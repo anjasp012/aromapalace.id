@@ -126,6 +126,19 @@ export async function enablePushNotifications(csrfToken?: string): Promise<{ suc
 
         if (response.ok) {
             localStorage.setItem('aromapalace_notifications_enabled', 'true');
+
+            // Trigger instant welcome notification so user sees it right away
+            try {
+                await registration.showNotification('🎉 Notifikasi Aroma Palace Aktif!', {
+                    body: 'Browser ini sekarang siap menerima update pesanan dan promo wewangian.',
+                    icon: '/images/logo.png',
+                    badge: '/images/logo.png',
+                    tag: 'welcome-notification',
+                });
+            } catch (e) {
+                console.log('Local notification display:', e);
+            }
+
             return {
                 success: true,
                 message: 'Notifikasi berhasil diaktifkan! Anda akan menerima update langsung di browser ini.',
@@ -141,5 +154,34 @@ export async function enablePushNotifications(csrfToken?: string): Promise<{ suc
             success: false,
             message: err?.message || 'Terjadi kesalahan saat mengaktifkan notifikasi.',
         };
+    }
+}
+
+/**
+ * Trigger a test notification locally on the registered service worker
+ */
+export async function sendLocalTestNotification(
+    title = '🔔 Tes Notifikasi Aroma Palace',
+    body = 'Notifikasi browser Anda aktif dan berjalan dengan baik!'
+): Promise<boolean> {
+    if (!isPushNotificationSupported() || Notification.permission !== 'granted') {
+        return false;
+    }
+
+    try {
+        const registration = await navigator.serviceWorker.ready;
+        await registration.showNotification(title, {
+            body,
+            icon: '/images/logo.png',
+            badge: '/images/logo.png',
+            tag: 'test-notification-' + Date.now(),
+            data: {
+                url: window.location.href,
+            },
+        });
+        return true;
+    } catch (err) {
+        console.warn('Failed to show test notification:', err);
+        return false;
     }
 }
