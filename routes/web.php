@@ -5,6 +5,7 @@ use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\DeviceTokenController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PakasirWebhookController;
@@ -32,6 +33,9 @@ Route::post('/search-history/sync', [SearchController::class, 'sync'])->name('se
 
 Route::post('/webhook/pakasir', [PakasirWebhookController::class, 'handle'])->name('webhook.pakasir');
 
+Route::post('/api/device-tokens', [DeviceTokenController::class, 'store'])->name('device-tokens.store');
+Route::delete('/api/device-tokens', [DeviceTokenController::class, 'destroy'])->name('device-tokens.destroy');
+
 Route::get('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/login', [AuthController::class, 'authenticate'])->name('login.post');
 Route::get('/register', [AuthController::class, 'registerView'])->name('register');
@@ -54,12 +58,13 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
         Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+
+        Route::get('/account/orders', [OrderController::class, 'index'])->name('account.orders');
     });
 
     Route::get('/payment/{order}', [PaymentController::class, 'show'])->name('payment.show');
     Route::post('/payment/{order}/check', [PaymentController::class, 'checkStatus'])->name('payment.check');
     Route::get('/payment', fn () => redirect()->route('checkout.index'));
-    Route::get('/account/orders', [OrderController::class, 'index'])->name('account.orders');
     Route::get('/orders/{order}/invoice', [OrderController::class, 'invoice'])->name('orders.invoice');
     Route::get('/invoice/{order}', [OrderController::class, 'invoice'])->name('invoice.show');
 });

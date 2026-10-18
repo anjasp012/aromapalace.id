@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import PushNotificationButton from '@/components/PushNotificationButton';
 
 interface AdminLayoutProps {
     title: string;
@@ -327,6 +328,8 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                     </div>
 
                     <div className="flex items-center gap-2">
+                        <PushNotificationButton variant="admin" />
+
                         <Button variant="outline" size="sm" asChild>
                             <a href="/" target="_blank" rel="noopener noreferrer">
                                 <Store className="size-3.5 mr-1.5" />

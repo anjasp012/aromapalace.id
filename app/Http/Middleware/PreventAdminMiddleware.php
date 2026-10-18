@@ -21,12 +21,16 @@ class PreventAdminMiddleware
         if ($user && $user->isAdmin()) {
             if ($request->expectsJson() || $request->is('api/*')) {
                 return response()->json([
-                    'message' => 'Akun administrator tidak diizinkan menggunakan fitur wishlist dan keranjang belanja.',
+                    'message' => 'Akun administrator tidak diizinkan menggunakan fitur customer ini.',
                 ], 403);
             }
 
+            if ($request->is('account/orders*')) {
+                return redirect()->route('admin.orders.index');
+            }
+
             return redirect()->route('admin.dashboard')
-                ->with('error', 'Akun administrator tidak dapat mengakses fitur wishlist atau keranjang belanja.');
+                ->with('error', 'Akun administrator tidak dapat mengakses fitur belanja customer.');
         }
 
         return $next($request);

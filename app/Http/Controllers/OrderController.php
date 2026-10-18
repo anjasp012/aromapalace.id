@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Services\CatalogService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -14,9 +15,14 @@ class OrderController extends Controller
     /**
      * Display the authenticated user's orders history.
      */
-    public function index(Request $request): Response
+    public function index(Request $request): Response|RedirectResponse
     {
         $user = $request->user();
+
+        if ($user && $user->isAdmin()) {
+            return redirect()->route('admin.orders.index');
+        }
+
         $activeTab = (string) $request->query('status', 'all');
 
         if (! in_array($activeTab, ['all', 'menunggu_pembayaran', 'menunggu_konfirmasi', 'diproses', 'dikirim', 'selesai'])) {
@@ -169,7 +175,7 @@ class OrderController extends Controller
     /**
      * Alias for index method.
      */
-    public function orders(Request $request): Response
+    public function orders(Request $request): Response|RedirectResponse
     {
         return $this->index($request);
     }
@@ -181,11 +187,16 @@ class OrderController extends Controller
     {
         $user = $request->user();
 
-        $orderModel = Order::where(function ($q) use ($order) {
+        $orderQuery = Order::where(function ($q) use ($order) {
             $q->where('order_number', $order)
                 ->orWhere('id', $order);
-        })
-            ->where('user_id', $user->id)
+        });
+
+        if (! $user->isAdmin()) {
+            $orderQuery->where('user_id', $user->id);
+        }
+
+        $orderModel = $orderQuery
             ->with(['items', 'voucher', 'store'])
             ->firstOrFail();
 

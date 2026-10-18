@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Voucher;
+use App\Services\FirebaseNotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -84,7 +85,10 @@ class VoucherController extends Controller
         $validated['min_order_amount'] = $validated['min_order_amount'] ?? 0;
         $validated['is_active'] = $request->boolean('is_active', true);
 
-        Voucher::create($validated);
+        $voucher = Voucher::create($validated);
+
+        // Broadcast notification to all customers for new voucher
+        app(FirebaseNotificationService::class)->notifyNewVoucher($voucher);
 
         return redirect()->route('admin.vouchers.index')
             ->with('success', "Voucher '{$validated['code']}' berhasil ditambahkan.");

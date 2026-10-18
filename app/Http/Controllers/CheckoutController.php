@@ -7,6 +7,7 @@ use App\Models\PaymentMethod;
 use App\Models\Store;
 use App\Models\Voucher;
 use App\Services\CatalogService;
+use App\Services\FirebaseNotificationService;
 use App\Services\PakasirService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,7 +21,8 @@ use Inertia\Response;
 class CheckoutController extends Controller
 {
     public function __construct(
-        protected PakasirService $pakasirService
+        protected PakasirService $pakasirService,
+        protected FirebaseNotificationService $notificationService
     ) {}
 
     /**
@@ -339,6 +341,9 @@ class CheckoutController extends Controller
 
             return $order;
         });
+
+        // Trigger push notification to Admins (pesanan masuk) & Customer (order dibuat)
+        $this->notificationService->notifyNewOrder($order);
 
         return redirect()->route('payment.show', ['order' => $order->order_number])
             ->with('success', 'Pesanan wewangian mewah Anda berhasil dibuat!');

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Services\CatalogService;
+use App\Services\FirebaseNotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -152,6 +153,17 @@ class OrderController extends Controller
         }
 
         $orderModel->save();
+
+        // Trigger push notifications
+        if ($newStatus === 'dikirim') {
+            if ($orderModel->delivery_type === 'pickup') {
+                app(FirebaseNotificationService::class)->notifyStorePickupReady($orderModel);
+            } else {
+                app(FirebaseNotificationService::class)->notifyOrderShipped($orderModel);
+            }
+        } elseif ($newStatus === 'diproses' || $newStatus === 'selesai') {
+            app(FirebaseNotificationService::class)->notifyPaymentSuccess($orderModel);
+        }
 
         $label = match ($newStatus) {
             'selesai' => 'Selesai',

@@ -45,6 +45,7 @@ import {
     Loader2,
     LayoutDashboard,
 } from 'lucide-react';
+import PushNotificationButton from '@/components/PushNotificationButton';
 
 interface LayoutProps {
     children: ReactNode;
@@ -517,6 +518,8 @@ export default function Layout({ children }: LayoutProps) {
                                                 </DropdownMenuItem>
                                             )}
 
+                                            <PushNotificationButton variant="customer_menu" />
+
                                             <DropdownMenuSeparator className="my-1 bg-border/60" />
 
                                             <DropdownMenuItem asChild variant="destructive">
@@ -555,6 +558,9 @@ export default function Layout({ children }: LayoutProps) {
                                                     <span>Daftar Akun Baru</span>
                                                 </Link>
                                             </DropdownMenuItem>
+
+                                            <DropdownMenuSeparator className="my-1 bg-border/60" />
+                                            <PushNotificationButton variant="customer_menu" />
                                         </>
                                     )}
                                 </DropdownMenuContent>

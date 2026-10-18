@@ -67,7 +67,9 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+        $remember = $request->has('remember') ? $request->boolean('remember') : true;
+
+        if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
 
             return redirect()->intended(route('products.index'));
@@ -102,7 +104,7 @@ class AuthController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
-        Auth::login($user);
+        Auth::login($user, true);
         $request->session()->regenerate();
 
         return redirect()->intended(route('products.index'))->with('status', 'Selamat datang di Aroma Palace, '.$user->name.'!');
