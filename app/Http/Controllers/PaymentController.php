@@ -87,22 +87,24 @@ class PaymentController extends Controller
             return redirect()->route('home')->with('error', 'Pesanan tidak ditemukan.');
         }
 
-        $txnRes = $this->pakasirService->createTransaction($orderModel->order_number, $orderModel->total_amount, $orderModel->payment_method);
-        if ($txnRes['success'] && ! empty($txnRes['data']['txn_id'])) {
-            $statusRes = $this->pakasirService->checkTransactionStatus($txnRes['data']['txn_id']);
-            if ($statusRes['success']) {
-                $status = strtolower((string) ($statusRes['data']['status'] ?? ''));
-                if ($status === 'completed') {
-                    $orderModel->update([
-                        'payment_status' => 'paid',
-                        'status' => 'diproses',
-                    ]);
-                    app(FirebaseNotificationService::class)->notifyPaymentSuccess($orderModel);
-                } elseif ($status === 'canceled') {
-                    $orderModel->update([
-                        'payment_status' => 'canceled',
-                        'status' => 'dibatalkan',
-                    ]);
+        if ($orderModel->payment_status === 'pending') {
+            $txnRes = $this->pakasirService->createTransaction($orderModel->order_number, $orderModel->total_amount, $orderModel->payment_method);
+            if ($txnRes['success'] && ! empty($txnRes['data']['txn_id'])) {
+                $statusRes = $this->pakasirService->checkTransactionStatus($txnRes['data']['txn_id']);
+                if ($statusRes['success']) {
+                    $status = strtolower((string) ($statusRes['data']['status'] ?? ''));
+                    if ($status === 'completed') {
+                        $orderModel->update([
+                            'payment_status' => 'paid',
+                            'status' => 'diproses',
+                        ]);
+                        app(FirebaseNotificationService::class)->notifyPaymentSuccess($orderModel);
+                    } elseif ($status === 'canceled') {
+                        $orderModel->update([
+                            'payment_status' => 'canceled',
+                            'status' => 'dibatalkan',
+                        ]);
+                    }
                 }
             }
         }

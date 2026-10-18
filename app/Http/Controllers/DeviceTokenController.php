@@ -34,6 +34,14 @@ class DeviceTokenController extends Controller
             ]
         );
 
+        if ($user) {
+            // Remove older duplicate tokens for this user on the same device_type
+            DeviceToken::where('user_id', $user->id)
+                ->where('token', '!=', $validated['token'])
+                ->where('device_type', $deviceType)
+                ->delete();
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Token perangkat berhasil didaftarkan.',

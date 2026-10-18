@@ -67,8 +67,26 @@ export async function initFirebaseForegroundListener(
             const title = payload.notification?.title || payload.data?.title || 'Aroma Palace';
             const body = payload.notification?.body || payload.data?.body || 'Anda memiliki notifikasi baru.';
             const url = payload.data?.url || payload.notification?.click_action || '/';
+            const tag = payload.data?.order_number
+                ? 'order-' + payload.data.order_number
+                : (payload.data?.order_id ? 'order-id-' + payload.data.order_id : (payload.data?.type || 'notif-msg'));
 
-            showSystemNotification(title, body, url, payload.data?.type || 'fcm-foreground-' + Date.now());
+            // Deduplication across multiple open tabs (suppress duplicate banners in a 4s window)
+            const dedupKey = 'aromapalace_notif_seen_' + tag;
+            const lastShown = Number(sessionStorage.getItem(dedupKey) || localStorage.getItem(dedupKey) || 0);
+            if (Date.now() - lastShown < 4000) {
+                if (onNotificationReceived) {
+                    onNotificationReceived(payload);
+                }
+                return;
+            }
+
+            try {
+                localStorage.setItem(dedupKey, String(Date.now()));
+                sessionStorage.setItem(dedupKey, String(Date.now()));
+            } catch (e) {}
+
+            showSystemNotification(title, body, url, tag);
 
             if (onNotificationReceived) {
                 onNotificationReceived(payload);
@@ -244,8 +262,8 @@ export async function showSystemNotification(
                 body,
                 icon: '/images/logo.png',
                 badge: '/images/logo.png',
-                tag: tag || 'notif-' + Date.now(),
-                renotify: true,
+                tag: tag || 'notif-single',
+                renotify: false,
                 data: {
                     url: url || window.location.href,
                 },
@@ -257,7 +275,7 @@ export async function showSystemNotification(
         new Notification(title, {
             body,
             icon: '/images/logo.png',
-            tag: tag || 'notif-' + Date.now(),
+            tag: tag || 'notif-single',
         });
         return true;
     } catch (err) {

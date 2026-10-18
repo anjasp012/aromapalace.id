@@ -217,7 +217,13 @@ class FirebaseNotificationService
      */
     public function sendBroadcast(string $title, string $body, ?string $url = null, array $data = []): int
     {
-        $tokens = DeviceToken::where('role', '!=', 'admin')->pluck('token')->unique()->all();
+        // Broadcast to all registered devices (customers, guests, and testing admins)
+        $tokens = DeviceToken::pluck('token')->unique()->all();
+
+        Log::info('Firebase FCM sendBroadcast dispatched', [
+            'total_tokens' => count($tokens),
+            'title' => $title,
+        ]);
 
         $sentCount = 0;
         foreach ($tokens as $token) {
@@ -236,6 +242,14 @@ class FirebaseNotificationService
      */
     public function notifyNewOrder(Order $order): void
     {
+        $cacheKey = "fcm_new_order_sent_{$order->id}";
+        if (Cache::has($cacheKey)) {
+            Log::info("Suppressing duplicate notifyNewOrder for order #{$order->order_number}");
+
+            return;
+        }
+        Cache::put($cacheKey, true, now()->addMinutes(10));
+
         $formattedTotal = 'Rp '.number_format($order->total_amount, 0, ',', '.');
 
         // Notifikasi ke Admin
@@ -265,6 +279,14 @@ class FirebaseNotificationService
      */
     public function notifyPaymentSuccess(Order $order): void
     {
+        $cacheKey = "fcm_payment_success_sent_{$order->id}";
+        if (Cache::has($cacheKey)) {
+            Log::info("Suppressing duplicate notifyPaymentSuccess for order #{$order->order_number}");
+
+            return;
+        }
+        Cache::put($cacheKey, true, now()->addMinutes(10));
+
         $formattedTotal = 'Rp '.number_format($order->total_amount, 0, ',', '.');
 
         // Ke Customer
