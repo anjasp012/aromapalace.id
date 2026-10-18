@@ -41,7 +41,7 @@ class OrderController extends Controller
         } elseif ($activeTab === 'menunggu_konfirmasi') {
             $query->where('status', 'menunggu_konfirmasi');
         } elseif ($activeTab === 'diproses') {
-            $query->where('status', 'diproses');
+            $query->whereIn('status', ['diproses', 'menunggu_konfirmasi']);
         } elseif ($activeTab === 'dikirim') {
             $query->where('status', 'dikirim');
         } elseif ($activeTab === 'selesai') {
@@ -62,7 +62,7 @@ class OrderController extends Controller
                     });
             })->count(),
             'menunggu_konfirmasi' => $user->orders()->where('status', 'menunggu_konfirmasi')->count(),
-            'diproses' => $user->orders()->where('status', 'diproses')->count(),
+            'diproses' => $user->orders()->whereIn('status', ['diproses', 'menunggu_konfirmasi'])->count(),
             'dikirim' => $user->orders()->where('status', 'dikirim')->count(),
             'selesai' => $user->orders()->where(function ($q) {
                 $q->where('status', 'selesai')
@@ -94,7 +94,7 @@ class OrderController extends Controller
             });
 
             $orderStatus = $order->status ?: match ($order->payment_status) {
-                'paid' => 'selesai',
+                'paid' => 'diproses',
                 'cancelled' => 'dibatalkan',
                 default => 'menunggu_pembayaran',
             };
@@ -219,7 +219,7 @@ class OrderController extends Controller
         $invoiceNumber = 'INV/'.$invDateCode.'/AP/'.str_pad((string) $orderModel->id, 8, '0', STR_PAD_LEFT);
 
         $orderStatus = $orderModel->status ?: match ($orderModel->payment_status) {
-            'paid' => 'selesai',
+            'paid' => 'diproses',
             'cancelled' => 'dibatalkan',
             default => 'menunggu_pembayaran',
         };

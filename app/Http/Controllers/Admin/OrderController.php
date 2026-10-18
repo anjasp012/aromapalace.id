@@ -50,7 +50,7 @@ class OrderController extends Controller
         } elseif ($status === 'menunggu_konfirmasi') {
             $query->where('status', 'menunggu_konfirmasi');
         } elseif ($status === 'diproses') {
-            $query->where('status', 'diproses');
+            $query->whereIn('status', ['diproses', 'menunggu_konfirmasi']);
         } elseif ($status === 'dikirim') {
             $query->where('status', 'dikirim')->where(function ($q) {
                 $q->where('delivery_type', 'delivery')->orWhereNull('delivery_type');
@@ -77,7 +77,7 @@ class OrderController extends Controller
                 ->orWhere(fn ($q) => $q->whereNull('status')->where('payment_status', 'pending'))
                 ->count(),
             'menunggu_konfirmasi' => Order::where('status', 'menunggu_konfirmasi')->count(),
-            'diproses' => Order::where('status', 'diproses')->count(),
+            'diproses' => Order::whereIn('status', ['diproses', 'menunggu_konfirmasi'])->count(),
             'dikirim' => Order::where('status', 'dikirim')->where(function ($q) {
                 $q->where('delivery_type', 'delivery')->orWhereNull('delivery_type');
             })->count(),
@@ -186,7 +186,7 @@ class OrderController extends Controller
     protected function mapOrderSummary(Order $order): array
     {
         $orderStatus = $order->status ?: match ($order->payment_status) {
-            'paid' => 'selesai',
+            'paid' => 'diproses',
             'cancelled' => 'dibatalkan',
             default => 'menunggu_pembayaran',
         };
@@ -259,7 +259,7 @@ class OrderController extends Controller
         });
 
         $orderStatus = $order->status ?: match ($order->payment_status) {
-            'paid' => 'selesai',
+            'paid' => 'diproses',
             'cancelled' => 'dibatalkan',
             default => 'menunggu_pembayaran',
         };

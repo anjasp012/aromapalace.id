@@ -140,7 +140,7 @@ export default function AdminDashboard({
                                 {metrics.needs_action_count}
                             </div>
                             <p className="text-xs text-muted-foreground mt-1">
-                                {status_counts.menunggu_konfirmasi} Konfirmasi &bull; {status_counts.diproses} Diproses
+                                {status_counts.diproses} Perlu Diproses{status_counts.menunggu_konfirmasi > 0 ? ` • ${status_counts.menunggu_konfirmasi} Konfirmasi` : ''}
                             </p>
                         </CardContent>
                     </Card>
@@ -166,7 +166,7 @@ export default function AdminDashboard({
                         <CardDescription>Pilih status untuk memfilter pesanan secara langsung.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
                             <Button variant="outline" asChild className="h-auto py-2.5 flex-col items-start gap-1 justify-start">
                                 <Link href="/admin/orders?status=menunggu_pembayaran">
                                     <span className="text-xs text-muted-foreground">Menunggu Bayar</span>
@@ -174,12 +174,14 @@ export default function AdminDashboard({
                                 </Link>
                             </Button>
 
-                            <Button variant="outline" asChild className="h-auto py-2.5 flex-col items-start gap-1 justify-start border-amber-200 dark:border-amber-900 bg-amber-50/30">
-                                <Link href="/admin/orders?status=menunggu_konfirmasi">
-                                    <span className="text-xs text-amber-700 dark:text-amber-400">Konfirmasi</span>
-                                    <span className="text-base font-bold text-amber-700 dark:text-amber-400">{status_counts.menunggu_konfirmasi}</span>
-                                </Link>
-                            </Button>
+                            {status_counts.menunggu_konfirmasi > 0 && (
+                                <Button variant="outline" asChild className="h-auto py-2.5 flex-col items-start gap-1 justify-start border-amber-200 dark:border-amber-900 bg-amber-50/30">
+                                    <Link href="/admin/orders?status=menunggu_konfirmasi">
+                                        <span className="text-xs text-amber-700 dark:text-amber-400">Konfirmasi</span>
+                                        <span className="text-base font-bold text-amber-700 dark:text-amber-400">{status_counts.menunggu_konfirmasi}</span>
+                                    </Link>
+                                </Button>
+                            )}
 
                             <Button variant="outline" asChild className="h-auto py-2.5 flex-col items-start gap-1 justify-start border-blue-200 dark:border-blue-900 bg-blue-50/30">
                                 <Link href="/admin/orders?status=diproses">

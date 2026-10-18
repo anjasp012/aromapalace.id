@@ -114,7 +114,6 @@ interface OrdersProps {
 const TABS = [
     { key: 'all', label: 'Semua' },
     { key: 'menunggu_pembayaran', label: 'Menunggu Pembayaran' },
-    { key: 'menunggu_konfirmasi', label: 'Menunggu Konfirmasi' },
     { key: 'diproses', label: 'Diproses' },
     { key: 'dikirim', label: 'Dikirim' },
     { key: 'selesai', label: 'Selesai' },
@@ -574,12 +573,12 @@ export default function OrdersPage({
                 const isPickup = selectedOrder.delivery_type === 'pickup';
                 const currentStep = (() => {
                     switch (effectiveStatus) {
-                        case 'selesai': return 5;
+                        case 'selesai': return 4;
                         case 'dikirim':
                         case 'pengambilan':
                         case 'siap_diambil':
-                            return 4;
-                        case 'diproses': return 3;
+                            return 3;
+                        case 'diproses':
                         case 'menunggu_konfirmasi': return 2;
                         case 'menunggu_pembayaran':
                         default: return 1;
@@ -747,8 +746,8 @@ export default function OrdersPage({
 
                                             {showTracking && (
                                                 <div className="space-y-4 pt-1 animate-in fade-in duration-200">
-                                                    {/* 5 Stepper Icons: Bayar -> Konfirmasi -> Diproses -> Dikirim -> Selesai */}
-                                                    <div className="grid grid-cols-5 text-center">
+                                                    {/* 4 Stepper Icons: Bayar -> Diproses -> Dikirim -> Selesai */}
+                                                    <div className="grid grid-cols-4 text-center">
                                                         <div className="flex flex-col items-center">
                                                             <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shadow-xs ${
                                                                 currentStep >= 1 ? 'bg-[#FEF08A] dark:bg-amber-900/50 text-[#854D0E] dark:text-amber-300' : 'bg-muted text-muted-foreground'
@@ -762,15 +761,6 @@ export default function OrdersPage({
                                                             <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shadow-xs ${
                                                                 currentStep >= 2 ? 'bg-[#FEF08A] dark:bg-amber-900/50 text-[#854D0E] dark:text-amber-300' : 'bg-muted text-muted-foreground'
                                                             }`}>
-                                                                <PackageCheck className="w-4 h-4 sm:w-5 sm:h-5" />
-                                                            </div>
-                                                            <span className="text-[10px] font-semibold mt-1.5 text-foreground truncate max-w-full">Konfirmasi</span>
-                                                        </div>
-
-                                                        <div className="flex flex-col items-center">
-                                                            <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shadow-xs ${
-                                                                currentStep >= 3 ? 'bg-[#FEF08A] dark:bg-amber-900/50 text-[#854D0E] dark:text-amber-300' : 'bg-muted text-muted-foreground'
-                                                            }`}>
                                                                 <Package className="w-4 h-4 sm:w-5 sm:h-5" />
                                                             </div>
                                                             <span className="text-[10px] font-semibold mt-1.5 text-foreground truncate max-w-full">Diproses</span>
@@ -778,7 +768,7 @@ export default function OrdersPage({
 
                                                         <div className="flex flex-col items-center">
                                                             <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shadow-xs ${
-                                                                currentStep >= 4 ? 'bg-[#FEF08A] dark:bg-amber-900/50 text-[#854D0E] dark:text-amber-300' : 'bg-muted text-muted-foreground'
+                                                                currentStep >= 3 ? 'bg-[#FEF08A] dark:bg-amber-900/50 text-[#854D0E] dark:text-amber-300' : 'bg-muted text-muted-foreground'
                                                             }`}>
                                                                 {isPickup ? (
                                                                     <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -793,7 +783,7 @@ export default function OrdersPage({
 
                                                         <div className="flex flex-col items-center">
                                                             <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shadow-xs ${
-                                                                currentStep >= 5 ? 'bg-[#FEF08A] dark:bg-amber-900/50 text-[#854D0E] dark:text-amber-300' : 'bg-muted text-muted-foreground'
+                                                                currentStep >= 4 ? 'bg-[#FEF08A] dark:bg-amber-900/50 text-[#854D0E] dark:text-amber-300' : 'bg-muted text-muted-foreground'
                                                             }`}>
                                                                 <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" />
                                                             </div>
@@ -802,8 +792,8 @@ export default function OrdersPage({
                                                     </div>
 
                                                     {/* Stepper Connecting Line with Node Circles */}
-                                                    <div className="relative flex items-center justify-between px-4 sm:px-6">
-                                                        <div className="absolute left-6 right-6 sm:left-8 sm:right-8 top-1/2 -translate-y-1/2 border-t-2 border-dashed border-[#FACC15] dark:border-amber-600 z-0" />
+                                                    <div className="relative flex items-center justify-between px-6 sm:px-10">
+                                                        <div className="absolute left-8 right-8 sm:left-12 sm:right-12 top-1/2 -translate-y-1/2 border-t-2 border-dashed border-[#FACC15] dark:border-amber-600 z-0" />
                                                         <div className={`relative z-10 w-5 h-5 rounded-full bg-background border-2 flex items-center justify-center text-[10px] font-bold ${
                                                             currentStep >= 2 ? 'border-amber-500 text-amber-600 dark:text-amber-400' : 'border-amber-500 text-amber-600 dark:text-amber-400'
                                                         }`}>
@@ -820,14 +810,9 @@ export default function OrdersPage({
                                                             {currentStep >= 4 ? '✓' : '3'}
                                                         </div>
                                                         <div className={`relative z-10 w-5 h-5 rounded-full bg-background border-2 flex items-center justify-center text-[10px] font-bold ${
-                                                            currentStep >= 5 ? 'border-amber-500 text-amber-600 dark:text-amber-400' : currentStep >= 4 ? 'border-amber-500 text-amber-600 dark:text-amber-400' : 'border-muted-foreground/40 text-muted-foreground'
+                                                            currentStep >= 4 ? 'border-amber-500 text-amber-600 dark:text-amber-400' : 'border-muted-foreground/40 text-muted-foreground'
                                                         }`}>
-                                                            {currentStep >= 5 ? '✓' : '4'}
-                                                        </div>
-                                                        <div className={`relative z-10 w-5 h-5 rounded-full bg-background border-2 flex items-center justify-center text-[10px] font-bold ${
-                                                            currentStep >= 5 ? 'border-amber-500 text-amber-600 dark:text-amber-400' : 'border-muted-foreground/40 text-muted-foreground'
-                                                        }`}>
-                                                            {currentStep >= 5 ? '✓' : '5'}
+                                                            {currentStep >= 4 ? '✓' : '4'}
                                                         </div>
                                                     </div>
 

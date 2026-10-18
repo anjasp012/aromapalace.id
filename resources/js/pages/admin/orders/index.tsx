@@ -193,7 +193,7 @@ export default function AdminOrdersIndex({
     const TABS = [
         { key: 'all', label: 'Semua', count: tab_counts.all },
         { key: 'menunggu_pembayaran', label: 'Menunggu Bayar', count: tab_counts.menunggu_pembayaran },
-        { key: 'menunggu_konfirmasi', label: 'Konfirmasi', count: tab_counts.menunggu_konfirmasi },
+        ...(tab_counts.menunggu_konfirmasi > 0 ? [{ key: 'menunggu_konfirmasi', label: 'Konfirmasi', count: tab_counts.menunggu_konfirmasi }] : []),
         { key: 'diproses', label: 'Diproses', count: tab_counts.diproses },
         { key: 'dikirim', label: 'Dikirim Kurir', count: tab_counts.dikirim },
         { key: 'pengambilan', label: 'Ambil di Butik', count: tab_counts.pengambilan },
@@ -500,14 +500,13 @@ export default function AdminOrdersIndex({
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="menunggu_pembayaran">1. Menunggu Pembayaran</SelectItem>
-                                            <SelectItem value="menunggu_konfirmasi">2. Menunggu Konfirmasi</SelectItem>
-                                            <SelectItem value="diproses">3. Diproses</SelectItem>
+                                            <SelectItem value="diproses">2. Diproses</SelectItem>
                                             <SelectItem value="dikirim">
                                                 {quickStatusOrder.delivery_type === 'pickup'
-                                                    ? '4. Siap Diambil di Butik'
-                                                    : '4. Dikirim Kurir'}
+                                                    ? '3. Siap Diambil di Butik'
+                                                    : '3. Dikirim Kurir'}
                                             </SelectItem>
-                                            <SelectItem value="selesai">5. Selesai</SelectItem>
+                                            <SelectItem value="selesai">4. Selesai</SelectItem>
                                             <SelectItem value="dibatalkan">Dibatalkan</SelectItem>
                                         </SelectContent>
                                     </Select>

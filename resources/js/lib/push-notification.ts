@@ -164,22 +164,9 @@ export async function enablePushNotifications(csrfToken?: string): Promise<{ suc
 
         if (response.ok) {
             localStorage.setItem('aromapalace_notifications_enabled', 'true');
-
-            // Trigger instant welcome notification so user sees it right away
-            try {
-                await registration.showNotification('🎉 Notifikasi Aroma Palace Aktif!', {
-                    body: 'Browser ini sekarang siap menerima update pesanan dan promo wewangian.',
-                    icon: '/images/logo.png',
-                    badge: '/images/logo.png',
-                    tag: 'welcome-notification',
-                });
-            } catch (e) {
-                console.log('Local notification display:', e);
-            }
-
             return {
                 success: true,
-                message: 'Notifikasi berhasil diaktifkan! Anda akan menerima update langsung di browser ini.',
+                message: 'Notifikasi berhasil diaktifkan.',
             };
         }
 
@@ -280,12 +267,32 @@ export async function showSystemNotification(
 }
 
 /**
- * Trigger a test notification locally on the registered service worker
+ * Automatically requests notification permission in new browsers (when permission is 'default'),
+ * and registers FCM device token with the backend.
+ * If permission is already 'granted', silently refreshes/registers the device token.
  */
-export async function sendLocalTestNotification(
-    title = '🔔 Tes Notifikasi Aroma Palace',
-    body = 'Notifikasi browser Anda aktif dan berjalan dengan baik!',
-    url?: string
-): Promise<boolean> {
-    return showSystemNotification(title, body, url, 'test-notification-' + Date.now());
+export async function autoRequestNotificationPermission(csrfToken?: string): Promise<void> {
+    if (!isPushNotificationSupported()) return;
+
+    try {
+        const currentPermission = Notification.permission;
+
+        if (currentPermission === 'default') {
+            const perm = await Notification.requestPermission();
+            if (perm === 'granted') {
+                await enablePushNotifications(csrfToken);
+            }
+        } else if (currentPermission === 'granted') {
+            await enablePushNotifications(csrfToken);
+        }
+    } catch (err) {
+        console.warn('Auto notification request error:', err);
+    }
+}
+
+/**
+ * Send local test notification (deprecated, test notifications removed)
+ */
+export async function sendLocalTestNotification(): Promise<boolean> {
+    return false;
 }

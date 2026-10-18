@@ -27,7 +27,7 @@ class DashboardController extends Controller
                 ->orWhere(fn ($q) => $q->whereNull('status')->where('payment_status', 'pending'))
                 ->count(),
             'menunggu_konfirmasi' => Order::where('status', 'menunggu_konfirmasi')->count(),
-            'diproses' => Order::where('status', 'diproses')->count(),
+            'diproses' => Order::whereIn('status', ['diproses', 'menunggu_konfirmasi'])->count(),
             'dikirim' => Order::where('status', 'dikirim')->where('delivery_type', 'delivery')->count(),
             'pengambilan' => Order::where('status', 'dikirim')->where('delivery_type', 'pickup')->count(),
             'selesai' => Order::where('status', 'selesai')
@@ -74,7 +74,7 @@ class DashboardController extends Controller
     protected function mapOrderSummary(Order $order): array
     {
         $orderStatus = $order->status ?: match ($order->payment_status) {
-            'paid' => 'selesai',
+            'paid' => 'diproses',
             'cancelled' => 'dibatalkan',
             default => 'menunggu_pembayaran',
         };

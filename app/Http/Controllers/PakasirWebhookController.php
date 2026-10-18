@@ -61,7 +61,7 @@ class PakasirWebhookController extends Controller
 
         if ($status === 'completed') {
             $updateData['payment_status'] = 'paid';
-            $updateData['status'] = 'menunggu_konfirmasi';
+            $updateData['status'] = 'diproses';
         } elseif ($status === 'canceled') {
             $updateData['payment_status'] = 'canceled';
             $updateData['status'] = 'dibatalkan';

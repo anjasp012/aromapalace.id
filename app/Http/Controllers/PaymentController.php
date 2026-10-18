@@ -44,7 +44,7 @@ class PaymentController extends Controller
                 if ($statusRes['success'] && ($statusRes['data']['status'] ?? '') === 'completed') {
                     $orderModel->update([
                         'payment_status' => 'paid',
-                        'status' => 'menunggu_konfirmasi',
+                        'status' => 'diproses',
                     ]);
                     app(FirebaseNotificationService::class)->notifyPaymentSuccess($orderModel);
                 }
@@ -95,7 +95,7 @@ class PaymentController extends Controller
                 if ($status === 'completed') {
                     $orderModel->update([
                         'payment_status' => 'paid',
-                        'status' => 'menunggu_konfirmasi',
+                        'status' => 'diproses',
                     ]);
                     app(FirebaseNotificationService::class)->notifyPaymentSuccess($orderModel);
                 } elseif ($status === 'canceled') {

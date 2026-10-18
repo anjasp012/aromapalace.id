@@ -101,10 +101,10 @@ export default function AdminOrderShow({ order }: OrderShowProps) {
 
     const currentStep = (() => {
         switch (order.order_status) {
-            case 'selesai': return 5;
+            case 'selesai': return 4;
             case 'dikirim':
-            case 'pengambilan': return 4;
-            case 'diproses': return 3;
+            case 'pengambilan': return 3;
+            case 'diproses':
             case 'menunggu_konfirmasi': return 2;
             case 'menunggu_pembayaran':
             default: return 1;
@@ -201,18 +201,7 @@ export default function AdminOrderShow({ order }: OrderShowProps) {
 
                         {/* Direct Action Buttons */}
                         <div className="flex flex-wrap items-center gap-2">
-                            {order.order_status === 'menunggu_konfirmasi' && (
-                                <Button
-                                    size="sm"
-                                    onClick={() => handleUpdateStatus('diproses')}
-                                    disabled={isUpdatingStatus}
-                                >
-                                    <Check className="size-4 mr-1.5" />
-                                    <span>Konfirmasi Pesanan</span>
-                                </Button>
-                            )}
-
-                            {order.order_status === 'diproses' && (
+                            {(order.order_status === 'diproses' || order.order_status === 'menunggu_konfirmasi') && (
                                 <Button
                                     size="sm"
                                     onClick={() => handleUpdateStatus('dikirim')}
@@ -262,17 +251,17 @@ export default function AdminOrderShow({ order }: OrderShowProps) {
                         </div>
                     </CardHeader>
 
-                    {/* Stepper Tracking Visual */}
+                    {/* Stepper Tracking Visual (4 Steps: Bayar -> Diproses -> Dikirim -> Selesai) */}
                     {order.order_status !== 'dibatalkan' && (
                         <CardContent className="pt-2">
-                            <div className="grid grid-cols-5 text-center gap-2 py-2">
+                            <div className="grid grid-cols-4 text-center gap-2 py-2">
                                 <div className="flex flex-col items-center">
                                     <div className={`size-9 rounded-full flex items-center justify-center text-xs font-semibold ${
                                         currentStep >= 1 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
                                     }`}>
                                         <CreditCard className="size-4" />
                                     </div>
-                                    <span className="text-xs font-medium mt-1.5 text-foreground">1. Bayar</span>
+                                    <span className="text-xs font-medium mt-1.5 text-foreground">1. Bayar (PG)</span>
                                     <span className="text-[10px] text-muted-foreground">{currentStep > 1 ? 'Lunas' : 'Menunggu'}</span>
                                 </div>
 
@@ -280,40 +269,30 @@ export default function AdminOrderShow({ order }: OrderShowProps) {
                                     <div className={`size-9 rounded-full flex items-center justify-center text-xs font-semibold ${
                                         currentStep >= 2 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
                                     }`}>
-                                        <PackageCheck className="size-4" />
+                                        <Package className="size-4" />
                                     </div>
-                                    <span className="text-xs font-medium mt-1.5 text-foreground">2. Konfirmasi</span>
-                                    <span className="text-[10px] text-muted-foreground">Verifikasi</span>
+                                    <span className="text-xs font-medium mt-1.5 text-foreground">2. Diproses</span>
+                                    <span className="text-[10px] text-muted-foreground">{currentStep >= 2 ? 'Disiapkan' : 'Antre'}</span>
                                 </div>
 
                                 <div className="flex flex-col items-center">
                                     <div className={`size-9 rounded-full flex items-center justify-center text-xs font-semibold ${
                                         currentStep >= 3 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
                                     }`}>
-                                        <Package className="size-4" />
-                                    </div>
-                                    <span className="text-xs font-medium mt-1.5 text-foreground">3. Diproses</span>
-                                    <span className="text-[10px] text-muted-foreground">Disiapkan</span>
-                                </div>
-
-                                <div className="flex flex-col items-center">
-                                    <div className={`size-9 rounded-full flex items-center justify-center text-xs font-semibold ${
-                                        currentStep >= 4 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                                    }`}>
                                         {isPickup ? <ShoppingBag className="size-4" /> : <Truck className="size-4" />}
                                     </div>
-                                    <span className="text-xs font-medium mt-1.5 text-foreground">4. {isPickup ? 'Pengambilan' : 'Dikirim'}</span>
+                                    <span className="text-xs font-medium mt-1.5 text-foreground">3. {isPickup ? 'Pengambilan' : 'Dikirim'}</span>
                                     <span className="text-[10px] text-muted-foreground">{isPickup ? 'Di Butik' : 'Kurir'}</span>
                                 </div>
 
                                 <div className="flex flex-col items-center">
                                     <div className={`size-9 rounded-full flex items-center justify-center text-xs font-semibold ${
-                                        currentStep >= 5 ? 'bg-emerald-600 text-white' : 'bg-muted text-muted-foreground'
+                                        currentStep >= 4 ? 'bg-emerald-600 text-white' : 'bg-muted text-muted-foreground'
                                     }`}>
                                         <CheckCircle2 className="size-4" />
                                     </div>
-                                    <span className="text-xs font-medium mt-1.5 text-foreground">5. Selesai</span>
-                                    <span className="text-[10px] text-muted-foreground">Tuntas</span>
+                                    <span className="text-xs font-medium mt-1.5 text-foreground">4. Selesai</span>
+                                    <span className="text-[10px] text-muted-foreground">{currentStep >= 4 ? 'Tuntas' : 'Menunggu'}</span>
                                 </div>
                             </div>
                         </CardContent>
@@ -470,16 +449,6 @@ export default function AdminOrderShow({ order }: OrderShowProps) {
                                 <CardDescription>Ganti status pesanan ke tahap spesifik.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-2">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleUpdateStatus('menunggu_konfirmasi')}
-                                    disabled={isUpdatingStatus || order.order_status === 'menunggu_konfirmasi'}
-                                    className="w-full justify-start text-xs"
-                                >
-                                    <Clock className="size-3.5 mr-2 text-amber-500" />
-                                    <span>Kembalikan ke Konfirmasi</span>
-                                </Button>
                                 <Button
                                     variant="outline"
                                     size="sm"

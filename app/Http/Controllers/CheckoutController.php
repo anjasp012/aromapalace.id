@@ -319,7 +319,7 @@ class CheckoutController extends Controller
                 'payment_channel' => $paymentChannel,
                 'payment_code' => $paymentCode,
                 'payment_status' => $paymentStatus,
-                'status' => $paymentStatus === 'paid' ? 'menunggu_konfirmasi' : 'menunggu_pembayaran',
+                'status' => $paymentStatus === 'paid' ? 'diproses' : 'menunggu_pembayaran',
                 'subtotal' => $subtotal,
                 'discount_amount' => $discountAmount,
                 'voucher_code' => $voucherCode ?: null,

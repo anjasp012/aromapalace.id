@@ -46,7 +46,7 @@ test('pakasir webhook updates order status to paid on completed event', function
 
     $order->refresh();
     expect($order->payment_status)->toBe('paid')
-        ->and($order->status)->toBe('menunggu_konfirmasi');
+        ->and($order->status)->toBe('diproses');
 });
 
 test('pakasir webhook rejects invalid secret with 401', function () {

@@ -45,7 +45,7 @@ import {
     Loader2,
     LayoutDashboard,
 } from 'lucide-react';
-import PushNotificationButton from '@/components/PushNotificationButton';
+import { autoRequestNotificationPermission } from '@/lib/push-notification';
 
 interface LayoutProps {
     children: ReactNode;
@@ -345,6 +345,9 @@ export default function Layout({ children }: LayoutProps) {
         window.showCartToast = (msg) => triggerToast(msg);
         window.showPromoToast = (msg) => triggerToast(msg);
         window.copyPromoCode = copyPromoCode;
+
+        // Auto request push notification permission on new browser or sync token
+        autoRequestNotificationPermission().catch(() => {});
     }, []);
 
     // Watch for backend flash messages
@@ -431,7 +434,7 @@ export default function Layout({ children }: LayoutProps) {
                     {/* Upper Row: Search | Centered Logo | User Actions */}
                     <div className="relative flex items-center justify-between py-3.5 sm:py-4 min-h-[84px]">
                         {/* Left: Search Trigger (Underlined input style matching mockup) */}
-                        <div className="flex items-center w-1/3 max-w-[170px] sm:max-w-[240px] md:max-w-[280px] z-10">
+                        <div className="flex items-center w-auto sm:w-1/3 max-w-[125px] sm:max-w-[240px] md:max-w-[280px] z-10">
                             <button
                                 type="button"
                                 onClick={() => window.openSpotlight?.()}
@@ -466,113 +469,111 @@ export default function Layout({ children }: LayoutProps) {
                             </Link>
                         </div>
 
-                        {/* Right: Actions (Akun, Wishlist, Keranjang) with stacked icon & label matching #4A070B */}
-                        <div className="flex items-center justify-end gap-2.5 sm:gap-4 md:gap-5 w-1/3 z-10">
-                            {/* Akun */}
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <button
-                                        type="button"
-                                        className="flex flex-col items-center justify-center gap-0.5 text-[#4A070B] hover:text-[#360407] transition cursor-pointer px-1 py-0.5 group outline-none"
-                                    >
-                                        <svg className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-[#4A070B] group-hover:text-[#360407] transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                        </svg>
-                                        <span className="text-[10px] sm:text-[11px] font-medium text-[#4A070B] group-hover:text-[#360407] leading-none mt-0.5">
-                                            Akun
-                                        </span>
-                                    </button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-56 p-1.5 shadow-lg border border-border/80">
-                                    {user ? (
-                                        <>
-                                            <div className="px-2.5 py-2 border-b border-border/60 mb-1">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-7 h-7 rounded-full bg-[#4A070B]/10 dark:bg-[#E8D0BA]/15 text-[#4A070B] dark:text-[#E8D0BA] flex items-center justify-center font-bold text-xs uppercase shrink-0">
-                                                        {user.name.charAt(0)}
-                                                    </div>
-                                                    <div className="min-w-0">
-                                                        <div className="text-xs font-bold text-foreground truncate">
-                                                            {user.name}
+                        {/* Right: Actions (Akun, Wishlist, Keranjang) - Mobile shows ONLY Keranjang */}
+                        <div className="flex items-center justify-end gap-2 sm:gap-4 md:gap-5 w-auto sm:w-1/3 z-10">
+                            {/* Akun: Hidden on mobile, visible on desktop sm:flex */}
+                            <div className="hidden sm:flex">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <button
+                                            type="button"
+                                            className="flex flex-col items-center justify-center gap-0.5 text-[#4A070B] hover:text-[#360407] transition cursor-pointer px-1 py-0.5 group outline-none"
+                                        >
+                                            <svg className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-[#4A070B] group-hover:text-[#360407] transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                            <span className="text-[10px] sm:text-[11px] font-medium text-[#4A070B] group-hover:text-[#360407] leading-none mt-0.5">
+                                                {isAdmin ? 'Admin' : 'Akun'}
+                                            </span>
+                                        </button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-56 p-1.5 shadow-lg border border-border/80">
+                                        {user ? (
+                                            <>
+                                                <div className="px-2.5 py-2 border-b border-border/60 mb-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-7 h-7 rounded-full bg-[#4A070B]/10 dark:bg-[#E8D0BA]/15 text-[#4A070B] dark:text-[#E8D0BA] flex items-center justify-center font-bold text-xs uppercase shrink-0">
+                                                            {user.name.charAt(0)}
                                                         </div>
-                                                        <div className="text-[10px] text-muted-foreground truncate">
-                                                            {user.email}
+                                                        <div className="min-w-0">
+                                                            <div className="text-xs font-bold text-foreground truncate">
+                                                                {user.name}
+                                                            </div>
+                                                            <div className="text-[10px] text-muted-foreground truncate">
+                                                                {user.email}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
 
-                                            {isAdmin ? (
-                                                <DropdownMenuItem asChild>
-                                                    <Link href="/admin/dashboard" className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-semibold text-[#4A070B] dark:text-[#E8D0BA] cursor-pointer">
-                                                        <LayoutDashboard className="w-4 h-4 text-[#4A070B] dark:text-[#E8D0BA] shrink-0" />
-                                                        <span>Dashboard Admin</span>
+                                                {isAdmin ? (
+                                                    <DropdownMenuItem asChild>
+                                                        <Link href="/admin/dashboard" className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-semibold text-[#4A070B] dark:text-[#E8D0BA] cursor-pointer">
+                                                            <LayoutDashboard className="w-4 h-4 text-[#4A070B] dark:text-[#E8D0BA] shrink-0" />
+                                                            <span>Dashboard Admin</span>
+                                                        </Link>
+                                                    </DropdownMenuItem>
+                                                ) : (
+                                                    <DropdownMenuItem asChild>
+                                                        <Link href="/account/orders" className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium cursor-pointer">
+                                                            <Package className="w-4 h-4 text-[#4A070B] dark:text-[#E8D0BA] shrink-0" />
+                                                            <span>Pesanan Saya</span>
+                                                        </Link>
+                                                    </DropdownMenuItem>
+                                                )}
+
+                                                <DropdownMenuSeparator className="my-1 bg-border/60" />
+
+                                                <DropdownMenuItem asChild variant="destructive">
+                                                    <Link
+                                                        href="/logout"
+                                                        method="post"
+                                                        as="button"
+                                                        className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium text-destructive cursor-pointer hover:bg-destructive/10"
+                                                    >
+                                                        <LogOut className="w-4 h-4 shrink-0 text-destructive" />
+                                                        <span>Keluar</span>
                                                     </Link>
                                                 </DropdownMenuItem>
-                                            ) : (
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div className="px-2.5 py-2 border-b border-border/60 mb-1">
+                                                    <div className="text-xs font-bold text-foreground">
+                                                        Selamat Datang
+                                                    </div>
+                                                    <div className="text-[10px] text-muted-foreground">
+                                                        Masuk untuk kemudahan belanja
+                                                    </div>
+                                                </div>
+
                                                 <DropdownMenuItem asChild>
-                                                    <Link href="/account/orders" className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium cursor-pointer">
-                                                        <Package className="w-4 h-4 text-[#4A070B] dark:text-[#E8D0BA] shrink-0" />
-                                                        <span>Pesanan Saya</span>
+                                                    <Link href="/login" className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium cursor-pointer">
+                                                        <LogIn className="w-4 h-4 text-[#4A070B] dark:text-[#E8D0BA] shrink-0" />
+                                                        <span>Masuk ke Akun</span>
                                                     </Link>
                                                 </DropdownMenuItem>
-                                            )}
 
-                                            <PushNotificationButton variant="customer_menu" />
+                                                <DropdownMenuItem asChild>
+                                                    <Link href="/register" className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium cursor-pointer">
+                                                        <UserPlus className="w-4 h-4 text-[#4A070B] dark:text-[#E8D0BA] shrink-0" />
+                                                        <span>Daftar Akun Baru</span>
+                                                    </Link>
+                                                </DropdownMenuItem>
 
-                                            <DropdownMenuSeparator className="my-1 bg-border/60" />
-
-                                            <DropdownMenuItem asChild variant="destructive">
-                                                <Link
-                                                    href="/logout"
-                                                    method="post"
-                                                    as="button"
-                                                    className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium text-destructive cursor-pointer hover:bg-destructive/10"
-                                                >
-                                                    <LogOut className="w-4 h-4 shrink-0 text-destructive" />
-                                                    <span>Keluar</span>
-                                                </Link>
-                                            </DropdownMenuItem>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <div className="px-2.5 py-2 border-b border-border/60 mb-1">
-                                                <div className="text-xs font-bold text-foreground">
-                                                    Selamat Datang
-                                                </div>
-                                                <div className="text-[10px] text-muted-foreground">
-                                                    Masuk untuk kemudahan belanja
-                                                </div>
-                                            </div>
-
-                                            <DropdownMenuItem asChild>
-                                                <Link href="/login" className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium cursor-pointer">
-                                                    <LogIn className="w-4 h-4 text-[#4A070B] dark:text-[#E8D0BA] shrink-0" />
-                                                    <span>Masuk ke Akun</span>
-                                                </Link>
-                                            </DropdownMenuItem>
-
-                                            <DropdownMenuItem asChild>
-                                                <Link href="/register" className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium cursor-pointer">
-                                                    <UserPlus className="w-4 h-4 text-[#4A070B] dark:text-[#E8D0BA] shrink-0" />
-                                                    <span>Daftar Akun Baru</span>
-                                                </Link>
-                                            </DropdownMenuItem>
-
-                                            <DropdownMenuSeparator className="my-1 bg-border/60" />
-                                            <PushNotificationButton variant="customer_menu" />
-                                        </>
-                                    )}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                                            </>
+                                        )}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
 
                             {/* Wishlist & Keranjang: Disembunyikan untuk User Role Admin */}
                             {!isAdmin && (
                                 <>
-                                    {/* Wishlist */}
+                                    {/* Wishlist: Hidden on mobile, visible on desktop */}
                                     <Link
                                         href={user ? '/wishlist' : '/login?notice=' + encodeURIComponent('Silakan masuk untuk mengakses halaman wishlist Anda.')}
-                                        className="flex flex-col items-center justify-center gap-0.5 text-[#4A070B] hover:text-[#360407] transition cursor-pointer px-1 py-0.5 group relative"
+                                        className="hidden sm:flex flex-col items-center justify-center gap-0.5 text-[#4A070B] hover:text-[#360407] transition cursor-pointer px-1 py-0.5 group relative"
                                     >
                                         <div className="relative">
                                             <svg className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-[#4A070B] group-hover:text-[#360407] transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -589,22 +590,23 @@ export default function Layout({ children }: LayoutProps) {
                                         </span>
                                     </Link>
 
-                                    {/* Keranjang */}
+                                    {/* Keranjang: Sole icon on mobile with optimized size & touch target */}
                                     <Link
                                         href={user ? '/cart' : '/login?notice=' + encodeURIComponent('Silakan masuk untuk melihat keranjang belanja Anda.')}
-                                        className="flex flex-col items-center justify-center gap-0.5 text-[#4A070B] hover:text-[#360407] transition cursor-pointer px-1 py-0.5 group relative"
+                                        className="flex items-center justify-center sm:flex-col sm:gap-0.5 text-[#4A070B] hover:text-[#360407] transition cursor-pointer w-10 h-10 sm:w-auto sm:h-auto sm:px-1 sm:py-0.5 group relative rounded-full sm:rounded-none hover:bg-[#4A070B]/5 sm:hover:bg-transparent active:scale-95"
+                                        aria-label="Keranjang Belanja"
                                     >
-                                        <div className="relative">
-                                            <svg className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-[#4A070B] group-hover:text-[#360407] transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <div className="relative flex items-center justify-center">
+                                            <svg className="w-6 h-6 sm:w-[18px] sm:h-[18px] text-[#4A070B] group-hover:text-[#360407] transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                                             </svg>
                                             {cartCount > 0 && (
-                                                <Badge className="absolute -top-1.5 -right-2 h-3.5 w-3.5 p-0 flex items-center justify-center text-[9px] bg-[#4A070B] text-white border-0">
+                                                <Badge className="absolute -top-1 -right-1 sm:-top-1.5 sm:-right-2 h-4.5 min-w-[18px] sm:h-3.5 sm:min-w-[14px] px-1 sm:p-0 flex items-center justify-center text-[10px] sm:text-[9px] font-bold bg-[#4A070B] text-white border-0 shadow-xs ring-2 ring-background rounded-full">
                                                     {cartCount}
                                                 </Badge>
                                             )}
                                         </div>
-                                        <span className="text-[10px] sm:text-[11px] font-medium text-[#4A070B] group-hover:text-[#360407] leading-none mt-0.5">
+                                        <span className="hidden sm:inline text-[10px] sm:text-[11px] font-medium text-[#4A070B] group-hover:text-[#360407] leading-none mt-0.5">
                                             Keranjang
                                         </span>
                                     </Link>
@@ -724,6 +726,77 @@ export default function Layout({ children }: LayoutProps) {
                             >
                                 HUBUNGI KAMI
                             </button>
+
+                            {/* Mobile-only Nav Access: Wishlist & Akun */}
+                            {!isAdmin && (
+                                <Link
+                                    href={user ? '/wishlist' : '/login?notice=' + encodeURIComponent('Silakan masuk untuk mengakses halaman wishlist Anda.')}
+                                    className={`sm:hidden inline-flex items-center py-3 sm:py-3.5 border-b-2 -mb-px transition whitespace-nowrap ${url === '/wishlist'
+                                        ? 'text-[#4A070B] font-bold border-[#4A070B]'
+                                        : 'text-muted-foreground hover:text-foreground border-transparent hover:border-[#4A070B]/30'
+                                        }`}
+                                >
+                                    WISHLIST {wishlistCount > 0 && `(${wishlistCount})`}
+                                </Link>
+                            )}
+
+                            <DropdownMenu>
+                                <DropdownMenuTrigger
+                                    className="sm:hidden inline-flex items-center gap-1 py-3 sm:py-3.5 border-b-2 -mb-px transition cursor-pointer outline-none whitespace-nowrap text-muted-foreground hover:text-foreground border-transparent hover:border-[#4A070B]/30"
+                                >
+                                    <span>{user ? (isAdmin ? 'DASHBOARD' : 'AKUN') : 'MASUK'}</span>
+                                    <svg className="w-3 h-3 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-56 p-1.5 shadow-lg border border-border/80">
+                                    {user ? (
+                                        <>
+                                            <div className="px-2.5 py-2 border-b border-border/60 mb-1">
+                                                <div className="text-xs font-bold text-foreground truncate">{user.name}</div>
+                                                <div className="text-[10px] text-muted-foreground truncate">{user.email}</div>
+                                            </div>
+                                            {isAdmin ? (
+                                                <DropdownMenuItem asChild>
+                                                    <Link href="/admin/dashboard" className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-semibold text-[#4A070B] cursor-pointer">
+                                                        <LayoutDashboard className="w-4 h-4 shrink-0" />
+                                                        <span>Dashboard Admin</span>
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                            ) : (
+                                                <DropdownMenuItem asChild>
+                                                    <Link href="/account/orders" className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium cursor-pointer">
+                                                        <Package className="w-4 h-4 shrink-0" />
+                                                        <span>Pesanan Saya</span>
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                            )}
+                                            <DropdownMenuSeparator className="my-1 bg-border/60" />
+                                            <DropdownMenuItem asChild variant="destructive">
+                                                <Link href="/logout" method="post" as="button" className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium text-destructive cursor-pointer hover:bg-destructive/10">
+                                                    <LogOut className="w-4 h-4 shrink-0 text-destructive" />
+                                                    <span>Keluar</span>
+                                                </Link>
+                                            </DropdownMenuItem>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <DropdownMenuItem asChild>
+                                                <Link href="/login" className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium cursor-pointer">
+                                                    <LogIn className="w-4 h-4 text-[#4A070B] shrink-0" />
+                                                    <span>Masuk ke Akun</span>
+                                                </Link>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem asChild>
+                                                <Link href="/register" className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium cursor-pointer">
+                                                    <UserPlus className="w-4 h-4 text-[#4A070B] shrink-0" />
+                                                    <span>Daftar Akun Baru</span>
+                                                </Link>
+                                            </DropdownMenuItem>
+                                        </>
+                                    )}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
 
                         {/* Mobile Slide Arrow Toggle Button */}

@@ -1,14 +1,18 @@
 import { useEffect } from 'react';
 import { router } from '@inertiajs/react';
-import { initFirebaseForegroundListener } from '@/lib/push-notification';
+import { initFirebaseForegroundListener, autoRequestNotificationPermission } from '@/lib/push-notification';
 
 /**
  * Pure Firebase FCM Real-time Order Notifier for Admin CMS
  * ZERO polling - listens directly to Google Firebase Cloud Messaging push events.
+ * Automatically prompts / registers push notifications in any browser.
  */
 export function useAdminOrderNotifier(enabled = true): void {
     useEffect(() => {
         if (!enabled || typeof window === 'undefined') return;
+
+        // Auto request permission on new browser or sync token
+        autoRequestNotificationPermission().catch(() => {});
 
         let cleanupFn: (() => void) | null = null;
 
