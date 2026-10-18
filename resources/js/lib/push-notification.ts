@@ -158,30 +158,96 @@ export async function enablePushNotifications(csrfToken?: string): Promise<{ suc
 }
 
 /**
- * Trigger a test notification locally on the registered service worker
+ * Play a high quality luxury notification chime sound using Web Audio API
  */
-export async function sendLocalTestNotification(
-    title = '🔔 Tes Notifikasi Aroma Palace',
-    body = 'Notifikasi browser Anda aktif dan berjalan dengan baik!'
+export function playNotificationChime(): void {
+    if (typeof window === 'undefined') return;
+
+    try {
+        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        if (!AudioContextClass) return;
+
+        const audioCtx = new AudioContextClass();
+        const now = audioCtx.currentTime;
+
+        // Two-tone bell chime (Note 1: D5, Note 2: A5)
+        const osc1 = audioCtx.createOscillator();
+        const osc2 = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(587.33, now); // D5
+        osc1.connect(gain);
+
+        osc2.type = 'triangle';
+        osc2.frequency.setValueAtTime(880, now + 0.12); // A5
+        osc2.connect(gain);
+
+        gain.connect(audioCtx.destination);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
+
+        osc1.start(now);
+        osc1.stop(now + 0.3);
+
+        osc2.start(now + 0.12);
+        osc2.stop(now + 0.9);
+    } catch (e) {
+        // AudioContext might be blocked until user gesture, ignore silently
+    }
+}
+
+/**
+ * Show a native system notification banner
+ */
+export async function showSystemNotification(
+    title: string,
+    body: string,
+    url?: string,
+    tag?: string
 ): Promise<boolean> {
     if (!isPushNotificationSupported() || Notification.permission !== 'granted') {
         return false;
     }
 
     try {
-        const registration = await navigator.serviceWorker.ready;
-        await registration.showNotification(title, {
+        playNotificationChime();
+
+        if ('serviceWorker' in navigator) {
+            const registration = await navigator.serviceWorker.ready;
+            await registration.showNotification(title, {
+                body,
+                icon: '/images/logo.png',
+                badge: '/images/logo.png',
+                tag: tag || 'notif-' + Date.now(),
+                renotify: true,
+                data: {
+                    url: url || window.location.href,
+                },
+            });
+            return true;
+        }
+
+        // Fallback to standard Window Notification
+        new Notification(title, {
             body,
             icon: '/images/logo.png',
-            badge: '/images/logo.png',
-            tag: 'test-notification-' + Date.now(),
-            data: {
-                url: window.location.href,
-            },
+            tag: tag || 'notif-' + Date.now(),
         });
         return true;
     } catch (err) {
-        console.warn('Failed to show test notification:', err);
+        console.warn('Failed to show notification:', err);
         return false;
     }
+}
+
+/**
+ * Trigger a test notification locally on the registered service worker
+ */
+export async function sendLocalTestNotification(
+    title = '🔔 Tes Notifikasi Aroma Palace',
+    body = 'Notifikasi browser Anda aktif dan berjalan dengan baik!',
+    url?: string
+): Promise<boolean> {
+    return showSystemNotification(title, body, url, 'test-notification-' + Date.now());
 }

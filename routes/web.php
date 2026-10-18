@@ -67,4 +67,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/payment', fn () => redirect()->route('checkout.index'));
     Route::get('/orders/{order}/invoice', [OrderController::class, 'invoice'])->name('orders.invoice');
     Route::get('/invoice/{order}', [OrderController::class, 'invoice'])->name('invoice.show');
+
+    Route::get('/api/notifications/admin/orders', [DeviceTokenController::class, 'pollAdminOrders'])->name('notifications.admin.orders');
+    Route::get('/api/notifications/customer/orders', [DeviceTokenController::class, 'pollCustomerOrders'])->name('notifications.customer.orders');
 });

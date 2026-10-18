@@ -22,6 +22,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import PushNotificationButton from '@/components/PushNotificationButton';
+import { useAdminOrderNotifier } from '@/lib/use-admin-notifications';
 
 interface AdminLayoutProps {
     title: string;
@@ -51,6 +52,9 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
     const flash = props.flash;
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [dismissFlash, setDismissFlash] = useState(false);
+
+    // Real-time Order Notification Poller (plays chime and shows desktop banner)
+    useAdminOrderNotifier(Boolean(user && user.role === 'admin'));
 
     const isDashboard = url === '/admin' || url.startsWith('/admin/dashboard');
     const isOrders = url.startsWith('/admin/orders');

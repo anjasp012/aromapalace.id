@@ -6,32 +6,31 @@ use App\Models\DeviceToken;
 use App\Models\Order;
 use App\Models\User;
 use App\Models\Voucher;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class FirebaseNotificationService
 {
     /**
-     * Send a push notification to a specific FCM token.
+     * Send a push notification to a specific FCM token via Firebase HTTP v1 API.
      *
      * @param  array<string, mixed>  $data
      */
     public function sendToToken(string $token, string $title, string $body, ?string $url = null, array $data = []): bool
     {
-        $projectId = config('services.firebase.project_id', env('FIREBASE_PROJECT_ID'));
-        $serverKey = config('services.firebase.server_key', env('FIREBASE_SERVER_KEY'));
+        $credentialsPath = env('FIREBASE_CREDENTIALS', storage_path('app/firebase-credentials.json'));
+        $credentials = null;
 
-        $payload = [
-            'title' => $title,
-            'body' => $body,
-            'url' => $url ?: url('/'),
-            'icon' => url('/images/logo.png'),
-            ...$data,
-        ];
+        if (file_exists($credentialsPath)) {
+            $credentials = json_decode((string) file_get_contents($credentialsPath), true);
+        } elseif (env('FIREBASE_CREDENTIALS_JSON')) {
+            $credentials = json_decode(env('FIREBASE_CREDENTIALS_JSON'), true);
+        }
 
-        // If credentials are not configured yet in .env, log safely without failing
-        if (! $serverKey && ! $projectId) {
-            Log::info('Firebase Push Notification (Simulated/Dev Mode):', [
+        // If service account is not yet configured, log safely without throwing exceptions
+        if (! $credentials) {
+            Log::info('Firebase Push Notification (Simulated/Local Mode - Service Account not found):', [
                 'token' => substr($token, 0, 15).'...',
                 'title' => $title,
                 'body' => $body,
@@ -41,21 +40,45 @@ class FirebaseNotificationService
             return true;
         }
 
+        $accessToken = $this->getGoogleAccessToken($credentials);
+        if (! $accessToken) {
+            return false;
+        }
+
+        $projectId = $credentials['project_id'] ?? env('FIREBASE_PROJECT_ID', 'aromapalace-89175');
+
+        // FCM v1 requires all data values to be strings
+        $stringData = [];
+        foreach ($data as $k => $v) {
+            $stringData[(string) $k] = is_scalar($v) ? (string) $v : (string) json_encode($v);
+        }
+        $stringData['url'] = $url ?: url('/');
+
+        $targetUrl = $url ?: url('/');
+
         try {
-            // Support legacy server key or Firebase FCM HTTP API
-            $response = Http::withHeaders([
-                'Authorization' => 'key='.$serverKey,
-                'Content-Type' => 'application/json',
-            ])->post('https://fcm.googleapis.com/fcm/send', [
-                'to' => $token,
-                'notification' => [
-                    'title' => $title,
-                    'body' => $body,
-                    'icon' => url('/images/logo.png'),
-                    'click_action' => $url ?: url('/'),
-                ],
-                'data' => $payload,
-            ]);
+            $response = Http::withToken($accessToken)
+                ->post("https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send", [
+                    'message' => [
+                        'token' => $token,
+                        'notification' => [
+                            'title' => $title,
+                            'body' => $body,
+                        ],
+                        'webpush' => [
+                            'notification' => [
+                                'title' => $title,
+                                'body' => $body,
+                                'icon' => url('/images/logo.png'),
+                                'badge' => url('/images/logo.png'),
+                            ],
+                            'fcm_options' => [
+                                'link' => $targetUrl,
+                            ],
+                        ],
+                        'data' => $stringData,
+                    ],
+                ]);
 
             if ($response->successful()) {
                 DeviceToken::where('token', $token)->update(['last_used_at' => now()]);
@@ -63,17 +86,68 @@ class FirebaseNotificationService
                 return true;
             }
 
-            Log::warning('Firebase FCM notification failed', [
+            Log::warning('Firebase FCM HTTP v1 notification failed', [
                 'status' => $response->status(),
                 'response' => $response->body(),
             ]);
 
             return false;
         } catch (\Throwable $e) {
-            Log::error('Firebase FCM exception: '.$e->getMessage());
+            Log::error('Firebase FCM HTTP v1 exception: '.$e->getMessage());
 
             return false;
         }
+    }
+
+    /**
+     * Generate or retrieve cached OAuth2 Google Access Token using Service Account JSON.
+     *
+     * @param  array<string, mixed>  $credentials
+     */
+    protected function getGoogleAccessToken(array $credentials): ?string
+    {
+        return Cache::remember('firebase_fcm_access_token', 3000, function () use ($credentials) {
+            $clientEmail = $credentials['client_email'] ?? null;
+            $privateKey = $credentials['private_key'] ?? null;
+
+            if (! $clientEmail || ! $privateKey) {
+                Log::error('Firebase FCM: Invalid credentials JSON, client_email or private_key missing.');
+
+                return null;
+            }
+
+            $now = time();
+            $header = rtrim(strtr(base64_encode(json_encode(['alg' => 'RS256', 'typ' => 'JWT'])), '+/', '-_'), '=');
+            $payload = rtrim(strtr(base64_encode(json_encode([
+                'iss' => $clientEmail,
+                'scope' => 'https://www.googleapis.com/auth/firebase.messaging',
+                'aud' => 'https://oauth2.googleapis.com/token',
+                'iat' => $now,
+                'exp' => $now + 3600,
+            ])), '+/', '-_'), '=');
+
+            $signature = '';
+            if (! openssl_sign("$header.$payload", $signature, $privateKey, OPENSSL_ALGO_SHA256)) {
+                Log::error('Firebase FCM: Failed to sign JWT with private key.');
+
+                return null;
+            }
+
+            $signedJwt = "$header.$payload.".rtrim(strtr(base64_encode($signature), '+/', '-_'), '=');
+
+            $response = Http::asForm()->post('https://oauth2.googleapis.com/token', [
+                'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+                'assertion' => $signedJwt,
+            ]);
+
+            if ($response->successful()) {
+                return $response->json('access_token');
+            }
+
+            Log::error('Firebase FCM OAuth2 Token error:', ['body' => $response->body()]);
+
+            return null;
+        });
     }
 
     /**
