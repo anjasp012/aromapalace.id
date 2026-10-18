@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\FirebaseNotificationService;
 use App\Services\PakasirService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -45,6 +46,7 @@ class PaymentController extends Controller
                         'payment_status' => 'paid',
                         'status' => 'menunggu_konfirmasi',
                     ]);
+                    app(FirebaseNotificationService::class)->notifyPaymentSuccess($orderModel);
                 }
             }
         }
@@ -95,6 +97,7 @@ class PaymentController extends Controller
                         'payment_status' => 'paid',
                         'status' => 'menunggu_konfirmasi',
                     ]);
+                    app(FirebaseNotificationService::class)->notifyPaymentSuccess($orderModel);
                 } elseif ($status === 'canceled') {
                     $orderModel->update([
                         'payment_status' => 'canceled',

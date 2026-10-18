@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Services\FirebaseNotificationService;
 use App\Services\PakasirService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -68,6 +69,10 @@ class PakasirWebhookController extends Controller
 
         if (! empty($updateData)) {
             $order->update($updateData);
+
+            if ($status === 'completed') {
+                app(FirebaseNotificationService::class)->notifyPaymentSuccess($order);
+            }
         }
 
         return response()->json([
