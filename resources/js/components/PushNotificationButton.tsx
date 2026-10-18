@@ -26,8 +26,14 @@ export default function PushNotificationButton({
 
     useEffect(() => {
         setSupported(isPushNotificationSupported());
-        setPermission(getNotificationPermission());
-    }, []);
+        const perm = getNotificationPermission();
+        setPermission(perm);
+
+        // If permission is already granted, refresh and sync real FCM token in background
+        if (perm === 'granted') {
+            enablePushNotifications(csrfToken).catch(() => {});
+        }
+    }, [csrfToken]);
 
     const handleClick = async () => {
         if (permission === 'granted') {

@@ -3,7 +3,7 @@
  * Integrates with Firebase Cloud Messaging (FCM) & Browser Notification API
  */
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getMessaging, getToken, isSupported as isMessagingSupported } from 'firebase/messaging';
+import { getMessaging, getToken, onMessage, isSupported as isMessagingSupported } from 'firebase/messaging';
 
 const firebaseConfig = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyD0dKjEP6f_nn-VixqdUx6oav0KeX26n5c",
@@ -43,6 +43,41 @@ export async function registerNotificationServiceWorker(): Promise<ServiceWorker
         return registration;
     } catch (error) {
         console.warn('Failed to register service worker for notifications:', error);
+        return null;
+    }
+}
+
+/**
+ * Listen for Firebase Cloud Messaging push events in the foreground (when tab is active)
+ * ZERO polling - 100% Google FCM push-driven.
+ */
+export async function initFirebaseForegroundListener(
+    onNotificationReceived?: (payload: any) => void
+): Promise<(() => void) | null> {
+    if (!isPushNotificationSupported()) return null;
+
+    try {
+        const hasSupport = await isMessagingSupported();
+        if (!hasSupport) return null;
+
+        const app = getFirebaseApp();
+        const messaging = getMessaging(app);
+
+        const unsubscribe = onMessage(messaging, (payload) => {
+            const title = payload.notification?.title || payload.data?.title || 'Aroma Palace';
+            const body = payload.notification?.body || payload.data?.body || 'Anda memiliki notifikasi baru.';
+            const url = payload.data?.url || payload.notification?.click_action || '/';
+
+            showSystemNotification(title, body, url, payload.data?.type || 'fcm-foreground-' + Date.now());
+
+            if (onNotificationReceived) {
+                onNotificationReceived(payload);
+            }
+        });
+
+        return unsubscribe;
+    } catch (err) {
+        console.warn('FCM foreground listener setup:', err);
         return null;
     }
 }
@@ -93,14 +128,17 @@ export async function enablePushNotifications(csrfToken?: string): Promise<{ suc
             console.warn('FCM getToken fallback to local token:', fcmError);
         }
 
-        if (!fcmToken) {
-            fcmToken = localStorage.getItem('aromapalace_fcm_token');
-            if (!fcmToken) {
+        if (fcmToken) {
+            localStorage.setItem('aromapalace_fcm_token', fcmToken);
+        } else {
+            const existing = localStorage.getItem('aromapalace_fcm_token');
+            if (existing && !existing.startsWith('fcm_web_')) {
+                fcmToken = existing;
+            } else {
                 fcmToken = 'fcm_web_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+                localStorage.setItem('aromapalace_fcm_token', fcmToken);
             }
         }
-
-        localStorage.setItem('aromapalace_fcm_token', fcmToken);
 
         // Detect browser name
         const ua = navigator.userAgent;
