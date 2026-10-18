@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\DeviceToken;
 use App\Models\Order;
 use App\Models\PaymentMethod;
+use App\Models\ProductVariant;
 use App\Models\Store;
 use App\Models\Voucher;
 use App\Services\CatalogService;
@@ -12,6 +13,7 @@ use App\Services\FirebaseNotificationService;
 use App\Services\PakasirService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -167,201 +169,246 @@ class CheckoutController extends Controller
 
         $user = $request->user();
 
-        $cartRecords = $user->cartItems()
-            ->with(['variant'])
-            ->get();
-
-        if ($cartRecords->isEmpty()) {
-            return redirect()->route('cart.index')->with('error', 'Keranjang belanja Anda kosong.');
+        // 1. Race condition guard: Concurrency lock per user to prevent duplicate checkout submissions
+        $lock = Cache::lock("checkout_submission_lock_user_{$user->id}", 15);
+        if (! $lock->get()) {
+            return redirect()->route('cart.index')
+                ->with('error', 'Pesanan Anda sedang diproses. Mohon tunggu sejenak dan jangan mengirim transaksi berulang.');
         }
 
-        $orderItemsData = [];
-        $subtotal = 0;
+        try {
+            $cartRecords = $user->cartItems()
+                ->with(['variant'])
+                ->get();
 
-        foreach ($cartRecords as $record) {
-            $product = CatalogService::find($record->product_id);
-            if (! $product) {
-                continue;
+            if ($cartRecords->isEmpty()) {
+                return redirect()->route('cart.index')->with('error', 'Keranjang belanja Anda kosong.');
             }
 
-            $variant = $record->variant;
-            $unitPrice = $variant ? (int) $variant->price : (int) ($product['raw_price'] ?? 0);
-            $volume = $variant?->volume ?? ($product['volume'] ?? '50ml');
-            $itemTotal = $unitPrice * $record->quantity;
-            $subtotal += $itemTotal;
+            $orderItemsData = [];
+            $subtotal = 0;
 
-            $orderItemsData[] = [
-                'product_id' => $record->product_id,
-                'variant_id' => $record->variant_id,
-                'product_name' => $product['name'],
-                'variant_name' => $variant?->name,
-                'volume' => $volume,
-                'price' => $unitPrice,
-                'quantity' => $record->quantity,
-                'total_price' => $itemTotal,
-            ];
-        }
+            foreach ($cartRecords as $record) {
+                $product = CatalogService::find($record->product_id);
+                if (! $product) {
+                    continue;
+                }
 
-        $voucherCode = strtoupper(trim((string) ($validated['voucher_code'] ?? '')));
-        $voucher = $voucherCode !== '' ? Voucher::where('code', $voucherCode)->first() : null;
-        $discountAmount = $voucher ? $voucher->calculateDiscount($subtotal) : $this->calculateDiscount($voucherCode, $subtotal);
-        $voucherId = ($voucher && $discountAmount > 0) ? $voucher->id : null;
-        $insuranceCost = $request->boolean('insurance') ? 9000 : 0;
-        $totalAmount = max(0, $subtotal - $discountAmount + $insuranceCost);
+                $variant = $record->variant;
+                $unitPrice = $variant ? (int) $variant->price : (int) ($product['raw_price'] ?? 0);
+                $volume = $variant?->volume ?? ($product['volume'] ?? '50ml');
+                $itemTotal = $unitPrice * $record->quantity;
+                $subtotal += $itemTotal;
 
-        $paymentMethod = $validated['payment_method'];
-        $pm = PaymentMethod::where('code', $paymentMethod)->first();
+                $orderItemsData[] = [
+                    'product_id' => $record->product_id,
+                    'variant_id' => $record->variant_id,
+                    'product_name' => $product['name'],
+                    'variant_name' => $variant?->name,
+                    'volume' => $volume,
+                    'price' => $unitPrice,
+                    'quantity' => $record->quantity,
+                    'total_price' => $itemTotal,
+                ];
+            }
 
-        $cleanPhone = preg_replace('/[^0-9]/', '', $validated['recipient_phone']) ?: '12345678';
-        $phoneSuffix = substr($cleanPhone, -8);
+            $voucherCode = strtoupper(trim((string) ($validated['voucher_code'] ?? '')));
+            $voucher = $voucherCode !== '' ? Voucher::where('code', $voucherCode)->first() : null;
+            $discountAmount = $voucher ? $voucher->calculateDiscount($subtotal) : $this->calculateDiscount($voucherCode, $subtotal);
+            $voucherId = ($voucher && $discountAmount > 0) ? $voucher->id : null;
+            $insuranceCost = $request->boolean('insurance') ? 9000 : 0;
+            $totalAmount = max(0, $subtotal - $discountAmount + $insuranceCost);
 
-        $channelName = $pm ? $pm->name : 'Virtual Account';
-        $paymentChannel = match ($paymentMethod) {
-            'qris' => 'QRIS Instant (Pakasir)',
-            'payment_link' => 'Payment Link (Pakasir)',
-            default => "{$channelName} Virtual Account (Pakasir)",
-        };
+            $paymentMethod = $validated['payment_method'];
+            $pm = PaymentMethod::where('code', $paymentMethod)->first();
 
-        $prefix = match ($paymentMethod) {
-            'bri_va' => '12800',
-            'bni_va' => '82771',
-            'bsi_va' => '90012',
-            'cimb_niaga_va' => '11880',
-            'danamon_va' => '85220',
-            'maybank_va' => '78000',
-            'bnc_va' => '99001',
-            'muamalat_va' => '14700',
-            'ocbc_va' => '20010',
-            default => '88000',
-        };
+            $channelName = $pm ? $pm->name : 'Virtual Account';
+            $paymentChannel = match ($paymentMethod) {
+                'qris' => 'QRIS Instant (Pakasir)',
+                'payment_link' => 'Payment Link (Pakasir)',
+                default => "{$channelName} Virtual Account (Pakasir)",
+            };
 
-        $defaultPaymentCode = match ($paymentMethod) {
-            'qris' => 'QRIS-AP-'.strtoupper(Str::random(8)),
-            'payment_link' => 'PL-'.strtoupper(Str::random(8)),
-            default => $prefix.$phoneSuffix,
-        };
+            $paymentStatus = 'pending';
+            $orderNumber = 'AP-'.date('Ymd').'-'.strtoupper(Str::random(5));
 
-        $paymentStatus = 'pending';
+            // Call Pakasir API to create real payment transaction
+            if ($totalAmount > 0) {
+                $pakasirRes = $this->pakasirService->createTransaction($orderNumber, $totalAmount, $paymentMethod);
 
-        $orderNumber = 'AP-'.date('Ymd').'-'.strtoupper(Str::random(5));
+                if (! $pakasirRes['success'] || empty($pakasirRes['data'])) {
+                    $errorMsg = $pakasirRes['error'] ?? 'Layanan pembayaran sedang mengalami kendala teknis.';
+                    Log::error('Pakasir checkout error: Transaction creation failed', [
+                        'order' => $orderNumber,
+                        'error' => $errorMsg,
+                        'user_id' => $user->id,
+                    ]);
 
-        // Call Pakasir API to create real payment transaction
-        if ($totalAmount > 0) {
-            $pakasirRes = $this->pakasirService->createTransaction($orderNumber, $totalAmount, $paymentMethod);
-            if ($pakasirRes['success'] && ! empty($pakasirRes['data'])) {
+                    return redirect()->route('checkout.index')
+                        ->withInput()
+                        ->with('error', "Gagal memproses pembayaran melalui Pakasir: {$errorMsg}. Silakan coba beberapa saat lagi atau pilih metode pembayaran lain.");
+                }
+
                 $pData = $pakasirRes['data'];
                 $paymentCode = ($pData['va_number'] ?? null)
                     ?: (($pData['qr_string'] ?? null)
                     ?: (($pData['payment_link'] ?? null)
-                    ?: ($pData['txn_id'] ?? $defaultPaymentCode)));
+                    ?: ($pData['txn_id'] ?? null)));
+
+                if (! $paymentCode) {
+                    return redirect()->route('checkout.index')
+                        ->withInput()
+                        ->with('error', 'Gerbang pembayaran Pakasir tidak mengembalikan kode pembayaran yang valid. Silakan coba kembali.');
+                }
             } else {
-                Log::warning('Pakasir transaction creation fallback', [
-                    'order' => $orderNumber,
-                    'error' => $pakasirRes['error'] ?? 'Unknown error',
-                ]);
-                $paymentCode = $defaultPaymentCode;
+                $paymentCode = 'FREE-VOUCHER';
+                $paymentStatus = 'paid';
             }
-        } else {
-            $paymentCode = $defaultPaymentCode;
-        }
 
-        $deliveryType = $validated['delivery_type'] ?? 'delivery';
-        $storeId = null;
+            $deliveryType = $validated['delivery_type'] ?? 'delivery';
+            $storeId = null;
 
-        if ($deliveryType === 'pickup') {
-            $store = ! empty($validated['store_id']) ? Store::find($validated['store_id']) : Store::first();
-            $storeId = $store?->id;
-            $storeName = $store ? $store->name : 'Butik Resmi Aroma Palace';
-            $shippingAddress = 'Ambil di butik: '.($store ? $store->name.' - '.$store->description : 'Butik Resmi Aroma Palace');
-            $city = 'Ambil di Butik';
-            $courier = 'Ambil Mandiri di Butik ('.$storeName.')';
-            $shippingCost = 0;
-        } else {
-            $shippingAddress = $validated['shipping_address'] ?? '-';
-            $city = $validated['city'] ?? '-';
-            $courier = $validated['courier'] ?? 'JNE Express VIP (Bebas Ongkir)';
-            $shippingCost = 0;
-        }
+            if ($deliveryType === 'pickup') {
+                $store = ! empty($validated['store_id']) ? Store::find($validated['store_id']) : Store::first();
+                $storeId = $store?->id;
+                $storeName = $store ? $store->name : 'Butik Resmi Aroma Palace';
+                $shippingAddress = 'Ambil di butik: '.($store ? $store->name.' - '.$store->description : 'Butik Resmi Aroma Palace');
+                $city = 'Ambil di Butik';
+                $courier = 'Ambil Mandiri di Butik ('.$storeName.')';
+                $shippingCost = 0;
+            } else {
+                $shippingAddress = $validated['shipping_address'] ?? '-';
+                $city = $validated['city'] ?? '-';
+                $courier = $validated['courier'] ?? 'JNE Express VIP (Bebas Ongkir)';
+                $shippingCost = 0;
+            }
 
-        $order = DB::transaction(function () use (
-            $user,
-            $orderNumber,
-            $deliveryType,
-            $storeId,
-            $validated,
-            $shippingAddress,
-            $city,
-            $courier,
-            $shippingCost,
-            $paymentMethod,
-            $paymentChannel,
-            $paymentCode,
-            $paymentStatus,
-            $subtotal,
-            $discountAmount,
-            $voucherCode,
-            $voucherId,
-            $voucher,
-            $totalAmount,
-            $orderItemsData
-        ) {
-            $order = Order::create([
-                'order_number' => $orderNumber,
+            $order = DB::transaction(function () use (
+                $user,
+                $orderNumber,
+                $deliveryType,
+                $storeId,
+                $validated,
+                $shippingAddress,
+                $city,
+                $courier,
+                $shippingCost,
+                $paymentMethod,
+                $paymentChannel,
+                $paymentCode,
+                $paymentStatus,
+                $subtotal,
+                $discountAmount,
+                $voucherCode,
+                $voucherId,
+                $totalAmount,
+                $orderItemsData
+            ) {
+                // 2. Race condition guard: Lock Cart Items and verify cart is still available
+                $lockedCartItems = $user->cartItems()->lockForUpdate()->get();
+                if ($lockedCartItems->isEmpty()) {
+                    throw new \Exception('Keranjang belanja Anda kosong atau telah diproses di jendela lain.');
+                }
+
+                // 3. Race condition guard: Lock Product Variants & verify/deduct stock atomically
+                foreach ($orderItemsData as $itemData) {
+                    if (! empty($itemData['variant_id'])) {
+                        $variant = ProductVariant::where('id', $itemData['variant_id'])->lockForUpdate()->first();
+                        if (! $variant) {
+                            throw new \Exception("Varian wewangian '{$itemData['product_name']}' tidak ditemukan.");
+                        }
+                        if ($variant->stock < $itemData['quantity']) {
+                            throw new \Exception("Mohon maaf, stok untuk '{$itemData['product_name']} ({$itemData['variant_name']})' tersisa {$variant->stock} unit.");
+                        }
+                        $variant->decrement('stock', $itemData['quantity']);
+                    }
+                }
+
+                // 4. Race condition guard: Lock Voucher & verify quota atomically
+                if ($voucherId) {
+                    $lockedVoucher = Voucher::where('id', $voucherId)->lockForUpdate()->first();
+                    if ($lockedVoucher) {
+                        if (! $lockedVoucher->is_active) {
+                            throw new \Exception("Voucher '{$lockedVoucher->code}' sudah tidak aktif.");
+                        }
+                        if ($lockedVoucher->starts_at && now()->lt($lockedVoucher->starts_at)) {
+                            throw new \Exception("Voucher '{$lockedVoucher->code}' belum dapat digunakan.");
+                        }
+                        if ($lockedVoucher->expires_at && now()->gt($lockedVoucher->expires_at)) {
+                            throw new \Exception("Voucher '{$lockedVoucher->code}' telah kedaluwarsa.");
+                        }
+                        if ($lockedVoucher->usage_limit !== null && $lockedVoucher->used_count >= $lockedVoucher->usage_limit) {
+                            throw new \Exception("Voucher '{$lockedVoucher->code}' telah mencapai batas kuota penggunaan.");
+                        }
+                        $lockedVoucher->increment('used_count');
+                    }
+                }
+
+                $order = Order::create([
+                    'order_number' => $orderNumber,
+                    'user_id' => $user->id,
+                    'delivery_type' => $deliveryType,
+                    'store_id' => $storeId,
+                    'recipient_name' => $validated['recipient_name'],
+                    'recipient_phone' => $validated['recipient_phone'],
+                    'shipping_address' => $shippingAddress,
+                    'city' => $city,
+                    'postal_code' => $validated['postal_code'] ?? null,
+                    'courier' => $courier,
+                    'shipping_cost' => $shippingCost,
+                    'payment_method' => $paymentMethod,
+                    'payment_channel' => $paymentChannel,
+                    'payment_code' => $paymentCode,
+                    'payment_status' => $paymentStatus,
+                    'status' => $paymentStatus === 'paid' ? 'diproses' : 'menunggu_pembayaran',
+                    'subtotal' => $subtotal,
+                    'discount_amount' => $discountAmount,
+                    'voucher_code' => $voucherCode ?: null,
+                    'voucher_id' => $voucherId,
+                    'total_amount' => $totalAmount,
+                    'notes' => $validated['notes'] ?? null,
+                ]);
+
+                foreach ($orderItemsData as $itemData) {
+                    $order->items()->create($itemData);
+                }
+
+                // Clear the user's cart
+                $user->cartItems()->delete();
+
+                return $order;
+            });
+
+            // Ensure customer's browser device token is linked to user_id
+            if ($request->filled('device_token')) {
+                DeviceToken::updateOrCreate(
+                    ['token' => $request->input('device_token')],
+                    [
+                        'user_id' => $user->id,
+                        'device_type' => 'web',
+                        'role' => $user->isAdmin() ? 'admin' : 'customer',
+                        'last_used_at' => now(),
+                    ]
+                );
+            }
+
+            // Trigger push notification to Admins (pesanan masuk) & Customer (order dibuat)
+            $this->notificationService->notifyNewOrder($order);
+
+            return redirect()->route('payment.show', ['order' => $order->order_number])
+                ->with('success', 'Pesanan wewangian mewah Anda berhasil dibuat!');
+        } catch (\Throwable $e) {
+            Log::error('Checkout process error: '.$e->getMessage(), [
                 'user_id' => $user->id,
-                'delivery_type' => $deliveryType,
-                'store_id' => $storeId,
-                'recipient_name' => $validated['recipient_name'],
-                'recipient_phone' => $validated['recipient_phone'],
-                'shipping_address' => $shippingAddress,
-                'city' => $city,
-                'postal_code' => $validated['postal_code'] ?? null,
-                'courier' => $courier,
-                'shipping_cost' => $shippingCost,
-                'payment_method' => $paymentMethod,
-                'payment_channel' => $paymentChannel,
-                'payment_code' => $paymentCode,
-                'payment_status' => $paymentStatus,
-                'status' => $paymentStatus === 'paid' ? 'diproses' : 'menunggu_pembayaran',
-                'subtotal' => $subtotal,
-                'discount_amount' => $discountAmount,
-                'voucher_code' => $voucherCode ?: null,
-                'voucher_id' => $voucherId,
-                'total_amount' => $totalAmount,
-                'notes' => $validated['notes'] ?? null,
+                'trace' => $e->getTraceAsString(),
             ]);
 
-            if ($voucher && $discountAmount > 0) {
-                $voucher->increment('used_count');
-            }
-
-            foreach ($orderItemsData as $itemData) {
-                $order->items()->create($itemData);
-            }
-
-            // Clear the user's cart
-            $user->cartItems()->delete();
-
-            return $order;
-        });
-
-        // Ensure customer's browser device token is linked to user_id
-        if ($request->filled('device_token')) {
-            DeviceToken::updateOrCreate(
-                ['token' => $request->input('device_token')],
-                [
-                    'user_id' => $user->id,
-                    'device_type' => 'web',
-                    'role' => $user->isAdmin() ? 'admin' : 'customer',
-                    'last_used_at' => now(),
-                ]
-            );
+            return redirect()->route('checkout.index')
+                ->withInput()
+                ->with('error', $e->getMessage() ?: 'Terjadi kesalahan saat memproses pesanan. Silakan periksa kembali keranjang Anda.');
+        } finally {
+            $lock->release();
         }
-
-        // Trigger push notification to Admins (pesanan masuk) & Customer (order dibuat)
-        $this->notificationService->notifyNewOrder($order);
-
-        return redirect()->route('payment.show', ['order' => $order->order_number])
-            ->with('success', 'Pesanan wewangian mewah Anda berhasil dibuat!');
     }
 
     /**

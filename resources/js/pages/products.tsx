@@ -817,36 +817,37 @@ export default function Products({
                     {/* ======================================================== */}
                     <main className="flex-1 min-w-0 w-full space-y-6">
 
-                        {/* Top Toolbar (Count, Mobile Filter Trigger, Sort) */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/80">
-                            {/* Product Count & Mobile Filter Trigger */}
-                            <div className="flex items-center justify-between sm:justify-start gap-3 w-full sm:w-auto">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs text-muted-foreground">
-                                        Menampilkan <strong className="text-foreground font-bold">{filteredFragrances.length}</strong> wewangian
+                        {/* Top Toolbar (Count on Left, Filter Icon + Sort on Right) */}
+                        <div className="flex items-center justify-between gap-2 sm:gap-4 pb-3.5 sm:pb-4 border-b border-border/80">
+                            {/* Product Count */}
+                            <div className="flex items-center gap-2 min-w-0">
+                                <span className="text-[11px] sm:text-xs text-muted-foreground truncate">
+                                    Menampilkan <strong className="text-foreground font-bold">{filteredFragrances.length}</strong> wewangian
+                                </span>
+                                {isServerFiltering && (
+                                    <span className="hidden sm:inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#4A070B]/10 text-[#4A070B] dark:text-[#E8D0BA] animate-pulse">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-[#4A070B] dark:bg-[#E8D0BA] animate-ping" />
+                                        Menyaring...
                                     </span>
-                                    {isServerFiltering && (
-                                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#4A070B]/10 text-[#4A070B] dark:text-[#E8D0BA] animate-pulse">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-[#4A070B] dark:bg-[#E8D0BA] animate-ping" />
-                                            Menyaring...
-                                        </span>
-                                    )}
-                                </div>
+                                )}
+                            </div>
 
-                                {/* Mobile Filter Button Trigger */}
+                            {/* Right: Filter Icon Button & Sort Dropdown side by side */}
+                            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                                {/* Mobile Filter Button Trigger: JUST ICON */}
                                 <Sheet open={mobileFilterOpen} onOpenChange={setMobileFilterOpen}>
                                     <SheetTrigger asChild>
                                         <Button
                                             variant="outline"
-                                            size="sm"
-                                            className="lg:hidden flex items-center gap-1.5 h-8 text-xs border-[#4A070B]/40 text-[#4A070B] hover:bg-[#4A070B]/10 rounded-md shadow-none cursor-pointer"
+                                            size="icon"
+                                            aria-label="Filter Wewangian"
+                                            className="lg:hidden relative h-8 w-8 sm:h-8.5 sm:w-8.5 border-[#4A070B]/30 text-[#4A070B] hover:bg-[#4A070B]/10 rounded-md shadow-none cursor-pointer shrink-0"
                                         >
-                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                                             </svg>
-                                            <span>Filter</span>
                                             {activeFiltersCount > 0 && (
-                                                <span className="w-4 h-4 rounded-full bg-[#4A070B]/15 text-[#4A070B] border border-[#4A070B]/30 text-[9px] font-bold flex items-center justify-center">
+                                                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#4A070B] text-white text-[9px] font-bold flex items-center justify-center ring-2 ring-background">
                                                     {activeFiltersCount}
                                                 </span>
                                             )}
@@ -869,29 +870,29 @@ export default function Products({
                                         </div>
                                     </SheetContent>
                                 </Sheet>
-                            </div>
 
-                            {/* Sort Selector using shadcn Select */}
-                            <div className="flex items-center gap-2 self-end sm:self-auto">
-                                <span className="text-xs text-muted-foreground shrink-0 hidden sm:inline">
-                                    Urutkan:
-                                </span>
-                                <Select
-                                    value={sortBy}
-                                    onValueChange={(val: string) => setSortBy(val as any)}
-                                >
-                                    <SelectTrigger className="w-[170px] sm:w-[185px] h-8.5 text-xs border-border/80 bg-background/80 hover:border-[#4A070B]/40 focus:border-[#4A070B] focus:ring-1 focus:ring-[#4A070B]/25 rounded-md shadow-none">
-                                        <SelectValue placeholder="Pilih Urutan" />
-                                    </SelectTrigger>
-                                    <SelectContent align="end" className="rounded-md border-border/80 bg-background shadow-none">
-                                        <SelectItem value="featured">Unggulan</SelectItem>
-                                        <SelectItem value="popular">Paling Populer</SelectItem>
-                                        <SelectItem value="price-asc">Harga: Rendah ke Tinggi</SelectItem>
-                                        <SelectItem value="price-desc">Harga: Tinggi ke Rendah</SelectItem>
-                                        <SelectItem value="rating">Rating Terbaik</SelectItem>
-                                        <SelectItem value="discount">Diskon Terbesar</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                {/* Sort Selector: Next to Filter Button */}
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-xs text-muted-foreground shrink-0 hidden md:inline">
+                                        Urutkan:
+                                    </span>
+                                    <Select
+                                        value={sortBy}
+                                        onValueChange={(val: string) => setSortBy(val as any)}
+                                    >
+                                        <SelectTrigger className="w-[145px] sm:w-[180px] h-8 sm:h-8.5 text-[11px] sm:text-xs border-border/80 bg-background/80 hover:border-[#4A070B]/40 focus:border-[#4A070B] focus:ring-1 focus:ring-[#4A070B]/25 rounded-md shadow-none">
+                                            <SelectValue placeholder="Pilih Urutan" />
+                                        </SelectTrigger>
+                                        <SelectContent align="end" className="rounded-md border-border/80 bg-background shadow-md">
+                                            <SelectItem value="featured">Unggulan</SelectItem>
+                                            <SelectItem value="popular">Paling Populer</SelectItem>
+                                            <SelectItem value="price-asc">Harga: Rendah ke Tinggi</SelectItem>
+                                            <SelectItem value="price-desc">Harga: Tinggi ke Rendah</SelectItem>
+                                            <SelectItem value="rating">Rating Terbaik</SelectItem>
+                                            <SelectItem value="discount">Diskon Terbesar</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </div>
                         </div>
 

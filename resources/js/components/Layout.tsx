@@ -246,11 +246,11 @@ export default function Layout({ children }: LayoutProps) {
                     'X-CSRF-TOKEN': getCsrfToken(),
                 },
                 body: JSON.stringify({ query: clean }),
-            }).catch(() => {});
+            }).catch(() => { });
         } else {
             try {
                 localStorage.setItem('aromapalace_search_history', JSON.stringify(updated));
-            } catch {}
+            } catch { }
         }
     };
 
@@ -267,11 +267,11 @@ export default function Layout({ children }: LayoutProps) {
                     'X-CSRF-TOKEN': getCsrfToken(),
                 },
                 body: JSON.stringify({ query: term }),
-            }).catch(() => {});
+            }).catch(() => { });
         } else {
             try {
                 localStorage.setItem('aromapalace_search_history', JSON.stringify(updated));
-            } catch {}
+            } catch { }
         }
     };
 
@@ -287,11 +287,11 @@ export default function Layout({ children }: LayoutProps) {
                     'X-CSRF-TOKEN': getCsrfToken(),
                 },
                 body: JSON.stringify({ all: true }),
-            }).catch(() => {});
+            }).catch(() => { });
         } else {
             try {
                 localStorage.removeItem('aromapalace_search_history');
-            } catch {}
+            } catch { }
         }
     };
 
@@ -350,7 +350,7 @@ export default function Layout({ children }: LayoutProps) {
     // Customer Realtime Push Notification & Foreground Listener
     useEffect(() => {
         // Auto request push notification permission on new browser or sync token
-        autoRequestNotificationPermission().catch(() => {});
+        autoRequestNotificationPermission().catch(() => { });
 
         let cleanupFn: (() => void) | null = null;
 
@@ -394,6 +394,18 @@ export default function Layout({ children }: LayoutProps) {
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
+
+    // Keep slide toggle arrow orientation in sync with touch/drag scroll
+    useEffect(() => {
+        const el = navTrackRef.current;
+        if (!el) return;
+        const handleScroll = () => {
+            const isScrolled = el.scrollLeft > 30;
+            setSlidRight(isScrolled);
+        };
+        el.addEventListener('scroll', handleScroll, { passive: true });
+        return () => el.removeEventListener('scroll', handleScroll);
     }, []);
 
     const handleSlideToggle = () => {
@@ -454,24 +466,39 @@ export default function Layout({ children }: LayoutProps) {
             </div>
 
             {/* Main Navigation Bar */}
-            <header className="bg-background border-b border-[#4A070B]/20 sticky top-0 z-30">
+            <header className="bg-background border-b border-[#4A070B]/20 sticky top-0 z-40">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     {/* Upper Row: Search | Centered Logo | User Actions */}
-                    <div className="relative flex items-center justify-between py-3.5 sm:py-4 min-h-[84px]">
-                        {/* Left: Search Trigger (Underlined input style matching mockup) */}
-                        <div className="flex items-center w-auto sm:w-1/3 max-w-[125px] sm:max-w-[240px] md:max-w-[280px] z-10">
+                    <div className="relative flex items-center justify-between py-2 sm:py-4 min-h-[60px] sm:min-h-[84px]">
+                        {/* Left: Search Trigger (Mobile: icon only; Desktop: underlined input) */}
+                        <div className="flex items-center w-auto sm:w-1/3 max-w-[40px] sm:max-w-[240px] md:max-w-[280px] z-10">
+                            {/* Mobile: Just Search Icon Button */}
                             <button
                                 type="button"
                                 onClick={() => window.openSpotlight?.()}
-                                className="w-full flex items-center gap-2 pb-1 border-b border-[#4A070B]/25 hover:border-[#4A070B] text-[#4A070B]/70 hover:text-[#4A070B] text-xs transition cursor-pointer text-left group"
+                                className="sm:hidden flex items-center justify-center w-9 h-9 text-[#4A070B] hover:text-[#360407] transition cursor-pointer rounded-full hover:bg-[#4A070B]/5 active:scale-95 shrink-0 -ml-1"
+                                aria-label="Cari Parfum"
                             >
-                                <svg className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-[#4A070B] group-hover:text-[#360407] transition shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-5 h-5 text-[#4A070B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
-                                <span className="text-[#4A070B]/75 group-hover:text-[#4A070B] transition truncate font-light text-[11px] sm:text-xs">
-                                    <span className="hidden sm:inline">Cari parfum mewah...</span>
-                                    <span className="sm:hidden">Cari parfum...</span>
+                            </button>
+
+                            {/* Desktop (sm+): Underlined Search Bar */}
+                            <button
+                                type="button"
+                                onClick={() => window.openSpotlight?.()}
+                                className="hidden sm:flex w-full items-center gap-2 pb-1 border-b border-[#4A070B]/25 hover:border-[#4A070B] text-[#4A070B]/70 hover:text-[#4A070B] text-xs transition cursor-pointer text-left group"
+                            >
+                                <svg className="w-[18px] h-[18px] text-[#4A070B] group-hover:text-[#360407] transition shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                                <span className="text-[#4A070B]/75 group-hover:text-[#4A070B] transition truncate font-light text-xs">
+                                    Cari parfum mewah...
                                 </span>
+                                <kbd className="ml-auto pointer-events-none inline-flex h-4.5 select-none items-center gap-0.5 rounded border border-[#4A070B]/20 bg-[#4A070B]/5 px-1.5 font-mono text-[9px] font-medium text-[#4A070B]/70">
+                                    ⌘K
+                                </kbd>
                             </button>
                         </div>
 
@@ -481,21 +508,21 @@ export default function Layout({ children }: LayoutProps) {
                                 <img
                                     src="/images/logo.png"
                                     alt="Aroma Palace"
-                                    className="w-9 h-9 sm:w-11 sm:h-11 lg:w-13 lg:h-13 object-contain rounded-full shadow-2xs group-hover:scale-105 transition-transform shrink-0"
+                                    className="w-8 h-8 sm:w-11 sm:h-11 lg:w-13 lg:h-13 object-contain rounded-full shadow-2xs group-hover:scale-105 transition-transform shrink-0"
                                 />
                                 <div className="flex flex-col items-center text-center">
-                                    <span className="font-sans text-base sm:text-xl lg:text-2xl font-bold tracking-[0.14em] lg:tracking-[0.18em] text-[#704828] group-hover:text-[#360407] transition uppercase leading-none whitespace-nowrap text-center">
+                                    <span className="font-sans text-sm sm:text-xl lg:text-2xl font-bold tracking-[0.12em] sm:tracking-[0.14em] lg:tracking-[0.18em] text-[#704828] group-hover:text-[#360407] transition uppercase leading-none whitespace-nowrap text-center">
                                         Aroma Palace
                                     </span>
-                                    <span className="font-sans text-[7px] sm:text-[8.5px] lg:text-[9.5px] uppercase tracking-[0.2em] lg:tracking-[0.25em] text-[#B88E58] font-semibold mt-0.5 sm:mt-1 whitespace-nowrap text-center">
+                                    <span className="font-sans text-[6.5px] sm:text-[8.5px] lg:text-[9.5px] uppercase tracking-[0.18em] sm:tracking-[0.2em] lg:tracking-[0.25em] text-[#B88E58] font-semibold mt-0.5 sm:mt-1 whitespace-nowrap text-center">
                                         Dubai&apos;s Signature Perfumes
                                     </span>
                                 </div>
                             </Link>
                         </div>
 
-                        {/* Right: Actions (Akun, Wishlist, Keranjang) - Mobile shows ONLY Keranjang */}
-                        <div className="flex items-center justify-end gap-2 sm:gap-4 md:gap-5 w-auto sm:w-1/3 z-10">
+                        {/* Right: Actions (Akun & Wishlist on desktop; Cart only on mobile) */}
+                        <div className="flex items-center justify-end gap-1.5 sm:gap-4 md:gap-5 w-auto sm:w-1/3 z-10">
                             {/* Akun: Hidden on mobile, visible on desktop sm:flex */}
                             <div className="hidden sm:flex">
                                 <DropdownMenu>
@@ -592,50 +619,62 @@ export default function Layout({ children }: LayoutProps) {
                                 </DropdownMenu>
                             </div>
 
-                            {/* Wishlist & Keranjang: Disembunyikan untuk User Role Admin */}
+                            {/* Wishlist: Disembunyikan untuk Admin, terlihat untuk Customer di desktop */}
                             {!isAdmin && (
-                                <>
-                                    {/* Wishlist: Hidden on mobile, visible on desktop */}
-                                    <Link
-                                        href={user ? '/wishlist' : '/login?notice=' + encodeURIComponent('Silakan masuk untuk mengakses halaman wishlist Anda.')}
-                                        className="hidden sm:flex flex-col items-center justify-center gap-0.5 text-[#4A070B] hover:text-[#360407] transition cursor-pointer px-1 py-0.5 group relative"
-                                    >
-                                        <div className="relative">
-                                            <svg className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-[#4A070B] group-hover:text-[#360407] transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                            </svg>
-                                            {wishlistCount > 0 && (
-                                                <Badge className="absolute -top-1.5 -right-2 h-3.5 w-3.5 p-0 flex items-center justify-center text-[9px] bg-[#4A070B] text-white border-0">
-                                                    {wishlistCount}
-                                                </Badge>
-                                            )}
-                                        </div>
-                                        <span className="text-[10px] sm:text-[11px] font-medium text-[#4A070B] group-hover:text-[#360407] leading-none mt-0.5">
-                                            Wishlist
-                                        </span>
-                                    </Link>
+                                <Link
+                                    href={user ? '/wishlist' : '/login?notice=' + encodeURIComponent('Silakan masuk untuk mengakses halaman wishlist Anda.')}
+                                    className="hidden sm:flex flex-col items-center justify-center gap-0.5 text-[#4A070B] hover:text-[#360407] transition cursor-pointer px-1 py-0.5 group relative"
+                                >
+                                    <div className="relative">
+                                        <svg className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-[#4A070B] group-hover:text-[#360407] transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                        </svg>
+                                        {wishlistCount > 0 && (
+                                            <Badge className="absolute -top-1.5 -right-2 h-3.5 w-3.5 p-0 flex items-center justify-center text-[9px] bg-[#4A070B] text-white border-0">
+                                                {wishlistCount}
+                                            </Badge>
+                                        )}
+                                    </div>
+                                    <span className="text-[10px] sm:text-[11px] font-medium text-[#4A070B] group-hover:text-[#360407] leading-none mt-0.5">
+                                        Wishlist
+                                    </span>
+                                </Link>
+                            )}
 
-                                    {/* Keranjang: Sole icon on mobile with optimized size & touch target */}
-                                    <Link
-                                        href={user ? '/cart' : '/login?notice=' + encodeURIComponent('Silakan masuk untuk melihat keranjang belanja Anda.')}
-                                        className="flex items-center justify-center sm:flex-col sm:gap-0.5 text-[#4A070B] hover:text-[#360407] transition cursor-pointer w-10 h-10 sm:w-auto sm:h-auto sm:px-1 sm:py-0.5 group relative rounded-full sm:rounded-none hover:bg-[#4A070B]/5 sm:hover:bg-transparent active:scale-95"
-                                        aria-label="Keranjang Belanja"
-                                    >
-                                        <div className="relative flex items-center justify-center">
-                                            <svg className="w-6 h-6 sm:w-[18px] sm:h-[18px] text-[#4A070B] group-hover:text-[#360407] transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                                            </svg>
-                                            {cartCount > 0 && (
-                                                <Badge className="absolute -top-1 -right-1 sm:-top-1.5 sm:-right-2 h-4.5 min-w-[18px] sm:h-3.5 sm:min-w-[14px] px-1 sm:p-0 flex items-center justify-center text-[10px] sm:text-[9px] font-bold bg-[#4A070B] text-white border-0 shadow-xs ring-2 ring-background rounded-full">
-                                                    {cartCount}
-                                                </Badge>
-                                            )}
-                                        </div>
-                                        <span className="hidden sm:inline text-[10px] sm:text-[11px] font-medium text-[#4A070B] group-hover:text-[#360407] leading-none mt-0.5">
-                                            Keranjang
-                                        </span>
-                                    </Link>
-                                </>
+                            {/* Tombol Kanan: Jika Admin -> Dashboard; Jika Customer/Guest -> Keranjang */}
+                            {isAdmin ? (
+                                <Link
+                                    href="/admin/dashboard"
+                                    className="flex items-center justify-center sm:flex-col sm:gap-0.5 text-[#4A070B] hover:text-[#360407] transition cursor-pointer w-9 h-9 sm:w-auto sm:h-auto sm:px-1 sm:py-0.5 group relative rounded-full sm:rounded-none hover:bg-[#4A070B]/5 sm:hover:bg-transparent active:scale-95 shrink-0 -mr-1"
+                                    aria-label="Dashboard Admin"
+                                >
+                                    <div className="relative flex items-center justify-center">
+                                        <LayoutDashboard className="w-5 h-5 sm:w-[18px] sm:h-[18px] text-[#4A070B] group-hover:text-[#360407] transition" />
+                                    </div>
+                                    <span className="hidden sm:inline text-[10px] sm:text-[11px] font-medium text-[#4A070B] group-hover:text-[#360407] leading-none mt-0.5">
+                                        Dashboard
+                                    </span>
+                                </Link>
+                            ) : (
+                                <Link
+                                    href={user ? '/cart' : '/login?notice=' + encodeURIComponent('Silakan masuk untuk melihat keranjang belanja Anda.')}
+                                    className="flex items-center justify-center sm:flex-col sm:gap-0.5 text-[#4A070B] hover:text-[#360407] transition cursor-pointer w-9 h-9 sm:w-auto sm:h-auto sm:px-1 sm:py-0.5 group relative rounded-full sm:rounded-none hover:bg-[#4A070B]/5 sm:hover:bg-transparent active:scale-95 shrink-0 -mr-1"
+                                    aria-label="Keranjang Belanja"
+                                >
+                                    <div className="relative flex items-center justify-center">
+                                        <svg className="w-5 h-5 sm:w-[18px] sm:h-[18px] text-[#4A070B] group-hover:text-[#360407] transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                        </svg>
+                                        {cartCount > 0 && (
+                                            <Badge className="absolute -top-1 -right-1 sm:-top-1.5 sm:-right-2 h-4 min-w-[16px] sm:h-3.5 sm:min-w-[14px] px-1 sm:p-0 flex items-center justify-center text-[9px] font-bold bg-[#4A070B] text-white border-0 shadow-xs ring-2 ring-background rounded-full">
+                                                {cartCount}
+                                            </Badge>
+                                        )}
+                                    </div>
+                                    <span className="hidden sm:inline text-[10px] sm:text-[11px] font-medium text-[#4A070B] group-hover:text-[#360407] leading-none mt-0.5">
+                                        Keranjang
+                                    </span>
+                                </Link>
                             )}
                         </div>
                     </div>
@@ -644,11 +683,11 @@ export default function Layout({ children }: LayoutProps) {
                     <nav className="relative border-t border-[#4A070B]/15 -mb-px">
                         <div
                             ref={navTrackRef}
-                            className="flex items-center justify-center gap-6 sm:gap-7 md:gap-8 lg:gap-10 overflow-x-auto text-xs font-semibold uppercase tracking-[0.08em] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                            className="flex items-center justify-start sm:justify-center gap-5 sm:gap-7 md:gap-8 lg:gap-10 overflow-x-auto text-[11px] sm:text-xs font-semibold uppercase tracking-[0.05em] sm:tracking-[0.08em] px-3 sm:px-0 pr-9 lg:pr-0 scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                         >
                             <Link
                                 href="/"
-                                className={`inline-flex items-center py-3 sm:py-3.5 border-b-2 -mb-px transition whitespace-nowrap ${url === '/'
+                                className={`inline-flex items-center py-2.5 sm:py-3.5 border-b-2 -mb-px transition whitespace-nowrap ${url === '/'
                                     ? 'text-[#4A070B] font-bold border-[#4A070B]'
                                     : 'text-muted-foreground hover:text-foreground border-transparent hover:border-[#4A070B]/30'
                                     }`}
@@ -658,7 +697,7 @@ export default function Layout({ children }: LayoutProps) {
 
                             <DropdownMenu>
                                 <DropdownMenuTrigger
-                                    className={`inline-flex items-center gap-1 py-3 sm:py-3.5 border-b-2 -mb-px transition cursor-pointer outline-none whitespace-nowrap ${url.startsWith('/products') && !url.includes('popular') && !url.includes('discount')
+                                    className={`inline-flex items-center gap-1 py-2.5 sm:py-3.5 border-b-2 -mb-px transition cursor-pointer outline-none whitespace-nowrap ${url.startsWith('/products') && !url.includes('popular') && !url.includes('discount')
                                         ? 'text-[#4A070B] font-bold border-[#4A070B]'
                                         : 'text-muted-foreground hover:text-foreground border-transparent hover:border-[#4A070B]/30'
                                         }`}
@@ -693,7 +732,7 @@ export default function Layout({ children }: LayoutProps) {
 
                             <Link
                                 href="/products?sort=popular"
-                                className={`inline-flex items-center py-3 sm:py-3.5 border-b-2 -mb-px transition whitespace-nowrap ${url.includes('popular')
+                                className={`inline-flex items-center py-2.5 sm:py-3.5 border-b-2 -mb-px transition whitespace-nowrap ${url.includes('popular')
                                     ? 'text-[#4A070B] font-bold border-[#4A070B]'
                                     : 'text-muted-foreground hover:text-foreground border-transparent hover:border-[#4A070B]/30'
                                     }`}
@@ -703,7 +742,7 @@ export default function Layout({ children }: LayoutProps) {
 
                             <Link
                                 href="/products?discount=1"
-                                className={`inline-flex items-center py-3 sm:py-3.5 border-b-2 -mb-px transition whitespace-nowrap ${url.includes('discount')
+                                className={`inline-flex items-center py-2.5 sm:py-3.5 border-b-2 -mb-px transition whitespace-nowrap ${url.includes('discount')
                                     ? 'text-[#4A070B] font-bold border-[#4A070B]'
                                     : 'text-muted-foreground hover:text-foreground border-transparent hover:border-[#4A070B]/30'
                                     }`}
@@ -713,7 +752,7 @@ export default function Layout({ children }: LayoutProps) {
 
                             <Link
                                 href="/articles"
-                                className={`inline-flex items-center py-3 sm:py-3.5 border-b-2 -mb-px transition whitespace-nowrap ${url.startsWith('/articles')
+                                className={`inline-flex items-center py-2.5 sm:py-3.5 border-b-2 -mb-px transition whitespace-nowrap ${url.startsWith('/articles')
                                     ? 'text-[#4A070B] font-bold border-[#4A070B]'
                                     : 'text-muted-foreground hover:text-foreground border-transparent hover:border-[#4A070B]/30'
                                     }`}
@@ -723,7 +762,7 @@ export default function Layout({ children }: LayoutProps) {
 
                             <Link
                                 href="/stores"
-                                className={`inline-flex items-center py-3 sm:py-3.5 border-b-2 -mb-px transition whitespace-nowrap ${url.startsWith('/stores')
+                                className={`inline-flex items-center py-2.5 sm:py-3.5 border-b-2 -mb-px transition whitespace-nowrap ${url.startsWith('/stores')
                                     ? 'text-[#4A070B] font-bold border-[#4A070B]'
                                     : 'text-muted-foreground hover:text-foreground border-transparent hover:border-[#4A070B]/30'
                                     }`}
@@ -733,7 +772,7 @@ export default function Layout({ children }: LayoutProps) {
 
                             <Link
                                 href="/about"
-                                className={`inline-flex items-center py-3 sm:py-3.5 border-b-2 -mb-px transition whitespace-nowrap ${url === '/about'
+                                className={`inline-flex items-center py-2.5 sm:py-3.5 border-b-2 -mb-px transition whitespace-nowrap ${url === '/about'
                                     ? 'text-[#4A070B] font-bold border-[#4A070B]'
                                     : 'text-muted-foreground hover:text-foreground border-transparent hover:border-[#4A070B]/30'
                                     }`}
@@ -744,101 +783,30 @@ export default function Layout({ children }: LayoutProps) {
                             <button
                                 type="button"
                                 onClick={() => setContactModalOpen(true)}
-                                className={`inline-flex items-center py-3 sm:py-3.5 border-b-2 -mb-px transition cursor-pointer uppercase whitespace-nowrap ${contactModalOpen
+                                className={`inline-flex items-center py-2.5 sm:py-3.5 border-b-2 -mb-px transition cursor-pointer uppercase whitespace-nowrap ${contactModalOpen
                                     ? 'text-[#4A070B] font-bold border-[#4A070B]'
                                     : 'text-muted-foreground hover:text-foreground border-transparent hover:border-[#4A070B]/30'
                                     }`}
                             >
                                 HUBUNGI KAMI
                             </button>
-
-                            {/* Mobile-only Nav Access: Wishlist & Akun */}
-                            {!isAdmin && (
-                                <Link
-                                    href={user ? '/wishlist' : '/login?notice=' + encodeURIComponent('Silakan masuk untuk mengakses halaman wishlist Anda.')}
-                                    className={`sm:hidden inline-flex items-center py-3 sm:py-3.5 border-b-2 -mb-px transition whitespace-nowrap ${url === '/wishlist'
-                                        ? 'text-[#4A070B] font-bold border-[#4A070B]'
-                                        : 'text-muted-foreground hover:text-foreground border-transparent hover:border-[#4A070B]/30'
-                                        }`}
-                                >
-                                    WISHLIST {wishlistCount > 0 && `(${wishlistCount})`}
-                                </Link>
-                            )}
-
-                            <DropdownMenu>
-                                <DropdownMenuTrigger
-                                    className="sm:hidden inline-flex items-center gap-1 py-3 sm:py-3.5 border-b-2 -mb-px transition cursor-pointer outline-none whitespace-nowrap text-muted-foreground hover:text-foreground border-transparent hover:border-[#4A070B]/30"
-                                >
-                                    <span>{user ? (isAdmin ? 'DASHBOARD' : 'AKUN') : 'MASUK'}</span>
-                                    <svg className="w-3 h-3 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-56 p-1.5 shadow-lg border border-border/80">
-                                    {user ? (
-                                        <>
-                                            <div className="px-2.5 py-2 border-b border-border/60 mb-1">
-                                                <div className="text-xs font-bold text-foreground truncate">{user.name}</div>
-                                                <div className="text-[10px] text-muted-foreground truncate">{user.email}</div>
-                                            </div>
-                                            {isAdmin ? (
-                                                <DropdownMenuItem asChild>
-                                                    <Link href="/admin/dashboard" className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-semibold text-[#4A070B] cursor-pointer">
-                                                        <LayoutDashboard className="w-4 h-4 shrink-0" />
-                                                        <span>Dashboard Admin</span>
-                                                    </Link>
-                                                </DropdownMenuItem>
-                                            ) : (
-                                                <DropdownMenuItem asChild>
-                                                    <Link href="/account/orders" className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium cursor-pointer">
-                                                        <Package className="w-4 h-4 shrink-0" />
-                                                        <span>Pesanan Saya</span>
-                                                    </Link>
-                                                </DropdownMenuItem>
-                                            )}
-                                            <DropdownMenuSeparator className="my-1 bg-border/60" />
-                                            <DropdownMenuItem asChild variant="destructive">
-                                                <Link href="/logout" method="post" as="button" className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium text-destructive cursor-pointer hover:bg-destructive/10">
-                                                    <LogOut className="w-4 h-4 shrink-0 text-destructive" />
-                                                    <span>Keluar</span>
-                                                </Link>
-                                            </DropdownMenuItem>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <DropdownMenuItem asChild>
-                                                <Link href="/login" className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium cursor-pointer">
-                                                    <LogIn className="w-4 h-4 text-[#4A070B] shrink-0" />
-                                                    <span>Masuk ke Akun</span>
-                                                </Link>
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem asChild>
-                                                <Link href="/register" className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium cursor-pointer">
-                                                    <UserPlus className="w-4 h-4 text-[#4A070B] shrink-0" />
-                                                    <span>Daftar Akun Baru</span>
-                                                </Link>
-                                            </DropdownMenuItem>
-                                        </>
-                                    )}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
                         </div>
 
                         {/* Mobile Slide Arrow Toggle Button */}
-                        <div className="lg:hidden absolute right-0 top-0 bottom-0 flex items-center pr-1.5 pl-6 bg-gradient-to-l from-background to-transparent pointer-events-none">
+                        <div className="lg:hidden absolute right-0 top-0 bottom-0 flex items-center pr-1 pl-4 bg-gradient-to-l from-background via-background/80 to-transparent pointer-events-none my-1">
                             <button
                                 onClick={handleSlideToggle}
                                 type="button"
-                                className="pointer-events-auto p-1.5 text-muted-foreground hover:text-foreground transition cursor-pointer"
+                                className="pointer-events-auto p-1.5 text-[#4A070B]/60 hover:text-[#4A070B] transition cursor-pointer"
                                 aria-label="Slide Navigation"
                             >
                                 <svg
-                                    className={`w-4 h-4 transition-transform duration-300 ${slidRight ? 'rotate-180' : ''}`}
+                                    className={`w-3.5 h-3.5 transition-transform duration-300 ${slidRight ? 'rotate-180' : ''}`}
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
                                 >
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
                                 </svg>
                             </button>
                         </div>

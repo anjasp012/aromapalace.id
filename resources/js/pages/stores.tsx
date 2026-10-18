@@ -461,10 +461,10 @@ export default function StoresPage({
                     </div>
 
                     {/* RIGHT COLUMN: 1 SINGLE INTERACTIVE MAP WITH ALL PINS (7 COLS) */}
-                    <div className="order-1 lg:order-2 lg:col-span-7 sticky top-28 space-y-2">
-                        <div className="relative rounded-xl overflow-hidden border border-border/80 shadow-md bg-muted/40">
+                    <div className="order-1 lg:order-2 lg:col-span-7 lg:sticky lg:top-28 space-y-2 isolate z-0">
+                        <div className="relative rounded-xl overflow-hidden border border-border/80 shadow-md bg-muted/40 isolate z-0">
                             {/* Floating Map Controls & Info Badge */}
-                            <div className="absolute top-3.5 left-3.5 right-3.5 z-[500] pointer-events-none flex items-center justify-end gap-2">
+                            <div className="absolute top-3.5 left-3.5 right-3.5 z-20 pointer-events-none flex items-center justify-end gap-2">
                                 <Button
                                     type="button"
                                     size="sm"

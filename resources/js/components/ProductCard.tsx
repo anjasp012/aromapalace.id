@@ -172,21 +172,6 @@ export default function ProductCard({
                     <span>{Number(product.rating || 5).toFixed(1)}</span>
                     <span>({reviews})</span>
                 </div>
-
-                {/* Mobile Detail button */}
-                {onQuickView && (
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onQuickView(product)}
-                        className={cn(
-                            'w-full text-[11px] h-7 sm:hidden mt-2',
-                            darkTheme && 'bg-white/10 hover:bg-white/20 text-white border-white/20'
-                        )}
-                    >
-                        Detail
-                    </Button>
-                )}
             </CardContent>
         </Card>
     );

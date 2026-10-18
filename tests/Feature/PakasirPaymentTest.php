@@ -216,3 +216,42 @@ test('checkout store rejects unknown payment method', function () {
 
     $response->assertSessionHasErrors(['payment_method']);
 });
+
+test('checkout store handles pakasir failure cleanly without creating order', function () {
+    $user = User::factory()->create();
+    $variant = ProductVariant::where('product_id', 1)->firstOrFail();
+
+    CartItem::create([
+        'user_id' => $user->id,
+        'product_id' => 1,
+        'variant_id' => $variant->id,
+        'quantity' => 1,
+    ]);
+
+    Http::fake([
+        '*create-transaction*' => Http::response([
+            'message' => 'Merchant account suspended or rate limited',
+        ], 500),
+    ]);
+
+    $response = $this->actingAs($user)->post(route('checkout.store'), [
+        'recipient_name' => 'Arya Test',
+        'recipient_phone' => '081234567890',
+        'delivery_type' => 'delivery',
+        'shipping_address' => 'Jl. Mawar 123',
+        'city' => 'Jakarta Selatan',
+        'postal_code' => '12190',
+        'courier' => 'JNE Express VIP (Bebas Ongkir)',
+        'payment_method' => 'qris',
+    ]);
+
+    $response->assertRedirect(route('checkout.index'));
+    $response->assertSessionHas('error');
+
+    // Order MUST NOT be created
+    $orderCount = Order::where('user_id', $user->id)->count();
+    expect($orderCount)->toBe(0);
+
+    // Cart items MUST NOT be deleted
+    expect($user->cartItems()->count())->toBe(1);
+});
