@@ -345,6 +345,7 @@ export default function CheckoutPage({
         payment_method: 'qris',
         voucher_code: initial_voucher,
         notes: '',
+        device_token: typeof window !== 'undefined' ? (localStorage.getItem('aromapalace_fcm_token') || '') : '',
     });
 
     const handleSwitchDeliveryType = (type: 'delivery' | 'pickup') => {
@@ -441,6 +442,12 @@ export default function CheckoutPage({
     };
 
     const handleConfirmAndPay = () => {
+        if (typeof window !== 'undefined') {
+            const token = localStorage.getItem('aromapalace_fcm_token') || '';
+            if (token) {
+                setData('device_token', token);
+            }
+        }
         post('/checkout', {
             preserveScroll: true,
             onFinish: () => setShowConfirmModal(false),

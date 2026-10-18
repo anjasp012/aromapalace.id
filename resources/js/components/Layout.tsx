@@ -45,7 +45,7 @@ import {
     Loader2,
     LayoutDashboard,
 } from 'lucide-react';
-import { autoRequestNotificationPermission } from '@/lib/push-notification';
+import { autoRequestNotificationPermission, initFirebaseForegroundListener } from '@/lib/push-notification';
 
 interface LayoutProps {
     children: ReactNode;
@@ -345,10 +345,35 @@ export default function Layout({ children }: LayoutProps) {
         window.showCartToast = (msg) => triggerToast(msg);
         window.showPromoToast = (msg) => triggerToast(msg);
         window.copyPromoCode = copyPromoCode;
+    }, []);
 
+    // Customer Realtime Push Notification & Foreground Listener
+    useEffect(() => {
         // Auto request push notification permission on new browser or sync token
         autoRequestNotificationPermission().catch(() => {});
-    }, []);
+
+        let cleanupFn: (() => void) | null = null;
+
+        initFirebaseForegroundListener((payload) => {
+            // Auto reload if user is on payment or orders page
+            if (
+                window.location.pathname.startsWith('/payment') ||
+                window.location.pathname.startsWith('/account/orders')
+            ) {
+                router.reload({ preserveScroll: true, preserveState: true });
+            }
+        }).then((unsubscribe) => {
+            if (unsubscribe) {
+                cleanupFn = unsubscribe;
+            }
+        });
+
+        return () => {
+            if (cleanupFn) {
+                cleanupFn();
+            }
+        };
+    }, [user?.id]);
 
     // Watch for backend flash messages
     useEffect(() => {

@@ -158,7 +158,25 @@ class FirebaseNotificationService
     public function sendToUser(User|int $user, string $title, string $body, ?string $url = null, array $data = []): int
     {
         $userId = $user instanceof User ? $user->id : $user;
-        $tokens = DeviceToken::where('user_id', $userId)->pluck('token')->all();
+        $tokens = DeviceToken::where('user_id', $userId)->pluck('token')->unique()->all();
+
+        // Fallback: If no tokens linked to user_id, search active customer tokens from the last 2 hours
+        if (empty($tokens)) {
+            $tokens = DeviceToken::where(function ($q) {
+                $q->whereNull('role')->orWhere('role', 'customer');
+            })
+                ->where('last_used_at', '>=', now()->subHours(2))
+                ->latest('last_used_at')
+                ->pluck('token')
+                ->unique()
+                ->all();
+        }
+
+        Log::info('Firebase FCM sendToUser', [
+            'user_id' => $userId,
+            'token_count' => count($tokens),
+            'title' => $title,
+        ]);
 
         $sentCount = 0;
         foreach ($tokens as $token) {
@@ -253,10 +271,14 @@ class FirebaseNotificationService
         if ($order->user_id) {
             $this->sendToUser(
                 user: $order->user_id,
-                title: '💳 Pembayaran Berhasil Dikonfirmasi!',
-                body: "Pembayaran untuk pesanan #{$order->order_number} telah lunas. Pesanan segera kami siapkan.",
+                title: '💳 Pembayaran Berhasil! #'.$order->order_number,
+                body: "Pembayaran {$formattedTotal} telah lunas. Pesanan Anda sedang disiapkan dan dikemas.",
                 url: url('/account/orders'),
-                data: ['order_id' => (string) $order->id, 'type' => 'payment_success']
+                data: [
+                    'order_id' => (string) $order->id,
+                    'order_number' => (string) $order->order_number,
+                    'type' => 'payment_success',
+                ]
             );
         }
 
@@ -265,7 +287,11 @@ class FirebaseNotificationService
             title: '💰 Pembayaran Diterima! #'.$order->order_number,
             body: "Pembayaran {$formattedTotal} dari {$order->recipient_name} telah lunas.",
             url: url('/admin/orders/'.$order->id),
-            data: ['order_id' => (string) $order->id, 'type' => 'admin_payment_received']
+            data: [
+                'order_id' => (string) $order->id,
+                'order_number' => (string) $order->order_number,
+                'type' => 'admin_payment_received',
+            ]
         );
     }
 

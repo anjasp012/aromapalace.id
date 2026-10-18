@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DeviceToken;
 use App\Models\Order;
 use App\Models\PaymentMethod;
 use App\Models\Store;
@@ -161,6 +162,7 @@ class CheckoutController extends Controller
             'voucher_code' => ['nullable', 'string', 'max:50'],
             'insurance' => ['nullable', 'boolean'],
             'notes' => ['nullable', 'string', 'max:500'],
+            'device_token' => ['nullable', 'string', 'max:500'],
         ]);
 
         $user = $request->user();
@@ -341,6 +343,19 @@ class CheckoutController extends Controller
 
             return $order;
         });
+
+        // Ensure customer's browser device token is linked to user_id
+        if ($request->filled('device_token')) {
+            DeviceToken::updateOrCreate(
+                ['token' => $request->input('device_token')],
+                [
+                    'user_id' => $user->id,
+                    'device_type' => 'web',
+                    'role' => $user->isAdmin() ? 'admin' : 'customer',
+                    'last_used_at' => now(),
+                ]
+            );
+        }
 
         // Trigger push notification to Admins (pesanan masuk) & Customer (order dibuat)
         $this->notificationService->notifyNewOrder($order);
