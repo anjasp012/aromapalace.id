@@ -1,0 +1,82 @@
+import { Link } from '@inertiajs/react';
+import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
+
+export interface ArticleItem {
+    id?: number;
+    slug: string;
+    title: string;
+    thumbnail?: string;
+    image?: string;
+    readTime: string;
+    date: string;
+    excerpt: string;
+}
+
+interface ArticleCardProps {
+    article: ArticleItem;
+    className?: string;
+}
+
+export default function ArticleCard({ article, className }: ArticleCardProps) {
+    const articleUrl = `/articles/${article.slug}`;
+    const thumbnailSrc = article.thumbnail || article.image || '';
+
+    return (
+        <Card
+            className={cn(
+                'group flex flex-col justify-between overflow-hidden border border-border/80 bg-card hover:border-[#4A070B]/40 dark:hover:border-[#E8D0BA]/40 shadow-none hover:shadow-sm transition-all duration-300 rounded-lg py-0 gap-0',
+                className
+            )}
+        >
+            <div className="flex flex-col">
+                {/* Image Container with smooth hover zoom */}
+                <Link href={articleUrl} className="block overflow-hidden relative aspect-[16/10] bg-muted">
+                    <img
+                        src={thumbnailSrc}
+                        alt={article.title}
+                        loading="lazy"
+                        className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+                    />
+                </Link>
+
+                {/* Content */}
+                <CardHeader className="p-4 sm:p-5 pb-3 space-y-2">
+                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground font-medium">
+                        <span>{article.date}</span>
+                        <span className="text-muted-foreground/40">&bull;</span>
+                        <span>{article.readTime} baca</span>
+                    </div>
+
+                    <CardTitle className="text-sm sm:text-base font-bold leading-snug line-clamp-2">
+                        <Link href={articleUrl} className="hover:text-[#4A070B] dark:hover:text-[#E8D0BA] transition-colors">
+                            {article.title}
+                        </Link>
+                    </CardTitle>
+
+                    <CardDescription className="text-xs leading-relaxed line-clamp-2 text-muted-foreground/90">
+                        {article.excerpt}
+                    </CardDescription>
+                </CardHeader>
+            </div>
+
+            {/* Editorial Footer Link */}
+            <CardFooter className="p-4 sm:p-5 pt-0 mt-auto">
+                <Link
+                    href={articleUrl}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground group-hover:text-[#4A070B] dark:group-hover:text-[#E8D0BA] transition-colors cursor-pointer"
+                >
+                    <span>Baca Selengkapnya</span>
+                    <svg
+                        className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                </Link>
+            </CardFooter>
+        </Card>
+    );
+}
