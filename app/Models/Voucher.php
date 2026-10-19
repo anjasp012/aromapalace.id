@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * @property int $id
@@ -48,6 +49,20 @@ class Voucher extends Model
 {
     /** @use HasFactory<VoucherFactory> */
     use HasFactory;
+
+    /**
+     * The "booted" method of the model.
+     */
+    protected static function booted(): void
+    {
+        static::saved(function () {
+            Cache::forget('active_header_vouchers');
+        });
+
+        static::deleted(function () {
+            Cache::forget('active_header_vouchers');
+        });
+    }
 
     /**
      * @return array<string, string>

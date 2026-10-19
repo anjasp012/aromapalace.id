@@ -38,8 +38,8 @@ interface CartPageProps {
     items: CartItemData[];
     subtotal: number;
     subtotal_formatted: string;
-    shipping_fee: number;
-    shipping_fee_formatted: string;
+    shipping_fee?: number;
+    shipping_fee_formatted?: string;
     total: number;
     total_formatted: string;
 }
@@ -48,8 +48,6 @@ export default function CartPage({
     items = [],
     subtotal = 0,
     subtotal_formatted = 'Rp 0',
-    shipping_fee = 0,
-    shipping_fee_formatted = 'Gratis',
     total = 0,
     total_formatted = 'Rp 0',
 }: CartPageProps) {
@@ -130,7 +128,7 @@ export default function CartPage({
             </div>
 
             {/* MAIN CONTAINER */}
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+            <div className={cn("mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12", items.length > 0 && "pb-36 sm:pb-40 lg:pb-12")}>
                 {items.length === 0 ? (
                     /* EMPTY STATE (Matches products.tsx empty state design) */
                     <div className="py-16 px-6 text-center space-y-4">
@@ -293,7 +291,7 @@ export default function CartPage({
                             </div>
 
                             {/* Continue Shopping Link */}
-                            <div className="pt-0">
+                            <div className="pt-2">
                                 <Link
                                     href="/products"
                                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#4A070B] hover:text-[#360407]"
@@ -303,8 +301,8 @@ export default function CartPage({
                             </div>
                         </div>
 
-                        {/* RIGHT COLUMN: ORDER SUMMARY (Matches product-detail.tsx purchase suite style) */}
-                        <div className="lg:col-span-4">
+                        {/* RIGHT COLUMN: ORDER SUMMARY (DESKTOP ONLY - lg:block) */}
+                        <div className="hidden lg:block lg:col-span-4">
                             <div className="rounded-lg border border-border/80 bg-card/60 backdrop-blur-xs p-5 sm:p-6 shadow-none sticky top-28 space-y-4">
                                 <h2 className="font-bold text-base text-foreground tracking-tight pb-3 border-b border-border/80">
                                     Ringkasan Pesanan
@@ -315,15 +313,6 @@ export default function CartPage({
                                     <div className="flex items-center justify-between text-muted-foreground">
                                         <span>Subtotal Produk</span>
                                         <span className="font-bold text-foreground">{subtotal_formatted}</span>
-                                    </div>
-
-                                    <div className="flex items-center justify-between text-muted-foreground">
-                                        <span className="flex items-center gap-1">
-                                            <span>Ongkos Kirim</span>
-                                        </span>
-                                        <span className="font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md text-[10.5px]">
-                                            {shipping_fee_formatted} (Seluruh Indonesia)
-                                        </span>
                                     </div>
 
                                     {voucherApplied && voucherDiscount > 0 && (
@@ -378,8 +367,8 @@ export default function CartPage({
                                         <div className="text-xs uppercase font-bold tracking-wider text-muted-foreground">
                                             Total Pembayaran
                                         </div>
-                                        <div className="text-[10px] text-emerald-600 font-medium">
-                                            Sudah termasuk PPN &amp; garansi aman
+                                        <div className="text-[10px] text-muted-foreground">
+                                            Ongkos kirim dihitung saat checkout
                                         </div>
                                     </div>
                                     <div className="text-2xl font-extrabold text-[#4A070B] dark:text-[#E8D0BA]">
@@ -387,7 +376,7 @@ export default function CartPage({
                                     </div>
                                 </div>
 
-                                {/* Checkout Primary Button (Matches product-detail.tsx primary button) */}
+                                {/* Checkout Primary Button */}
                                 <Link
                                     href={voucherApplied && voucherCode ? `/checkout?voucher=${encodeURIComponent(voucherCode)}` : '/checkout'}
                                     className="block w-full"
@@ -412,8 +401,108 @@ export default function CartPage({
                                         <span>Lanjut ke Pembayaran</span>
                                     </Button>
                                 </Link>
-
                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* MOBILE FLOATING BOTTOM SUMMARY BAR (Voucher + Sticky Checkout) */}
+                {items.length > 0 && (
+                    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t border-border shadow-[0_-8px_30px_rgba(0,0,0,0.12)]">
+                        {/* Attached Voucher Bar */}
+                        <div className="px-4 py-2 border-b border-border/60 bg-muted/20">
+                            {voucherApplied && voucherDiscount > 0 ? (
+                                <div className="flex items-center justify-between text-xs">
+                                    <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium truncate">
+                                        <svg className="w-3.5 h-3.5 shrink-0 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                        </svg>
+                                        <span className="truncate">
+                                            Voucher <strong className="font-bold">{voucherCode.toUpperCase()}</strong>: -Rp {voucherDiscount.toLocaleString('id-ID')}
+                                        </span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setVoucherApplied(false);
+                                            setVoucherDiscount(0);
+                                            setVoucherCode('');
+                                        }}
+                                        className="text-[11px] text-destructive hover:underline font-semibold cursor-pointer shrink-0 ml-2"
+                                    >
+                                        Hapus
+                                    </button>
+                                </div>
+                            ) : (
+                                <form onSubmit={handleApplyVoucher} className="flex items-center gap-2">
+                                    <div className="relative flex-1">
+                                        <svg
+                                            className="w-3.5 h-3.5 text-[#E5A844] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                        </svg>
+                                        <Input
+                                            type="text"
+                                            placeholder="Punya Kode Voucher Promo?"
+                                            value={voucherCode}
+                                            onChange={(e) => setVoucherCode(e.target.value)}
+                                            className="h-8.5 pl-8 pr-2.5 rounded-md border border-border/80 bg-background text-xs uppercase tracking-wider focus:border-[#4A070B] focus:ring-1 focus:ring-[#4A070B]/25 shadow-none"
+                                        />
+                                    </div>
+                                    <Button
+                                        type="submit"
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-8.5 px-3 rounded-md border border-[#4A070B] text-[#4A070B] hover:bg-[#4A070B] hover:text-white text-xs font-semibold shadow-none cursor-pointer shrink-0 transition-colors"
+                                    >
+                                        Terapkan
+                                    </Button>
+                                </form>
+                            )}
+                        </div>
+
+                        {/* Primary Bottom Bar */}
+                        <div className="mx-auto max-w-7xl px-4 py-2.5 sm:px-6 flex items-center justify-between gap-3">
+                            {/* Summary info: Total Pembayaran */}
+                            <div className="flex flex-col min-w-0">
+                                <span className="text-[10.5px] font-medium text-muted-foreground truncate">
+                                    Total ({totalItemsCount} produk)
+                                </span>
+                                <div className="flex items-baseline gap-1.5 flex-wrap">
+                                    <span className="text-lg font-black text-[#4A070B] dark:text-[#E8D0BA] tracking-tight">
+                                        {finalTotalFormatted}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Checkout Action Button */}
+                            <Link
+                                href={voucherApplied && voucherCode ? `/checkout?voucher=${encodeURIComponent(voucherCode)}` : '/checkout'}
+                                className="shrink-0"
+                            >
+                                <Button
+                                    size="default"
+                                    className="h-10.5 px-5 sm:px-6 bg-[#4A070B] hover:bg-[#360407] text-white font-semibold rounded-md text-xs sm:text-sm shadow-none transition active:scale-[0.98] cursor-pointer flex items-center gap-2"
+                                >
+                                    <svg
+                                        className="w-3.5 h-3.5 text-[#E5A844]"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth="2"
+                                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                                        />
+                                    </svg>
+                                    <span>Checkout ({totalItemsCount})</span>
+                                </Button>
+                            </Link>
                         </div>
                     </div>
                 )}

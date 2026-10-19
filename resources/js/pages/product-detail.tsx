@@ -553,9 +553,9 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                         {/* QUANTITY & PRIMARY ACTION BUTTONS */}
                         <div className="space-y-3 pt-2">
                             {!isAdmin ? (
-                                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                                <div className="flex flex-row items-center gap-2 sm:gap-3">
                                     {/* Quantity Counter */}
-                                    <div className="flex items-center justify-between sm:justify-start border border-border/80 rounded-md bg-background px-1 h-11 shrink-0">
+                                    <div className="flex items-center justify-between border border-border/80 rounded-md bg-background px-1 h-11 shrink-0">
                                         <Button
                                             variant="ghost"
                                             size="sm"
@@ -566,7 +566,7 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                                         >
                                             &minus;
                                         </Button>
-                                        <span className="w-10 text-center font-bold text-xs text-foreground">
+                                        <span className="w-8 sm:w-10 text-center font-bold text-xs text-foreground">
                                             {quantity}
                                         </span>
                                         <Button
@@ -584,12 +584,12 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                                     {/* Add to Cart Button */}
                                     <Button
                                         onClick={handleAddToCart}
-                                        className="flex-1 h-11 rounded-md bg-[#4A070B] text-white hover:bg-[#360407] font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer shadow-none transition-all"
+                                        className="flex-1 h-11 rounded-md bg-[#4A070B] text-white hover:bg-[#360407] font-semibold text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer shadow-none transition-all min-w-0"
                                     >
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                                         </svg>
-                                        <span>+ Keranjang Belanja</span>
+                                        <span className="truncate">+ Keranjang Belanja</span>
                                     </Button>
                                 </div>
                             ) : (
@@ -791,12 +791,13 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                         </h2>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
-                        {relatedProducts.slice(0, 5).map((item) => (
+                    <div className="flex sm:grid overflow-x-auto sm:overflow-visible gap-3 sm:gap-6 pb-3 sm:pb-0 snap-x snap-mandatory scrollbar-none sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                        {relatedProducts.slice(0, 10).map((item) => (
                             <ProductCard
                                 key={item.id}
                                 product={item as unknown as ProductItem}
                                 onQuickView={(p) => setQuickViewBottle(p)}
+                                className="w-[calc((100%-16px)/2.45)] sm:w-auto shrink-0 sm:shrink snap-start"
                             />
                         ))}
                     </div>

@@ -63,8 +63,6 @@ class CartController extends Controller
             'items' => $items,
             'subtotal' => $subtotal,
             'subtotal_formatted' => $formattedSubtotal,
-            'shipping_fee' => 0,
-            'shipping_fee_formatted' => 'Gratis',
             'total' => $subtotal,
             'total_formatted' => $formattedSubtotal,
         ]);

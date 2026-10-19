@@ -2,7 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Voucher;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -44,6 +46,18 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
             ],
+            'header_vouchers' => fn () => Cache::rememberForever('active_header_vouchers', function () {
+                return Voucher::query()
+                    ->where('is_active', true)
+                    ->where(function ($q) {
+                        $q->whereNull('starts_at')->orWhere('starts_at', '<=', now());
+                    })
+                    ->where(function ($q) {
+                        $q->whereNull('expires_at')->orWhere('expires_at', '>=', now());
+                    })
+                    ->select(['id', 'code', 'name', 'description', 'terms', 'type', 'value', 'min_order_amount', 'max_discount_amount'])
+                    ->get();
+            }),
             'auth' => [
                 'user' => $user,
                 'is_admin' => fn () => $user ? $user->isAdmin() : false,

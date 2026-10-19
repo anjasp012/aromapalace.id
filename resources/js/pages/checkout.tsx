@@ -487,7 +487,7 @@ export default function CheckoutPage({
     const totalItemsCount = items.length;
 
     return (
-        <Layout>
+        <Layout showFooter={false}>
             <Head title="Konfirmasi & Pembayaran Pesanan • Aroma Palace" />
 
             {/* PAGE HEADER BANNER (Exact match to cart.tsx) */}
@@ -504,7 +504,7 @@ export default function CheckoutPage({
             </div>
 
             {/* MAIN TWO-COLUMN CONTAINER (gap-6 & card styling consistent with cart.tsx) */}
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12 pb-32 sm:pb-36 lg:pb-12">
                 <form onSubmit={handleOpenConfirm}>
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                         {/* ======================================================== */}
@@ -889,53 +889,53 @@ export default function CheckoutPage({
                             {/* CARD 2: DAFTAR PESANAN & PRODUK */}
                             <div className="rounded-lg border border-border/80 bg-card/60 backdrop-blur-xs p-5 sm:p-6 shadow-none space-y-4">
                                 {/* Products Item List (Styling tokens matching cart.tsx) */}
-                                <div className="space-y-3">
+                                <div className="divide-y divide-border/60">
                                     {items.map((item) => (
                                         <div
                                             key={item.id}
-                                            className="flex items-center justify-between gap-4 transition-colors"
+                                            className="flex items-start sm:items-center gap-3 sm:gap-4 py-3 first:pt-0 last:pb-0 transition-colors"
                                         >
-                                            <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                                                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-md border border-border/80 bg-muted/30 overflow-hidden shrink-0">
-                                                    {item.product?.image ? (
-                                                        <img
-                                                            src={item.product.image}
-                                                            alt={item.product.name}
-                                                            className="w-full h-full object-cover"
-                                                        />
-                                                    ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-[10px] text-muted-foreground">
-                                                            No Pic
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div className="space-y-1 min-w-0">
-                                                    <h3 className="font-semibold text-xs sm:text-sm text-foreground truncate">
-                                                        {item.product?.name}
-                                                    </h3>
-                                                    <div className="flex items-center gap-2 flex-wrap">
-                                                        <span className="inline-flex items-center gap-1 text-[11px] bg-muted/40 border border-border/70 px-2 py-0.5 rounded-md">
-                                                            <span>Ukuran:</span>
-                                                            <strong className="text-foreground">{item.volume}</strong>
-                                                            {item.variant_name && (
-                                                                <span className="text-[#4A070B] dark:text-[#E8D0BA] font-medium ml-0.5">
-                                                                    ({item.variant_name})
-                                                                </span>
-                                                            )}
-                                                        </span>
-                                                        <span className="text-[11px] text-muted-foreground">
-                                                            Jumlah: <strong className="text-foreground">{item.quantity}</strong>
-                                                        </span>
+                                            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-md border border-border/80 bg-muted/30 overflow-hidden shrink-0 mt-0.5 sm:mt-0">
+                                                {item.product?.image ? (
+                                                    <img
+                                                        src={item.product.image}
+                                                        alt={item.product.name}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-[10px] text-muted-foreground">
+                                                        No Pic
                                                     </div>
-                                                </div>
+                                                )}
                                             </div>
-
-                                            <div className="text-right shrink-0">
-                                                <div className="text-xs sm:text-sm font-bold text-[#4A070B] dark:text-[#E8D0BA]">
-                                                    {item.total_price_formatted}
+                                            <div className="space-y-1.5 min-w-0 flex-1">
+                                                <h3 className="font-semibold text-xs sm:text-sm text-foreground">
+                                                    {item.product?.name}
+                                                </h3>
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className="inline-flex items-center gap-1 text-[11px] bg-muted/40 border border-border/70 px-2 py-0.5 rounded-md">
+                                                        <span className="text-muted-foreground">Ukuran:</span>
+                                                        <strong className="text-foreground">{item.volume}</strong>
+                                                        {item.variant_name && (
+                                                            <span className="text-[#4A070B] dark:text-[#E8D0BA] font-medium ml-0.5">
+                                                                ({item.variant_name})
+                                                            </span>
+                                                        )}
+                                                    </span>
                                                 </div>
-                                                <div className="text-[10.5px] text-muted-foreground">
-                                                    {item.unit_price_formatted} / unit
+                                                <div className="flex items-center gap-2 flex-wrap text-xs">
+                                                    <span className="text-[11px] text-muted-foreground">
+                                                        Jumlah: <strong className="text-foreground">{item.quantity}</strong>
+                                                    </span>
+                                                    <span className="text-muted-foreground/60 text-[10px]">•</span>
+                                                    <span className="font-bold text-[#4A070B] dark:text-[#E8D0BA] text-xs sm:text-sm">
+                                                        {item.total_price_formatted}
+                                                    </span>
+                                                    {item.quantity > 1 && (
+                                                        <span className="text-[10.5px] text-muted-foreground">
+                                                            ({item.unit_price_formatted} / unit)
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -963,21 +963,6 @@ export default function CheckoutPage({
                                 </div>
                             </div>
 
-                            {/* Continue Shopping / Back Link */}
-                            <div className="pt-0">
-                                <Link
-                                    href="/products"
-                                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#4A070B] dark:text-[#E8D0BA] hover:text-[#360407] transition-colors"
-                                >
-                                    <span>←</span> Lanjut Pilih Wewangian Lain
-                                </Link>
-                            </div>
-                        </div>
-
-                        {/* ======================================================== */}
-                        {/* RIGHT COLUMN: METODE PEMBAYARAN & RINGKASAN (4 COLS, space-y-4) */}
-                        {/* ======================================================== */}
-                        <div className="lg:col-span-4 space-y-4 sticky top-28">
                             {/* CARD 3: PILIH METODE PEMBAYARAN */}
                             <div className="rounded-lg border border-border/80 bg-card/60 backdrop-blur-xs p-5 sm:p-6 shadow-none space-y-4">
                                 <div className="flex items-center justify-between pb-3 border-b border-border/80">
@@ -1043,18 +1028,20 @@ export default function CheckoutPage({
                                         </p>
                                     )}
                                 </div>
-
-
                             </div>
+                        </div>
 
-                            {/* CARD 4: RINGKASAN BELANJA (Exact layout & styling to cart.tsx order summary) */}
+                        {/* ======================================================== */}
+                        {/* RIGHT COLUMN: RINGKASAN BELANJA (4 COLS, desktop sticky top-28) */}
+                        {/* ======================================================== */}
+                        <div className="lg:col-span-4 space-y-4 lg:sticky lg:top-28">
+                            {/* CARD 4: RINGKASAN BELANJA */}
                             <div className="rounded-lg border border-border/80 bg-card/60 backdrop-blur-xs p-5 sm:p-6 shadow-none space-y-4">
                                 <h2 className="font-bold text-base text-foreground tracking-tight pb-3 border-b border-border/80">
                                     Ringkasan Belanja
                                 </h2>
 
-                                {/* Breakdown Rows (Matching cart.tsx line items) */}
-                                {/* Line items (Matching cart.tsx) */}
+                                {/* Line items */}
                                 <div className="space-y-2.5 text-xs">
                                     <div className="flex items-center justify-between text-muted-foreground">
                                         <span>Subtotal ({totalItemsCount} barang)</span>
@@ -1075,7 +1062,7 @@ export default function CheckoutPage({
                                     </div>
 
                                     {appliedVoucher && voucherDiscount > 0 && (
-                                        <div className="flex items-center justify-between text-xs bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 rounded-md">
+                                        <div className="hidden lg:flex items-center justify-between text-xs bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 rounded-md">
                                             <div className="flex items-center gap-2">
                                                 <span className="font-semibold text-emerald-800 dark:text-emerald-300">
                                                     Diskon ({appliedVoucherLabel})
@@ -1101,9 +1088,9 @@ export default function CheckoutPage({
                                     )}
                                 </div>
 
-                                {/* Voucher input form (hanya muncul jika belum pasang voucher) */}
+                                {/* Desktop only: Voucher input form */}
                                 {(!appliedVoucher || voucherDiscount <= 0) && (
-                                    <div className="pt-3 border-t border-border/70">
+                                    <div className="hidden lg:block pt-3 border-t border-border/70">
                                         <div className="flex gap-2">
                                             <Input
                                                 type="text"
@@ -1130,47 +1117,163 @@ export default function CheckoutPage({
                                     </div>
                                 )}
 
-                                <Separator className="bg-border/80" />
+                                {/* Desktop only: Separator, Total Pembayaran, and Primary Button */}
+                                <div className="hidden lg:block space-y-4">
+                                    <Separator className="bg-border/80" />
 
-                                {/* Total Belanja (Exact match to cart.tsx) */}
-                                <div className="flex items-baseline justify-between pt-1">
-                                    <div>
-                                        <div className="text-xs uppercase font-bold tracking-wider text-muted-foreground">
-                                            Total Pembayaran
+                                    {/* Total Belanja */}
+                                    <div className="flex items-baseline justify-between pt-1">
+                                        <div>
+                                            <div className="text-xs uppercase font-bold tracking-wider text-muted-foreground">
+                                                Total Pembayaran
+                                            </div>
+                                            <div className="text-[10px] text-emerald-600 font-medium">
+                                                Sudah termasuk PPN &amp; garansi aman
+                                            </div>
                                         </div>
-                                        <div className="text-[10px] text-emerald-600 font-medium">
-                                            Sudah termasuk PPN &amp; garansi aman
+                                        <div className="text-2xl font-extrabold text-[#4A070B] dark:text-[#E8D0BA]">
+                                            {finalTotalFormatted}
                                         </div>
                                     </div>
-                                    <div className="text-2xl font-extrabold text-[#4A070B] dark:text-[#E8D0BA]">
-                                        {finalTotalFormatted}
-                                    </div>
-                                </div>
 
-                                {/* Checkout Primary Button (Exact styling as cart.tsx) */}
-                                <Button
-                                    type="submit"
-                                    size="lg"
-                                    disabled={processing}
-                                    className="w-full bg-[#4A070B] hover:bg-[#360407] text-white font-semibold rounded-md h-11 text-xs sm:text-sm shadow-none transition active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
-                                >
-                                    <svg
-                                        className="w-4 h-4 text-[#E5A844]"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
+                                    {/* Checkout Primary Button */}
+                                    <Button
+                                        type="submit"
+                                        size="lg"
+                                        disabled={processing}
+                                        className="w-full bg-[#4A070B] hover:bg-[#360407] text-white font-semibold rounded-md h-11 text-xs sm:text-sm shadow-none transition active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
                                     >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth="2"
-                                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                                        />
-                                    </svg>
-                                    <span>{processing ? 'Memproses Pesanan...' : `Beli (${totalItemsCount}) dan Bayar`}</span>
-                                </Button>
-
+                                        <svg
+                                            className="w-4 h-4 text-[#E5A844]"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth="2"
+                                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                                            />
+                                        </svg>
+                                        <span>{processing ? 'Memproses Pesanan...' : `Beli (${totalItemsCount}) dan Bayar`}</span>
+                                    </Button>
+                                </div>
                             </div>
+
+                            {/* Back to Cart Link (Placed under Ringkasan Belanja Card) */}
+                            <div className="pt-0.5">
+                                <Link
+                                    href="/cart"
+                                    className="inline-flex items-center gap-1.5 font-semibold text-xs text-[#4A070B] dark:text-[#E8D0BA] hover:text-[#360407] transition-colors"
+                                >
+                                    <span>←</span> Kembali ke Keranjang
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* MOBILE FLOATING BOTTOM SUMMARY BAR (Voucher + Sticky Pay Button) */}
+                    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t border-border shadow-[0_-8px_30px_rgba(0,0,0,0.12)]">
+                        {/* Attached Voucher Bar (Identical to cart.tsx) */}
+                        <div className="px-4 py-2 border-b border-border/60 bg-muted/20">
+                            {appliedVoucher && voucherDiscount > 0 ? (
+                                <div className="flex items-center justify-between text-xs">
+                                    <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium truncate">
+                                        <svg className="w-3.5 h-3.5 shrink-0 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                        </svg>
+                                        <span className="truncate">
+                                            Voucher <strong className="font-bold">{appliedVoucher.toUpperCase()}</strong>: -Rp {voucherDiscount.toLocaleString('id-ID')}
+                                        </span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setAppliedVoucher('');
+                                            setVoucherDiscount(0);
+                                            setVoucherCodeInput('');
+                                            setData('voucher_code', '');
+                                        }}
+                                        className="text-[11px] text-destructive hover:underline font-semibold cursor-pointer shrink-0 ml-2"
+                                    >
+                                        Hapus
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-2">
+                                    <div className="relative flex-1">
+                                        <svg
+                                            className="w-3.5 h-3.5 text-[#E5A844] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                        </svg>
+                                        <Input
+                                            type="text"
+                                            placeholder="Punya Kode Voucher Promo?"
+                                            value={voucherCodeInput}
+                                            onChange={(e) => setVoucherCodeInput(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    handleApplyVoucher(e);
+                                                }
+                                            }}
+                                            className="h-8.5 pl-8 pr-2.5 rounded-md border border-border/80 bg-background text-xs uppercase tracking-wider focus:border-[#4A070B] focus:ring-1 focus:ring-[#4A070B]/25 shadow-none"
+                                        />
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        onClick={handleApplyVoucher}
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-8.5 px-3 rounded-md border border-[#4A070B] text-[#4A070B] hover:bg-[#4A070B] hover:text-white text-xs font-semibold shadow-none cursor-pointer shrink-0 transition-colors"
+                                    >
+                                        Terapkan
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Primary Bottom Bar */}
+                        <div className="mx-auto max-w-7xl px-4 py-2.5 sm:px-6 flex items-center justify-between gap-3">
+                            {/* Summary info: Total Pembayaran */}
+                            <div className="flex flex-col min-w-0">
+                                <span className="text-[10.5px] font-medium text-muted-foreground truncate">
+                                    Total ({totalItemsCount} produk)
+                                </span>
+                                <div className="flex items-baseline gap-1.5 flex-wrap">
+                                    <span className="text-lg font-black text-[#4A070B] dark:text-[#E8D0BA] tracking-tight">
+                                        {finalTotalFormatted}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Pay Action Button */}
+                            <Button
+                                type="submit"
+                                disabled={processing}
+                                size="default"
+                                className="h-10.5 px-5 sm:px-6 bg-[#4A070B] hover:bg-[#360407] text-white font-semibold rounded-md text-xs sm:text-sm shadow-none transition active:scale-[0.98] cursor-pointer flex items-center gap-2 shrink-0"
+                            >
+                                <svg
+                                    className="w-3.5 h-3.5 text-[#E5A844]"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                                    />
+                                </svg>
+                                <span>{processing ? 'Memproses...' : `Bayar (${totalItemsCount})`}</span>
+                            </Button>
                         </div>
                     </div>
                 </form>

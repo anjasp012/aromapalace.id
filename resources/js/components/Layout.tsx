@@ -49,6 +49,7 @@ import { autoRequestNotificationPermission, initFirebaseForegroundListener } fro
 
 interface LayoutProps {
     children: ReactNode;
+    showFooter?: boolean;
 }
 
 interface SuggestionProduct {
@@ -69,10 +70,22 @@ interface SuggestionBrand {
     products_count: number;
 }
 
+export interface HeaderVoucher {
+    id: number;
+    code: string;
+    name: string;
+    description: string | null;
+    terms?: string[] | null;
+    type: 'percentage' | 'fixed';
+    value: number;
+    min_order_amount: number;
+    max_discount_amount: number | null;
+}
+
 interface SharedProps {
     auth?: {
         user?: {
-            id?: number;
+            id: number;
             name: string;
             email: string;
             role?: string;
@@ -83,6 +96,7 @@ interface SharedProps {
         cart_count?: number;
         search_history?: string[];
     };
+    header_vouchers?: HeaderVoucher[];
     flash?: {
         success?: string | null;
         error?: string | null;
@@ -92,7 +106,7 @@ interface SharedProps {
 
 declare global {
     interface Window {
-        openPromoModal?: () => void;
+        openPromoModal?: (voucher?: HeaderVoucher) => void;
         openSpotlight?: () => void;
         openInfoModal?: (tab?: string) => void;
         openStoreModal?: () => void;
@@ -104,7 +118,7 @@ declare global {
     }
 }
 
-export default function Layout({ children }: LayoutProps) {
+export default function Layout({ children, showFooter = true }: LayoutProps) {
     const { url, props } = usePage<SharedProps>();
     const user = props?.auth?.user;
     const isAdmin = Boolean(props?.auth?.is_admin || user?.role === 'admin');
@@ -115,6 +129,55 @@ export default function Layout({ children }: LayoutProps) {
 
     // Modals State using shadcn Dialog
     const [promoModalOpen, setPromoModalOpen] = useState(false);
+
+    // Header Vouchers from Inertia shared props (cached with rememberForever)
+    const headerVouchers: HeaderVoucher[] = (props.header_vouchers && props.header_vouchers.length > 0)
+        ? props.header_vouchers
+        : [
+            {
+                id: 1,
+                code: 'AROMA40',
+                name: 'Aroma Royale Special 40%',
+                description: 'Nikmati diskon istimewa sebesar 40% untuk seluruh koleksi wewangian artisanal pilihan Aroma Palace.',
+                terms: ['Berlaku untuk semua produk wewangian tanpa terkecuali.', 'Dapat digunakan untuk 1 kali checkout per akun.'],
+                type: 'percentage',
+                value: 40,
+                min_order_amount: 0,
+                max_discount_amount: null,
+            },
+        ];
+
+    const [currentVoucherIndex, setCurrentVoucherIndex] = useState(0);
+    const [isVoucherFading, setIsVoucherFading] = useState(false);
+    const [selectedHeaderVoucher, setSelectedHeaderVoucher] = useState<HeaderVoucher | null>(headerVouchers[0] || null);
+
+    // Random rotating announcement every 4.5 seconds
+    useEffect(() => {
+        if (headerVouchers.length <= 1) return;
+        const timer = setInterval(() => {
+            setIsVoucherFading(true);
+            setTimeout(() => {
+                setCurrentVoucherIndex((prev) => {
+                    let next = Math.floor(Math.random() * headerVouchers.length);
+                    if (next === prev && headerVouchers.length > 1) {
+                        next = (prev + 1) % headerVouchers.length;
+                    }
+                    return next;
+                });
+                setIsVoucherFading(false);
+            }, 250);
+        }, 4500);
+
+        return () => clearInterval(timer);
+    }, [headerVouchers.length]);
+
+    const activeHeaderVoucher = headerVouchers[currentVoucherIndex] || headerVouchers[0];
+
+    const handleOpenVoucherModal = (voucherToOpen?: HeaderVoucher) => {
+        setSelectedHeaderVoucher(voucherToOpen || activeHeaderVoucher);
+        setPromoModalOpen(true);
+    };
+
     const [spotlightOpen, setSpotlightOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchHistory, setSearchHistory] = useState<string[]>([]);
@@ -330,7 +393,7 @@ export default function Layout({ children }: LayoutProps) {
 
     // Global Window bindings
     useEffect(() => {
-        window.openPromoModal = () => setPromoModalOpen(true);
+        window.openPromoModal = (v) => handleOpenVoucherModal(v);
         window.openSpotlight = () => {
             setSpotlightOpen(true);
             setTimeout(() => spotlightInputRef.current?.focus(), 50);
@@ -421,18 +484,25 @@ export default function Layout({ children }: LayoutProps) {
     };
 
     return (
-        <div className="bg-background text-foreground flex flex-col min-h-screen">
+        <div className="bg-background text-foreground flex flex-col min-h-screen" suppressHydrationWarning>
             {/* Top Announcement Bar */}
-            <div className="bg-[#360407] text-white text-xs py-2 relative z-40">
+            <div className="bg-[#360407] text-white text-xs py-2 relative z-40" suppressHydrationWarning>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
                     <button
                         type="button"
-                        onClick={() => window.openPromoModal?.()}
-                        className="flex items-center gap-1.5 text-xs text-white/95 hover:text-white transition cursor-pointer text-left group"
+                        onClick={() => handleOpenVoucherModal(activeHeaderVoucher)}
+                        className="w-full md:w-auto flex items-center justify-center md:justify-start gap-1.5 text-xs text-white/95 hover:text-white transition cursor-pointer text-center md:text-left group"
+                        title="Klik untuk melihat detail voucher"
                     >
-                        <span className="text-[#E5A844] text-xs">✦</span>
-                        <span className="font-normal text-[11px] sm:text-xs tracking-tight">
-                            Promo Spesial &ndash; Diskon hingga 40%! Klaim Voucher &rarr;
+                        <span className="text-[#E5A844] text-xs shrink-0 animate-pulse">✦</span>
+                        <span className={`font-normal text-[11px] sm:text-xs tracking-tight transition-all duration-300 ${isVoucherFading ? 'opacity-0 -translate-y-0.5' : 'opacity-100 translate-y-0'}`}>
+                            {activeHeaderVoucher ? (
+                                activeHeaderVoucher.type === 'percentage'
+                                    ? `Promo Spesial \u2013 Diskon hingga ${activeHeaderVoucher.value}%! Klaim Voucher \u2192`
+                                    : `Promo Spesial \u2013 Potongan Rp ${new Intl.NumberFormat('id-ID').format(activeHeaderVoucher.value)}! Klaim Voucher \u2192`
+                            ) : (
+                                'Promo Spesial \u2013 Diskon hingga 40%! Klaim Voucher \u2192'
+                            )}
                         </span>
                     </button>
 
@@ -496,9 +566,6 @@ export default function Layout({ children }: LayoutProps) {
                                 <span className="text-[#4A070B]/75 group-hover:text-[#4A070B] transition truncate font-light text-xs">
                                     Cari parfum mewah...
                                 </span>
-                                <kbd className="ml-auto pointer-events-none inline-flex h-4.5 select-none items-center gap-0.5 rounded border border-[#4A070B]/20 bg-[#4A070B]/5 px-1.5 font-mono text-[9px] font-medium text-[#4A070B]/70">
-                                    ⌘K
-                                </kbd>
                             </button>
                         </div>
 
@@ -641,19 +708,16 @@ export default function Layout({ children }: LayoutProps) {
                                 </Link>
                             )}
 
-                            {/* Tombol Kanan: Jika Admin -> Dashboard; Jika Customer/Guest -> Keranjang */}
+                            {/* Tombol Kanan: Jika Admin -> Cukup di mobile icon saja, di desktop sudah ada di dropdown Akun. Jika Customer/Guest -> Keranjang */}
                             {isAdmin ? (
                                 <Link
                                     href="/admin/dashboard"
-                                    className="flex items-center justify-center sm:flex-col sm:gap-0.5 text-[#4A070B] hover:text-[#360407] transition cursor-pointer w-9 h-9 sm:w-auto sm:h-auto sm:px-1 sm:py-0.5 group relative rounded-full sm:rounded-none hover:bg-[#4A070B]/5 sm:hover:bg-transparent active:scale-95 shrink-0 -mr-1"
+                                    className="sm:hidden flex items-center justify-center text-[#4A070B] hover:text-[#360407] transition cursor-pointer w-9 h-9 group relative rounded-full hover:bg-[#4A070B]/5 active:scale-95 shrink-0 -mr-1"
                                     aria-label="Dashboard Admin"
                                 >
                                     <div className="relative flex items-center justify-center">
-                                        <LayoutDashboard className="w-5 h-5 sm:w-[18px] sm:h-[18px] text-[#4A070B] group-hover:text-[#360407] transition" />
+                                        <LayoutDashboard className="w-5 h-5 text-[#4A070B] group-hover:text-[#360407] transition" />
                                     </div>
-                                    <span className="hidden sm:inline text-[10px] sm:text-[11px] font-medium text-[#4A070B] group-hover:text-[#360407] leading-none mt-0.5">
-                                        Dashboard
-                                    </span>
                                 </Link>
                             ) : (
                                 <Link
@@ -820,11 +884,12 @@ export default function Layout({ children }: LayoutProps) {
             </main>
 
             {/* Modern Clean Footer with Rich Burgundy Gradient matching Produk Diskon */}
-            <footer className="bg-gradient-to-br from-[#4A070B] via-[#52090F] to-[#360407] text-white/80 border-t border-[#360407] mt-12 sm:mt-16">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-8 pb-10 border-b border-white/10">
-                        {/* Col 1: Brand Info */}
-                        <div className="lg:col-span-4 space-y-3">
+            {showFooter && (
+                <footer className="bg-gradient-to-br from-[#4A070B] via-[#52090F] to-[#360407] text-white/80 border-t border-[#360407] mt-12 sm:mt-16">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-14">
+                    <div className="grid grid-cols-2 lg:grid-cols-12 gap-8 pb-8 sm:pb-10 border-b border-white/10">
+                        {/* Baris 1 di Mobile / Col 1 di Desktop: Brand Info */}
+                        <div className="col-span-2 lg:col-span-4 space-y-3">
                             <div className="flex items-center gap-2">
                                 <img
                                     src="/images/logo.png"
@@ -889,8 +954,8 @@ export default function Layout({ children }: LayoutProps) {
                             </div>
                         </div>
 
-                        {/* Col 2: Katalog */}
-                        <div className="lg:col-span-2 space-y-3">
+                        {/* Baris 2 di Mobile / Col 2 di Desktop: Katalog */}
+                        <div className="col-span-1 lg:col-span-2 space-y-3">
                             <h5 className="text-xs font-semibold uppercase tracking-wider text-white">Katalog</h5>
                             <ul className="space-y-2 text-xs">
                                 <li><Link href="/products" className="text-white/70 hover:text-white transition">Semua Koleksi</Link></li>
@@ -902,8 +967,8 @@ export default function Layout({ children }: LayoutProps) {
                             </ul>
                         </div>
 
-                        {/* Col 3: Layanan Pelanggan */}
-                        <div className="lg:col-span-3 space-y-3">
+                        {/* Baris 2 di Mobile / Col 3 di Desktop: Layanan Pelanggan */}
+                        <div className="col-span-1 lg:col-span-3 space-y-3">
                             <h5 className="text-xs font-semibold uppercase tracking-wider text-white">Bantuan &amp; Kebijakan</h5>
                             <ul className="space-y-2 text-xs">
                                 <li>
@@ -945,8 +1010,8 @@ export default function Layout({ children }: LayoutProps) {
                             </ul>
                         </div>
 
-                        {/* Col 4: Unduh Aplikasi */}
-                        <div className="lg:col-span-3 space-y-3">
+                        {/* Desktop & Tablet only: Unduh Aplikasi (Disembunyikan di Mobile) */}
+                        <div className="hidden sm:block sm:col-span-2 lg:col-span-3 space-y-3">
                             <h5 className="text-xs font-semibold uppercase tracking-wider text-white">Unduh Aplikasi</h5>
                             <p className="text-xs leading-relaxed text-white/70">
                                 Unduh aplikasi kami untuk akses eksklusif katalog parfum Dubai.
@@ -984,7 +1049,7 @@ export default function Layout({ children }: LayoutProps) {
                     </div>
 
                     {/* Bottom Bar */}
-                    <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-white/60">
+                    <div className="pt-6 sm:pt-8 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 text-xs text-white/60 text-center sm:text-left">
                         <p>© 2026 Aroma Palace. All rights reserved.</p>
                         <div className="flex items-center gap-4 text-white/60">
                             <button
@@ -1006,6 +1071,7 @@ export default function Layout({ children }: LayoutProps) {
                     </div>
                 </div>
             </footer>
+            )}
 
             {/* Notification Toast */}
             {toastMessage && (
@@ -1015,39 +1081,59 @@ export default function Layout({ children }: LayoutProps) {
                 </div>
             )}
 
-            {/* POPUP 1: WELCOME PROMOTION MODAL (shadcn Dialog) */}
+            {/* POPUP 1: VOUCHER CLAIM (shadcn Dialog) - Identik dengan Home */}
             <Dialog open={promoModalOpen} onOpenChange={setPromoModalOpen}>
-                <DialogContent className="max-w-md p-6">
-                    <DialogHeader className="text-left space-y-2">
-                        <Badge variant="secondary" className="w-fit">Penawaran Eksklusif</Badge>
-                        <DialogTitle className="text-xl font-bold">Selamat Datang di Aroma Palace</DialogTitle>
-                        <DialogDescription className="text-xs leading-relaxed">
-                            Gunakan kode voucher di bawah ini untuk mendapatkan potongan harga langsung sebesar 20% pada pesanan pertama Anda.
-                        </DialogDescription>
-                    </DialogHeader>
+                {selectedHeaderVoucher && (
+                    <DialogContent className="w-[calc(100vw-32px)] max-w-[calc(100vw-32px)] sm:w-full sm:max-w-md p-5 sm:p-6 rounded-2xl">
+                        <DialogHeader className="text-left space-y-2">
+                            <Badge variant="secondary" className="w-fit">
+                                {selectedHeaderVoucher.type === 'percentage'
+                                    ? `Diskon ${selectedHeaderVoucher.value}%`
+                                    : `Potongan Rp ${new Intl.NumberFormat('id-ID').format(selectedHeaderVoucher.value)}`}
+                            </Badge>
+                            <DialogTitle className="text-lg font-bold">
+                                {selectedHeaderVoucher.name}
+                            </DialogTitle>
+                            <DialogDescription className="text-xs leading-relaxed">
+                                {selectedHeaderVoucher.description || `Gunakan kode promo ${selectedHeaderVoucher.code} untuk mendapatkan diskon istimewa.`}
+                            </DialogDescription>
+                        </DialogHeader>
 
-                    <div className="my-4 p-4 rounded-lg bg-muted border border-border flex items-center justify-between">
-                        <div>
-                            <span className="text-[10px] text-muted-foreground uppercase font-bold block">Kode Promo</span>
-                            <span className="text-sm font-mono font-bold text-foreground">AROMA20</span>
+                        <div className="my-3 p-3.5 rounded-lg bg-muted border border-border text-xs space-y-2">
+                            <p className="font-semibold text-foreground">Syarat &amp; Ketentuan:</p>
+                            <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                                {(selectedHeaderVoucher.terms && selectedHeaderVoucher.terms.length > 0
+                                    ? selectedHeaderVoucher.terms
+                                    : [
+                                        `Gunakan kode promo ${selectedHeaderVoucher.code} saat checkout.`,
+                                        selectedHeaderVoucher.min_order_amount > 0
+                                            ? `Minimal belanja Rp ${new Intl.NumberFormat('id-ID').format(selectedHeaderVoucher.min_order_amount)}.`
+                                            : 'Tanpa minimal belanja.',
+                                        'Berlaku selama periode promosi aktif.',
+                                    ]
+                                ).map((t, i) => (
+                                    <li key={i}>{t}</li>
+                                ))}
+                            </ul>
                         </div>
-                        <Button
-                            size="sm"
-                            onClick={() => {
-                                copyPromoCode('AROMA20');
-                                setPromoModalOpen(false);
-                            }}
-                        >
-                            Salin Voucher
-                        </Button>
-                    </div>
 
-                    <div className="flex justify-end gap-2">
-                        <Button variant="outline" size="sm" onClick={() => setPromoModalOpen(false)}>
-                            Nanti Saja
-                        </Button>
-                    </div>
-                </DialogContent>
+                        <div className="flex gap-2">
+                            <Button
+                                onClick={() => {
+                                    copyPromoCode(selectedHeaderVoucher.code);
+                                    setPromoModalOpen(false);
+                                }}
+                                className="flex-1 cursor-pointer"
+                                size="sm"
+                            >
+                                Salin Kode ({selectedHeaderVoucher.code})
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => setPromoModalOpen(false)} className="cursor-pointer">
+                                Tutup
+                            </Button>
+                        </div>
+                    </DialogContent>
+                )}
             </Dialog>
 
             {/* POPUP 2: SPOTLIGHT SEARCH MODAL (shadcn Dialog) */}
@@ -1061,9 +1147,9 @@ export default function Layout({ children }: LayoutProps) {
                     }
                 }}
             >
-                <DialogContent className="max-w-2xl p-0 overflow-hidden shadow-2xl border-border/80">
+                <DialogContent className="w-[calc(100vw-32px)] max-w-[calc(100vw-32px)] sm:w-full sm:max-w-2xl p-0 overflow-hidden shadow-2xl border-border/80 rounded-2xl">
                     {/* Search Input Bar */}
-                    <div className="p-4 border-b border-border/80 flex items-center gap-3 bg-card">
+                    <div className="p-3.5 sm:p-4 px-4 border-b border-border/80 flex items-center gap-2.5 sm:gap-3 bg-card">
                         <Search className="w-5 h-5 text-muted-foreground shrink-0" />
                         <Input
                             ref={spotlightInputRef}
@@ -1075,7 +1161,7 @@ export default function Layout({ children }: LayoutProps) {
                                 }
                             }}
                             placeholder="Cari nama parfum atau brand..."
-                            className="border-none shadow-none focus-visible:ring-0 text-sm h-9 px-0 bg-transparent placeholder:text-muted-foreground/70"
+                            className="border-none shadow-none focus-visible:ring-0 text-sm h-9 px-2 bg-transparent placeholder:text-muted-foreground/70"
                         />
                         {searchQuery && (
                             <Button
@@ -1257,7 +1343,7 @@ export default function Layout({ children }: LayoutProps) {
 
             {/* POPUP 3: CUSTOMER SERVICE & POLICIES MODAL (shadcn Dialog + Tabs + Accordion) */}
             <Dialog open={infoModalOpen} onOpenChange={setInfoModalOpen}>
-                <DialogContent className="max-w-xl p-6">
+                <DialogContent className="w-[calc(100vw-32px)] max-w-[calc(100vw-32px)] sm:w-full sm:max-w-xl p-5 sm:p-6 rounded-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle className="text-lg font-bold">Layanan Pelanggan &amp; Bantuan</DialogTitle>
                         <DialogDescription className="text-xs">
@@ -1317,7 +1403,7 @@ export default function Layout({ children }: LayoutProps) {
 
             {/* POPUP 4: STORE LOCATOR MODAL (shadcn Dialog) */}
             <Dialog open={storeModalOpen} onOpenChange={setStoreModalOpen}>
-                <DialogContent className="max-w-lg p-6">
+                <DialogContent className="w-[calc(100vw-32px)] max-w-[calc(100vw-32px)] sm:w-full sm:max-w-lg p-5 sm:p-6 rounded-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader className="text-left space-y-1">
                         <Badge variant="secondary" className="w-fit">Boutique &amp; Store Locator</Badge>
                         <DialogTitle className="text-lg font-bold">Lokasi Butik Aroma Palace</DialogTitle>
@@ -1383,7 +1469,7 @@ export default function Layout({ children }: LayoutProps) {
 
             {/* POPUP 5: CONTACT CONCIERGE MODAL (shadcn Dialog) */}
             <Dialog open={contactModalOpen} onOpenChange={setContactModalOpen}>
-                <DialogContent className="max-w-md p-6">
+                <DialogContent className="w-[calc(100vw-32px)] max-w-[calc(100vw-32px)] sm:w-full sm:max-w-md p-5 sm:p-6 rounded-2xl">
                     <DialogHeader className="text-left space-y-1">
                         <Badge variant="secondary" className="w-fit">Concierge Service</Badge>
                         <DialogTitle className="text-lg font-bold">Hubungi Tim Aroma Palace</DialogTitle>

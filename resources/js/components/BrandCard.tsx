@@ -17,9 +17,9 @@ interface BrandCardProps {
 
 export default function BrandCard({ brand, className }: BrandCardProps) {
     return (
-        <Link href={`/products?brand=${brand.slug}`} className="block h-full group">
-            <Card className={cn('p-3 sm:p-4 transition flex flex-col justify-between h-full py-3 gap-0 shadow-none hover:border-foreground/30 rounded-lg', className)}>
-                <div className="space-y-3">
+        <Link href={`/products?brand=${brand.slug}`} className={cn('block h-full group', className)}>
+            <Card className="p-2.5 sm:p-4 transition flex flex-col justify-between h-full py-2.5 sm:py-3 gap-0 shadow-none hover:border-foreground/30 rounded-lg w-full">
+                <div className="space-y-2 sm:space-y-3">
                     <div className="aspect-square rounded-md overflow-hidden bg-muted">
                         <img
                             src={brand.image}
@@ -29,15 +29,15 @@ export default function BrandCard({ brand, className }: BrandCardProps) {
                         />
                     </div>
                     <div>
-                        <h4 className="text-xs sm:text-sm font-bold text-foreground truncate group-hover:text-primary transition-colors">
+                        <h4 className="text-[11px] sm:text-sm font-bold text-foreground truncate group-hover:text-primary transition-colors">
                             {brand.name}
                         </h4>
-                        <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5 leading-relaxed">
+                        <p className="text-[10px] sm:text-[11px] text-muted-foreground line-clamp-1 sm:line-clamp-2 mt-0.5 leading-relaxed">
                             {brand.description}
                         </p>
                     </div>
                 </div>
-                <div className="pt-3 border-t border-border flex items-center justify-between text-[11px] text-muted-foreground mt-3">
+                <div className="pt-2 sm:pt-3 border-t border-border flex items-center justify-between text-[10px] sm:text-[11px] text-muted-foreground mt-2 sm:mt-3">
                     <span>{brand.collectionsCount} Koleksi</span>
                     <span className="group-hover:translate-x-0.5 transition-transform">&rarr;</span>
                 </div>

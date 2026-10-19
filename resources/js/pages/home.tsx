@@ -543,14 +543,18 @@ export default function Home({
                             </Button>
                         </div>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5 sm:gap-3">
-                            {categoriesList.map((cat) => (
-                                <CategoryCard key={cat.slug} category={cat} />
+                        <div className="flex sm:grid overflow-x-auto sm:overflow-visible gap-2 sm:gap-2.5 lg:gap-3 pb-2 sm:pb-0 scrollbar-none snap-x snap-mandatory sm:grid-cols-4 lg:grid-cols-9">
+                            {categoriesList.map((cat, idx) => (
+                                <CategoryCard
+                                    key={cat.slug}
+                                    category={cat}
+                                    className={`w-[calc((100%-24px)/4)] sm:w-auto shrink-0 sm:shrink snap-start ${idx >= 9 ? 'sm:hidden lg:block' : ''}`}
+                                />
                             ))}
                         </div>
                     </section>
 
-                    {/* 3. PRODUK POPULER (using shadcn Card, Badge, Button, and Dialog) */}
+                    {/* 3. PRODUK POPULER (Slider 2.5 on Mobile, Grid on Desktop) */}
                     <section id="best-sellers">
                         <div className="flex items-center justify-between mb-4 sm:mb-6">
                             <h2 className="text-xl sm:text-2xl tracking-tight text-foreground">
@@ -564,7 +568,7 @@ export default function Home({
                             </Button>
                         </div>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-5">
+                        <div className="flex sm:grid overflow-x-auto sm:overflow-visible gap-3 sm:gap-5 pb-3 sm:pb-0 snap-x snap-mandatory scrollbar-none sm:grid-cols-3 lg:grid-cols-5">
                             {popularProducts.map((p) => (
                                 <ProductCard
                                     key={p.id}
@@ -572,6 +576,7 @@ export default function Home({
                                     isWishlisted={wishlistedIds.includes(p.id)}
                                     onToggleWishlist={toggleWishlist}
                                     onQuickView={openQuickView}
+                                    className="w-[calc((100%-16px)/2.45)] sm:w-auto shrink-0 sm:shrink snap-start"
                                 />
                             ))}
                         </div>
@@ -654,7 +659,7 @@ export default function Home({
                                 <div
                                     ref={voucherSliderRef}
                                     onScroll={handleVoucherScroll}
-                                    className="flex items-stretch gap-4 overflow-x-auto pb-3 no-scrollbar"
+                                    className="flex items-stretch gap-3 sm:gap-4 overflow-x-auto pb-3 no-scrollbar"
                                 >
                                     {repeatedVouchers.map((vouch, idx) => (
                                         <VoucherCard
@@ -663,7 +668,7 @@ export default function Home({
                                             isCopied={copiedCodes[vouch.code]}
                                             onCopy={handleCopyCode}
                                             onSelect={setSelectedVoucher}
-                                            className="w-[85%] sm:w-[calc((100%-24px)/2.2)] lg:w-[calc((100%-40px)/3.5)] shrink-0"
+                                            className="w-[calc((100%-12px)/2)] sm:w-[calc((100%-24px)/2.2)] lg:w-[calc((100%-40px)/3.5)] shrink-0 snap-start"
                                         />
                                     ))}
                                 </div>
@@ -697,7 +702,7 @@ export default function Home({
                             </Button>
                         </div>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-5">
+                        <div className="flex sm:grid overflow-x-auto sm:overflow-visible gap-3 sm:gap-5 pb-3 sm:pb-0 snap-x snap-mandatory scrollbar-none sm:grid-cols-3 lg:grid-cols-5">
                             {recommendedProducts.map((p) => (
                                 <ProductCard
                                     key={p.id}
@@ -705,6 +710,7 @@ export default function Home({
                                     isWishlisted={wishlistedIds.includes(p.id)}
                                     onToggleWishlist={toggleWishlist}
                                     onQuickView={openQuickView}
+                                    className="w-[calc((100%-16px)/2.45)] sm:w-auto shrink-0 sm:shrink snap-start"
                                 />
                             ))}
                         </div>
@@ -813,9 +819,13 @@ export default function Home({
                             </Button>
                         </div>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+                        <div className="flex sm:grid overflow-x-auto sm:overflow-visible gap-3 sm:gap-4 pb-2 sm:pb-0 scrollbar-none snap-x snap-mandatory sm:grid-cols-3 lg:grid-cols-6">
                             {brandList.map((b) => (
-                                <BrandCard key={b.slug} brand={b} />
+                                <BrandCard
+                                    key={b.slug}
+                                    brand={b}
+                                    className="w-[calc((100%-30px)/3.5)] sm:w-auto shrink-0 sm:shrink snap-start"
+                                />
                             ))}
                         </div>
                     </section>
@@ -908,7 +918,7 @@ export default function Home({
             {/* POPUP 2: VOUCHER CLAIM (shadcn Dialog) */}
             <Dialog open={!!selectedVoucher} onOpenChange={(open) => !open && setSelectedVoucher(null)}>
                 {selectedVoucher && (
-                    <DialogContent className="max-w-md p-6">
+                    <DialogContent className="w-[calc(100vw-32px)] max-w-[calc(100vw-32px)] sm:w-full sm:max-w-md p-5 sm:p-6 rounded-2xl">
                         <DialogHeader className="text-left space-y-2">
                             <Badge variant="secondary" className="w-fit">{selectedVoucher.badge}</Badge>
                             <DialogTitle className="text-lg font-bold">{selectedVoucher.title}</DialogTitle>
