@@ -1,5 +1,5 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import { useState, useEffect, useRef, type ReactNode } from 'react';
+import { useState, useEffect, useRef, useMemo, type ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,12 +44,17 @@ import {
     ArrowRight,
     Loader2,
     LayoutDashboard,
+    Home,
+    Compass,
+    User,
+    BookOpen,
 } from 'lucide-react';
 import { autoRequestNotificationPermission, initFirebaseForegroundListener } from '@/lib/push-notification';
 
 interface LayoutProps {
     children: ReactNode;
     showFooter?: boolean;
+    showBottomNav?: boolean;
 }
 
 interface SuggestionProduct {
@@ -118,7 +123,7 @@ declare global {
     }
 }
 
-export default function Layout({ children, showFooter = true }: LayoutProps) {
+export default function Layout({ children, showFooter = true, showBottomNav }: LayoutProps) {
     const { url, props } = usePage<SharedProps>();
     const user = props?.auth?.user;
     const isAdmin = Boolean(props?.auth?.is_admin || user?.role === 'admin');
@@ -199,6 +204,51 @@ export default function Layout({ children, showFooter = true }: LayoutProps) {
     // Wishlist & Cart Counts from DB / shared props
     const wishlistCount = props?.auth?.wishlist_count ?? 0;
     const cartCount = props?.auth?.cart_count ?? 0;
+
+    const pathname = (typeof window !== 'undefined' ? window.location.pathname : url) || '';
+    const isCartOrCheckout =
+        url.startsWith('/cart') ||
+        url.startsWith('/checkout') ||
+        url.includes('/cart') ||
+        url.includes('/checkout') ||
+        pathname.includes('/cart') ||
+        pathname.includes('/checkout');
+
+    const shouldShowBottomNav = (showBottomNav ?? !isCartOrCheckout) && !url.startsWith('/admin') && !url.includes('/admin') && !pathname.includes('/admin');
+
+    const mobileNavItems = useMemo(() => [
+        {
+            label: 'Home',
+            href: '/',
+            active: url === '/',
+            icon: <Home className="w-5 h-5" />,
+        },
+        {
+            label: 'Artikel',
+            href: '/articles',
+            active: url.startsWith('/articles'),
+            icon: <BookOpen className="w-5 h-5" />,
+        },
+        {
+            label: 'Katalog',
+            href: '/products',
+            active: url.startsWith('/products'),
+            icon: <Compass className="w-5 h-5" />,
+        },
+        {
+            label: 'Wish',
+            href: user ? '/wishlist' : '/login?notice=' + encodeURIComponent('Silakan masuk untuk melihat daftar favorit Anda.'),
+            active: url.startsWith('/wishlist'),
+            badge: wishlistCount,
+            icon: <Heart className="w-5 h-5" />,
+        },
+        {
+            label: user ? (isAdmin ? 'Admin' : 'Akun') : 'Akun',
+            href: user ? (isAdmin ? '/admin/dashboard' : '/orders') : '/login',
+            active: url.startsWith('/orders') || url.startsWith('/login') || url.startsWith('/register') || (isAdmin && url.startsWith('/admin')),
+            icon: isAdmin ? <LayoutDashboard className="w-5 h-5" /> : <User className="w-5 h-5" />,
+        },
+    ], [url, user, isAdmin, wishlistCount]);
 
     const getCsrfToken = () => {
         return (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '';
@@ -879,14 +929,14 @@ export default function Layout({ children, showFooter = true }: LayoutProps) {
             </header>
 
             {/* Main Content Area */}
-            <main className="flex-1">
+            <main className={`flex-1 ${shouldShowBottomNav && !showFooter ? 'pb-16 md:pb-0' : ''}`}>
                 {children}
             </main>
 
             {/* Modern Clean Footer with Rich Burgundy Gradient matching Produk Diskon */}
             {showFooter && (
-                <footer className="bg-gradient-to-br from-[#4A070B] via-[#52090F] to-[#360407] text-white/80 border-t border-[#360407] mt-12 sm:mt-16">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-14">
+                <footer className={`bg-gradient-to-br from-[#4A070B] via-[#52090F] to-[#360407] text-white/80 border-t border-[#360407] mt-12 sm:mt-16 ${shouldShowBottomNav ? 'pb-20 md:pb-0' : ''}`}>
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-14">
                     <div className="grid grid-cols-2 lg:grid-cols-12 gap-8 pb-8 sm:pb-10 border-b border-white/10">
                         {/* Baris 1 di Mobile / Col 1 di Desktop: Brand Info */}
                         <div className="col-span-2 lg:col-span-4 space-y-3">
@@ -1075,7 +1125,7 @@ export default function Layout({ children, showFooter = true }: LayoutProps) {
 
             {/* Notification Toast */}
             {toastMessage && (
-                <div className="fixed bottom-6 right-6 z-50 rounded-xl border border-border bg-card text-card-foreground px-4 py-3 text-xs shadow-xl flex items-center gap-2.5 animate-in fade-in slide-in-from-bottom-3 duration-200">
+                <div className={`fixed ${shouldShowBottomNav ? 'bottom-20 md:bottom-6' : 'bottom-6'} right-6 z-50 rounded-xl border border-border bg-card text-card-foreground px-4 py-3 text-xs shadow-xl flex items-center gap-2.5 animate-in fade-in slide-in-from-bottom-3 duration-200`}>
                     <span className="text-primary font-bold">✓</span>
                     <span>{toastMessage}</span>
                 </div>
@@ -1535,6 +1585,46 @@ export default function Layout({ children, showFooter = true }: LayoutProps) {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {/* MOBILE FLOATING BOTTOM MENUBAR (Hanya muncul di mode mobile md:hidden) */}
+            {shouldShowBottomNav && (
+                <nav
+                    aria-label="Navigasi Bawah Mobile"
+                    className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t border-border/80 shadow-[0_-4px_25px_rgba(0,0,0,0.08)] pb-[max(env(safe-area-inset-bottom),0px)]"
+                >
+                    <div className="grid grid-cols-5 h-14 items-center px-1">
+                        {mobileNavItems.map((item) => {
+                            const isActive = item.active;
+                            return (
+                                <Link
+                                    key={item.label}
+                                    href={item.href}
+                                    className={`flex flex-col items-center justify-center gap-0.5 py-1 px-1 transition relative select-none ${
+                                        isActive
+                                            ? 'text-[#4A070B] dark:text-[#E8D0BA] font-bold'
+                                            : 'text-muted-foreground hover:text-foreground font-medium'
+                                    }`}
+                                >
+                                    <div className="relative flex items-center justify-center">
+                                        {item.icon}
+                                        {Boolean(item.badge && item.badge > 0) && (
+                                            <span className="absolute -top-1.5 -right-2.5 h-3.5 min-w-[14px] px-1 flex items-center justify-center text-[9px] font-bold bg-[#4A070B] dark:bg-[#E8D0BA] text-white dark:text-[#4A070B] rounded-full ring-2 ring-background">
+                                                {item.badge! > 99 ? '99+' : item.badge}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <span className="text-[10px] tracking-tight truncate max-w-full">
+                                        {item.label}
+                                    </span>
+                                    {isActive && (
+                                        <span className="absolute top-0 w-8 h-0.5 bg-[#4A070B] dark:bg-[#E8D0BA] rounded-full" />
+                                    )}
+                                </Link>
+                            );
+                        })}
+                    </div>
+                </nav>
+            )}
         </div>
     );
 }

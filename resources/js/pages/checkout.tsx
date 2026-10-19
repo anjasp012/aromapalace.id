@@ -487,7 +487,7 @@ export default function CheckoutPage({
     const totalItemsCount = items.length;
 
     return (
-        <Layout showFooter={false}>
+        <Layout showFooter={false} showBottomNav={false}>
             <Head title="Konfirmasi & Pembayaran Pesanan • Aroma Palace" />
 
             {/* PAGE HEADER BANNER (Exact match to cart.tsx) */}
@@ -504,7 +504,7 @@ export default function CheckoutPage({
             </div>
 
             {/* MAIN TWO-COLUMN CONTAINER (gap-6 & card styling consistent with cart.tsx) */}
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12 pb-32 sm:pb-36 lg:pb-12">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12 pb-36 sm:pb-40 lg:pb-12">
                 <form onSubmit={handleOpenConfirm}>
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                         {/* ======================================================== */}
@@ -1174,7 +1174,7 @@ export default function CheckoutPage({
                     </div>
 
                     {/* MOBILE FLOATING BOTTOM SUMMARY BAR (Voucher + Sticky Pay Button) */}
-                    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t border-border shadow-[0_-8px_30px_rgba(0,0,0,0.12)]">
+                    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t border-border shadow-[0_-8px_30px_rgba(0,0,0,0.12)] pb-[max(env(safe-area-inset-bottom),0px)]">
                         {/* Attached Voucher Bar (Identical to cart.tsx) */}
                         <div className="px-4 py-2 border-b border-border/60 bg-muted/20">
                             {appliedVoucher && voucherDiscount > 0 ? (

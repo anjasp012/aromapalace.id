@@ -111,7 +111,7 @@ export default function CartPage({
     const totalItemsCount = items.length;
 
     return (
-        <Layout>
+        <Layout showBottomNav={items.length === 0}>
             <Head title="Keranjang Belanja Saya • Aroma Palace" />
 
             {/* PAGE HEADER BANNER (Matches products.tsx style) */}
@@ -408,7 +408,7 @@ export default function CartPage({
 
                 {/* MOBILE FLOATING BOTTOM SUMMARY BAR (Voucher + Sticky Checkout) */}
                 {items.length > 0 && (
-                    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t border-border shadow-[0_-8px_30px_rgba(0,0,0,0.12)]">
+                    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t border-border shadow-[0_-8px_30px_rgba(0,0,0,0.12)] pb-[max(env(safe-area-inset-bottom),0px)]">
                         {/* Attached Voucher Bar */}
                         <div className="px-4 py-2 border-b border-border/60 bg-muted/20">
                             {voucherApplied && voucherDiscount > 0 ? (

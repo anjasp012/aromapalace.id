@@ -668,7 +668,7 @@ export default function Home({
                                             isCopied={copiedCodes[vouch.code]}
                                             onCopy={handleCopyCode}
                                             onSelect={setSelectedVoucher}
-                                            className="w-[calc((100%-12px)/2)] sm:w-[calc((100%-24px)/2.2)] lg:w-[calc((100%-40px)/3.5)] shrink-0 snap-start"
+                                            className="w-[calc((100%-12px)/1.5)] sm:w-[calc((100%-24px)/2.2)] lg:w-[calc((100%-40px)/3.5)] shrink-0 snap-start"
                                         />
                                     ))}
                                 </div>
