@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Services\CatalogService;
 use App\Services\FirebaseNotificationService;
+use App\Services\MembershipService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -163,6 +164,7 @@ class OrderController extends Controller
             }
         } elseif ($newStatus === 'diproses' || $newStatus === 'selesai') {
             app(FirebaseNotificationService::class)->notifyPaymentSuccess($orderModel);
+            app(MembershipService::class)->awardOrderPoints($orderModel);
         }
 
         $label = match ($newStatus) {

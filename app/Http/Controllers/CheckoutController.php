@@ -10,6 +10,7 @@ use App\Models\Store;
 use App\Models\Voucher;
 use App\Services\CatalogService;
 use App\Services\FirebaseNotificationService;
+use App\Services\MembershipService;
 use App\Services\PakasirService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -394,6 +395,10 @@ class CheckoutController extends Controller
 
             // Trigger push notification to Admins (pesanan masuk) & Customer (order dibuat)
             $this->notificationService->notifyNewOrder($order);
+
+            if ($order->payment_status === 'paid') {
+                app(MembershipService::class)->awardOrderPoints($order);
+            }
 
             return redirect()->route('payment.show', ['order' => $order->order_number])
                 ->with('success', 'Pesanan wewangian mewah Anda berhasil dibuat!');

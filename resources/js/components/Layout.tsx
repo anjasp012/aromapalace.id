@@ -48,6 +48,7 @@ import {
     Compass,
     User,
     BookOpen,
+    Crown,
 } from 'lucide-react';
 import { autoRequestNotificationPermission, initFirebaseForegroundListener } from '@/lib/push-notification';
 
@@ -99,6 +100,13 @@ interface SharedProps {
         wishlist_ids?: number[];
         wishlist_count?: number;
         cart_count?: number;
+        membership?: {
+            membership_number: string;
+            tier: string;
+            tier_label: string;
+            points: number;
+            points_formatted: string;
+        } | null;
         search_history?: string[];
     };
     header_vouchers?: HeaderVoucher[];
@@ -244,8 +252,8 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
         },
         {
             label: user ? (isAdmin ? 'Admin' : 'Akun') : 'Akun',
-            href: user ? (isAdmin ? '/admin/dashboard' : '/orders') : '/login',
-            active: url.startsWith('/orders') || url.startsWith('/login') || url.startsWith('/register') || (isAdmin && url.startsWith('/admin')),
+            href: user ? (isAdmin ? '/admin/dashboard' : '/account') : '/login',
+            active: url.startsWith('/account') || url.startsWith('/orders') || url.startsWith('/membership') || url.startsWith('/loyalty') || url.startsWith('/login') || url.startsWith('/register') || (isAdmin && url.startsWith('/admin')),
             icon: isAdmin ? <LayoutDashboard className="w-5 h-5" /> : <User className="w-5 h-5" />,
         },
     ], [url, user, isAdmin, wishlistCount]);
@@ -683,12 +691,39 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                                         </Link>
                                                     </DropdownMenuItem>
                                                 ) : (
-                                                    <DropdownMenuItem asChild>
-                                                        <Link href="/account/orders" className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium cursor-pointer">
-                                                            <Package className="w-4 h-4 text-[#4A070B] dark:text-[#E8D0BA] shrink-0" />
-                                                            <span>Pesanan Saya</span>
-                                                        </Link>
-                                                    </DropdownMenuItem>
+                                                    <>
+                                                        <DropdownMenuItem asChild>
+                                                            <Link href="/membership" className="flex items-center justify-between px-2.5 py-2 text-xs font-medium cursor-pointer group">
+                                                                <div className="flex items-center gap-2.5">
+                                                                    <Crown className="w-4 h-4 text-[#E5A844] shrink-0" />
+                                                                    <span>Royale Membership</span>
+                                                                </div>
+                                                                {props?.auth?.membership ? (
+                                                                    <span className="text-[10px] font-bold text-[#E5A844] bg-[#E5A844]/10 px-1.5 py-0.5 rounded">
+                                                                        {props.auth.membership.points_formatted} Poin
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">
+                                                                        +100 Poin
+                                                                    </span>
+                                                                )}
+                                                            </Link>
+                                                        </DropdownMenuItem>
+
+                                                        <DropdownMenuItem asChild>
+                                                            <Link href="/account" className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium cursor-pointer">
+                                                                <User className="w-4 h-4 text-[#4A070B] dark:text-[#E8D0BA] shrink-0" />
+                                                                <span>Pengaturan Akun</span>
+                                                            </Link>
+                                                        </DropdownMenuItem>
+
+                                                        <DropdownMenuItem asChild>
+                                                            <Link href="/account/orders" className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium cursor-pointer">
+                                                                <Package className="w-4 h-4 text-[#4A070B] dark:text-[#E8D0BA] shrink-0" />
+                                                                <span>Pesanan Saya</span>
+                                                            </Link>
+                                                        </DropdownMenuItem>
+                                                    </>
                                                 )}
 
                                                 <DropdownMenuSeparator className="my-1 bg-border/60" />
@@ -1592,19 +1627,22 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                     aria-label="Navigasi Bawah Mobile"
                     className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t border-border/80 shadow-[0_-4px_25px_rgba(0,0,0,0.08)] pb-[max(env(safe-area-inset-bottom),0px)]"
                 >
-                    <div className="grid grid-cols-5 h-14 items-center px-1">
+                    <div className="grid grid-cols-5 h-14 items-stretch">
                         {mobileNavItems.map((item) => {
                             const isActive = item.active;
                             return (
                                 <Link
                                     key={item.label}
                                     href={item.href}
-                                    className={`flex flex-col items-center justify-center gap-0.5 py-1 px-1 transition relative select-none ${
+                                    className={`h-full flex flex-col items-center justify-center gap-0.5 px-1 transition relative select-none ${
                                         isActive
                                             ? 'text-[#4A070B] dark:text-[#E8D0BA] font-bold'
                                             : 'text-muted-foreground hover:text-foreground font-medium'
                                     }`}
                                 >
+                                    {isActive && (
+                                        <span className="absolute -top-px left-0 right-0 h-0.5 bg-[#4A070B] dark:bg-[#E8D0BA]" />
+                                    )}
                                     <div className="relative flex items-center justify-center">
                                         {item.icon}
                                         {Boolean(item.badge && item.badge > 0) && (
@@ -1616,9 +1654,6 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                     <span className="text-[10px] tracking-tight truncate max-w-full">
                                         {item.label}
                                     </span>
-                                    {isActive && (
-                                        <span className="absolute top-0 w-8 h-0.5 bg-[#4A070B] dark:bg-[#E8D0BA] rounded-full" />
-                                    )}
                                 </Link>
                             );
                         })}

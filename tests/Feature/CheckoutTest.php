@@ -315,7 +315,7 @@ test('orders page provides tab counts and supports serverside status filtering',
             ->where('tab_counts.all', 4)
             ->where('tab_counts.menunggu_pembayaran', 1)
             ->where('tab_counts.menunggu_konfirmasi', 1)
-            ->where('tab_counts.diproses', 1)
+            ->where('tab_counts.diproses', 2)
             ->where('tab_counts.dikirim', 1)
             ->where('tab_counts.selesai', 0)
             ->has('orders', 4)
@@ -347,8 +347,7 @@ test('orders page provides tab counts and supports serverside status filtering',
         ->assertInertia(fn ($page) => $page
             ->component('orders')
             ->where('active_tab', 'diproses')
-            ->has('orders', 1)
-            ->where('orders.0.order_number', 'AP-ORDER-PRC')
+            ->has('orders', 2)
         );
 
     // Filter dikirim

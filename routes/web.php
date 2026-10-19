@@ -1,12 +1,14 @@
 <?php
 
 use App\Http\Controllers\AboutController;
+use App\Http\Controllers\AccountController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\DeviceTokenController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PakasirWebhookController;
 use App\Http\Controllers\PaymentController;
@@ -24,6 +26,9 @@ Route::get('/articles/{slug}', [ArticleController::class, 'show'])->name('articl
 Route::get('/stores', [StoreController::class, 'index'])->name('stores.index');
 Route::get('/about', [AboutController::class, 'index'])->name('about');
 Route::post('/consultation', [AboutController::class, 'consultation'])->name('consultation.store');
+Route::get('/membership', [MembershipController::class, 'index'])->name('membership.index');
+Route::get('/loyalty', fn () => redirect()->route('membership.index'));
+Route::get('/orders', fn () => redirect()->route('account.orders'));
 
 Route::get('/api/search/suggestions', [SearchController::class, 'suggestions'])->name('search.suggestions');
 Route::get('/search-history', [SearchController::class, 'index'])->name('search.history.index');
@@ -59,7 +64,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
         Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
 
+        Route::get('/account', [AccountController::class, 'index'])->name('account.index');
+        Route::patch('/account/profile', [AccountController::class, 'updateProfile'])->name('account.profile.update');
+        Route::patch('/account/password', [AccountController::class, 'updatePassword'])->name('account.password.update');
         Route::get('/account/orders', [OrderController::class, 'index'])->name('account.orders');
+        Route::post('/membership/join', [MembershipController::class, 'join'])->name('membership.join');
+        Route::post('/membership/redeem/{reward}', [MembershipController::class, 'redeem'])->name('membership.redeem');
     });
 
     Route::get('/payment/{order}', [PaymentController::class, 'show'])->name('payment.show');

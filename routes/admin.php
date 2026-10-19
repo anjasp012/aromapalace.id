@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PaymentMethodController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\StoreController;
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VoucherController;
 use Illuminate\Support\Facades\Route;
 
@@ -67,3 +68,14 @@ Route::get('/stores', [StoreController::class, 'index'])->name('stores.index');
 Route::post('/stores', [StoreController::class, 'store'])->name('stores.store');
 Route::match(['put', 'patch', 'post'], '/stores/{store}', [StoreController::class, 'update'])->name('stores.update');
 Route::delete('/stores/{store}', [StoreController::class, 'destroy'])->name('stores.destroy');
+
+// User Management
+Route::get('/users', [UserController::class, 'index'])->name('users.index');
+Route::post('/users', [UserController::class, 'store'])->name('users.store');
+Route::get('/users/{user}', [UserController::class, 'show'])->name('users.show');
+Route::match(['put', 'patch'], '/users/{user}', [UserController::class, 'update'])->name('users.update');
+Route::patch('/users/{user}/role', [UserController::class, 'updateRole'])->name('users.update-role');
+Route::post('/users/{user}/points/add', [UserController::class, 'addPoints'])->name('users.points.add');
+Route::post('/users/{user}/points/deduct', [UserController::class, 'deductPoints'])->name('users.points.deduct');
+Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+

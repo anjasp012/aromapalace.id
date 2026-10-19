@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,6 +22,7 @@ import {
     ExternalLink,
     ShoppingBag,
     Store,
+    Crown,
 } from 'lucide-react';
 
 interface OrderItemData {
@@ -124,6 +125,9 @@ export default function OrdersPage({
     active_tab = 'all',
     tab_counts,
 }: OrdersProps) {
+    const { auth } = usePage<{ auth?: { membership?: { points_formatted: string; membership_number: string } | null } }>().props;
+    const membershipData = auth?.membership;
+
     const [selectedOrder, setSelectedOrder] = useState<OrderData | null>(null);
     const [copiedCode, setCopiedCode] = useState(false);
     const [copiedInvoice, setCopiedInvoice] = useState(false);
@@ -347,6 +351,44 @@ export default function OrdersPage({
 
             {/* MAIN CONTAINER */}
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-6">
+                {/* ROYALE CLUB MEMBERSHIP BANNER */}
+                <div className="p-4 sm:p-5 rounded-xl border border-[#E5A844]/30 bg-gradient-to-r from-[#4A070B] via-[#360407] to-[#2B0305] text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+                    <div className="flex items-center gap-3.5">
+                        <div className="w-10 h-10 rounded-full bg-[#E5A844]/15 border border-[#E5A844]/30 text-[#E5A844] flex items-center justify-center shrink-0">
+                            <Crown className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs sm:text-sm font-bold text-white tracking-wide">
+                                    Royale Club Membership
+                                </span>
+                                {membershipData ? (
+                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#E5A844] text-[#360407]">
+                                        Member Aktif
+                                    </span>
+                                ) : (
+                                    <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">
+                                        Bonus +100 Poin
+                                    </span>
+                                )}
+                            </div>
+                            <p className="text-[11px] sm:text-xs text-white/70">
+                                {membershipData
+                                    ? `Saldo: ${membershipData.points_formatted} Poin • Dapatkan 1 poin setiap belanja Rp 10.000.`
+                                    : 'Kumpulkan poin di setiap belanja wewangian dan tukarkan dengan voucher diskon hingga Rp 200.000.'}
+                            </p>
+                        </div>
+                    </div>
+                    <Link href="/membership" className="shrink-0">
+                        <Button
+                            size="sm"
+                            className="w-full sm:w-auto bg-gradient-to-r from-[#F7D070] to-[#E5A844] hover:from-[#E5A844] hover:to-[#C98A2C] text-[#360407] font-bold text-xs px-4 h-9 shadow-xs cursor-pointer"
+                        >
+                            {membershipData ? 'Lihat Royale Club →' : 'Gabung Membership (Gratis) →'}
+                        </Button>
+                    </Link>
+                </div>
+
                 {/* STATUS FILTER TABS (Serverside) */}
                 <div className="border-b border-border/80">
                     <div className="flex items-center gap-2 overflow-x-auto pb-3 scrollbar-none">

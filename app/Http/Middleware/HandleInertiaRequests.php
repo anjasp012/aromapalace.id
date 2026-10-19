@@ -64,6 +64,11 @@ class HandleInertiaRequests extends Middleware
                 'wishlist_ids' => fn () => ($user && ! $user->isAdmin()) ? $user->wishlists()->pluck('product_id')->all() : [],
                 'wishlist_count' => fn () => ($user && ! $user->isAdmin()) ? (int) $user->wishlists()->count() : 0,
                 'cart_count' => fn () => ($user && ! $user->isAdmin()) ? (int) $user->cartItems()->count() : 0,
+                'membership' => fn () => ($user && ! $user->isAdmin() && $user->membership) ? [
+                    'membership_number' => $user->membership->membership_number,
+                    'points' => $user->membership->points,
+                    'points_formatted' => number_format($user->membership->points, 0, ',', '.'),
+                ] : null,
                 'search_history' => fn () => $user ? $user->searchHistories()->latest('updated_at')->take(10)->pluck('query')->all() : [],
             ],
         ];

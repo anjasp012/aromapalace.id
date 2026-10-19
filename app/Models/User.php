@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -25,6 +26,8 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  * @property-read Collection<int, Wishlist> $wishlists
  * @property-read Collection<int, CartItem> $cartItems
+ * @property-read Membership|null $membership
+ * @property-read Collection<int, LoyaltyPointHistory> $pointHistories
  */
 #[Fillable(['name', 'email', 'password', 'role'])]
 #[Hidden(['password', 'remember_token'])]
@@ -92,5 +95,21 @@ class User extends Authenticatable
     public function deviceTokens(): HasMany
     {
         return $this->hasMany(DeviceToken::class);
+    }
+
+    /**
+     * @return HasOne<Membership, $this>
+     */
+    public function membership(): HasOne
+    {
+        return $this->hasOne(Membership::class);
+    }
+
+    /**
+     * @return HasMany<LoyaltyPointHistory, $this>
+     */
+    public function pointHistories(): HasMany
+    {
+        return $this->hasMany(LoyaltyPointHistory::class)->latest();
     }
 }

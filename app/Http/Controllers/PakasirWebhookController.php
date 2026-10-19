@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Services\FirebaseNotificationService;
+use App\Services\MembershipService;
 use App\Services\PakasirService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -76,6 +77,7 @@ class PakasirWebhookController extends Controller
 
             if ($status === 'completed') {
                 app(FirebaseNotificationService::class)->notifyPaymentSuccess($order);
+                app(MembershipService::class)->awardOrderPoints($order);
             }
         }
 

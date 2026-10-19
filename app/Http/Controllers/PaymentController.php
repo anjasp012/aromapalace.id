@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\FirebaseNotificationService;
+use App\Services\MembershipService;
 use App\Services\PakasirService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -47,6 +48,7 @@ class PaymentController extends Controller
                         'status' => 'diproses',
                     ]);
                     app(FirebaseNotificationService::class)->notifyPaymentSuccess($orderModel);
+                    app(MembershipService::class)->awardOrderPoints($orderModel);
                 }
             }
         }
@@ -99,6 +101,7 @@ class PaymentController extends Controller
                             'status' => 'diproses',
                         ]);
                         app(FirebaseNotificationService::class)->notifyPaymentSuccess($orderModel);
+                        app(MembershipService::class)->awardOrderPoints($orderModel);
                     } elseif ($status === 'canceled') {
                         $orderModel->update([
                             'payment_status' => 'canceled',

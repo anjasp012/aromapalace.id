@@ -18,6 +18,7 @@ import {
     FileText,
     CreditCard,
     MapPin,
+    Users,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -57,6 +58,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
 
     const isDashboard = url === '/admin' || url.startsWith('/admin/dashboard');
     const isOrders = url.startsWith('/admin/orders');
+    const isUsers = url.startsWith('/admin/users');
     const isProducts = url.startsWith('/admin/products');
     const isCategories = url.startsWith('/admin/categories');
     const isBrands = url.startsWith('/admin/brands');
@@ -143,6 +145,19 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                         >
                             <ShoppingBag className="size-4" />
                             <span>Pesanan</span>
+                        </Link>
+
+                        <Link
+                            href="/admin/users"
+                            onClick={() => setSidebarOpen(false)}
+                            className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
+                                isUsers
+                                    ? 'bg-muted text-primary font-semibold'
+                                    : 'text-muted-foreground hover:text-primary hover:bg-muted'
+                            }`}
+                        >
+                            <Users className="size-4" />
+                            <span>Pengguna</span>
                         </Link>
 
                         <Separator className="my-2" />
