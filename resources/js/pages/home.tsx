@@ -1,5 +1,7 @@
 import { Head, Link, usePage, router } from '@inertiajs/react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import useEmblaCarousel from 'embla-carousel-react';
+import Autoplay from 'embla-carousel-autoplay';
 import Layout from '@/components/Layout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -45,11 +47,8 @@ export default function Home({
     const { t, pickText, isEn } = useTranslation();
 
     const activeVouchers = propVouchers;
-    const repeatedVouchers: VoucherItem[] = activeVouchers.length > 0
-        ? [...activeVouchers, ...activeVouchers, ...activeVouchers]
-        : [];
 
-    // 1. Hero Carousel State
+    // 1. Hero Carousel State (Embla with touch/swipe & autoplay)
     const banners = [
         {
             id: 1,
@@ -90,15 +89,25 @@ export default function Home({
     ];
 
     const [activeSlide, setActiveSlide] = useState(0);
-    const [isHovered, setIsHovered] = useState(false);
+    const [heroRef, heroApi] = useEmblaCarousel(
+        { loop: true, duration: 25 },
+        [Autoplay({ delay: 5000, stopOnInteraction: false, stopOnMouseEnter: true })]
+    );
+
+    const onHeroSelect = useCallback(() => {
+        if (!heroApi) return;
+        setActiveSlide(heroApi.selectedScrollSnap());
+    }, [heroApi]);
 
     useEffect(() => {
-        if (isHovered) return;
-        const timer = setInterval(() => {
-            setActiveSlide((prev) => (prev + 1) % banners.length);
-        }, 5000);
-        return () => clearInterval(timer);
-    }, [isHovered, banners.length]);
+        if (!heroApi) return;
+        heroApi.on('select', onHeroSelect);
+        heroApi.on('reInit', onHeroSelect);
+        return () => {
+            heroApi.off('select', onHeroSelect);
+            heroApi.off('reInit', onHeroSelect);
+        };
+    }, [heroApi, onHeroSelect]);
 
     // 2. Wishlist State
     const [wishlistedIds, setWishlistedIds] = useState<number[]>(props?.auth?.wishlist_ids ?? []);
@@ -152,124 +161,18 @@ export default function Home({
         setQuickViewProduct(product);
     };
 
-    // 5. Horizontal Slider Refs & Scroll Handlers
-    const voucherSliderRef = useRef<HTMLDivElement>(null);
-    const discountSliderRef = useRef<HTMLDivElement>(null);
+    // 5. Embla Carousels for Vouchers & Discounts
+    const [voucherRef, voucherApi] = useEmblaCarousel({
+        align: 'start',
+        containScroll: 'trimSnaps',
+        dragFree: true,
+    });
 
-    const isVoucherHoveredRef = useRef(false);
-    const voucherScrollPosRef = useRef(0);
-    const singleSetWidthRef = useRef(0);
-    const lastTimeRef = useRef<number | null>(null);
-
-    const isDiscountHoveredRef = useRef(false);
-    const discountScrollPosRef = useRef(0);
-    const singleDiscountSetWidthRef = useRef(0);
-    const lastDiscountTimeRef = useRef<number | null>(null);
-
-    // Continuous auto-scroll for voucher slider, stops on hover or dialog open
-    useEffect(() => {
-        const el = voucherSliderRef.current;
-        if (!el) return;
-
-        const updateSetWidth = () => {
-            if (!el || el.children.length < activeVouchers.length + 1) return;
-            const firstCard = el.children[0] as HTMLElement;
-            const nextSetCard = el.children[activeVouchers.length] as HTMLElement;
-            if (firstCard && nextSetCard) {
-                singleSetWidthRef.current = nextSetCard.offsetLeft - firstCard.offsetLeft;
-            }
-        };
-
-        updateSetWidth();
-        window.addEventListener('resize', updateSetWidth);
-
-        let animId: number;
-
-        const step = (time: number) => {
-            if (lastTimeRef.current === null) {
-                lastTimeRef.current = time;
-            }
-            const delta = Math.min((time - lastTimeRef.current) / 1000, 0.1);
-            lastTimeRef.current = time;
-
-            if (singleSetWidthRef.current === 0) {
-                updateSetWidth();
-            }
-
-            const isPaused = isVoucherHoveredRef.current || !!selectedVoucher;
-
-            if (!isPaused && el) {
-                // Smooth glide velocity: 36px per second
-                const speed = 36;
-                voucherScrollPosRef.current += speed * delta;
-
-                const setWidth = singleSetWidthRef.current;
-                if (setWidth > 0 && voucherScrollPosRef.current >= setWidth) {
-                    voucherScrollPosRef.current -= setWidth;
-                }
-                el.scrollLeft = voucherScrollPosRef.current;
-            }
-
-            animId = requestAnimationFrame(step);
-        };
-
-        animId = requestAnimationFrame(step);
-
-        return () => {
-            cancelAnimationFrame(animId);
-            window.removeEventListener('resize', updateSetWidth);
-            lastTimeRef.current = null;
-        };
-    }, [selectedVoucher, activeVouchers.length]);
-
-    const handleVoucherScroll = () => {
-        if (!voucherSliderRef.current) return;
-        if (isVoucherHoveredRef.current || selectedVoucher) {
-            voucherScrollPosRef.current = voucherSliderRef.current.scrollLeft;
-        }
-    };
-
-    const scrollSlider = (ref: React.RefObject<HTMLDivElement | null>, dir: number, cardWidthFallback: number) => {
-        const el = ref.current;
-        if (!el) return;
-        const card = el.firstElementChild as HTMLElement;
-        const cardWidth = card ? card.offsetWidth + 16 : cardWidthFallback;
-
-        if (ref === voucherSliderRef) {
-            const setWidth = singleSetWidthRef.current;
-            let target = el.scrollLeft + dir * cardWidth;
-            if (setWidth > 0) {
-                if (target < 0) target += setWidth;
-                if (target >= setWidth * 2) target -= setWidth;
-            }
-            el.scrollTo({ left: target, behavior: 'smooth' });
-            voucherScrollPosRef.current = target;
-            return;
-        }
-
-        if (ref === discountSliderRef) {
-            const setWidth = singleDiscountSetWidthRef.current;
-            let target = el.scrollLeft + dir * cardWidth;
-            if (setWidth > 0) {
-                if (target < 0) target += setWidth;
-                if (target >= setWidth * 2) target -= setWidth;
-            }
-            el.scrollTo({ left: target, behavior: 'smooth' });
-            discountScrollPosRef.current = target;
-            return;
-        }
-
-        const maxScroll = el.scrollWidth - el.clientWidth;
-        if (dir === 1 && el.scrollLeft >= maxScroll - 15) {
-            el.scrollTo({ left: 0, behavior: 'smooth' });
-            return;
-        }
-        if (dir === -1 && el.scrollLeft <= 15) {
-            el.scrollTo({ left: maxScroll, behavior: 'smooth' });
-            return;
-        }
-        el.scrollBy({ left: dir * cardWidth, behavior: 'smooth' });
-    };
+    const [discountRef, discountApi] = useEmblaCarousel({
+        align: 'start',
+        containScroll: 'trimSnaps',
+        dragFree: true,
+    });
 
     // Products Datasets from Database
     const popularProducts: ProductItem[] = propPopularProducts;
@@ -277,78 +180,6 @@ export default function Home({
         ? propRecommendedProducts
         : propPopularProducts;
     const discountedProducts: ProductItem[] = propDiscountedProducts;
-
-    const repeatedDiscountedProducts: ProductItem[] = discountedProducts.length > 0
-        ? [...discountedProducts, ...discountedProducts, ...discountedProducts]
-        : [];
-
-    // Continuous auto-scroll for discount slider to the RIGHT (opposite direction of voucher)
-    useEffect(() => {
-        const el = discountSliderRef.current;
-        if (!el) return;
-
-        const updateDiscountSetWidth = () => {
-            if (!el || el.children.length < discountedProducts.length + 1) return;
-            const firstCard = el.children[0] as HTMLElement;
-            const nextSetCard = el.children[discountedProducts.length] as HTMLElement;
-            if (firstCard && nextSetCard) {
-                const width = nextSetCard.offsetLeft - firstCard.offsetLeft;
-                singleDiscountSetWidthRef.current = width;
-                if (discountScrollPosRef.current === 0 && width > 0) {
-                    discountScrollPosRef.current = width;
-                    el.scrollLeft = width;
-                }
-            }
-        };
-
-        updateDiscountSetWidth();
-        window.addEventListener('resize', updateDiscountSetWidth);
-
-        let animId: number;
-
-        const step = (time: number) => {
-            if (lastDiscountTimeRef.current === null) {
-                lastDiscountTimeRef.current = time;
-            }
-            const delta = Math.min((time - lastDiscountTimeRef.current) / 1000, 0.1);
-            lastDiscountTimeRef.current = time;
-
-            if (singleDiscountSetWidthRef.current === 0) {
-                updateDiscountSetWidth();
-            }
-
-            const isPaused = isDiscountHoveredRef.current || !!quickViewProduct;
-
-            if (!isPaused && el) {
-                // Smooth glide velocity to the RIGHT (opposite direction of voucher): 36px per second
-                const speed = 36;
-                discountScrollPosRef.current -= speed * delta;
-
-                const setWidth = singleDiscountSetWidthRef.current;
-                if (setWidth > 0 && discountScrollPosRef.current <= 0) {
-                    discountScrollPosRef.current += setWidth;
-                }
-                el.scrollLeft = discountScrollPosRef.current;
-            }
-
-            animId = requestAnimationFrame(step);
-        };
-
-        animId = requestAnimationFrame(step);
-
-        return () => {
-            cancelAnimationFrame(animId);
-            window.removeEventListener('resize', updateDiscountSetWidth);
-            lastDiscountTimeRef.current = null;
-        };
-    }, [quickViewProduct, discountedProducts.length]);
-
-    const handleDiscountScroll = () => {
-        if (!discountSliderRef.current) return;
-        if (isDiscountHoveredRef.current || quickViewProduct) {
-            discountScrollPosRef.current = discountSliderRef.current.scrollLeft;
-        }
-    };
 
     const categoriesList: CategoryItem[] = propCategories;
     const brandList: BrandItem[] = propBrands;
@@ -363,8 +194,6 @@ export default function Home({
                     {/* 1. HERO CAROUSEL BANNER DENGAN YOUTUBE-STYLE AMBIENT FLARE */}
                     <section>
                         <Card
-                            onMouseEnter={() => setIsHovered(true)}
-                            onMouseLeave={() => setIsHovered(false)}
                             className="relative overflow-hidden border border-border/70 py-0 gap-0 shadow-lg rounded-2xl group transition-all duration-700"
                         >
                             {/* Dynamic Ambient Background Canvas (YouTube Ambient Mode) */}
@@ -404,103 +233,98 @@ export default function Home({
                                 ))}
                             </div>
 
-                            {/* Slide Content with Smooth Crossfade */}
-                            <div className="relative z-10">
-                                {banners.map((banner, idx) => {
-                                    const isActive = activeSlide === idx;
-                                    return (
-                                        <div
-                                            key={banner.id}
-                                            className={`grid grid-cols-1 lg:grid-cols-12 items-center transition-all duration-700 ease-in-out ${isActive
-                                                    ? 'opacity-100 relative pointer-events-auto z-10 translate-x-0'
-                                                    : 'opacity-0 absolute inset-0 pointer-events-none z-0 -translate-x-3'
-                                                }`}
-                                        >
-                                            {/* Left Column: Content */}
-                                            <div className="order-2 lg:order-1 lg:col-span-6 p-6 pb-12 sm:p-10 sm:pb-12 lg:p-14 lg:pb-14 flex flex-col justify-center">
-                                                <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-foreground leading-[1.15]">
-                                                    {banner.title}
-                                                </h1>
-                                                <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-foreground/75 leading-relaxed max-w-md">
-                                                    {banner.subtitle}
-                                                </p>
+                            {/* Slide Content with Embla Carousel Swipe */}
+                            <div ref={heroRef} className="relative z-10 overflow-hidden cursor-grab active:cursor-grabbing select-none">
+                                <div className="flex">
+                                    {banners.map((banner) => (
+                                        <div key={banner.id} className="min-w-0 shrink-0 grow-0 basis-full">
+                                            <div className="grid grid-cols-1 lg:grid-cols-12 items-center">
+                                                {/* Left Column: Content */}
+                                                <div className="order-2 lg:order-1 lg:col-span-6 p-6 pb-12 sm:p-10 sm:pb-12 lg:p-14 lg:pb-14 flex flex-col justify-center">
+                                                    <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-foreground leading-[1.15]">
+                                                        {banner.title}
+                                                    </h1>
+                                                    <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-foreground/75 leading-relaxed max-w-md">
+                                                        {banner.subtitle}
+                                                    </p>
 
-                                                {/* Action Buttons using shadcn Button */}
-                                                <div className="mt-6 sm:mt-8 flex flex-wrap items-center gap-3">
-                                                    <Button
-                                                        asChild
-                                                        size="default"
-                                                        className="shadow-sm font-semibold hover:shadow-md transition-shadow"
-                                                    >
-                                                        <Link href={banner.link}>Belanja Sekarang</Link>
-                                                    </Button>
-                                                    <Button
-                                                        asChild
-                                                        variant="outline"
-                                                        size="default"
-                                                        className="bg-background/60 hover:bg-background/90 backdrop-blur-xs border-border/80"
-                                                    >
-                                                        <Link href="/products?sort=popular">Jelajahi Koleksi</Link>
-                                                    </Button>
+                                                    {/* Action Buttons using shadcn Button */}
+                                                    <div className="mt-6 sm:mt-8 flex flex-wrap items-center gap-3">
+                                                        <Button
+                                                            asChild
+                                                            size="default"
+                                                            className="shadow-sm font-semibold hover:shadow-md transition-shadow"
+                                                        >
+                                                            <Link href={banner.link}>Belanja Sekarang</Link>
+                                                        </Button>
+                                                        <Button
+                                                            asChild
+                                                            variant="outline"
+                                                            size="default"
+                                                            className="bg-background/60 hover:bg-background/90 backdrop-blur-xs border-border/80"
+                                                        >
+                                                            <Link href="/products?sort=popular">Jelajahi Koleksi</Link>
+                                                        </Button>
+                                                    </div>
+
+                                                    {/* 4 Feature Points with subtle glass border */}
+                                                    <div className="mt-8 sm:mt-12 pt-6 border-t border-border/70 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                                        <div>
+                                                            <p className="text-xs font-semibold text-foreground">Gratis Ongkir</p>
+                                                            <p className="text-[11px] text-muted-foreground">Min. Rp 500rb</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs font-semibold text-foreground">Pembayaran Aman</p>
+                                                            <p className="text-[11px] text-muted-foreground">100% Terenkripsi</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs font-semibold text-foreground">Layanan 24/7</p>
+                                                            <p className="text-[11px] text-muted-foreground">Bantuan Ramah</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs font-semibold text-foreground">Garansi Retur</p>
+                                                            <p className="text-[11px] text-muted-foreground">100% Original</p>
+                                                        </div>
+                                                    </div>
                                                 </div>
 
-                                                {/* 4 Feature Points with subtle glass border */}
-                                                <div className="mt-8 sm:mt-12 pt-6 border-t border-border/70 grid grid-cols-2 sm:grid-cols-4 gap-4">
-                                                    <div>
-                                                        <p className="text-xs font-semibold text-foreground">Gratis Ongkir</p>
-                                                        <p className="text-[11px] text-muted-foreground">Min. Rp 500rb</p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-xs font-semibold text-foreground">Pembayaran Aman</p>
-                                                        <p className="text-[11px] text-muted-foreground">100% Terenkripsi</p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-xs font-semibold text-foreground">Layanan 24/7</p>
-                                                        <p className="text-[11px] text-muted-foreground">Bantuan Ramah</p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-xs font-semibold text-foreground">Garansi Retur</p>
-                                                        <p className="text-[11px] text-muted-foreground">100% Original</p>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                                {/* Right Column: Image with Direct YouTube Video Glow / Ambient Flare */}
+                                                <div className="order-1 lg:order-2 lg:col-span-6 relative h-[240px] sm:h-[360px] lg:h-[480px] p-4 sm:p-8 lg:p-12 flex items-center justify-center">
+                                                    <div className="relative w-full h-full max-w-[500px] flex items-center justify-center">
+                                                        {/* Ambient Flare behind Image */}
+                                                        <div
+                                                            aria-hidden="true"
+                                                            className="absolute -inset-3 sm:-inset-6 rounded-2xl overflow-hidden pointer-events-none blur-2xl sm:blur-3xl opacity-65 sm:opacity-80 scale-105 sm:scale-110 saturate-150 transform-gpu transition-all duration-700"
+                                                        >
+                                                            <img
+                                                                src={banner.image}
+                                                                alt=""
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        </div>
 
-                                            {/* Right Column: Image with Direct YouTube Video Glow / Ambient Flare */}
-                                            <div className="order-1 lg:order-2 lg:col-span-6 relative h-[240px] sm:h-[360px] lg:h-[480px] p-4 sm:p-8 lg:p-12 flex items-center justify-center">
-                                                <div className="relative w-full h-full max-w-[500px] flex items-center justify-center">
-                                                    {/* Ambient Flare behind Image (Directly duplicate blurred photo, like YouTube Ambient Mode) */}
-                                                    <div
-                                                        aria-hidden="true"
-                                                        className="absolute -inset-3 sm:-inset-6 rounded-2xl overflow-hidden pointer-events-none blur-2xl sm:blur-3xl opacity-65 sm:opacity-80 scale-105 sm:scale-110 saturate-150 transform-gpu transition-all duration-700"
-                                                    >
-                                                        <img
-                                                            src={banner.image}
-                                                            alt=""
-                                                            className="w-full h-full object-cover"
-                                                        />
-                                                    </div>
-
-                                                    {/* Crisp Main Image Card */}
-                                                    <div className="relative z-10 w-full h-full rounded-xl sm:rounded-2xl overflow-hidden border border-white/60 dark:border-white/10 bg-background shadow-xl">
-                                                        <img
-                                                            src={banner.image}
-                                                            alt={banner.title}
-                                                            className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
-                                                        />
-                                                        {/* Subtle gradient vignette on image bottom */}
-                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent pointer-events-none" />
+                                                        {/* Crisp Main Image Card */}
+                                                        <div className="relative z-10 w-full h-full rounded-xl sm:rounded-2xl overflow-hidden border border-white/60 dark:border-white/10 bg-background shadow-xl">
+                                                            <img
+                                                                src={banner.image}
+                                                                alt={banner.title}
+                                                                className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                                                            />
+                                                            {/* Subtle gradient vignette on image bottom */}
+                                                            <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent pointer-events-none" />
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    );
-                                })}
+                                    ))}
+                                </div>
                             </div>
 
-                            {/* Prev / Next Slide Arrows (Hover on Desktop) */}
+                            {/* Prev / Next Slide Arrows (Desktop & Interactive) */}
                             <button
                                 type="button"
-                                onClick={() => setActiveSlide((prev) => (prev - 1 + banners.length) % banners.length)}
+                                onClick={() => heroApi?.scrollPrev()}
                                 aria-label="Slide Sebelumnya"
                                 className="hidden lg:flex items-center justify-center absolute left-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-background/80 hover:bg-background text-[#4A070B] dark:text-[#E8D0BA] border border-border/70 shadow-md backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity z-20 cursor-pointer"
                             >
@@ -510,7 +334,7 @@ export default function Home({
                             </button>
                             <button
                                 type="button"
-                                onClick={() => setActiveSlide((prev) => (prev + 1) % banners.length)}
+                                onClick={() => heroApi?.scrollNext()}
                                 aria-label="Slide Berikutnya"
                                 className="hidden lg:flex items-center justify-center absolute right-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-background/80 hover:bg-background text-[#4A070B] dark:text-[#E8D0BA] border border-border/70 shadow-md backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity z-20 cursor-pointer"
                             >
@@ -525,7 +349,7 @@ export default function Home({
                                     <button
                                         key={b.id}
                                         type="button"
-                                        onClick={() => setActiveSlide(i)}
+                                        onClick={() => heroApi?.scrollTo(i)}
                                         aria-label={`Slide ${i + 1}`}
                                         className={`h-2 sm:h-2.5 rounded-full transition-all duration-500 cursor-pointer ${activeSlide === i
                                                 ? 'w-7 sm:w-8 bg-[#4A070B] dark:bg-[#D4A373] shadow-xs'
@@ -637,27 +461,11 @@ export default function Home({
                                 </h2>
                             </div>
 
-                            <div
-                                className="relative group/voucher"
-                                onMouseEnter={() => {
-                                    isVoucherHoveredRef.current = true;
-                                }}
-                                onMouseLeave={() => {
-                                    isVoucherHoveredRef.current = false;
-                                    lastTimeRef.current = null;
-                                }}
-                                onTouchStart={() => {
-                                    isVoucherHoveredRef.current = true;
-                                }}
-                                onTouchEnd={() => {
-                                    isVoucherHoveredRef.current = false;
-                                    lastTimeRef.current = null;
-                                }}
-                            >
+                            <div className="relative group/voucher">
                                 <Button
                                     variant="outline"
                                     size="icon"
-                                    onClick={() => scrollSlider(voucherSliderRef, -1, 320)}
+                                    onClick={() => voucherApi?.scrollPrev()}
                                     aria-label="Scroll left"
                                     className="absolute -left-3.5 top-1/2 -translate-y-1/2 z-20 rounded-full shadow-md bg-background/90 hover:bg-background hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer opacity-0 pointer-events-none group-hover/voucher:opacity-100 group-hover/voucher:pointer-events-auto"
                                 >
@@ -666,27 +474,29 @@ export default function Home({
                                     </svg>
                                 </Button>
 
-                                <div
-                                    ref={voucherSliderRef}
-                                    onScroll={handleVoucherScroll}
-                                    className="flex items-stretch gap-3 sm:gap-4 overflow-x-auto pb-3 no-scrollbar"
-                                >
-                                    {repeatedVouchers.map((vouch, idx) => (
-                                        <VoucherCard
-                                            key={`${vouch.code}-${idx}`}
-                                            voucher={vouch}
-                                            isCopied={copiedCodes[vouch.code]}
-                                            onCopy={handleCopyCode}
-                                            onSelect={setSelectedVoucher}
-                                            className="w-[calc((100%-12px)/1.5)] sm:w-[calc((100%-24px)/2.2)] lg:w-[calc((100%-40px)/3.5)] shrink-0 snap-start"
-                                        />
-                                    ))}
+                                <div ref={voucherRef} className="overflow-hidden pb-3">
+                                    <div className="flex gap-3 sm:gap-4">
+                                        {activeVouchers.map((vouch, idx) => (
+                                            <div
+                                                key={`${vouch.code}-${idx}`}
+                                                className="w-[calc((100%-12px)/1.3)] sm:w-[calc((100%-24px)/2.2)] lg:w-[calc((100%-40px)/3.5)] shrink-0 min-w-0"
+                                            >
+                                                <VoucherCard
+                                                    voucher={vouch}
+                                                    isCopied={copiedCodes[vouch.code]}
+                                                    onCopy={handleCopyCode}
+                                                    onSelect={setSelectedVoucher}
+                                                    className="w-full h-full"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
 
                                 <Button
                                     variant="outline"
                                     size="icon"
-                                    onClick={() => scrollSlider(voucherSliderRef, 1, 320)}
+                                    onClick={() => voucherApi?.scrollNext()}
                                     aria-label="Scroll right"
                                     className="absolute -right-3.5 top-1/2 -translate-y-1/2 z-20 rounded-full shadow-md bg-background/90 hover:bg-background hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer opacity-0 pointer-events-none group-hover/voucher:opacity-100 group-hover/voucher:pointer-events-auto"
                                 >
@@ -728,7 +538,7 @@ export default function Home({
                 </div>
 
                 {/* 7. PRODUK DENGAN DISKON (FULL-WIDTH SECTION SLIDER) */}
-                {repeatedDiscountedProducts.length > 0 && (
+                {discountedProducts.length > 0 && (
                     <section
                         id="discounts"
                         className="w-full bg-gradient-to-br from-[#4A070B] via-[#52090F] to-[#360407] border-y border-[#360407] py-8 sm:py-12"
@@ -751,27 +561,11 @@ export default function Home({
                                 </Button>
                             </div>
 
-                            <div
-                                className="relative group/deal"
-                                onMouseEnter={() => {
-                                    isDiscountHoveredRef.current = true;
-                                }}
-                                onMouseLeave={() => {
-                                    isDiscountHoveredRef.current = false;
-                                    lastDiscountTimeRef.current = null;
-                                }}
-                                onTouchStart={() => {
-                                    isDiscountHoveredRef.current = true;
-                                }}
-                                onTouchEnd={() => {
-                                    isDiscountHoveredRef.current = false;
-                                    lastDiscountTimeRef.current = null;
-                                }}
-                            >
+                            <div className="relative group/deal">
                                 <Button
                                     variant="outline"
                                     size="icon"
-                                    onClick={() => scrollSlider(discountSliderRef, -1, 220)}
+                                    onClick={() => discountApi?.scrollPrev()}
                                     aria-label="Scroll left"
                                     className="absolute -left-2 sm:-left-3.5 top-1/2 -translate-y-1/2 z-20 rounded-full shadow-md bg-white/95 text-neutral-900 hover:bg-white hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer opacity-0 pointer-events-none group-hover/deal:opacity-100 group-hover/deal:pointer-events-auto border-none"
                                 >
@@ -780,28 +574,30 @@ export default function Home({
                                     </svg>
                                 </Button>
 
-                                <div
-                                    ref={discountSliderRef}
-                                    onScroll={handleDiscountScroll}
-                                    className="flex items-stretch gap-4 overflow-x-auto pb-3 no-scrollbar"
-                                >
-                                    {repeatedDiscountedProducts.map((p, idx) => (
-                                        <ProductCard
-                                            key={`${p.id}-${idx}`}
-                                            product={p}
-                                            isWishlisted={wishlistedIds.includes(p.id)}
-                                            onToggleWishlist={toggleWishlist}
-                                            onQuickView={openQuickView}
-                                            darkTheme
-                                            className="w-[calc((100%-16px)/2.2)] sm:w-[calc((100%-32px)/3.5)] lg:w-[calc((100%-72px)/5.5)] shrink-0"
-                                        />
-                                    ))}
+                                <div ref={discountRef} className="overflow-hidden pb-3">
+                                    <div className="flex gap-4">
+                                        {discountedProducts.map((p, idx) => (
+                                            <div
+                                                key={`${p.id}-${idx}`}
+                                                className="w-[calc((100%-16px)/2.2)] sm:w-[calc((100%-32px)/3.5)] lg:w-[calc((100%-72px)/5.5)] shrink-0 min-w-0"
+                                            >
+                                                <ProductCard
+                                                    product={p}
+                                                    isWishlisted={wishlistedIds.includes(p.id)}
+                                                    onToggleWishlist={toggleWishlist}
+                                                    onQuickView={openQuickView}
+                                                    darkTheme
+                                                    className="w-full h-full"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
 
                                 <Button
                                     variant="outline"
                                     size="icon"
-                                    onClick={() => scrollSlider(discountSliderRef, 1, 220)}
+                                    onClick={() => discountApi?.scrollNext()}
                                     aria-label="Scroll right"
                                     className="absolute -right-2 sm:-right-3.5 top-1/2 -translate-y-1/2 z-20 rounded-full shadow-md bg-white/95 text-neutral-900 hover:bg-white hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer opacity-0 pointer-events-none group-hover/deal:opacity-100 group-hover/deal:pointer-events-auto border-none"
                                 >
