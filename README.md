@@ -157,7 +157,7 @@ Di Xcode:
 
 1. Pilih target **App** → tab **Signing & Capabilities**.
 2. Pilih **Team** dari akun Apple Developer Program berbayar. Tim "Personal Team" (akun gratis) hanya bisa run ke device sendiri dan tidak bisa upload.
-3. Pastikan **Bundle Identifier** sama dengan yang didaftarkan di App Store Connect (default `com.aromapalace.app`).
+3. Pastikan **Bundle Identifier** = `id.aromapalace.app` (sama dengan App ID di App Store Connect). Android tetap memakai package `com.aromapalace.app`.
 4. Run ke simulator atau iPhone untuk tes.
 
 Upload ke App Store:
