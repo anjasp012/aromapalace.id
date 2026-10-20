@@ -16,6 +16,8 @@
         "@capacitor/app": "^8.1.2",
         "@capacitor/cli": "^8.5.3",
         "@capacitor/core": "^8.5.3",
+        "@capacitor/splash-screen": "^8.0.2",
+        "@capacitor/status-bar": "^8.0.4",
         "@inertiajs/react": "^3.0.0",
         "@inertiajs/vite": "^3.0.0",
         "@tailwindcss/vite": "^4.1.11",

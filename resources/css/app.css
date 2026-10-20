@@ -105,6 +105,31 @@
     }
     body {
         @apply bg-background text-foreground antialiased;
+        /* Native app: no bounce scroll on iOS */
+        overscroll-behavior: none;
+        -webkit-overscroll-behavior: none;
+        /* Hide scrollbar visually */
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    body::-webkit-scrollbar {
+        display: none;
+    }
+    /* Native app feel: no text selection on interactive elements */
+    * {
+        -webkit-tap-highlight-color: transparent;
+        -webkit-touch-callout: none;
+        caret-color: #4A070B;
+    }
+    /* Disable text selection everywhere except input fields */
+    *:not(input):not(textarea):not([contenteditable]) {
+        -webkit-user-select: none;
+        user-select: none;
+    }
+    /* Allow text selection in input/textarea */
+    input, textarea, [contenteditable] {
+        -webkit-user-select: text;
+        user-select: text;
     }
     ::selection {
         background-color: #4A070B;
@@ -114,8 +139,19 @@
         background-color: #4A070B;
         color: #FFFFFF;
     }
-    * {
-        caret-color: #4A070B;
+    /* No cursor on mobile (native-like) */
+    @media (pointer: coarse) {
+        * {
+            cursor: none !important;
+        }
+        a, button, [role="button"], label, select {
+            cursor: default !important;
+        }
+    }
+    /* Smooth momentum scroll on scrollable areas */
+    [data-scroll], .overflow-y-auto, .overflow-y-scroll, .overflow-x-auto, .overflow-x-scroll, .overflow-auto {
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
     }
 }
 
@@ -140,4 +176,42 @@ input[type=number]::-webkit-outer-spin-button {
 }
 input[type=number] {
     -moz-appearance: textfield;
+}
+
+/* ========================
+   NATIVE APP SPECIFIC STYLES
+   Applied when running inside Capacitor / PWA
+   ======================== */
+
+/* Respect device safe area (notch, home bar) */
+html.native-app body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Hide all scrollbars globally inside native app */
+html.native-app * {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+html.native-app *::-webkit-scrollbar {
+    display: none;
+}
+
+/* Prevent image dragging (native images aren't draggable) */
+html.native-app img {
+    -webkit-user-drag: none;
+    user-drag: none;
+    pointer-events: none;
+}
+/* But allow clicking through images on links */
+html.native-app a img,
+html.native-app button img {
+    pointer-events: auto;
+}
+
+/* Smooth page transitions for native feel */
+html.native-app #app {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Aroma Palace Brand Colors -->
+    <color name="colorPrimary">#4A070B</color>
+    <color name="colorPrimaryDark">#360407</color>
+    <color name="colorAccent">#C9973A</color>
+    <!-- Navigation bar & splash background -->
+    <color name="colorBackground">#4A070B</color>
+</resources>

@@ -1062,13 +1062,13 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
             </header>
 
             {/* Main Content Area */}
-            <main className={`flex-1 ${shouldShowBottomNav && !showFooter ? 'pb-16 md:pb-0' : ''}`}>
+            <main className={`flex-1 ${shouldShowBottomNav ? 'pb-20 md:pb-0' : ''}`}>
                 {children}
             </main>
 
             {/* Modern Clean Footer with Rich Burgundy Gradient matching Produk Diskon */}
             {showFooter && (
-                <footer className={`bg-gradient-to-br from-[#4A070B] via-[#52090F] to-[#360407] text-white/80 border-t border-[#360407] mt-12 sm:mt-16 ${shouldShowBottomNav ? 'pb-20 md:pb-0' : ''}`}>
+                <footer className="hidden md:block bg-gradient-to-br from-[#4A070B] via-[#52090F] to-[#360407] text-white/80 border-t border-[#360407] mt-12 sm:mt-16">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-14">
                         <div className="grid grid-cols-2 lg:grid-cols-12 gap-8 pb-8 sm:pb-10 border-b border-white/10">
                             {/* Baris 1 di Mobile / Col 1 di Desktop: Brand Info */}
