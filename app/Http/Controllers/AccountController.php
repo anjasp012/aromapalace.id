@@ -6,7 +6,10 @@ use App\Models\Order;
 use App\Services\MembershipService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -126,5 +129,41 @@ class AccountController extends Controller
         ]);
 
         return back()->with('success', 'Kata sandi akun Anda berhasil diperbarui.');
+    }
+
+    /**
+     * Delete the customer account (required by App Store guideline 5.1.1(v)).
+     *
+     * Personal data is removed and the user record is anonymized, so past
+     * orders stay intact for the store's transaction records.
+     */
+    public function destroy(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'password' => ['required', 'current_password'],
+        ]);
+
+        $user = $request->user();
+
+        DB::transaction(function () use ($user) {
+            $user->wishlists()->delete();
+            $user->cartItems()->delete();
+            $user->searchHistories()->delete();
+            $user->deviceTokens()->delete();
+            $user->membership()->delete();
+
+            $user->forceFill([
+                'name' => 'Akun Dihapus',
+                'email' => 'deleted-'.$user->id.'-'.Str::random(12).'@deleted.aromapalace.id',
+                'password' => Hash::make(Str::random(40)),
+                'remember_token' => null,
+            ])->save();
+        });
+
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('home')->with('success', 'Akun Anda telah dihapus.');
     }
 }

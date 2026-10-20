@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\FlushesCatalogCache;
 use Database\Factories\ArticleFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 class Article extends Model
 {
     /** @use HasFactory<ArticleFactory> */
-    use HasFactory;
+    use FlushesCatalogCache, HasFactory;
 
     protected $guarded = ['id'];
 }

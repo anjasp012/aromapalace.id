@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\FlushesCatalogCache;
 use Carbon\Carbon;
 use Database\Factories\VoucherFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -52,7 +53,7 @@ use Illuminate\Support\Facades\Cache;
 class Voucher extends Model
 {
     /** @use HasFactory<VoucherFactory> */
-    use HasFactory;
+    use FlushesCatalogCache, HasFactory;
 
     /**
      * The "booted" method of the model.

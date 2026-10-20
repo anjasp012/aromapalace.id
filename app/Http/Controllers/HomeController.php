@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\Voucher;
 use App\Services\CatalogService;
+use App\Support\CatalogCache;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -17,6 +18,16 @@ class HomeController extends Controller
      * Display the Aroma Palace home showcase page.
      */
     public function index(): Response
+    {
+        return Inertia::render('home', CatalogCache::remember('home', fn () => $this->homeData()));
+    }
+
+    /**
+     * Build the home page props from the database.
+     *
+     * @return array<string, mixed>
+     */
+    protected function homeData(): array
     {
         // 1. Popular Products from DB (ordered by reviews or highest rating)
         $popularProducts = Product::with([
@@ -171,7 +182,7 @@ class HomeController extends Controller
             ->values()
             ->all();
 
-        return Inertia::render('home', [
+        return [
             'popularProducts' => $popularProducts,
             'discountedProducts' => $discountedProducts,
             'recommendedProducts' => $recommendedProducts,
@@ -185,6 +196,6 @@ class HomeController extends Controller
                 'concentration' => '30% Extrait',
                 'rating' => '4.9/5.0',
             ],
-        ]);
+        ];
     }
 }

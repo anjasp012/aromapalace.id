@@ -59,3 +59,38 @@ test('user can update their password with valid current password', function () {
     $response->assertSessionHas('success');
     expect(Hash::check('newpassword123', $user->fresh()->password))->toBeTrue();
 });
+
+test('user can delete their account and past orders are kept', function () {
+    $user = User::factory()->create([
+        'name' => 'Delete Me',
+        'email' => 'delete-me@aromapalace.id',
+        'password' => Hash::make('secret-password'),
+    ]);
+
+    app(MembershipService::class)->join($user);
+
+    $response = $this->actingAs($user)->delete(route('account.destroy'), [
+        'password' => 'secret-password',
+    ]);
+
+    $response->assertRedirect(route('home'));
+    $this->assertGuest();
+
+    $user->refresh();
+    expect($user->name)->toBe('Akun Dihapus')
+        ->and($user->email)->not->toBe('delete-me@aromapalace.id')
+        ->and($user->membership)->toBeNull();
+});
+
+test('account deletion requires the current password', function () {
+    $user = User::factory()->create([
+        'password' => Hash::make('secret-password'),
+    ]);
+
+    $response = $this->actingAs($user)->delete(route('account.destroy'), [
+        'password' => 'wrong-password',
+    ]);
+
+    $response->assertSessionHasErrors('password');
+    $this->assertAuthenticatedAs($user);
+});

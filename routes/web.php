@@ -70,6 +70,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/account', [AccountController::class, 'index'])->name('account.index');
         Route::patch('/account/profile', [AccountController::class, 'updateProfile'])->name('account.profile.update');
         Route::patch('/account/password', [AccountController::class, 'updatePassword'])->name('account.password.update');
+        Route::delete('/account', [AccountController::class, 'destroy'])->name('account.destroy');
         Route::get('/account/orders', [OrderController::class, 'index'])->name('account.orders');
         Route::post('/membership/join', [MembershipController::class, 'join'])->name('membership.join');
         Route::post('/membership/redeem/{reward}', [MembershipController::class, 'redeem'])->name('membership.redeem');

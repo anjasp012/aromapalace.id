@@ -47,7 +47,7 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
             ],
-            'header_vouchers' => fn () => Cache::rememberForever('active_header_vouchers', function () {
+            'header_vouchers' => fn () => Cache::remember('active_header_vouchers', 600, function () {
                 return Voucher::query()
                     ->where('is_active', true)
                     ->where(function ($q) {

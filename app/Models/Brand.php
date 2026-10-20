@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\FlushesCatalogCache;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -23,7 +24,7 @@ use Illuminate\Support\Carbon;
 #[Fillable(['name', 'slug', 'thumbnail', 'description', 'description_en'])]
 class Brand extends Model
 {
-    use HasFactory;
+    use FlushesCatalogCache, HasFactory;
 
     /**
      * @return HasMany<Product, $this>
