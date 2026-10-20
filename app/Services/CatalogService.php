@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Product;
+use App\Support\CatalogCache;
 
 class CatalogService
 {
@@ -27,11 +28,11 @@ class CatalogService
      */
     public static function all(): array
     {
-        return Product::with(static::$eagerRelations)
+        return CatalogCache::remember('products:all', fn () => Product::with(static::$eagerRelations)
             ->orderBy('id')
             ->get()
             ->map(fn (Product $p) => static::formatProduct($p))
-            ->all();
+            ->all());
     }
 
     /**
@@ -53,12 +54,14 @@ class CatalogService
      */
     public static function findBySlug(string $slug): ?array
     {
-        $product = Product::with(static::$eagerRelations)
-            ->where('slug', $slug)
-            ->orWhere('id', is_numeric($slug) ? (int) $slug : 0)
-            ->first();
+        return CatalogCache::remember('products:slug:'.md5($slug), function () use ($slug) {
+            $product = Product::with(static::$eagerRelations)
+                ->where('slug', $slug)
+                ->orWhere('id', is_numeric($slug) ? (int) $slug : 0)
+                ->first();
 
-        return $product ? static::formatProduct($product) : null;
+            return $product ? static::formatProduct($product) : null;
+        });
     }
 
     /**

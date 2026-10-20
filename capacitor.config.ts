@@ -1,49 +1,61 @@
 import type { CapacitorConfig } from '@capacitor/cli';
+import { writeFileSync } from 'node:fs';
+
+/**
+ * The app is a native shell (iOS & Android) around the live Laravel website.
+ * Change the site URL with: CAP_SERVER_URL=https://aromapalace.id npx cap sync
+ */
+const serverUrl = process.env.CAP_SERVER_URL || 'https://demo-aromapalace.gagasan.tech';
+
+// The offline page reads this to know where "Coba Lagi" should go.
+writeFileSync('mobile/www/server-url.js', `window.APP_SERVER_URL = ${JSON.stringify(serverUrl)};\n`);
 
 const config: CapacitorConfig = {
   appId: 'com.aromapalace.app',
   appName: 'Aroma Palace',
-  webDir: 'public',
+  // Local fallback pages only (offline screen). The real content comes from serverUrl.
+  webDir: 'mobile/www',
+  // Lets the website detect the app via the User-Agent if ever needed.
+  appendUserAgent: 'AromaPalaceApp',
+  backgroundColor: '#4A070B',
   server: {
-    // Ganti dengan URL domain live website kamu:
-    // CONTOH LIVE: 'https://aromapalace.id'
-    // CONTOH LOKAL (Android Emulator): 'http://10.0.2.2:8000'
-    // CONTOH LOKAL (HP fisik 1 Wi-Fi): 'http://192.168.1.xxx:8000'
-    url: 'https://demo-aromapalace.gagasan.tech',
-    cleartext: true, // Mengizinkan http:// jika masih pengujian lokal
+    url: serverUrl,
+    // Shown by the WebView when the site cannot be loaded (no internet, server down).
+    errorPath: 'offline.html',
+    cleartext: serverUrl.startsWith('http://'),
+    // Only the shop's own domains stay inside the app. WhatsApp, maps and other
+    // external links open in their native apps / system browser.
     allowNavigation: [
+      new URL(serverUrl).hostname,
       'aromapalace.id',
       '*.aromapalace.id',
-      'wa.me',
-      'api.whatsapp.com',
-      '*.google.com'
-    ]
+    ],
+  },
+  ios: {
+    // Safe areas (notch, home bar) are handled in CSS: html.native-app body in resources/css/app.css.
+    contentInset: 'never',
+    scrollEnabled: true,
+    limitsNavigationsToAppBoundDomains: false,
+  },
+  android: {
+    allowMixedContent: false,
   },
   plugins: {
     SplashScreen: {
-      // Durasi tampil splash screen (ms) sebelum di-hide
-      launchShowDuration: 2500,
-      // Tetap tampil sampai secara manual di-hide via JS
+      // Hidden from JS (resources/js/lib/native-app.ts) once the first page is painted.
       launchAutoHide: false,
-      // Warna background saat splash (harus sama dengan warna splash image)
+      launchShowDuration: 8000,
       backgroundColor: '#4A070B',
-      // Android: gunakan splash.png di drawable
       androidSplashResourceName: 'splash',
-      // Splash mengisi penuh layar (full screen)
+      androidScaleType: 'CENTER_CROP',
       splashFullScreen: true,
-      // Sembunyikan status bar saat splash
       splashImmersive: true,
-      // Animasi fade-out saat splash selesai
       showSpinner: false,
-      // Durasi fade-out (ms)
-      fadeOutDuration: 400,
     },
     StatusBar: {
-      // Style teks status bar: DARK (teks hitam) atau LIGHT (teks putih)
-      style: 'LIGHT',
-      // Warna background status bar (Android M+)
+      // DARK = white text, for the burgundy bar.
+      style: 'DARK',
       backgroundColor: '#4A070B',
-      // Status bar overlay di atas konten (false = ada ruang untuk status bar)
       overlaysWebView: false,
     },
   },

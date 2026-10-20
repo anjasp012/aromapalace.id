@@ -26,6 +26,7 @@ import {
     User,
     Info,
     Store,
+    Trash2,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 
@@ -71,6 +72,10 @@ export default function AccountPage({
     const [editProfileOpen, setEditProfileOpen] = useState(false);
     const [changePasswordOpen, setChangePasswordOpen] = useState(false);
     const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+    const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
+    const [deletePassword, setDeletePassword] = useState('');
+    const [deleteError, setDeleteError] = useState<string | null>(null);
+    const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
     // Profile form state
     const [editName, setEditName] = useState(user.name || '');
@@ -97,6 +102,20 @@ export default function AccountPage({
 
     // Active in-progress orders (Diproses + Dikirim)
     const activeOrdersCount = (order_counts.diproses || 0) + (order_counts.dikirim || 0);
+
+    const handleDeleteAccount = (e: React.FormEvent) => {
+        e.preventDefault();
+        setDeleteError(null);
+
+        setIsDeletingAccount(true);
+        router.delete('/account', {
+            data: { password: deletePassword },
+            onError: (errors) => {
+                setDeleteError(errors.password || (isEn ? 'Failed to delete account.' : 'Gagal menghapus akun.'));
+            },
+            onFinish: () => setIsDeletingAccount(false),
+        });
+    };
 
     const handleUpdateProfile = (e: React.FormEvent) => {
         e.preventDefault();
@@ -449,6 +468,14 @@ export default function AccountPage({
                             <LogOut className="w-4 h-4" />
                             <span>{t('account.logout')}</span>
                         </Button>
+                        <button
+                            type="button"
+                            onClick={() => setDeleteAccountOpen(true)}
+                            className="w-full mt-3 text-[11px] font-medium text-muted-foreground hover:text-destructive transition cursor-pointer flex items-center justify-center gap-1.5"
+                        >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>{t('account.delete_account')}</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -685,6 +712,69 @@ export default function AccountPage({
                             {t('account.confirm_logout')}
                         </Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            {/* MODAL 5: HAPUS AKUN */}
+            <Dialog
+                open={deleteAccountOpen}
+                onOpenChange={(open) => {
+                    setDeleteAccountOpen(open);
+                    if (!open) {
+                        setDeletePassword('');
+                        setDeleteError(null);
+                    }
+                }}
+            >
+                <DialogContent className="w-[calc(100vw-32px)] max-w-sm p-5 sm:p-6 rounded-2xl">
+                    <form onSubmit={handleDeleteAccount}>
+                        <DialogHeader className="text-left space-y-2">
+                            <DialogTitle className="text-base font-bold text-destructive">
+                                {t('account.delete_confirm_title')}
+                            </DialogTitle>
+                            <DialogDescription className="text-xs text-muted-foreground leading-relaxed">
+                                {t('account.delete_confirm_desc')}
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        {deleteError && (
+                            <div className="mt-3 p-3 rounded-xl bg-destructive/10 text-destructive text-xs font-medium">
+                                {deleteError}
+                            </div>
+                        )}
+
+                        <div className="mt-4">
+                            <Input
+                                type="password"
+                                value={deletePassword}
+                                onChange={(e) => setDeletePassword(e.target.value)}
+                                placeholder={t('account.delete_password_placeholder')}
+                                autoComplete="current-password"
+                                required
+                                className="text-sm rounded-xl"
+                            />
+                        </div>
+
+                        <DialogFooter className="flex flex-row justify-end gap-2 pt-4">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setDeleteAccountOpen(false)}
+                                className="cursor-pointer rounded-xl"
+                            >
+                                {t('common.cancel')}
+                            </Button>
+                            <Button
+                                type="submit"
+                                size="sm"
+                                variant="destructive"
+                                disabled={isDeletingAccount || !deletePassword}
+                                className="cursor-pointer rounded-xl"
+                            >
+                                {isDeletingAccount ? t('account.deleting') : t('account.confirm_delete')}
+                            </Button>
+                        </DialogFooter>
+                    </form>
                 </DialogContent>
             </Dialog>
         </Layout>

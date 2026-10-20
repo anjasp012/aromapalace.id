@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\FlushesCatalogCache;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Collection;
@@ -44,7 +45,7 @@ use Illuminate\Support\Carbon;
 class Product extends Model
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory;
+    use FlushesCatalogCache, HasFactory;
 
     /**
      * @return array<string, string>

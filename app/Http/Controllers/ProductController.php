@@ -6,6 +6,7 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use App\Services\CatalogService;
+use App\Support\CatalogCache;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -16,6 +17,24 @@ class ProductController extends Controller
      * Display the perfume catalog with filterable scent families.
      */
     public function index(Request $request): Response
+    {
+        $filters = $request->only([
+            'search', 'q', 'category', 'brand', 'price', 'price_tier', 'min_price', 'min',
+            'max_price', 'max', 'rating', 'min_rating', 'discount', 'promo', 'sort', 'sortBy',
+        ]);
+
+        return Inertia::render('products', CatalogCache::remember(
+            'products:index:'.CatalogCache::hash($filters),
+            fn () => $this->productIndexData($request),
+        ));
+    }
+
+    /**
+     * Build the product listing props for the given filters.
+     *
+     * @return array<string, mixed>
+     */
+    protected function productIndexData(Request $request): array
     {
         $query = Product::with([
             'variants',
@@ -107,7 +126,7 @@ class ProductController extends Controller
             Brand::orderBy('name')->pluck('name')->all()
         )));
 
-        return Inertia::render('products', [
+        return [
             'fragrances' => $fragrances,
             'categories' => $categories,
             'brands' => $brands,
@@ -125,7 +144,7 @@ class ProductController extends Controller
                 'sortBy' => $sortBy,
             ],
             'totalCount' => count($fragrances),
-        ]);
+        ];
     }
 
     /**
