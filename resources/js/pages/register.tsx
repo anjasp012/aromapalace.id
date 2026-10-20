@@ -4,12 +4,14 @@ import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
+import { useTranslation } from '@/lib/i18n';
 
 interface RegisterProps {
     status?: string;
 }
 
 export default function Register({ status }: RegisterProps) {
+    const { t } = useTranslation();
     const [showPassword, setShowPassword] = useState(false);
 
     const { data, setData, post, processing, errors } = useForm({
@@ -25,17 +27,17 @@ export default function Register({ status }: RegisterProps) {
 
     return (
         <Layout>
-            <Head title="Daftar Akun Baru - Aroma Palace" />
+            <Head title={`${t('auth.register_title')} - Aroma Palace`} />
 
             <div className="min-h-[75vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background via-muted/20 to-background">
                 <div className="w-full max-w-md space-y-6">
                     {/* Header */}
                     <div className="text-center space-y-2">
                         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-sans">
-                            Daftar Akun Baru
+                            {t('auth.register_title')}
                         </h1>
                         <p className="text-xs sm:text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
-                            Bergabunglah untuk menikmati koleksi wewangian mewah dan kemudahan berbelanja di Aroma Palace.
+                            {t('auth.register_subtitle')}
                         </p>
                     </div>
 
@@ -52,12 +54,12 @@ export default function Register({ status }: RegisterProps) {
                                 {/* Name */}
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-semibold text-foreground block">
-                                        Nama Lengkap
+                                        {t('auth.full_name')}
                                     </label>
                                     <Input
                                         type="text"
                                         name="name"
-                                        placeholder="Nama Lengkap Anda"
+                                        placeholder={t('auth.full_name_placeholder')}
                                         value={data.name}
                                         onChange={(e) => setData('name', e.target.value)}
                                         className="h-10 text-xs shadow-none border-border/80 focus-visible:ring-1 focus-visible:ring-[#4A070B] focus-visible:border-[#4A070B]"
@@ -72,12 +74,12 @@ export default function Register({ status }: RegisterProps) {
                                 {/* Email */}
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-semibold text-foreground block">
-                                        Alamat Email
+                                        {t('auth.email')}
                                     </label>
                                     <Input
                                         type="email"
                                         name="email"
-                                        placeholder="nama@email.com"
+                                        placeholder={t('auth.email_placeholder')}
                                         value={data.email}
                                         onChange={(e) => setData('email', e.target.value)}
                                         className="h-10 text-xs shadow-none border-border/80 focus-visible:ring-1 focus-visible:ring-[#4A070B] focus-visible:border-[#4A070B]"
@@ -91,13 +93,13 @@ export default function Register({ status }: RegisterProps) {
                                 {/* Password */}
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-semibold text-foreground block">
-                                        Kata Sandi
+                                        {t('auth.password')}
                                     </label>
                                     <div className="relative">
                                         <Input
                                             type={showPassword ? 'text' : 'password'}
                                             name="password"
-                                            placeholder="Minimal 6 karakter"
+                                            placeholder={t('auth.password_min')}
                                             value={data.password}
                                             onChange={(e) => setData('password', e.target.value)}
                                             className="h-10 text-xs pr-10 shadow-none border-border/80 focus-visible:ring-1 focus-visible:ring-[#4A070B] focus-visible:border-[#4A070B]"
@@ -109,7 +111,7 @@ export default function Register({ status }: RegisterProps) {
                                             className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground text-xs cursor-pointer"
                                             tabIndex={-1}
                                         >
-                                            {showPassword ? 'Tutup' : 'Lihat'}
+                                            {showPassword ? t('auth.hide') : t('auth.show')}
                                         </button>
                                     </div>
                                     {errors.password && (
@@ -123,17 +125,17 @@ export default function Register({ status }: RegisterProps) {
                                     disabled={processing}
                                     className="w-full h-10.5 rounded-md bg-[#4A070B] hover:bg-[#360407] text-white text-xs font-bold uppercase tracking-wider shadow-none transition cursor-pointer mt-2"
                                 >
-                                    {processing ? 'Mendaftarkan...' : 'Daftar Sekarang'}
+                                    {processing ? t('auth.registering') : t('auth.register_button')}
                                 </Button>
 
                                 {/* Login Link */}
                                 <p className="text-center text-xs text-muted-foreground pt-2">
-                                    Sudah memiliki akun?{' '}
+                                    {t('auth.have_account')}{' '}
                                     <Link
                                         href="/login"
                                         className="text-[#4A070B] font-bold"
                                     >
-                                        Masuk Sekarang
+                                        {t('auth.sign_in_link')}
                                     </Link>
                                 </p>
                             </form>

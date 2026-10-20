@@ -56,7 +56,6 @@ interface DashboardProps {
     };
     status_counts: {
         menunggu_pembayaran: number;
-        menunggu_konfirmasi: number;
         diproses: number;
         dikirim: number;
         pengambilan: number;
@@ -82,8 +81,6 @@ export default function AdminDashboard({
                 return <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300"><Truck className="size-3 mr-1" /> {label}</Badge>;
             case 'diproses':
                 return <Badge variant="secondary" className="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300"><Package className="size-3 mr-1" /> Diproses</Badge>;
-            case 'menunggu_konfirmasi':
-                return <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50/50"><Clock className="size-3 mr-1" /> Konfirmasi</Badge>;
             case 'dibatalkan':
                 return <Badge variant="destructive"><XCircle className="size-3 mr-1" /> Dibatalkan</Badge>;
             case 'menunggu_pembayaran':
@@ -140,7 +137,7 @@ export default function AdminDashboard({
                                 {metrics.needs_action_count}
                             </div>
                             <p className="text-xs text-muted-foreground mt-1">
-                                {status_counts.diproses} Perlu Diproses{status_counts.menunggu_konfirmasi > 0 ? ` • ${status_counts.menunggu_konfirmasi} Konfirmasi` : ''}
+                                {status_counts.diproses} Perlu Diproses
                             </p>
                         </CardContent>
                     </Card>
@@ -174,14 +171,7 @@ export default function AdminDashboard({
                                 </Link>
                             </Button>
 
-                            {status_counts.menunggu_konfirmasi > 0 && (
-                                <Button variant="outline" asChild className="h-auto py-2.5 flex-col items-start gap-1 justify-start border-amber-200 dark:border-amber-900 bg-amber-50/30">
-                                    <Link href="/admin/orders?status=menunggu_konfirmasi">
-                                        <span className="text-xs text-amber-700 dark:text-amber-400">Konfirmasi</span>
-                                        <span className="text-base font-bold text-amber-700 dark:text-amber-400">{status_counts.menunggu_konfirmasi}</span>
-                                    </Link>
-                                </Button>
-                            )}
+
 
                             <Button variant="outline" asChild className="h-auto py-2.5 flex-col items-start gap-1 justify-start border-blue-200 dark:border-blue-900 bg-blue-50/30">
                                 <Link href="/admin/orders?status=diproses">
@@ -230,7 +220,7 @@ export default function AdminDashboard({
                                 <CardDescription>Pesanan yang memerlukan verifikasi admin atau persiapan pengiriman.</CardDescription>
                             </div>
                             <Button variant="ghost" size="sm" asChild>
-                                <Link href="/admin/orders?status=menunggu_konfirmasi">
+                                <Link href="/admin/orders?status=diproses">
                                     <span>Lihat Semua</span>
                                     <ChevronRight className="size-4 ml-1" />
                                 </Link>

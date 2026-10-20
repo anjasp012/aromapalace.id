@@ -8,6 +8,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\DeviceTokenController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PakasirWebhookController;
@@ -17,6 +18,8 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\WishlistController;
 use Illuminate\Support\Facades\Route;
+
+Route::match(['get', 'post'], '/locale/{lang?}', [LocaleController::class, 'setLocale'])->name('locale.set');
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');

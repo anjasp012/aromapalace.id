@@ -1,6 +1,7 @@
 import React from 'react';
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Printer } from 'lucide-react';
+import { useTranslation } from '@/lib/i18n';
 
 interface InvoiceItem {
     id: number;
@@ -55,6 +56,8 @@ interface InvoiceProps {
 }
 
 export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
+    const { t, isEn } = useTranslation();
+
     const handlePrint = () => {
         window.print();
     };
@@ -70,7 +73,7 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
                     className="inline-flex items-center gap-2 text-xs font-semibold text-gray-600 hover:text-gray-900 transition-colors"
                 >
                     <ArrowLeft className="w-4 h-4" />
-                    <span>Kembali ke Riwayat Pesanan</span>
+                    <span>{t('invoice.back_to_history')}</span>
                 </Link>
 
                 <div className="flex items-center gap-3">
@@ -80,7 +83,7 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
                         className="inline-flex items-center justify-center gap-2 px-6 py-2 rounded-lg bg-[#FFD100] hover:bg-[#E6BC00] text-gray-950 font-bold text-xs sm:text-sm shadow-xs transition-colors cursor-pointer select-none"
                     >
                         <Printer className="w-4 h-4" />
-                        <span>Unduh</span>
+                        <span>{t('invoice.download_btn')}</span>
                     </button>
                 </div>
             </div>
@@ -94,7 +97,7 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
                             aroma<span className="font-light text-gray-600">palace</span>
                         </div>
                         <div className="text-[11px] text-gray-500 tracking-wider uppercase mt-1 font-medium">
-                            Parfums de Luxe &bull; Boutique Resmi
+                            {t('invoice.official_boutique')}
                         </div>
                     </div>
 
@@ -113,15 +116,15 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
                     {/* Left Column: Penjual */}
                     <div>
                         <div className="text-[10.5px] font-bold text-gray-500 uppercase tracking-wider mb-2">
-                            Diterbitkan Atas Nama
+                            {isEn ? 'Issued By' : 'Diterbitkan Atas Nama'}
                         </div>
                         <div className="space-y-1">
                             <div className="flex">
-                                <span className="text-gray-500 w-20">Penjual:</span>
+                                <span className="text-gray-500 w-20">{t('invoice.seller')}:</span>
                                 <span className="font-bold text-gray-900">{seller.name}</span>
                             </div>
                             <div className="flex">
-                                <span className="text-gray-500 w-20">Butik:</span>
+                                <span className="text-gray-500 w-20">{isEn ? 'Boutique:' : 'Butik:'}</span>
                                 <span className="text-gray-700">{seller.store_name}</span>
                             </div>
                         </div>
@@ -130,15 +133,15 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
                     {/* Right Column: Pembeli & Tanggal */}
                     <div>
                         <div className="text-[10.5px] font-bold text-gray-500 uppercase tracking-wider mb-2">
-                            Ditunjukan Untuk
+                            {isEn ? 'Billed To' : 'Ditujukan Untuk'}
                         </div>
                         <div className="space-y-1">
                             <div className="flex">
-                                <span className="text-gray-500 w-32">Pembeli:</span>
+                                <span className="text-gray-500 w-32">{t('invoice.buyer')}:</span>
                                 <span className="font-bold text-gray-900">{buyer.name}</span>
                             </div>
                             <div className="flex">
-                                <span className="text-gray-500 w-32">Tanggal Pembelian:</span>
+                                <span className="text-gray-500 w-32">{t('invoice.date')}:</span>
                                 <span className="text-gray-900 font-medium">{order.created_at}</span>
                             </div>
                         </div>
@@ -151,10 +154,10 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
                         <table className="w-full text-xs">
                             <thead>
                                 <tr className="bg-gray-100 text-gray-700 font-bold border-y border-gray-200">
-                                    <th className="py-2.5 px-3 text-left font-bold w-1/2">Informasi Pesanan</th>
-                                    <th className="py-2.5 px-3 text-right font-bold">Harga Satuan</th>
-                                    <th className="py-2.5 px-3 text-center font-bold">Kuantitas</th>
-                                    <th className="py-2.5 px-3 text-right font-bold">Subtotal</th>
+                                    <th className="py-2.5 px-3 text-left font-bold w-1/2">{isEn ? 'Order Information' : 'Informasi Pesanan'}</th>
+                                    <th className="py-2.5 px-3 text-right font-bold">{t('invoice.price')}</th>
+                                    <th className="py-2.5 px-3 text-center font-bold">{t('invoice.quantity')}</th>
+                                    <th className="py-2.5 px-3 text-right font-bold">{t('invoice.subtotal')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
@@ -165,7 +168,7 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
                                                 {item.product_name}
                                             </div>
                                             <div className="text-[11px] text-gray-500 mt-0.5">
-                                                {item.variant_name && <span>Varian: {item.variant_name} &bull; </span>}
+                                                {item.variant_name && <span>{isEn ? 'Variant' : 'Varian'}: {item.variant_name} &bull; </span>}
                                                 {item.volume && <span>Volume: {item.volume}</span>}
                                             </div>
                                         </td>
@@ -191,11 +194,11 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0">
                         {order.is_paid ? (
                             <div className="border-[3px] border-emerald-500/35 text-emerald-600/40 font-black text-4xl sm:text-6xl uppercase tracking-[0.25em] px-8 sm:px-12 py-3 rounded-2xl rotate-[-14deg]">
-                                LUNAS
+                                {isEn ? 'PAID' : 'LUNAS'}
                             </div>
                         ) : (
                             <div className="border-[3px] border-rose-500/35 text-rose-600/40 font-black text-4xl sm:text-6xl uppercase tracking-[0.25em] px-8 sm:px-12 py-3 rounded-2xl rotate-[-14deg]">
-                                BELUM LUNAS
+                                {isEn ? 'UNPAID' : 'BELUM LUNAS'}
                             </div>
                         )}
                     </div>
@@ -205,14 +208,14 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
                         {/* Left: Payment Method Info */}
                         <div className="sm:col-span-5 space-y-1">
                             <div className="text-[10.5px] font-bold text-gray-500 uppercase tracking-wider mb-2">
-                                Metode Pembayaran
+                                {t('invoice.payment_method')}
                             </div>
                             <div className="font-bold text-gray-900 text-sm">
                                 {order.payment_channel}
                             </div>
                             <div className="text-[11px] text-gray-500">
-                                Status: <strong className={order.is_paid ? 'text-emerald-700' : 'text-amber-700'}>
-                                    {order.is_paid ? 'Terkonfirmasi Lunas' : 'Menunggu Pembayaran'}
+                                {isEn ? 'Status:' : 'Status:'} <strong className={order.is_paid ? 'text-emerald-700' : 'text-amber-700'}>
+                                    {order.is_paid ? t('invoice.paid') : t('invoice.unpaid')}
                                 </strong>
                             </div>
                         </div>
@@ -220,44 +223,44 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
                         {/* Right: Calculations Breakdown */}
                         <div className="sm:col-span-7 space-y-2">
                             <div className="flex items-center justify-between text-gray-600">
-                                <span>Total Harga ({order.items_count} produk)</span>
+                                <span>{isEn ? `Subtotal (${order.items_count} items)` : `Total Harga (${order.items_count} produk)`}</span>
                                 <span className="font-medium text-gray-900">{order.subtotal_formatted}</span>
                             </div>
 
                             <div className="flex items-center justify-between text-gray-600">
-                                <span>Total Ongkos Kirim</span>
+                                <span>{t('invoice.shipping_cost')}</span>
                                 <span className="font-medium text-gray-900">{order.shipping_cost_formatted}</span>
                             </div>
 
                             <div className="flex items-center justify-between text-gray-600">
-                                <span>Total Asuransi Pengiriman</span>
+                                <span>{isEn ? 'Shipping Insurance' : 'Total Asuransi Pengiriman'}</span>
                                 <span className="font-medium text-gray-900">Rp 0</span>
                             </div>
 
                             {order.discount_amount > 0 && (
                                 <div className="flex items-center justify-between text-emerald-700 font-medium">
-                                    <span>Total Voucher Diskon {order.voucher_code ? `(${order.voucher_code})` : ''}</span>
+                                    <span>{t('invoice.discount')} {order.voucher_code ? `(${order.voucher_code})` : ''}</span>
                                     <span>- {order.discount_amount_formatted}</span>
                                 </div>
                             )}
 
                             <div className="flex items-center justify-between text-gray-600">
-                                <span>Diskon Ongkos Kirim</span>
+                                <span>{isEn ? 'Shipping Discount' : 'Diskon Ongkos Kirim'}</span>
                                 <span className="font-medium text-gray-900">Rp 0</span>
                             </div>
 
                             <div className="flex items-center justify-between text-gray-600">
-                                <span>Ongkos Pembayaran</span>
+                                <span>{isEn ? 'Payment Fee' : 'Ongkos Pembayaran'}</span>
                                 <span className="font-medium text-gray-900">Rp 0</span>
                             </div>
 
                             <div className="flex items-center justify-between text-gray-600">
-                                <span>Biaya Layanan</span>
+                                <span>{isEn ? 'Service Fee' : 'Biaya Layanan'}</span>
                                 <span className="font-medium text-gray-900">Rp 0</span>
                             </div>
 
                             <div className="border-t border-gray-200 pt-2 flex items-center justify-between">
-                                <span className="font-bold text-gray-900 text-sm">Total Tagihan</span>
+                                <span className="font-bold text-gray-900 text-sm">{isEn ? 'Total Due' : 'Total Tagihan'}</span>
                                 <span className="font-black text-gray-950 text-base">
                                     {order.total_amount_formatted}
                                 </span>
@@ -271,7 +274,7 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
                     <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
                         <div className="sm:col-span-4">
                             <div className="text-[10.5px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
-                                Metode Pengiriman
+                                {t('invoice.shipping_method')}
                             </div>
                             <div className="font-bold text-gray-900">
                                 {order.courier}
@@ -280,7 +283,7 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
 
                         <div className="sm:col-span-8">
                             <div className="text-[10.5px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
-                                Alamat Pengiriman
+                                {t('invoice.shipping_address')}
                             </div>
                             <div className="space-y-0.5">
                                 <div className="font-bold text-gray-900">
@@ -296,9 +299,9 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
 
                 {/* Footer Note (Matching Screenshot) */}
                 <div className="pt-10 pb-2 text-center text-[11px] text-gray-500 space-y-1">
-                    <p>Invoice ini sah dan diproses oleh komputer</p>
+                    <p>{isEn ? 'This is a computer-generated invoice and valid without signature.' : 'Invoice ini sah dan diproses oleh komputer.'}</p>
                     <p>
-                        Jika butuh bantuan, silakan hubungi{' '}
+                        {isEn ? 'Need help? Contact ' : 'Jika butuh bantuan, silakan hubungi '}
                         <a
                             href="https://wa.me/6289529591732"
                             target="_blank"

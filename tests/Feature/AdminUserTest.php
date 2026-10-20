@@ -136,3 +136,49 @@ test('admin cannot delete an admin user account', function () {
     $response->assertRedirect();
     $this->assertDatabaseHas('users', ['id' => $otherAdmin->id]);
 });
+
+test('admin can create a new user account', function () {
+    $admin = User::factory()->admin()->create();
+
+    $response = $this->actingAs($admin)
+        ->post('/admin/users', [
+            'name' => 'Citra Lestari',
+            'email' => 'citra@example.com',
+            'role' => 'customer',
+            'password' => 'secret123',
+        ]);
+
+    $response->assertRedirect('/admin/users');
+    $this->assertDatabaseHas('users', [
+        'name' => 'Citra Lestari',
+        'email' => 'citra@example.com',
+        'role' => 'customer',
+    ]);
+
+    $newUser = User::where('email', 'citra@example.com')->first();
+    expect($newUser)->not->toBeNull()
+        ->and($newUser->membership)->not->toBeNull();
+});
+
+test('admin can update user account details', function () {
+    $admin = User::factory()->admin()->create();
+    $customer = User::factory()->create([
+        'name' => 'Original Name',
+        'email' => 'original@example.com',
+        'role' => 'customer',
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->put("/admin/users/{$customer->id}", [
+            'name' => 'Updated Name',
+            'email' => 'updated@example.com',
+            'role' => 'customer',
+        ]);
+
+    $response->assertRedirect('/admin/users');
+    $this->assertDatabaseHas('users', [
+        'id' => $customer->id,
+        'name' => 'Updated Name',
+        'email' => 'updated@example.com',
+    ]);
+});

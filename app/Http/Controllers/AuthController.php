@@ -76,7 +76,7 @@ class AuthController extends Controller
         }
 
         return back()->withErrors([
-            'email' => 'Kombinasi email dan kata sandi yang Anda masukkan tidak cocok.',
+            'email' => __('auth.failed'),
         ])->onlyInput('email');
     }
 
@@ -89,13 +89,6 @@ class AuthController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:6'],
-        ], [
-            'name.required' => 'Nama lengkap wajib diisi.',
-            'email.required' => 'Alamat email wajib diisi.',
-            'email.email' => 'Format alamat email tidak valid.',
-            'email.unique' => 'Email ini sudah terdaftar. Silakan masuk.',
-            'password.required' => 'Kata sandi wajib diisi.',
-            'password.min' => 'Kata sandi minimal 6 karakter.',
         ]);
 
         $user = User::create([
@@ -107,7 +100,11 @@ class AuthController extends Controller
         Auth::login($user, true);
         $request->session()->regenerate();
 
-        return redirect()->intended(route('products.index'))->with('status', 'Selamat datang di Aroma Palace, '.$user->name.'!');
+        $statusMessage = app()->getLocale() === 'en'
+            ? "Welcome to Aroma Palace, {$user->name}!"
+            : "Selamat datang di Aroma Palace, {$user->name}!";
+
+        return redirect()->intended(route('products.index'))->with('status', $statusMessage);
     }
 
     /**

@@ -55,6 +55,7 @@ class StoreController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
+            'description_en' => ['nullable', 'string'],
             'thumbnail' => ['nullable'],
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
@@ -82,6 +83,7 @@ class StoreController extends Controller
         Store::create([
             'name' => $validated['name'],
             'description' => $validated['description'] ?? 'Butik resmi Aroma Palace',
+            'description_en' => $validated['description_en'] ?? null,
             'thumbnail' => $thumbnail ?: 'https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?auto=format&fit=crop&w=800&q=80',
             'latitude' => $lat,
             'longitude' => $lng,
@@ -97,6 +99,7 @@ class StoreController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
+            'description_en' => ['nullable', 'string'],
             'thumbnail' => ['nullable'],
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
@@ -124,6 +127,7 @@ class StoreController extends Controller
         $store->update([
             'name' => $validated['name'],
             'description' => $validated['description'] ?? $store->description,
+            'description_en' => array_key_exists('description_en', $validated) ? $validated['description_en'] : $store->description_en,
             'thumbnail' => $thumbnail,
             'latitude' => $lat,
             'longitude' => $lng,

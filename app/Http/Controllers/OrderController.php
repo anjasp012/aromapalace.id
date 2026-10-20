@@ -25,7 +25,7 @@ class OrderController extends Controller
 
         $activeTab = (string) $request->query('status', 'all');
 
-        if (! in_array($activeTab, ['all', 'menunggu_pembayaran', 'menunggu_konfirmasi', 'diproses', 'dikirim', 'selesai'])) {
+        if (! in_array($activeTab, ['all', 'menunggu_pembayaran', 'diproses', 'dikirim', 'selesai'])) {
             $activeTab = 'all';
         }
 
@@ -38,10 +38,8 @@ class OrderController extends Controller
                         $sub->whereNull('status')->where('payment_status', 'pending');
                     });
             });
-        } elseif ($activeTab === 'menunggu_konfirmasi') {
-            $query->where('status', 'menunggu_konfirmasi');
         } elseif ($activeTab === 'diproses') {
-            $query->whereIn('status', ['diproses', 'menunggu_konfirmasi']);
+            $query->where('status', 'diproses');
         } elseif ($activeTab === 'dikirim') {
             $query->where('status', 'dikirim');
         } elseif ($activeTab === 'selesai') {
@@ -61,8 +59,7 @@ class OrderController extends Controller
                         $sub->whereNull('status')->where('payment_status', 'pending');
                     });
             })->count(),
-            'menunggu_konfirmasi' => $user->orders()->where('status', 'menunggu_konfirmasi')->count(),
-            'diproses' => $user->orders()->whereIn('status', ['diproses', 'menunggu_konfirmasi'])->count(),
+            'diproses' => $user->orders()->where('status', 'diproses')->count(),
             'dikirim' => $user->orders()->where('status', 'dikirim')->count(),
             'selesai' => $user->orders()->where(function ($q) {
                 $q->where('status', 'selesai')
@@ -104,7 +101,6 @@ class OrderController extends Controller
                 'selesai' => 'Selesai',
                 'dikirim' => $isPickup ? 'Pengambilan' : 'Dikirim',
                 'diproses' => 'Diproses',
-                'menunggu_konfirmasi' => 'Menunggu Konfirmasi',
                 'menunggu_pembayaran' => 'Menunggu Pembayaran',
                 'dibatalkan' => 'Dibatalkan',
                 default => ucfirst(str_replace('_', ' ', $orderStatus)),
@@ -225,7 +221,7 @@ class OrderController extends Controller
         };
 
         $isPaid = $orderModel->payment_status === 'paid'
-            || in_array($orderStatus, ['menunggu_konfirmasi', 'diproses', 'dikirim', 'selesai']);
+            || in_array($orderStatus, ['diproses', 'dikirim', 'selesai']);
 
         return Inertia::render('invoice', [
             'order' => [

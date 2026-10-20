@@ -109,7 +109,9 @@ class MembershipController extends Controller
                 return [
                     'id' => $r->id,
                     'name' => $r->name,
+                    'name_en' => $r->name_en,
                     'description' => $r->description,
+                    'description_en' => $r->description_en,
                     'points_required' => $r->points_required,
                     'reward_type' => $r->reward_type,
                     'reward_value' => $r->reward_value,

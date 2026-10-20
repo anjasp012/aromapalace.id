@@ -10,6 +10,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { type ProductItem } from '@/components/ProductCard';
+import { useTranslation, formatCategoryName } from '@/lib/i18n';
 
 interface ProductQuickViewModalProps {
     product: ProductItem | null;
@@ -27,6 +28,7 @@ export default function ProductQuickViewModal({
     const { props } = usePage<any>();
     const user = props?.auth?.user;
     const isAdmin = Boolean(props?.auth?.is_admin || user?.role === 'admin');
+    const { t, pickText, isEn } = useTranslation();
 
     const [quantity, setQuantity] = useState(1);
 
@@ -40,7 +42,14 @@ export default function ProductQuickViewModal({
 
     const handleAdd = () => {
         if (!user) {
-            router.visit('/login?notice=' + encodeURIComponent('Silakan masuk untuk menambahkan produk ke keranjang belanja.'));
+            router.visit(
+                '/login?notice=' +
+                    encodeURIComponent(
+                        isEn
+                            ? 'Please log in to add products to your shopping cart.'
+                            : 'Silakan masuk untuk menambahkan produk ke keranjang belanja.'
+                    )
+            );
             onOpenChange(false);
             return;
         }
@@ -48,19 +57,24 @@ export default function ProductQuickViewModal({
             onAddToCart(product, quantity);
         } else {
             window.showCartToast?.(
-                `${quantity}x ${product.name} (${product.volume || '100ml'}) berhasil ditambahkan ke keranjang.`
+                isEn
+                    ? `${quantity}x ${product.name} (${product.volume || '100ml'}) added to your cart.`
+                    : `${quantity}x ${product.name} (${product.volume || '100ml'}) berhasil ditambahkan ke keranjang.`
             );
         }
         onOpenChange(false);
     };
 
     const categoryOrFamily = product.category || product.family;
+    const activeDescription = pickText(product.description, product.description_en);
 
     const renderDescription = (desc?: string) => {
         if (!desc) {
             return (
                 <p>
-                    Wewangian mewah dengan formula konsentrasi tinggi untuk ketahanan aroma sepanjang hari.
+                    {isEn
+                        ? 'Luxurious fragrance crafted with a high concentration formula for all-day scent longevity.'
+                        : 'Wewangian mewah dengan formula konsentrasi tinggi untuk ketahanan aroma sepanjang hari.'}
                 </p>
             );
         }
@@ -74,11 +88,7 @@ export default function ProductQuickViewModal({
             );
         }
 
-        return (
-            <p className="whitespace-pre-line">
-                {desc}
-            </p>
-        );
+        return <p className="whitespace-pre-line">{desc}</p>;
     };
 
     return (
@@ -109,7 +119,7 @@ export default function ProductQuickViewModal({
                                 )}
                                 {categoryOrFamily && (
                                     <span className="text-xs text-muted-foreground">
-                                        &bull; {categoryOrFamily}
+                                        &bull; {formatCategoryName(categoryOrFamily, isEn)}
                                     </span>
                                 )}
                             </div>
@@ -117,7 +127,7 @@ export default function ProductQuickViewModal({
                                 {product.name}
                             </DialogTitle>
                             <DialogDescription className="text-xs">
-                                Konsentrasi: {product.concentration || 'Eau de Parfum'} &bull; {product.volume || '100ml'}
+                                {t('catalog.concentration')}: {product.concentration || 'Eau de Parfum'} &bull; {product.volume || '100ml'}
                             </DialogDescription>
                         </DialogHeader>
 
@@ -133,21 +143,21 @@ export default function ProductQuickViewModal({
                         </div>
 
                         <div className="text-xs sm:text-sm text-muted-foreground leading-relaxed pt-1">
-                            {renderDescription(product.description)}
+                            {renderDescription(activeDescription)}
                         </div>
 
                         <div className="space-y-3 pt-2">
                             {!isAdmin ? (
                                 <>
                                     <div className="flex items-center justify-between text-xs">
-                                        <span className="font-medium">Jumlah:</span>
+                                        <span className="font-medium">{t('product.quantity')}:</span>
                                         <div className="flex items-center border border-border rounded-md">
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
                                                 onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
                                                 className="h-7 w-7 p-0 cursor-pointer"
-                                                aria-label="Kurangi jumlah"
+                                                aria-label={isEn ? "Decrease quantity" : "Kurangi jumlah"}
                                             >
                                                 &minus;
                                             </Button>
@@ -157,7 +167,7 @@ export default function ProductQuickViewModal({
                                                 size="sm"
                                                 onClick={() => setQuantity((prev) => prev + 1)}
                                                 className="h-7 w-7 p-0 cursor-pointer"
-                                                aria-label="Tambah jumlah"
+                                                aria-label={isEn ? "Increase quantity" : "Tambah jumlah"}
                                             >
                                                 &#43;
                                             </Button>
@@ -166,11 +176,11 @@ export default function ProductQuickViewModal({
 
                                     <div className="grid grid-cols-2 gap-2">
                                         <Button onClick={handleAdd} size="sm" className="bg-[#4A070B] hover:bg-[#360407] text-white cursor-pointer shadow-none">
-                                            + Keranjang
+                                            {t('product.add_to_cart')}
                                         </Button>
                                         <Button asChild variant="outline" size="sm">
                                             <Link href={product.slug ? `/products/${product.slug}` : '/products'}>
-                                                Lihat Halaman
+                                                {isEn ? 'View Product' : 'Lihat Halaman'}
                                             </Link>
                                         </Button>
                                     </div>
@@ -178,11 +188,11 @@ export default function ProductQuickViewModal({
                             ) : (
                                 <div className="space-y-2">
                                     <p className="text-xs text-muted-foreground italic">
-                                        Mode Administrator: Fitur belanja dinonaktifkan.
+                                        {isEn ? 'Administrator Mode: Shopping features disabled.' : 'Mode Administrator: Fitur belanja dinonaktifkan.'}
                                     </p>
                                     <Button asChild variant="outline" size="sm" className="w-full">
                                         <Link href={product.slug ? `/products/${product.slug}` : '/products'}>
-                                            Lihat Halaman Produk
+                                            {isEn ? 'View Product Page' : 'Lihat Halaman Produk'}
                                         </Link>
                                     </Button>
                                 </div>

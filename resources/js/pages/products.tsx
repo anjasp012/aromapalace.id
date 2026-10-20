@@ -27,6 +27,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Check, ChevronDown } from 'lucide-react';
+import { useTranslation, formatCategoryName } from '@/lib/i18n';
 
 export interface Fragrance {
     id: number;
@@ -50,6 +51,7 @@ export interface Fragrance {
     mood: string;
     image?: string;
     description?: string;
+    description_en?: string;
     notes: {
         top: string;
         heart: string;
@@ -78,10 +80,10 @@ interface ProductsProps {
 }
 
 const PRICE_TIERS = [
-    { label: 'Semua Harga', value: 'all' },
-    { label: '< Rp 1.500.000', value: 'under-1500' },
-    { label: 'Rp 1.5jt - Rp 2.5jt', value: '1500-2500' },
-    { label: '> Rp 2.500.000', value: 'above-2500' },
+    { label: 'Semua Harga', labelEn: 'All Prices', value: 'all' },
+    { label: '< Rp 1.500.000', labelEn: '< IDR 1,500,000', value: 'under-1500' },
+    { label: 'Rp 1.5jt - Rp 2.5jt', labelEn: 'IDR 1.5M - 2.5M', value: '1500-2500' },
+    { label: '> Rp 2.500.000', labelEn: '> IDR 2,500,000', value: 'above-2500' },
 ];
 
 interface ParsedFilters {
@@ -238,6 +240,7 @@ export default function Products({
     filters: serverFilters,
     totalCount,
 }: ProductsProps) {
+    const { t, isEn, pickText } = useTranslation();
     const { url, props } = usePage<any>();
     const user = props?.auth?.user;
     const isAdmin = Boolean(props?.auth?.is_admin || user?.role === 'admin');
@@ -376,7 +379,10 @@ export default function Products({
     const toggleWishlist = (id: number, name: string) => {
         if (isAdmin) return;
         if (!user) {
-            router.visit('/login?notice=' + encodeURIComponent('Silakan masuk untuk menyimpan wewangian ke wishlist Anda.'));
+            const noticeText = isEn
+                ? 'Please log in to save fragrances to your wishlist.'
+                : 'Silakan masuk untuk menyimpan wewangian ke wishlist Anda.';
+            router.visit('/login?notice=' + encodeURIComponent(noticeText));
             return;
         }
         setWishlist((prev) => {
@@ -400,7 +406,10 @@ export default function Products({
     const handleAddToBag = (item: Fragrance) => {
         if (isAdmin) return;
         if (!user) {
-            router.visit('/login?notice=' + encodeURIComponent('Silakan masuk untuk menambahkan produk ke keranjang belanja.'));
+            const noticeText = isEn
+                ? 'Please log in to add products to your shopping bag.'
+                : 'Silakan masuk untuk menambahkan produk ke keranjang belanja.';
+            router.visit('/login?notice=' + encodeURIComponent(noticeText));
             return;
         }
         router.post(
@@ -424,8 +433,10 @@ export default function Products({
         if (navigator.share && /mobile|android|iphone|ipad/i.test(navigator.userAgent)) {
             try {
                 await navigator.share({
-                    title: 'Katalog Aroma Palace',
-                    text: 'Lihat pilihan wewangian mewah ini di Aroma Palace:',
+                    title: isEn ? 'Aroma Palace Catalog' : 'Katalog Aroma Palace',
+                    text: isEn
+                        ? 'Explore these luxury fragrances at Aroma Palace:'
+                        : 'Lihat pilihan wewangian mewah ini di Aroma Palace:',
                     url: currentUrl,
                 });
                 return;
@@ -449,9 +460,15 @@ export default function Products({
             }
             setCopiedUrl(true);
             setTimeout(() => setCopiedUrl(false), 2200);
-            window.showPromoToast?.('Tautan filter berhasil disalin! Siap dibagikan.');
+            window.showPromoToast?.(
+                isEn
+                    ? 'Filter link successfully copied! Ready to share.'
+                    : 'Tautan filter berhasil disalin! Siap dibagikan.'
+            );
         } catch {
-            window.showPromoToast?.('Gagal menyalin tautan.');
+            window.showPromoToast?.(
+                isEn ? 'Failed to copy link.' : 'Gagal menyalin tautan.'
+            );
         }
     };
 
@@ -510,7 +527,7 @@ export default function Products({
                     <svg className="w-4 h-4 text-[#4A070B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                     </svg>
-                    <span>Filter Produk</span>
+                    <span>{t('catalog.filter')}</span>
                 </div>
                 {activeFiltersCount > 0 && (
                     <span className="w-5 h-5 rounded-full bg-[#4A070B]/10 text-[#4A070B] border border-[#4A070B]/30 text-[10px] font-bold flex items-center justify-center">
@@ -522,12 +539,12 @@ export default function Products({
             {/* 1. Quick Search */}
             <div className="space-y-2">
                 <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground block">
-                    Pencarian Cepat
+                    {isEn ? 'Quick Search' : 'Pencarian Cepat'}
                 </label>
                 <div className="relative">
                     <input
                         type="text"
-                        placeholder="Nama parfum, notes, brand..."
+                        placeholder={isEn ? 'Fragrance name, notes, brand...' : 'Nama parfum, notes, brand...'}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full h-9 pl-8 pr-7 rounded-md border border-border/80 bg-background/80 text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-[#4A070B] focus:ring-1 focus:ring-[#4A070B]/25 transition shadow-none"
@@ -539,7 +556,7 @@ export default function Products({
                         <button
                             type="button"
                             onClick={() => setSearchQuery('')}
-                            aria-label="Hapus pencarian"
+                            aria-label={isEn ? 'Clear search' : 'Hapus pencarian'}
                             className="absolute right-2 top-2.5 text-muted-foreground hover:text-foreground text-xs"
                         >
                             &times;
@@ -551,7 +568,7 @@ export default function Products({
             {/* 2. Kategori */}
             <div className="space-y-2 pt-1 border-t border-border/60">
                 <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground block pt-2">
-                    Kategori
+                    {t('catalog.categories')}
                 </label>
                 <div className="flex flex-wrap gap-1.5">
                     {categories.map((cat) => {
@@ -566,7 +583,7 @@ export default function Products({
                                     : 'bg-background/80 text-muted-foreground border-border/80 hover:text-foreground hover:border-[#4A070B]/30'
                                     }`}
                             >
-                                {cat === 'All' ? 'Semua Kategori' : cat}
+                                {cat === 'All' ? t('catalog.allCategories') : formatCategoryName(cat, isEn)}
                             </button>
                         );
                     })}
@@ -576,7 +593,7 @@ export default function Products({
             {/* 3. Brand */}
             <div className="space-y-2 pt-1 border-t border-border/60">
                 <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground block pt-2">
-                    Brand
+                    {t('catalog.brands')}
                 </label>
                 <div className="flex flex-wrap gap-1.5">
                     {/* Semua Brand */}
@@ -588,7 +605,7 @@ export default function Products({
                             : 'bg-background/80 text-muted-foreground border-border/80 hover:text-foreground hover:border-[#4A070B]/30'
                             }`}
                     >
-                        Semua Brand
+                        {t('catalog.allBrands')}
                     </button>
 
                     {/* Primary Brands */}
@@ -620,7 +637,7 @@ export default function Products({
                                     }`}
                             >
                                 <span className="truncate max-w-[120px]">
-                                    {isOtherBrandSelected ? activeBrand : 'Brand Lainnya'}
+                                    {isOtherBrandSelected ? activeBrand : (isEn ? 'Other Brands' : 'Brand Lainnya')}
                                 </span>
                                 <ChevronDown className="w-3 h-3 shrink-0 opacity-70" />
                             </DropdownMenuTrigger>
@@ -630,7 +647,7 @@ export default function Products({
                                         onClick={() => setActiveBrand('All')}
                                         className="flex items-center justify-between px-2.5 py-1.5 cursor-pointer rounded-md text-[11px] text-muted-foreground hover:bg-muted/80 border-b border-border/50 mb-1"
                                     >
-                                        <span>Semua Brand</span>
+                                        <span>{t('catalog.allBrands')}</span>
                                     </DropdownMenuItem>
                                 )}
                                 {otherBrands.map((b) => {
@@ -658,7 +675,7 @@ export default function Products({
             {/* 4. Rentang Harga */}
             <div className="space-y-2.5 pt-1 border-t border-border/60">
                 <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground block pt-2">
-                    Rentang Harga
+                    {t('catalog.priceRange')}
                 </label>
                 <div className="grid grid-cols-2 gap-1.5">
                     {PRICE_TIERS.map((tier) => (
@@ -675,7 +692,7 @@ export default function Products({
                                 : 'bg-background/80 text-muted-foreground border-border/80 hover:text-foreground hover:border-[#4A070B]/30'
                                 }`}
                         >
-                            {tier.label}
+                            {isEn && tier.labelEn ? tier.labelEn : tier.label}
                         </button>
                     ))}
                 </div>
@@ -683,7 +700,7 @@ export default function Products({
                 {/* Custom Min / Max input */}
                 <div className="pt-1.5">
                     <span className="text-[10px] text-muted-foreground uppercase font-semibold block mb-1.5">
-                        Kustomisasi Harga (Rp)
+                        {isEn ? 'Custom Price (IDR)' : 'Kustomisasi Harga (Rp)'}
                     </span>
                     <div className="flex items-center gap-2">
                         <input
@@ -699,7 +716,7 @@ export default function Products({
                         <span className="text-muted-foreground text-xs">-</span>
                         <input
                             type="number"
-                            placeholder="Maks"
+                            placeholder={isEn ? 'Max' : 'Maks'}
                             value={customMax}
                             onChange={(e) => {
                                 setCustomMax(e.target.value);
@@ -714,7 +731,7 @@ export default function Products({
             {/* 4. Rating */}
             <div className="space-y-2 pt-1 border-t border-border/60">
                 <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground block pt-2">
-                    Rating Pelanggan
+                    {isEn ? 'Customer Rating' : 'Rating Pelanggan'}
                 </label>
                 <div className="flex gap-1.5">
                     <button
@@ -725,7 +742,7 @@ export default function Products({
                             : 'bg-background/80 text-muted-foreground border-border/80 hover:text-foreground hover:border-[#4A070B]/30'
                             }`}
                     >
-                        Semua
+                        {t('common.all')}
                     </button>
                     <button
                         type="button"
@@ -753,7 +770,7 @@ export default function Products({
             {/* 5. Penawaran & Promo */}
             <div className="space-y-2 pt-1 border-t border-border/60">
                 <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground block pt-2">
-                    Penawaran & Diskon
+                    {isEn ? 'Deals & Discounts' : 'Penawaran & Diskon'}
                 </label>
                 <div className="grid grid-cols-2 gap-1.5">
                     <button
@@ -764,7 +781,7 @@ export default function Products({
                             : 'bg-background/80 text-muted-foreground border-border/80 hover:text-foreground hover:border-[#4A070B]/30'
                             }`}
                     >
-                        Semua Produk
+                        {isEn ? 'All Products' : 'Semua Produk'}
                     </button>
                     <button
                         type="button"
@@ -775,7 +792,7 @@ export default function Products({
                             }`}
                     >
                         <span>🏷️</span>
-                        <span>Promo Diskon</span>
+                        <span>{isEn ? 'Discount Promo' : 'Promo Diskon'}</span>
                     </button>
                 </div>
             </div>
@@ -784,17 +801,19 @@ export default function Products({
 
     return (
         <Layout>
-            <Head title="Katalog Koleksi Parfum Mewah • Aroma Palace" />
+            <Head title={isEn ? 'Luxury Fragrance Collection Catalog • Aroma Palace' : 'Katalog Koleksi Parfum Mewah • Aroma Palace'} />
 
             {/* PAGE HEADER */}
             <div className="border-b border-border/70 bg-gradient-to-b from-muted/30 via-background to-background py-10 sm:py-14">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center space-y-3">
                     <h1 className="text-3xl sm:text-4xl lg:text-5xl tracking-tight text-foreground">
-                        <span className="font-light">Katalog</span>{' '}
-                        <span className="font-bold text-[#4A070B] dark:text-[#E8D0BA]">Wewangian Eksklusif</span>
+                        <span className="font-light">{isEn ? 'Catalog of' : 'Katalog'}</span>{' '}
+                        <span className="font-bold text-[#4A070B] dark:text-[#E8D0BA]">{isEn ? 'Exclusive Fragrances' : 'Wewangian Eksklusif'}</span>
                     </h1>
                     <p className="max-w-2xl mx-auto text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                        Pilihan parfum artisanal dan konsentrasi extrait murni dengan daya tahan tinggi serta karakter aroma mewah yang memikat setiap indera.
+                        {isEn
+                            ? 'Curated artisanal fragrances and pure extrait concentrations boasting intense longevity and captivating luxury character.'
+                            : 'Pilihan parfum artisanal dan konsentrasi extrait murni dengan daya tahan tinggi serta karakter aroma mewah yang memikat setiap indera.'}
                     </p>
                 </div>
             </div>
@@ -822,12 +841,16 @@ export default function Products({
                             {/* Product Count */}
                             <div className="flex items-center gap-2 min-w-0">
                                 <span className="text-[11px] sm:text-xs text-muted-foreground truncate">
-                                    Menampilkan <strong className="text-foreground font-bold">{filteredFragrances.length}</strong> wewangian
+                                    {isEn ? (
+                                        <>Showing <strong className="text-foreground font-bold">{filteredFragrances.length}</strong> fragrances</>
+                                    ) : (
+                                        <>Menampilkan <strong className="text-foreground font-bold">{filteredFragrances.length}</strong> wewangian</>
+                                    )}
                                 </span>
                                 {isServerFiltering && (
                                     <span className="hidden sm:inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#4A070B]/10 text-[#4A070B] dark:text-[#E8D0BA] animate-pulse">
                                         <span className="w-1.5 h-1.5 rounded-full bg-[#4A070B] dark:bg-[#E8D0BA] animate-ping" />
-                                        Menyaring...
+                                        {isEn ? 'Filtering...' : 'Menyaring...'}
                                     </span>
                                 )}
                             </div>
@@ -840,7 +863,7 @@ export default function Products({
                                         <Button
                                             variant="outline"
                                             size="icon"
-                                            aria-label="Filter Wewangian"
+                                            aria-label={isEn ? 'Filter Fragrances' : 'Filter Wewangian'}
                                             className="lg:hidden relative h-8 w-8 sm:h-8.5 sm:w-8.5 border-[#4A070B]/30 text-[#4A070B] hover:bg-[#4A070B]/10 rounded-md shadow-none cursor-pointer shrink-0"
                                         >
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -856,7 +879,7 @@ export default function Products({
                                     <SheetContent side="left" className="w-[300px] sm:w-[360px] p-6 overflow-y-auto">
                                         <SheetHeader className="text-left mb-4">
                                             <SheetTitle className="text-sm font-bold uppercase tracking-wider text-foreground">
-                                                Filter Wewangian
+                                                {isEn ? 'Fragrance Filters' : 'Filter Wewangian'}
                                             </SheetTitle>
                                         </SheetHeader>
                                         {renderFilterContent()}
@@ -865,7 +888,9 @@ export default function Products({
                                                 onClick={() => setMobileFilterOpen(false)}
                                                 className="w-full bg-foreground hover:bg-foreground/90 text-background rounded-md text-xs font-semibold h-10 shadow-none"
                                             >
-                                                Terapkan Filter ({filteredFragrances.length} Produk)
+                                                {isEn
+                                                    ? `Apply Filters (${filteredFragrances.length} Products)`
+                                                    : `Terapkan Filter (${filteredFragrances.length} Produk)`}
                                             </Button>
                                         </div>
                                     </SheetContent>
@@ -874,22 +899,22 @@ export default function Products({
                                 {/* Sort Selector: Next to Filter Button */}
                                 <div className="flex items-center gap-1.5">
                                     <span className="text-xs text-muted-foreground shrink-0 hidden md:inline">
-                                        Urutkan:
+                                        {isEn ? 'Sort by:' : 'Urutkan:'}
                                     </span>
                                     <Select
                                         value={sortBy}
                                         onValueChange={(val: string) => setSortBy(val as any)}
                                     >
                                         <SelectTrigger className="w-[145px] sm:w-[180px] h-8 sm:h-8.5 text-[11px] sm:text-xs border-border/80 bg-background/80 hover:border-[#4A070B]/40 focus:border-[#4A070B] focus:ring-1 focus:ring-[#4A070B]/25 rounded-md shadow-none">
-                                            <SelectValue placeholder="Pilih Urutan" />
+                                            <SelectValue placeholder={isEn ? 'Select Sort' : 'Pilih Urutan'} />
                                         </SelectTrigger>
                                         <SelectContent align="end" className="rounded-md border-border/80 bg-background shadow-md">
-                                            <SelectItem value="featured">Unggulan</SelectItem>
-                                            <SelectItem value="popular">Paling Populer</SelectItem>
-                                            <SelectItem value="price-asc">Harga: Rendah ke Tinggi</SelectItem>
-                                            <SelectItem value="price-desc">Harga: Tinggi ke Rendah</SelectItem>
-                                            <SelectItem value="rating">Rating Terbaik</SelectItem>
-                                            <SelectItem value="discount">Diskon Terbesar</SelectItem>
+                                            <SelectItem value="featured">{isEn ? 'Featured' : 'Unggulan'}</SelectItem>
+                                            <SelectItem value="popular">{isEn ? 'Most Popular' : 'Paling Populer'}</SelectItem>
+                                            <SelectItem value="price-asc">{isEn ? 'Price: Low to High' : 'Harga: Rendah ke Tinggi'}</SelectItem>
+                                            <SelectItem value="price-desc">{isEn ? 'Price: High to Low' : 'Harga: Tinggi ke Rendah'}</SelectItem>
+                                            <SelectItem value="rating">{isEn ? 'Highest Rated' : 'Rating Terbaik'}</SelectItem>
+                                            <SelectItem value="discount">{isEn ? 'Biggest Discount' : 'Diskon Terbesar'}</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -899,7 +924,9 @@ export default function Products({
                         {/* Active Filter Badges Strip */}
                         {activeFiltersCount > 0 && (
                             <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                                <span className="text-[11px] text-muted-foreground mr-1">Filter aktif:</span>
+                                <span className="text-[11px] text-muted-foreground mr-1">
+                                    {isEn ? 'Active filters:' : 'Filter aktif:'}
+                                </span>
 
                                 {activeCategory !== 'All' && (
                                     <Badge
@@ -907,7 +934,7 @@ export default function Products({
                                         className="gap-1 text-[11px] rounded-md px-2 py-0.5 border border-border cursor-pointer hover:bg-destructive/10"
                                         onClick={() => setActiveCategory('All')}
                                     >
-                                        <span>{activeCategory}</span>
+                                        <span>{formatCategoryName(activeCategory, isEn)}</span>
                                         <span className="text-xs">&times;</span>
                                     </Badge>
                                 )}
@@ -934,10 +961,10 @@ export default function Products({
                                         }}
                                     >
                                         <span>
-                                            {priceTier === 'under-1500' && '< Rp 1.5jt'}
-                                            {priceTier === '1500-2500' && 'Rp 1.5jt - 2.5jt'}
-                                            {priceTier === 'above-2500' && '> Rp 2.5jt'}
-                                            {priceTier === 'custom' && `Rp ${customMin || 0} - ${customMax || '∞'}`}
+                                            {priceTier === 'under-1500' && (isEn ? '< IDR 1.5M' : '< Rp 1.5jt')}
+                                            {priceTier === '1500-2500' && (isEn ? 'IDR 1.5M - 2.5M' : 'Rp 1.5jt - 2.5jt')}
+                                            {priceTier === 'above-2500' && (isEn ? '> IDR 2.5M' : '> Rp 2.5jt')}
+                                            {priceTier === 'custom' && (isEn ? `IDR ${customMin || 0} - ${customMax || '∞'}` : `Rp ${customMin || 0} - ${customMax || '∞'}`)}
                                         </span>
                                         <span className="text-xs">&times;</span>
                                     </Badge>
@@ -971,7 +998,7 @@ export default function Products({
                                         className="gap-1 text-[11px] rounded-md px-2 py-0.5 border border-border cursor-pointer hover:bg-destructive/10"
                                         onClick={() => setOnlyDiscount(false)}
                                     >
-                                        <span>🏷️ Promo Diskon</span>
+                                        <span>🏷️ {isEn ? 'Discount Promo' : 'Promo Diskon'}</span>
                                         <span className="text-xs">&times;</span>
                                     </Badge>
                                 )}
@@ -979,7 +1006,7 @@ export default function Products({
                                 <button
                                     type="button"
                                     onClick={handleShareOrCopyUrl}
-                                    title="Bagikan atau salin URL filter saat ini"
+                                    title={isEn ? 'Share or copy current filter URL' : 'Bagikan atau salin URL filter saat ini'}
                                     className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-[#4A070B]/10 text-[#4A070B] hover:bg-[#4A070B]/15 border border-[#4A070B]/25 transition cursor-pointer ml-1 shadow-none"
                                 >
                                     {copiedUrl ? (
@@ -987,14 +1014,14 @@ export default function Products({
                                             <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
                                             </svg>
-                                            <span className="text-emerald-700 font-bold">Tersalin!</span>
+                                            <span className="text-emerald-700 font-bold">{isEn ? 'Copied!' : 'Tersalin!'}</span>
                                         </>
                                     ) : (
                                         <>
                                             <svg className="w-3.5 h-3.5 text-[#4A070B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                                             </svg>
-                                            <span>Salin Tautan Filter</span>
+                                            <span>{isEn ? 'Copy Filter Link' : 'Salin Tautan Filter'}</span>
                                         </>
                                     )}
                                 </button>
@@ -1004,7 +1031,7 @@ export default function Products({
                                     onClick={resetAllFilters}
                                     className="text-[11px] text-muted-foreground hover:text-foreground font-medium ml-1 cursor-pointer"
                                 >
-                                    Hapus Semua
+                                    {isEn ? 'Clear All' : 'Hapus Semua'}
                                 </button>
                             </div>
                         )}
@@ -1020,10 +1047,12 @@ export default function Products({
                                     </svg>
                                 </div>
                                 <h3 className="text-base font-bold text-foreground">
-                                    Tidak Ada Wewangian yang Cocok
+                                    {isEn ? 'No Matching Fragrances Found' : 'Tidak Ada Wewangian yang Cocok'}
                                 </h3>
                                 <p className="text-xs text-muted-foreground max-w-md mx-auto leading-relaxed">
-                                    Filter atau kata kunci yang Anda pilih saat ini tidak menghasilkan wewangian yang sesuai. Silakan sesuaikan kriteria atau bersihkan filter.
+                                    {isEn
+                                        ? 'Your selected filters or search keywords did not match any fragrances. Please adjust your criteria or reset the filters.'
+                                        : 'Filter atau kata kunci yang Anda pilih saat ini tidak menghasilkan wewangian yang sesuai. Silakan sesuaikan kriteria atau bersihkan filter.'}
                                 </p>
                                 <div className="pt-2">
                                     <Button
@@ -1032,7 +1061,7 @@ export default function Products({
                                         onClick={resetAllFilters}
                                         className="rounded-md text-xs border-[#4A070B]/40 text-[#4A070B] hover:bg-[#4A070B]/10 shadow-none cursor-pointer"
                                     >
-                                        Reset Semua Filter
+                                        {isEn ? 'Reset All Filters' : 'Reset Semua Filter'}
                                     </Button>
                                 </div>
                             </div>
@@ -1063,7 +1092,14 @@ export default function Products({
                 onAddToCart={(prod, qty) => {
                     if (isAdmin) return;
                     if (!user) {
-                        router.visit('/login?notice=' + encodeURIComponent('Silakan masuk untuk menambahkan produk ke keranjang belanja.'));
+                        router.visit(
+                            '/login?notice=' +
+                                encodeURIComponent(
+                                    isEn
+                                        ? 'Please log in to add products to your shopping bag.'
+                                        : 'Silakan masuk untuk menambahkan produk ke keranjang belanja.'
+                                )
+                        );
                         return;
                     }
                     router.post(

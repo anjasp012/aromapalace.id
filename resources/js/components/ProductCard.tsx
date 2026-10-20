@@ -1,8 +1,9 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useTranslation, formatCategoryName } from '@/lib/i18n';
 
 export interface ProductItem {
     id: number;
@@ -34,6 +35,7 @@ export interface ProductItem {
         base: string;
     };
     description?: string;
+    description_en?: string;
 }
 
 interface ProductCardProps {
@@ -51,16 +53,16 @@ export default function ProductCard({
     isWishlisted = false,
     onToggleWishlist,
     onQuickView,
-    onAddToCart,
     className,
     darkTheme = false,
 }: ProductCardProps) {
+    const { t, isEn } = useTranslation();
     const { props } = usePage<any>();
     const isAdmin = Boolean(props?.auth?.is_admin || props?.auth?.user?.role === 'admin');
 
     const reviews = product.reviewsCount ?? product.reviews_count ?? 0;
-
     const productUrl = product.slug ? `/products/${product.slug}` : `/products/${product.id}`;
+    const categoryDisplay = formatCategoryName(product.category || product.family || '', isEn);
 
     return (
         <Card className={cn('group overflow-hidden flex flex-col py-0 gap-0 border-0 border-none shadow-none rounded-lg bg-transparent', className)}>
@@ -88,7 +90,7 @@ export default function ProductCard({
                     )}
                     {product.isNew && (
                         <Badge variant="secondary" className="text-[10px]">
-                            Baru
+                            {isEn ? 'New' : 'Baru'}
                         </Badge>
                     )}
                 </div>
@@ -109,6 +111,7 @@ export default function ProductCard({
                                 ? 'text-destructive bg-background'
                                 : 'opacity-0 group-hover:opacity-100 bg-background/80'
                         )}
+                        aria-label={isWishlisted ? (isEn ? 'Remove from Wishlist' : 'Hapus dari Wishlist') : (isEn ? 'Save to Wishlist' : 'Simpan ke Wishlist')}
                     >
                         <svg className={cn('w-3.5 h-3.5', isWishlisted ? 'fill-current' : '')} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -129,18 +132,18 @@ export default function ProductCard({
                             }}
                             className="w-full text-xs shadow-none cursor-pointer"
                         >
-                            Quick View
+                            {t('common.quick_view')}
                         </Button>
                     </div>
                 )}
             </div>
 
             <CardContent className="py-3 sm:py-4 px-0 space-y-1">
-                {(product.brand || product.category || product.family) && (
+                {(product.brand || categoryDisplay) && (
                     <p className={cn('text-[11px] truncate', darkTheme ? 'text-white/70' : 'text-muted-foreground')}>
                         {product.brand ? product.brand : ''}
-                        {product.brand && (product.category || product.family) ? ' • ' : ''}
-                        {product.category || product.family || ''}
+                        {product.brand && categoryDisplay ? ' • ' : ''}
+                        {categoryDisplay}
                     </p>
                 )}
                 <h3

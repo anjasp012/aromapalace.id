@@ -95,7 +95,7 @@ class UserController extends Controller
         ]);
 
         if ($user->role === 'customer') {
-            $this->membershipService->getOrCreateMembership($user);
+            $this->membershipService->getMembership($user, autoCreate: true);
         }
 
         return redirect()->route('admin.users.index')
@@ -130,7 +130,7 @@ class UserController extends Controller
         $user->save();
 
         if ($user->role === 'customer' && ! $user->membership) {
-            $this->membershipService->getOrCreateMembership($user);
+            $this->membershipService->getMembership($user, autoCreate: true);
         }
 
         return redirect()->route('admin.users.index')

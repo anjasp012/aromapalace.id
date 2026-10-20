@@ -82,7 +82,6 @@ interface OrdersIndexProps {
     tab_counts: {
         all: number;
         menunggu_pembayaran: number;
-        menunggu_konfirmasi: number;
         diproses: number;
         dikirim: number;
         pengambilan: number;
@@ -180,8 +179,6 @@ export default function AdminOrdersIndex({
                 return <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200"><Truck className="size-3 mr-1" /> {label}</Badge>;
             case 'diproses':
                 return <Badge variant="secondary" className="bg-amber-50 text-amber-700 border-amber-200"><Package className="size-3 mr-1" /> Diproses</Badge>;
-            case 'menunggu_konfirmasi':
-                return <Badge variant="outline" className="text-amber-600 border-amber-300"><Clock className="size-3 mr-1" /> Konfirmasi</Badge>;
             case 'dibatalkan':
                 return <Badge variant="destructive"><XCircle className="size-3 mr-1" /> Dibatalkan</Badge>;
             case 'menunggu_pembayaran':
@@ -193,7 +190,6 @@ export default function AdminOrdersIndex({
     const TABS = [
         { key: 'all', label: 'Semua', count: tab_counts.all },
         { key: 'menunggu_pembayaran', label: 'Menunggu Bayar', count: tab_counts.menunggu_pembayaran },
-        ...(tab_counts.menunggu_konfirmasi > 0 ? [{ key: 'menunggu_konfirmasi', label: 'Konfirmasi', count: tab_counts.menunggu_konfirmasi }] : []),
         { key: 'diproses', label: 'Diproses', count: tab_counts.diproses },
         { key: 'dikirim', label: 'Dikirim Kurir', count: tab_counts.dikirim },
         { key: 'pengambilan', label: 'Ambil di Butik', count: tab_counts.pengambilan },

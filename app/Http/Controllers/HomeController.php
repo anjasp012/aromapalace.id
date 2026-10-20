@@ -92,7 +92,10 @@ class HomeController extends Controller
         $categories = Category::all()->map(function (Category $c) use ($categoryImages) {
             return [
                 'name' => $c->name,
+                'name_en' => $c->name_en,
                 'slug' => $c->slug,
+                'description' => $c->description,
+                'description_en' => $c->description_en,
                 'image' => $categoryImages[$c->slug] ?? 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=400&q=80',
             ];
         })->values()->all();
@@ -103,6 +106,7 @@ class HomeController extends Controller
                 'name' => $b->name,
                 'slug' => $b->slug,
                 'description' => $b->description ?? '',
+                'description_en' => $b->description_en ?? '',
                 'collectionsCount' => $b->products_count,
                 'image' => $b->thumbnail ?? 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=200&q=80',
             ];
@@ -133,7 +137,9 @@ class HomeController extends Controller
                     'badge' => $badge,
                     'expiry' => $expiry,
                     'title' => $v->name,
+                    'title_en' => $v->name_en,
                     'desc' => $v->description ?? "Gunakan kode promo {$v->code} untuk mendapatkan diskon istimewa.",
+                    'desc_en' => $v->description_en,
                     'minSpend' => $minSpend,
                     'maxDiscount' => $maxDiscount,
                     'terms' => $v->terms ?? [
@@ -155,9 +161,11 @@ class HomeController extends Controller
                 'id' => $art->id,
                 'slug' => $art->slug,
                 'title' => $art->title,
+                'title_en' => $art->title_en,
                 'readTime' => $art->read_time,
                 'date' => $art->created_at->format('d M Y'),
                 'excerpt' => $art->excerpt,
+                'excerpt_en' => $art->excerpt_en,
                 'thumbnail' => $art->thumbnail,
             ])
             ->values()

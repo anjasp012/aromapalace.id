@@ -26,8 +26,10 @@ import {
 interface CategoryItem {
     id: number;
     name: string;
+    name_en?: string | null;
     slug: string;
     description?: string | null;
+    description_en?: string | null;
     products_count: number;
     created_at?: string;
 }
@@ -69,8 +71,10 @@ export default function AdminCategoriesIndex({
 
     const form = useForm({
         name: '',
+        name_en: '',
         slug: '',
         description: '',
+        description_en: '',
     });
 
     const slugify = (text: string) => {
@@ -97,8 +101,10 @@ export default function AdminCategoriesIndex({
         setEditingCategory(null);
         form.setData({
             name: '',
+            name_en: '',
             slug: '',
             description: '',
+            description_en: '',
         });
         form.clearErrors();
         setDialogOpen(true);
@@ -108,8 +114,10 @@ export default function AdminCategoriesIndex({
         setEditingCategory(category);
         form.setData({
             name: category.name,
+            name_en: category.name_en || '',
             slug: category.slug,
             description: category.description || '',
+            description_en: category.description_en || '',
         });
         form.clearErrors();
         setDialogOpen(true);
@@ -242,7 +250,12 @@ export default function AdminCategoriesIndex({
                                     categories.data.map((cat) => (
                                         <tr key={cat.id} className="hover:bg-muted/50 transition-colors">
                                             <td className="p-4 align-middle font-medium text-foreground">
-                                                {cat.name}
+                                                <div>{cat.name}</div>
+                                                {cat.name_en && (
+                                                    <div className="text-[11px] text-muted-foreground font-normal italic">
+                                                        EN: {cat.name_en}
+                                                    </div>
+                                                )}
                                             </td>
                                             <td className="p-4 align-middle font-mono text-muted-foreground">
                                                 /{cat.slug}
@@ -335,24 +348,44 @@ export default function AdminCategoriesIndex({
                     </DialogHeader>
 
                     <form onSubmit={handleFormSubmit} className="space-y-4 text-xs">
-                        <div className="space-y-1.5">
-                            <label className="font-medium text-foreground">Nama Kategori *</label>
-                            <Input
-                                type="text"
-                                placeholder="Contoh: Oriental Spicy"
-                                value={form.data.name}
-                                onChange={(e) => {
-                                    const val = e.target.value;
-                                    form.setData((prev) => ({
-                                        ...prev,
-                                        name: val,
-                                        slug: prev.slug === '' || prev.slug === slugify(prev.name) ? slugify(val) : prev.slug,
-                                    }));
-                                }}
-                                className="h-9"
-                                required
-                            />
-                            {form.errors.name && <p className="text-destructive text-[11px]">{form.errors.name}</p>}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <div className="flex items-center justify-between">
+                                    <label className="font-medium text-foreground">Nama Kategori *</label>
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-semibold">🇮🇩 ID</span>
+                                </div>
+                                <Input
+                                    type="text"
+                                    placeholder="Contoh: Oriental Mewah"
+                                    value={form.data.name}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        form.setData((prev) => ({
+                                            ...prev,
+                                            name: val,
+                                            slug: prev.slug === '' || prev.slug === slugify(prev.name) ? slugify(val) : prev.slug,
+                                        }));
+                                    }}
+                                    className="h-9"
+                                    required
+                                />
+                                {form.errors.name && <p className="text-destructive text-[11px]">{form.errors.name}</p>}
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <div className="flex items-center justify-between">
+                                    <label className="font-medium text-foreground">Nama Kategori (English)</label>
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-semibold">🇬🇧 EN</span>
+                                </div>
+                                <Input
+                                    type="text"
+                                    placeholder="e.g. Luxurious Oriental"
+                                    value={form.data.name_en}
+                                    onChange={(e) => form.setData('name_en', e.target.value)}
+                                    className="h-9"
+                                />
+                                {form.errors.name_en && <p className="text-destructive text-[11px]">{form.errors.name_en}</p>}
+                            </div>
                         </div>
 
                         <div className="space-y-1.5">
@@ -368,15 +401,33 @@ export default function AdminCategoriesIndex({
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="font-medium text-foreground">Deskripsi (Opsional)</label>
+                            <div className="flex items-center justify-between">
+                                <label className="font-medium text-foreground">Deskripsi (Indonesia)</label>
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-semibold">🇮🇩 ID</span>
+                            </div>
                             <textarea
-                                rows={3}
+                                rows={2}
                                 placeholder="Karakteristik atau keunikan kelompok aroma ini..."
                                 value={form.data.description}
                                 onChange={(e) => form.setData('description', e.target.value)}
                                 className="w-full rounded-md border border-input bg-transparent p-2.5 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                             />
                             {form.errors.description && <p className="text-destructive text-[11px]">{form.errors.description}</p>}
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <div className="flex items-center justify-between">
+                                <label className="font-medium text-foreground">Deskripsi (English)</label>
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-semibold">🇬🇧 EN</span>
+                            </div>
+                            <textarea
+                                rows={2}
+                                placeholder="Characteristics or distinctive traits of this scent family in English..."
+                                value={form.data.description_en}
+                                onChange={(e) => form.setData('description_en', e.target.value)}
+                                className="w-full rounded-md border border-input bg-transparent p-2.5 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                            />
+                            {form.errors.description_en && <p className="text-destructive text-[11px]">{form.errors.description_en}</p>}
                         </div>
 
                         <DialogFooter className="pt-2">

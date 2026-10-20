@@ -20,6 +20,7 @@ class Store extends Model
     protected $fillable = [
         'name',
         'description',
+        'description_en',
         'thumbnail',
         'latitude',
         'longitude',

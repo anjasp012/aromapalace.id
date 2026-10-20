@@ -36,6 +36,7 @@ interface StoreItem {
     id: number;
     name: string;
     description?: string | null;
+    description_en?: string | null;
     thumbnail?: string | null;
     latitude?: number | null;
     longitude?: number | null;
@@ -99,6 +100,7 @@ export default function AdminStoresIndex({
         _method?: string;
         name: string;
         description: string;
+        description_en: string;
         thumbnail: File | string | null;
         latitude: string | number;
         longitude: string | number;
@@ -106,6 +108,7 @@ export default function AdminStoresIndex({
     }>({
         name: '',
         description: '',
+        description_en: '',
         thumbnail: null,
         latitude: '',
         longitude: '',
@@ -128,6 +131,7 @@ export default function AdminStoresIndex({
         form.setData({
             name: '',
             description: '',
+            description_en: '',
             thumbnail: null,
             latitude: '',
             longitude: '',
@@ -144,6 +148,7 @@ export default function AdminStoresIndex({
             _method: 'put',
             name: st.name,
             description: st.description || '',
+            description_en: st.description_en || '',
             thumbnail: st.thumbnail || '',
             latitude: st.latitude !== null && st.latitude !== undefined ? st.latitude : '',
             longitude: st.longitude !== null && st.longitude !== undefined ? st.longitude : '',
@@ -340,6 +345,12 @@ export default function AdminStoresIndex({
                                                         <p className="line-clamp-2 text-xs leading-relaxed text-foreground/80">
                                                             {st.description || '-'}
                                                         </p>
+                                                        {st.description_en && (
+                                                            <p className="line-clamp-1 text-[11px] leading-relaxed text-muted-foreground mt-0.5 italic">
+                                                                <span className="font-semibold text-[10px] text-amber-600 dark:text-amber-400 not-italic mr-1">EN:</span>
+                                                                {st.description_en}
+                                                            </p>
+                                                        )}
                                                     </td>
                                                     <td className="p-4 align-middle">
                                                         {st.latitude && st.longitude ? (
@@ -604,7 +615,10 @@ export default function AdminStoresIndex({
 
                             {/* 4. Alamat Lengkap & Fasilitas Butik */}
                             <div className="space-y-1.5">
-                                <label className="font-medium text-foreground">Alamat Lengkap &amp; Fasilitas Butik</label>
+                                <div className="flex items-center justify-between">
+                                    <label className="font-medium text-foreground">Alamat Lengkap &amp; Fasilitas Butik (Bahasa Indonesia)</label>
+                                    <Badge variant="outline" className="text-[10px] text-muted-foreground border-border/60">🇮🇩 ID</Badge>
+                                </div>
                                 <Textarea
                                     rows={2}
                                     placeholder="Contoh: Senayan City Mall, Ground Floor Unit G-12, Jl. Asia Afrika Lot 19. Menghadirkan private scent lounge..."
@@ -614,6 +628,23 @@ export default function AdminStoresIndex({
                                 />
                                 {form.errors.description && (
                                     <p className="text-destructive text-[11px]">{form.errors.description}</p>
+                                )}
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <div className="flex items-center justify-between">
+                                    <label className="font-medium text-foreground">Boutique Address &amp; Facilities (English)</label>
+                                    <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-500/30 bg-amber-500/5">🇬🇧 EN</Badge>
+                                </div>
+                                <Textarea
+                                    rows={2}
+                                    placeholder="e.g. Senayan City Mall, Ground Floor Unit G-12. Featuring a private scent lounge..."
+                                    value={form.data.description_en}
+                                    onChange={(e) => form.setData('description_en', e.target.value)}
+                                    className="text-xs"
+                                />
+                                {form.errors.description_en && (
+                                    <p className="text-destructive text-[11px]">{form.errors.description_en}</p>
                                 )}
                             </div>
 

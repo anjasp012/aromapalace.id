@@ -5,6 +5,7 @@ import ArticleCard, { type ArticleItem } from '@/components/ArticleCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, X, Loader2 } from 'lucide-react';
+import { useTranslation } from '@/lib/i18n';
 
 interface ArticlesProps {
     articles: ArticleItem[];
@@ -15,6 +16,7 @@ export default function ArticlesPage({
     articles = [],
     searchQuery = '',
 }: ArticlesProps) {
+    const { t, isEn } = useTranslation();
     const [search, setSearch] = useState(searchQuery);
     const [isSearching, setIsSearching] = useState(false);
     const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -77,10 +79,14 @@ export default function ArticlesPage({
     return (
         <Layout>
             <Head>
-                <title>Artikel &amp; Jurnal Wewangian • Aroma Palace</title>
+                <title>{isEn ? 'Articles & Fragrance Journal • Aroma Palace' : 'Artikel & Jurnal Wewangian • Aroma Palace'}</title>
                 <meta
                     name="description"
-                    content="Kumpulan artikel dan panduan wewangian mewah dari Aroma Palace."
+                    content={
+                        isEn
+                            ? 'Curated luxury fragrance articles, guides, and olfactory stories from Aroma Palace.'
+                            : 'Kumpulan artikel dan panduan wewangian mewah dari Aroma Palace.'
+                    }
                 />
             </Head>
 
@@ -88,11 +94,13 @@ export default function ArticlesPage({
             <div className="border-b border-border/70 bg-gradient-to-b from-muted/30 via-background to-background py-10 sm:py-14">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center space-y-3">
                     <h1 className="text-3xl sm:text-4xl lg:text-5xl tracking-tight text-foreground">
-                        <span className="font-light">Artikel &amp;</span>{' '}
-                        <span className="font-bold text-[#4A070B] dark:text-[#E8D0BA]">Jurnal Wewangian</span>
+                        <span className="font-light">{isEn ? 'Articles &' : 'Artikel &'}</span>{' '}
+                        <span className="font-bold text-[#4A070B] dark:text-[#E8D0BA]">{isEn ? 'Fragrance Journal' : 'Jurnal Wewangian'}</span>
                     </h1>
                     <p className="max-w-2xl mx-auto text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                        Panduan dan wawasan seputar wewangian mewah dunia untuk melengkapi wawasan olfaktori dan koleksi parfum Anda.
+                        {isEn
+                            ? 'Global luxury fragrance guides and insights to enrich your olfactory knowledge and perfume collection.'
+                            : 'Panduan dan wawasan seputar wewangian mewah dunia untuk melengkapi wawasan olfaktori dan koleksi parfum Anda.'}
                     </p>
                 </div>
             </div>
@@ -105,11 +113,13 @@ export default function ArticlesPage({
                         <span className="text-xs text-muted-foreground">
                             {searchQuery ? (
                                 <>
-                                    Menampilkan hasil untuk <strong className="text-foreground font-bold">&ldquo;{searchQuery}&rdquo;</strong> ({articles.length} artikel)
+                                    {isEn ? 'Showing results for ' : 'Menampilkan hasil untuk '}{' '}
+                                    <strong className="text-foreground font-bold">&ldquo;{searchQuery}&rdquo;</strong> ({articles.length} {isEn ? 'articles' : 'artikel'})
                                 </>
                             ) : (
                                 <>
-                                    Menampilkan <strong className="text-foreground font-bold">{articles.length}</strong> artikel wewangian
+                                    {isEn ? 'Showing ' : 'Menampilkan '}{' '}
+                                    <strong className="text-foreground font-bold">{articles.length}</strong> {isEn ? 'fragrance articles' : 'artikel wewangian'}
                                 </>
                             )}
                         </span>
@@ -120,7 +130,7 @@ export default function ArticlesPage({
                                 onClick={handleClearSearch}
                                 className="h-6 px-2 text-[11px] text-[#4A070B] dark:text-[#E8D0BA] hover:underline cursor-pointer"
                             >
-                                Hapus Pencarian
+                                {isEn ? 'Clear Search' : 'Hapus Pencarian'}
                             </Button>
                         )}
                     </div>
@@ -135,7 +145,7 @@ export default function ArticlesPage({
                             )}
                             <Input
                                 type="text"
-                                placeholder="Cari artikel wewangian..."
+                                placeholder={isEn ? 'Search fragrance articles...' : 'Cari artikel wewangian...'}
                                 value={search}
                                 onChange={(e) => handleSearchChange(e.target.value)}
                                 className="pl-9 pr-8 text-xs h-9 bg-card border-border/80 shadow-none focus-visible:ring-1 focus-visible:ring-[#4A070B]"
@@ -162,9 +172,11 @@ export default function ArticlesPage({
                     </div>
                 ) : (
                     <div className="py-16 px-6 text-center space-y-4">
-                        <h3 className="text-base font-bold text-foreground">Tidak Ada Artikel Ditemukan</h3>
+                        <h3 className="text-base font-bold text-foreground">{isEn ? 'No Articles Found' : 'Tidak Ada Artikel Ditemukan'}</h3>
                         <p className="text-xs text-muted-foreground max-w-sm mx-auto leading-relaxed">
-                            Tidak ada artikel yang sesuai dengan kata kunci pencarian Anda.
+                            {isEn
+                                ? 'No articles matched your search keywords.'
+                                : 'Tidak ada artikel yang sesuai dengan kata kunci pencarian Anda.'}
                         </p>
                         <div className="pt-2">
                             <Button
@@ -173,7 +185,7 @@ export default function ArticlesPage({
                                 onClick={handleClearSearch}
                                 className="text-xs rounded-md border-border/80 cursor-pointer"
                             >
-                                Tampilkan Semua Artikel
+                                {isEn ? 'Show All Articles' : 'Tampilkan Semua Artikel'}
                             </Button>
                         </div>
                     </div>

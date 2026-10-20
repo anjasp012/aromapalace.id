@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Head, Link, router } from '@inertiajs/react';
+import { Link, router, useForm } from '@inertiajs/react';
 import AdminLayout from '@/layouts/AdminLayout';
 import {
     Search,
@@ -8,8 +8,10 @@ import {
     Shield,
     ShoppingBag,
     Eye,
+    Edit3,
     Trash2,
     RefreshCw,
+    Plus,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -83,8 +85,17 @@ export default function AdminUsersIndex({
 }: UsersIndexProps) {
     const [search, setSearch] = useState(filters.search || '');
     const [roleFilter, setRoleFilter] = useState(filters.role || 'all');
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [editingUser, setEditingUser] = useState<UserItem | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<UserItem | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+
+    const userForm = useForm({
+        name: '',
+        email: '',
+        role: 'customer',
+        password: '',
+    });
 
     const applyFilter = (newVals: { search?: string; role?: string }) => {
         router.get(
@@ -113,6 +124,49 @@ export default function AdminUsersIndex({
         router.get('/admin/users');
     };
 
+    const handleOpenCreate = () => {
+        setEditingUser(null);
+        userForm.setData({
+            name: '',
+            email: '',
+            role: 'customer',
+            password: '',
+        });
+        userForm.clearErrors();
+        setDialogOpen(true);
+    };
+
+    const handleOpenEdit = (user: UserItem) => {
+        setEditingUser(user);
+        userForm.setData({
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            password: '',
+        });
+        userForm.clearErrors();
+        setDialogOpen(true);
+    };
+
+    const handleFormSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (editingUser) {
+            userForm.put(`/admin/users/${editingUser.id}`, {
+                onSuccess: () => {
+                    setDialogOpen(false);
+                    userForm.reset();
+                },
+            });
+        } else {
+            userForm.post('/admin/users', {
+                onSuccess: () => {
+                    setDialogOpen(false);
+                    userForm.reset();
+                },
+            });
+        }
+    };
+
     const handleDeleteSubmit = () => {
         if (!deleteTarget) return;
         setIsDeleting(true);
@@ -129,8 +183,6 @@ export default function AdminUsersIndex({
             title="Manajemen Pengguna"
             subtitle="Kelola seluruh akun pelanggan, hak akses administrator, dan status keanggotaan poin loyalitas."
         >
-            <Head title="Manajemen Pengguna - Admin CMS" />
-
             <div className="space-y-6">
                 {/* Metric Summary Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -179,7 +231,7 @@ export default function AdminUsersIndex({
                     </Card>
                 </div>
 
-                {/* Filter and Actions */}
+                {/* Filter and Actions Bar */}
                 <Card className="p-4">
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
                         <form onSubmit={handleSearchSubmit} className="flex-1 w-full sm:max-w-md flex items-center gap-2">
@@ -222,6 +274,11 @@ export default function AdminUsersIndex({
                                     <span>Reset</span>
                                 </Button>
                             )}
+
+                            <Button size="sm" onClick={handleOpenCreate} className="h-9">
+                                <Plus className="size-4 mr-1.5" />
+                                <span>Tambah Pengguna</span>
+                            </Button>
                         </div>
                     </div>
                 </Card>
@@ -298,11 +355,21 @@ export default function AdminUsersIndex({
                                                         size="icon"
                                                         asChild
                                                         className="size-8 text-muted-foreground hover:text-foreground"
-                                                        title="Lihat Detail Pengguna"
+                                                        title="Lihat Detail & Mutasi Poin"
                                                     >
                                                         <Link href={`/admin/users/${user.id}`}>
                                                             <Eye className="size-3.5" />
                                                         </Link>
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => handleOpenEdit(user)}
+                                                        className="size-8 text-muted-foreground hover:text-foreground"
+                                                        title="Edit Data Pengguna"
+                                                    >
+                                                        <Edit3 className="size-3.5" />
                                                     </Button>
                                                     {user.role !== 'admin' && (
                                                         <Button
@@ -360,6 +427,113 @@ export default function AdminUsersIndex({
                     )}
                 </Card>
             </div>
+
+            {/* Create/Edit Modal Dialog */}
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>
+                            {editingUser ? 'Edit Data Pengguna' : 'Tambah Pengguna Baru'}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {editingUser
+                                ? 'Perbarui nama, alamat email, role akses, atau kata sandi pengguna.'
+                                : 'Daftarkan akun pelanggan atau admin baru ke dalam sistem Aroma Palace.'}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <form onSubmit={handleFormSubmit} className="space-y-4 py-2">
+                        <div className="space-y-1.5">
+                            <label htmlFor="name" className="text-xs font-medium text-foreground block">
+                                Nama Lengkap <span className="text-destructive">*</span>
+                            </label>
+                            <Input
+                                id="name"
+                                type="text"
+                                placeholder="Contoh: Budi Santoso"
+                                value={userForm.data.name}
+                                onChange={(e) => userForm.setData('name', e.target.value)}
+                                className="h-9 text-xs"
+                                required
+                            />
+                            {userForm.errors.name && (
+                                <p className="text-xs text-destructive">{userForm.errors.name}</p>
+                            )}
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label htmlFor="email" className="text-xs font-medium text-foreground block">
+                                Alamat Email <span className="text-destructive">*</span>
+                            </label>
+                            <Input
+                                id="email"
+                                type="email"
+                                placeholder="budi@example.com"
+                                value={userForm.data.email}
+                                onChange={(e) => userForm.setData('email', e.target.value)}
+                                className="h-9 text-xs"
+                                required
+                            />
+                            {userForm.errors.email && (
+                                <p className="text-xs text-destructive">{userForm.errors.email}</p>
+                            )}
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label htmlFor="role" className="text-xs font-medium text-foreground block">
+                                Role Akses <span className="text-destructive">*</span>
+                            </label>
+                            <Select
+                                value={userForm.data.role}
+                                onValueChange={(val) => userForm.setData('role', val)}
+                            >
+                                <SelectTrigger id="role" className="h-9 text-xs">
+                                    <SelectValue placeholder="Pilih Role" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="customer">Pelanggan (Customer)</SelectItem>
+                                    <SelectItem value="admin">Administrator (Admin CMS)</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            {userForm.errors.role && (
+                                <p className="text-xs text-destructive">{userForm.errors.role}</p>
+                            )}
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label htmlFor="password" className="text-xs font-medium text-foreground block">
+                                Kata Sandi {editingUser ? '(Opsional)' : <span className="text-destructive">*</span>}
+                            </label>
+                            <Input
+                                id="password"
+                                type="password"
+                                placeholder={editingUser ? 'Kosongkan jika tidak ingin mengubah' : 'Minimal 8 karakter'}
+                                value={userForm.data.password}
+                                onChange={(e) => userForm.setData('password', e.target.value)}
+                                className="h-9 text-xs"
+                                required={!editingUser}
+                            />
+                            {userForm.errors.password && (
+                                <p className="text-xs text-destructive">{userForm.errors.password}</p>
+                            )}
+                        </div>
+
+                        <DialogFooter className="gap-2 sm:gap-0 pt-3">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setDialogOpen(false)}
+                            >
+                                Batal
+                            </Button>
+                            <Button type="submit" size="sm" disabled={userForm.processing}>
+                                {userForm.processing ? 'Menyimpan...' : 'Simpan'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
 
             {/* Delete Confirmation Dialog */}
             <Dialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}>

@@ -31,7 +31,7 @@ class AccountController extends Controller
                 $q->where('status', 'menunggu_pembayaran')
                     ->orWhere(fn ($sub) => $sub->whereNull('status')->where('payment_status', 'pending'));
             })->count(),
-            'diproses' => $user->orders()->whereIn('status', ['diproses', 'menunggu_konfirmasi'])->count(),
+            'diproses' => $user->orders()->where('status', 'diproses')->count(),
             'dikirim' => $user->orders()->where('status', 'dikirim')->count(),
             'selesai' => $user->orders()->where(function ($q) {
                 $q->where('status', 'selesai')

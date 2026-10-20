@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Link, router, useForm } from '@inertiajs/react';
 import AdminLayout from '@/layouts/AdminLayout';
 import {
     ArrowLeft,
@@ -91,7 +91,6 @@ interface UsersShowProps {
 
 const orderStatusLabel: Record<string, string> = {
     menunggu_pembayaran: 'Menunggu Bayar',
-    menunggu_konfirmasi: 'Dikonfirmasi',
     diproses: 'Diproses',
     dikirim: 'Dikirim',
     selesai: 'Selesai',
@@ -145,8 +144,6 @@ export default function AdminUsersShow({
             title={`Pengguna: ${user.name}`}
             subtitle="Detail profil pengguna, pengelolaan role akses, dan histori mutasi saldo poin loyalitas."
         >
-            <Head title={`${user.name} - Admin CMS`} />
-
             <div className="space-y-6">
                 {/* Back Link */}
                 <div>

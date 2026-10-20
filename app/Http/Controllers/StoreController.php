@@ -37,6 +37,7 @@ class StoreController extends Controller
             'id' => $store->id,
             'name' => $store->name,
             'description' => $store->description,
+            'description_en' => $store->description_en,
             'thumbnail' => $store->thumbnail,
             'latitude' => (float) $store->latitude,
             'longitude' => (float) $store->longitude,

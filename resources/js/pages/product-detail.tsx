@@ -15,6 +15,7 @@ import {
     DialogDescription,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { useTranslation, formatCategoryName } from '@/lib/i18n';
 
 export interface FragranceReview {
     name: string;
@@ -57,6 +58,7 @@ export interface FragranceDetail {
     tag?: string;
     mood?: string;
     description?: string;
+    description_en?: string;
     longevity?: string;
     sillage?: string;
     season?: string;
@@ -80,6 +82,7 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
     const { props } = usePage<any>();
     const user = props?.auth?.user;
     const isAdmin = Boolean(props?.auth?.is_admin || user?.role === 'admin');
+    const { t, pickText, isEn } = useTranslation();
 
     // Gallery State
     const images = useMemo(() => {
@@ -126,7 +129,7 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
             {
                 id: null,
                 label: product.volume || '50ml',
-                title: `${product.volume || '50ml'} (Signature Produk)`,
+                title: `${product.volume || '50ml'} (${isEn ? 'Signature Product' : 'Signature Produk'})`,
                 price: product.price,
                 rawPrice: product.raw_price,
                 originalPrice: product.originalPrice,
@@ -134,7 +137,7 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                 inStock: product.in_stock,
             },
         ];
-    }, [product]);
+    }, [product, isEn]);
 
     // Dynamic Price based on selected variant
     const currentPriceInfo = useMemo(() => {
@@ -157,7 +160,14 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
     const handleToggleWishlist = () => {
         if (isAdmin) return;
         if (!user) {
-            router.visit('/login?notice=' + encodeURIComponent('Silakan masuk untuk menyimpan wewangian ke wishlist Anda.'));
+            router.visit(
+                '/login?notice=' +
+                    encodeURIComponent(
+                        isEn
+                            ? 'Please log in to save fragrances to your wishlist.'
+                            : 'Silakan masuk untuk menyimpan wewangian ke wishlist Anda.'
+                    )
+            );
             return;
         }
         setIsWishlisted((prev) => !prev);
@@ -177,7 +187,14 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
     const handleAddToCart = () => {
         if (isAdmin) return;
         if (!user) {
-            router.visit('/login?notice=' + encodeURIComponent('Silakan masuk untuk menambahkan produk ke keranjang belanja.'));
+            router.visit(
+                '/login?notice=' +
+                    encodeURIComponent(
+                        isEn
+                            ? 'Please log in to add products to your shopping cart.'
+                            : 'Silakan masuk untuk menambahkan produk ke keranjang belanja.'
+                    )
+            );
             return;
         }
         router.post(
@@ -194,12 +211,12 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
         );
     };
 
-
-
     // WhatsApp Consultation
     const handleWhatsAppConsultation = () => {
         const message = encodeURIComponent(
-            `Halo Aroma Palace, saya tertarik berkonsultasi mengenai parfum "${product.name}" (${product.concentration || 'Extrait de Parfum'}). Mohon informasi ketersediaan batch maserasi dan rekomendasi pengiriman.`
+            isEn
+                ? `Hello Aroma Palace, I am interested in consulting about the fragrance "${product.name}" (${product.concentration || 'Extrait de Parfum'}). Please provide batch information and shipping recommendations.`
+                : `Halo Aroma Palace, saya tertarik berkonsultasi mengenai parfum "${product.name}" (${product.concentration || 'Extrait de Parfum'}). Mohon informasi ketersediaan batch maserasi dan rekomendasi pengiriman.`
         );
         window.open(`https://wa.me/6281234567890?text=${message}`, '_blank');
     };
@@ -213,7 +230,9 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
             try {
                 await navigator.share({
                     title: `${product.name} • Aroma Palace`,
-                    text: `Jelajahi racikan wewangian mewah ${product.name} dari Aroma Palace:`,
+                    text: isEn
+                        ? `Explore the luxurious fragrance ${product.name} from Aroma Palace:`
+                        : `Jelajahi racikan wewangian mewah ${product.name} dari Aroma Palace:`,
                     url: currentUrl,
                 });
                 return;
@@ -228,9 +247,13 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
             }
             setCopiedShare(true);
             setTimeout(() => setCopiedShare(false), 2000);
-            window.showPromoToast?.('Tautan wewangian berhasil disalin ke clipboard.');
+            window.showPromoToast?.(
+                isEn
+                    ? 'Fragrance link copied to clipboard.'
+                    : 'Tautan wewangian berhasil disalin ke clipboard.'
+            );
         } catch {
-            window.showPromoToast?.('Gagal menyalin tautan.');
+            window.showPromoToast?.(isEn ? 'Failed to copy link.' : 'Gagal menyalin tautan.');
         }
     };
 
@@ -242,7 +265,7 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
         const reviewItem: FragranceReview = {
             name: newReviewAuthor.trim(),
             rating: newRating,
-            date: 'Baru saja',
+            date: isEn ? 'Just now' : 'Baru saja',
             comment: newReviewText.trim(),
         };
 
@@ -250,14 +273,22 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
         setNewReviewAuthor('');
         setNewReviewText('');
         setWriteReviewOpen(false);
-        window.showPromoToast?.('Terima kasih! Ulasan wewangian Anda berhasil diterbitkan.');
+        window.showPromoToast?.(
+            isEn
+                ? 'Thank you! Your fragrance review has been submitted.'
+                : 'Terima kasih! Ulasan wewangian Anda berhasil diterbitkan.'
+        );
     };
+
+    const activeDescription = pickText(product.description, product.description_en);
 
     const renderDescription = (desc?: string) => {
         if (!desc) {
             return (
                 <p>
-                    Wewangian mahakarya dengan konsentrasi ekstrak murni berkarakter kuat yang dirancang untuk meninggalkan jejak aroma tak terlupakan di setiap ruangan yang Anda masuki.
+                    {isEn
+                        ? 'A masterwork fragrance with pure extract concentration and strong character, crafted to leave an unforgettable trail in every room you enter.'
+                        : 'Wewangian mahakarya dengan konsentrasi ekstrak murni berkarakter kuat yang dirancang untuk meninggalkan jejak aroma tak terlupakan di setiap ruangan yang Anda masuki.'}
                 </p>
             );
         }
@@ -271,11 +302,7 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
             );
         }
 
-        return (
-            <p className="whitespace-pre-line">
-                {desc}
-            </p>
-        );
+        return <p className="whitespace-pre-line">{desc}</p>;
     };
 
     const activeImage = images[activeImageIndex] || product.image;
@@ -283,12 +310,14 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
     return (
         <Layout>
             <Head>
-                <title>{`${product.name} • Wewangian Mewah Aroma Palace`}</title>
+                <title>{`${product.name} • ${isEn ? 'Luxury Fragrance Aroma Palace' : 'Wewangian Mewah Aroma Palace'}`}</title>
                 <meta
                     name="description"
                     content={
-                        product.description ||
-                        `Pesan parfum artisanal ${product.name} dengan konsentrasi murni ${product.concentration} dari Aroma Palace.`
+                        activeDescription ||
+                        (isEn
+                            ? `Order artisanal fragrance ${product.name} with pure concentration ${product.concentration} from Aroma Palace.`
+                            : `Pesan parfum artisanal ${product.name} dengan konsentrasi murni ${product.concentration} dari Aroma Palace.`)
                     }
                 />
             </Head>
@@ -301,18 +330,18 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                             <svg className="w-3.5 h-3.5 text-[#4A070B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                             </svg>
-                            <span>Beranda</span>
+                            <span>{t('nav.home')}</span>
                         </Link>
                         <span>/</span>
                         <Link href="/products" className="hover:text-foreground transition-colors">
-                            Koleksi Produk
+                            {t('nav.products')}
                         </Link>
                         <span>/</span>
                         <Link
                             href={`/products?category=${encodeURIComponent(product.family || product.category || 'All')}`}
                             className="hover:text-foreground transition-colors"
                         >
-                            {product.family || product.category || 'Parfum'}
+                            {formatCategoryName(product.family || product.category || 'Parfum', isEn)}
                         </Link>
                         <span>/</span>
                         <span className="font-semibold text-foreground truncate max-w-[200px] sm:max-w-none">
@@ -340,11 +369,9 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                                 />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
-                                    Gambar Wewangian
+                                    {isEn ? 'Fragrance Image' : 'Gambar Wewangian'}
                                 </div>
                             )}
-
-
 
                             {/* Top Right Wishlist & Zoom Actions */}
                             <div className="absolute top-3 right-3 flex flex-col gap-2 z-10">
@@ -357,7 +384,7 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                                             'rounded-md h-8 w-8 bg-background/90 backdrop-blur-xs border border-border/80 transition-colors shadow-none cursor-pointer',
                                             isWishlisted ? 'text-rose-600' : 'text-muted-foreground hover:text-foreground'
                                         )}
-                                        title={isWishlisted ? 'Hapus dari Wishlist' : 'Simpan ke Wishlist'}
+                                        title={isWishlisted ? (isEn ? 'Remove from Wishlist' : 'Hapus dari Wishlist') : (isEn ? 'Save to Wishlist' : 'Simpan ke Wishlist')}
                                     >
                                         <svg className={cn('w-4 h-4', isWishlisted ? 'fill-current' : '')} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -370,15 +397,13 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                                     size="icon"
                                     onClick={() => setLightboxOpen(true)}
                                     className="rounded-md h-8 w-8 bg-background/90 backdrop-blur-xs border border-border/80 text-muted-foreground hover:text-foreground shadow-none cursor-pointer"
-                                    title="Perbesar Tampilan"
+                                    title={isEn ? 'Zoom Image' : 'Perbesar Tampilan'}
                                 >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
                                     </svg>
                                 </Button>
                             </div>
-
-
                         </div>
 
                         {/* Thumbnail Strip */}
@@ -416,7 +441,7 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                                 </svg>
-                                <span>{copiedShare ? 'Tautan Disalin!' : 'Bagikan Wewangian Ini'}</span>
+                                <span>{copiedShare ? (isEn ? 'Link Copied!' : 'Tautan Disalin!') : (isEn ? 'Share This Fragrance' : 'Bagikan Wewangian Ini')}</span>
                             </button>
 
                             <button
@@ -427,7 +452,7 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                                 <svg className="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.18-2.587-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.007c.106.005.249-.04.39.299.144.347.491 1.2.534 1.288.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.302c-.087.087-.179.182-.077.357.101.174.45 1.077 1.246 1.785.807.717 1.488.94 1.701 1.027.213.087.339.073.465-.072.126-.145.541-.63.685-.847.145-.217.289-.174.484-.101.195.072 1.238.584 1.45.69.213.106.355.158.407.248.052.09.052.523-.092.928z" />
                                 </svg>
-                                <span>Tanya Fragrance Specialist</span>
+                                <span>{isEn ? 'Ask Fragrance Specialist' : 'Tanya Fragrance Specialist'}</span>
                             </button>
                         </div>
                     </div>
@@ -445,7 +470,7 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                                 </span>
                                 <span className="text-muted-foreground text-xs">•</span>
                                 <Badge variant="outline" className="text-[11px] rounded-md border-border/80 font-normal shadow-none">
-                                    {product.family}
+                                    {formatCategoryName(product.family, isEn)}
                                 </Badge>
                             </div>
 
@@ -466,21 +491,21 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                                 href="#ulasan"
                                 className="text-muted-foreground hover:text-[#4A070B] transition-colors"
                             >
-                                {product.reviews_count || customReviews.length || 0} Ulasan Pelanggan
+                                {product.reviews_count || customReviews.length || 0} {isEn ? 'Customer Reviews' : 'Ulasan Pelanggan'}
                             </a>
                             <span className="text-muted-foreground">/</span>
                             <span className="text-emerald-600 font-medium flex items-center gap-1">
                                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                                 </svg>
-                                100% Produk Original Terjamin
+                                {isEn ? '100% Guaranteed Authentic' : '100% Produk Original Terjamin'}
                             </span>
                         </div>
 
                         {/* Price Block */}
                         <div className="space-y-1.5 bg-muted/20 p-4 rounded-lg border border-border/80">
                             <div className="text-[11px] uppercase font-bold tracking-wider text-muted-foreground">
-                                Harga Investasi Aroma
+                                {isEn ? 'Fragrance Investment' : 'Harga Investasi Aroma'}
                             </div>
                             <div className="flex flex-wrap items-baseline gap-3">
                                 <span className="text-2xl sm:text-3xl font-extrabold text-[#4A070B] dark:text-[#E8D0BA]">
@@ -493,25 +518,27 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                                 )}
                                 {product.discountBadge && (
                                     <span className="text-xs px-2 py-0.5 rounded-md bg-destructive/10 text-destructive font-bold">
-                                        Diskon {product.discountBadge}
+                                        {isEn ? 'Discount' : 'Diskon'} {product.discountBadge}
                                     </span>
                                 )}
                             </div>
                             <p className="text-[11px] text-muted-foreground">
-                                Sudah termasuk pajak PPN &amp; garansi kemasan pengiriman premium dengan kotak segel beludru.
+                                {isEn
+                                    ? 'Includes VAT & premium delivery box packaging with velvet-sealed casing.'
+                                    : 'Sudah termasuk pajak PPN & garansi kemasan pengiriman premium dengan kotak segel beludru.'}
                             </p>
                         </div>
 
                         {/* Product Description */}
                         <div className="text-xs sm:text-sm text-foreground/80 leading-relaxed">
-                            {renderDescription(product.description)}
+                            {renderDescription(activeDescription)}
                         </div>
 
                         {/* SIZE / VOLUME VARIANT SELECTION (OPTIONAL) */}
                         <div className="space-y-2.5">
                             <div className="flex items-center justify-between text-xs">
                                 <span className="font-bold text-foreground uppercase tracking-wider text-[11px]">
-                                    Pilih Varian / Ukuran Botol:
+                                    {isEn ? 'Select Variant / Bottle Size:' : 'Pilih Varian / Ukuran Botol:'}
                                 </span>
                                 <span className="text-muted-foreground text-[11px]">
                                     {currentPriceInfo.title}
@@ -562,7 +589,7 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                                             onClick={decreaseQty}
                                             disabled={quantity <= 1}
                                             className="h-8 w-8 p-0 cursor-pointer text-muted-foreground hover:text-foreground"
-                                            aria-label="Kurangi jumlah"
+                                            aria-label={isEn ? "Decrease quantity" : "Kurangi jumlah"}
                                         >
                                             &minus;
                                         </Button>
@@ -575,7 +602,7 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                                             onClick={increaseQty}
                                             disabled={quantity >= 10}
                                             className="h-8 w-8 p-0 cursor-pointer text-muted-foreground hover:text-foreground"
-                                            aria-label="Tambah jumlah"
+                                            aria-label={isEn ? "Increase quantity" : "Tambah jumlah"}
                                         >
                                             &#43;
                                         </Button>
@@ -589,17 +616,17 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                                         <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                                         </svg>
-                                        <span className="truncate">+ Keranjang Belanja</span>
+                                        <span className="truncate">{t('product.add_to_cart')}</span>
                                     </Button>
                                 </div>
                             ) : (
                                 <div className="p-3.5 bg-muted/50 rounded-lg border border-border/70 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                                     <span className="text-muted-foreground font-medium">
-                                        Mode Administrator: Fitur wishlist dan keranjang belanja dinonaktifkan.
+                                        {isEn ? 'Administrator Mode: Shopping features disabled.' : 'Mode Administrator: Fitur wishlist dan keranjang belanja dinonaktifkan.'}
                                     </span>
                                     <Button asChild size="sm" variant="outline" className="h-8 text-xs border-[#4A070B]/40 text-[#4A070B] shrink-0">
                                         <Link href={`/admin/products/${product.id}/edit`}>
-                                            Edit Produk di CMS &rarr;
+                                            {isEn ? 'Edit Product in CMS →' : 'Edit Produk di CMS →'}
                                         </Link>
                                     </Button>
                                 </div>
@@ -615,8 +642,8 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                                     </svg>
                                 </div>
                                 <div className="space-y-0.5">
-                                    <div className="text-[11px] font-bold text-foreground">100% Extrait Asli</div>
-                                    <div className="text-[10px] text-muted-foreground leading-snug">Standar IFRA Paris &amp; Teruji Laboratorium.</div>
+                                    <div className="text-[11px] font-bold text-foreground">{isEn ? '100% Authentic Extrait' : '100% Extrait Asli'}</div>
+                                    <div className="text-[10px] text-muted-foreground leading-snug">{isEn ? 'IFRA Paris Standards & Lab Tested.' : 'Standar IFRA Paris & Teruji Laboratorium.'}</div>
                                 </div>
                             </div>
 
@@ -627,8 +654,8 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                                     </svg>
                                 </div>
                                 <div className="space-y-0.5">
-                                    <div className="text-[11px] font-bold text-foreground">Kemasan Khusus Aman</div>
-                                    <div className="text-[10px] text-muted-foreground leading-snug">Boks kayu eksklusif &amp; garansi anti-pecah.</div>
+                                    <div className="text-[11px] font-bold text-foreground">{isEn ? 'Secure Luxury Packaging' : 'Kemasan Khusus Aman'}</div>
+                                    <div className="text-[10px] text-muted-foreground leading-snug">{isEn ? 'Exclusive wooden case & anti-breakage guarantee.' : 'Boks kayu eksklusif & garansi anti-pecah.'}</div>
                                 </div>
                             </div>
 
@@ -639,8 +666,8 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                                     </svg>
                                 </div>
                                 <div className="space-y-0.5">
-                                    <div className="text-[11px] font-bold text-foreground">Gratis 2 Sampel Vial</div>
-                                    <div className="text-[10px] text-muted-foreground leading-snug">Coba 2 aroma lain di setiap pengiriman.</div>
+                                    <div className="text-[11px] font-bold text-foreground">{isEn ? 'Complimentary 2 Sample Vials' : 'Gratis 2 Sampel Vial'}</div>
+                                    <div className="text-[10px] text-muted-foreground leading-snug">{isEn ? 'Experience 2 other scents in every delivery.' : 'Coba 2 aroma lain di setiap pengiriman.'}</div>
                                 </div>
                             </div>
 
@@ -651,8 +678,8 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                                     </svg>
                                 </div>
                                 <div className="space-y-0.5">
-                                    <div className="text-[11px] font-bold text-foreground">Garansi Tukar Aroma</div>
-                                    <div className="text-[10px] text-muted-foreground leading-snug">Bisa tukar aroma jika segel utama belum dibuka.</div>
+                                    <div className="text-[11px] font-bold text-foreground">{isEn ? 'Fragrance Exchange Guarantee' : 'Garansi Tukar Aroma'}</div>
+                                    <div className="text-[10px] text-muted-foreground leading-snug">{isEn ? 'Exchangeable if the primary seal remains intact.' : 'Bisa tukar aroma jika segel utama belum dibuka.'}</div>
                                 </div>
                             </div>
                         </div>
@@ -671,13 +698,15 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                     <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                         <div className="space-y-1">
                             <span className="text-xs font-bold uppercase tracking-wider text-[#4A070B] dark:text-[#E8D0BA]">
-                                Suara Kolektor Wewangian
+                                {isEn ? 'Voices of Fragrance Collectors' : 'Suara Kolektor Wewangian'}
                             </span>
                             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-                                Ulasan Pelanggan Terverifikasi
+                                {isEn ? 'Verified Customer Reviews' : 'Ulasan Pelanggan Terverifikasi'}
                             </h2>
                             <p className="text-xs text-muted-foreground">
-                                Pengalaman jujur dari para pecinta aroma yang telah mengoleksi botol wewangian ini.
+                                {isEn
+                                    ? 'Authentic experiences from fragrance connoisseurs who have collected this creation.'
+                                    : 'Pengalaman jujur dari para pecinta aroma yang telah mengoleksi botol wewangian ini.'}
                             </p>
                         </div>
 
@@ -689,7 +718,7 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                             <svg className="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
-                            Tulis Ulasan Anda
+                            {isEn ? 'Write a Review' : 'Tulis Ulasan Anda'}
                         </Button>
                     </div>
 
@@ -705,7 +734,9 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                                     {'★'.repeat(5)}
                                 </div>
                                 <div className="text-xs text-muted-foreground">
-                                    Berdasarkan {customReviews.length} ulasan terverifikasi
+                                    {isEn
+                                        ? `Based on ${customReviews.length} verified reviews`
+                                        : `Berdasarkan ${customReviews.length} ulasan terverifikasi`}
                                 </div>
                             </div>
 
@@ -747,7 +778,9 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                         <div className="lg:col-span-8 space-y-3.5">
                             {customReviews.length === 0 ? (
                                 <Card className="p-8 text-center text-xs text-muted-foreground rounded-lg border-border/80 shadow-none">
-                                    Belum ada ulasan untuk wewangian ini. Jadilah yang pertama memberikan ulasan!
+                                    {isEn
+                                        ? 'No reviews yet for this fragrance. Be the first to share your experience!'
+                                        : 'Belum ada ulasan untuk wewangian ini. Jadilah yang pertama memberikan ulasan!'}
                                 </Card>
                             ) : (
                                 customReviews.map((rev, idx) => (
@@ -787,7 +820,7 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                 <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
                     <div className="mb-6">
                         <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-                            Rekomendasi Wewangian Terkait
+                            {isEn ? 'Recommended Fragrances' : 'Rekomendasi Wewangian Terkait'}
                         </h2>
                     </div>
 
@@ -822,17 +855,21 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                 <DialogContent className="max-w-md p-6 rounded-lg border-border shadow-none">
                     <DialogHeader className="text-left space-y-1">
                         <DialogTitle className="text-base font-bold text-foreground">
-                            Bagikan Pengalaman Aroma Anda
+                            {isEn ? 'Share Your Fragrance Experience' : 'Bagikan Pengalaman Aroma Anda'}
                         </DialogTitle>
                         <DialogDescription className="text-xs text-muted-foreground">
-                            Ulasan Anda mengenai {product.name} sangat berarti bagi para kurator dan kolektor lain.
+                            {isEn
+                                ? `Your impression of ${product.name} guides fellow collectors and curators.`
+                                : `Ulasan Anda mengenai ${product.name} sangat berarti bagi para kurator dan kolektor lain.`}
                         </DialogDescription>
                     </DialogHeader>
 
                     <form onSubmit={handleAddReview} className="space-y-4 pt-2">
                         {/* Rating Stars Selection */}
                         <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-foreground">Nilai Aroma (Rating):</label>
+                            <label className="text-xs font-semibold text-foreground">
+                                {isEn ? 'Scent Rating:' : 'Nilai Aroma (Rating):'}
+                            </label>
                             <div className="flex items-center gap-2">
                                 {[1, 2, 3, 4, 5].map((star) => (
                                     <button
@@ -856,11 +893,13 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
 
                         {/* Name input */}
                         <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-foreground">Nama Anda:</label>
+                            <label className="text-xs font-semibold text-foreground">
+                                {isEn ? 'Your Name:' : 'Nama Anda:'}
+                            </label>
                             <input
                                 type="text"
                                 required
-                                placeholder="Contoh: Raden Arya"
+                                placeholder={isEn ? 'e.g., Alexander Smith' : 'Contoh: Raden Arya'}
                                 value={newReviewAuthor}
                                 onChange={(e) => setNewReviewAuthor(e.target.value)}
                                 className="w-full px-3 py-2 rounded-md border border-border/80 bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-[#4A070B]"
@@ -869,11 +908,17 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
 
                         {/* Review text */}
                         <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-foreground">Ulasan Pengalaman:</label>
+                            <label className="text-xs font-semibold text-foreground">
+                                {isEn ? 'Experience Review:' : 'Ulasan Pengalaman:'}
+                            </label>
                             <textarea
                                 required
                                 rows={4}
-                                placeholder="Ceritakan bagaimana aroma ini berinteraksi di kulit Anda, ketahanannya, serta situasi pemakaian terbaik..."
+                                placeholder={
+                                    isEn
+                                        ? 'Describe how this scent develops on your skin, its longevity, and best occasions for wear...'
+                                        : 'Ceritakan bagaimana aroma ini berinteraksi di kulit Anda, ketahanannya, serta situasi pemakaian terbaik...'
+                                }
                                 value={newReviewText}
                                 onChange={(e) => setNewReviewText(e.target.value)}
                                 className="w-full px-3 py-2 rounded-md border border-border/80 bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-[#4A070B] resize-none"
@@ -888,14 +933,14 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                                 onClick={() => setWriteReviewOpen(false)}
                                 className="text-xs cursor-pointer shadow-none"
                             >
-                                Batal
+                                {isEn ? 'Cancel' : 'Batal'}
                             </Button>
                             <Button
                                 type="submit"
                                 size="sm"
                                 className="bg-[#4A070B] text-white hover:bg-[#360407] text-xs rounded-md shadow-none cursor-pointer"
                             >
-                                Publikasikan Ulasan
+                                {isEn ? 'Publish Review' : 'Publikasikan Ulasan'}
                             </Button>
                         </div>
                     </form>

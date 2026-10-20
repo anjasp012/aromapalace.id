@@ -70,7 +70,9 @@ class VoucherController extends Controller
         $validated = $request->validate([
             'code' => ['required', 'string', 'max:50', 'unique:vouchers,code'],
             'name' => ['required', 'string', 'max:255'],
+            'name_en' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
+            'description_en' => ['nullable', 'string', 'max:1000'],
             'type' => ['required', 'string', 'in:percentage,fixed'],
             'value' => ['required', 'integer', 'min:1'],
             'min_order_amount' => ['nullable', 'integer', 'min:0'],
@@ -99,7 +101,9 @@ class VoucherController extends Controller
         $validated = $request->validate([
             'code' => ['required', 'string', 'max:50', Rule::unique('vouchers', 'code')->ignore($voucher->id)],
             'name' => ['required', 'string', 'max:255'],
+            'name_en' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
+            'description_en' => ['nullable', 'string', 'max:1000'],
             'type' => ['required', 'string', 'in:percentage,fixed'],
             'value' => ['required', 'integer', 'min:1'],
             'min_order_amount' => ['nullable', 'integer', 'min:0'],

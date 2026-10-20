@@ -10,7 +10,9 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * @property int $id
  * @property string $name
+ * @property string|null $name_en
  * @property string|null $description
+ * @property string|null $description_en
  * @property int $points_required
  * @property string $reward_type
  * @property int $reward_value
@@ -22,7 +24,9 @@ use Illuminate\Database\Eloquent\Model;
  */
 #[Fillable([
     'name',
+    'name_en',
     'description',
+    'description_en',
     'points_required',
     'reward_type',
     'reward_value',

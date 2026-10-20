@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/lib/i18n';
 
 interface FragranceProduct {
     id: number;
@@ -51,6 +52,7 @@ export default function CartPage({
     total = 0,
     total_formatted = 'Rp 0',
 }: CartPageProps) {
+    const { t, isEn } = useTranslation();
     const [updatingId, setUpdatingId] = useState<number | null>(null);
     const [removingId, setRemovingId] = useState<number | null>(null);
     const [isClearing, setIsClearing] = useState(false);
@@ -82,7 +84,10 @@ export default function CartPage({
     };
 
     const handleClearCart = () => {
-        if (!confirm('Apakah Anda yakin ingin mengosongkan seluruh isi keranjang belanja?')) {
+        const msg = isEn
+            ? 'Are you sure you want to empty your entire shopping cart?'
+            : 'Apakah Anda yakin ingin mengosongkan seluruh isi keranjang belanja?';
+        if (!confirm(msg)) {
             return;
         }
         setIsClearing(true);
@@ -100,9 +105,12 @@ export default function CartPage({
             const disc = Math.round(subtotal * discountPercent);
             setVoucherDiscount(disc);
             setVoucherApplied(true);
-            window.showPromoToast?.(`Voucher ${code} berhasil dipasang! Potongan diskon Rp ${disc.toLocaleString('id-ID')}`);
+            const successMsg = isEn
+                ? `Voucher ${code} applied successfully! Discount of IDR ${disc.toLocaleString('en-US')}`
+                : `Voucher ${code} berhasil dipasang! Potongan diskon Rp ${disc.toLocaleString('id-ID')}`;
+            window.showPromoToast?.(successMsg);
         } else {
-            alert('Kode voucher tidak valid. Coba gunakan: AROMA40, DUBAI25, atau ROYALE10');
+            alert(isEn ? 'Invalid voucher code. Try using: AROMA40, DUBAI25, or ROYALE10' : 'Kode voucher tidak valid. Coba gunakan: AROMA40, DUBAI25, atau ROYALE10');
         }
     };
 
@@ -112,17 +120,19 @@ export default function CartPage({
 
     return (
         <Layout showBottomNav={items.length === 0}>
-            <Head title="Keranjang Belanja Saya • Aroma Palace" />
+            <Head title={isEn ? 'My Shopping Cart • Aroma Palace' : 'Keranjang Belanja Saya • Aroma Palace'} />
 
             {/* PAGE HEADER BANNER (Matches products.tsx style) */}
             <div className="border-b border-border/70 bg-gradient-to-b from-muted/30 via-background to-background py-10 sm:py-14">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center space-y-3">
                     <h1 className="text-3xl sm:text-4xl lg:text-5xl tracking-tight text-foreground">
-                        <span className="font-light">Keranjang</span>{' '}
-                        <span className="font-bold text-[#4A070B] dark:text-[#E8D0BA]">Belanja Saya</span>
+                        <span className="font-light">{isEn ? 'My Shopping' : 'Keranjang'}</span>{' '}
+                        <span className="font-bold text-[#4A070B] dark:text-[#E8D0BA]">{isEn ? 'Cart' : 'Belanja Saya'}</span>
                     </h1>
                     <p className="max-w-2xl mx-auto text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                        Periksa racikan wewangian dan ukuran produk pilihan Anda sebelum melanjutkan ke proses checkout dengan perlindungan asuransi pengiriman penuh.
+                        {isEn
+                            ? 'Review your selected fragrances and sizes before proceeding to checkout with full shipping insurance.'
+                            : 'Periksa racikan wewangian dan ukuran produk pilihan Anda sebelum melanjutkan ke proses checkout dengan perlindungan asuransi pengiriman penuh.'}
                     </p>
                 </div>
             </div>
@@ -133,10 +143,12 @@ export default function CartPage({
                     /* EMPTY STATE (Matches products.tsx empty state design) */
                     <div className="py-16 px-6 text-center space-y-4">
                         <h3 className="text-base font-bold text-foreground">
-                            Keranjang Belanja Anda Masih Kosong
+                            {isEn ? 'Your Shopping Bag is Empty' : 'Keranjang Belanja Anda Masih Kosong'}
                         </h3>
                         <p className="text-xs text-muted-foreground max-w-md mx-auto leading-relaxed">
-                            Belum ada wewangian yang ditambahkan ke keranjang. Temukan aroma berkarakter kuat dari Dubai untuk melengkapi koleksi Anda.
+                            {isEn
+                                ? 'No fragrances added yet. Discover signature perfumes to complete your collection.'
+                                : 'Belum ada wewangian yang ditambahkan ke keranjang. Temukan aroma berkarakter kuat dari Dubai untuk melengkapi koleksi Anda.'}
                         </p>
                         <div className="pt-2">
                             <Link href="/products">
@@ -144,7 +156,7 @@ export default function CartPage({
                                     size="sm"
                                     className="bg-[#4A070B] hover:bg-[#360407] text-white rounded-md px-6 h-10 text-xs font-semibold cursor-pointer shadow-none"
                                 >
-                                    Mulai Berbelanja
+                                    {isEn ? 'Start Shopping' : 'Mulai Berbelanja'}
                                 </Button>
                             </Link>
                         </div>
@@ -158,7 +170,11 @@ export default function CartPage({
                             <div className="flex items-center justify-between pb-3 border-b border-border/80">
                                 <div className="flex items-center gap-2">
                                     <span className="text-xs text-muted-foreground">
-                                        Total <strong className="text-foreground font-bold">{totalItemsCount}</strong> produk dalam keranjang
+                                        {isEn ? (
+                                            <>Total <strong className="text-foreground font-bold">{totalItemsCount}</strong> items in cart</>
+                                        ) : (
+                                            <>Total <strong className="text-foreground font-bold">{totalItemsCount}</strong> produk dalam keranjang</>
+                                        )}
                                     </span>
                                 </div>
                                 <Button
@@ -168,7 +184,7 @@ export default function CartPage({
                                     onClick={handleClearCart}
                                     className="h-7 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md cursor-pointer"
                                 >
-                                    {isClearing ? 'Mengosongkan...' : 'Kosongkan Keranjang'}
+                                    {isClearing ? (isEn ? 'Clearing...' : 'Mengosongkan...') : (isEn ? 'Clear Cart' : 'Kosongkan Keranjang')}
                                 </Button>
                             </div>
 
@@ -207,7 +223,7 @@ export default function CartPage({
 
                                                     <div className="flex flex-col flex-wrap gap-2 text-xs text-muted-foreground pt-0.5">
                                                         <span className="inline-flex items-center gap-1 text-[11px] bg-muted/40 border border-border/70 px-2 py-0.5 rounded-md">
-                                                            <span>Ukuran:</span>
+                                                            <span>{isEn ? 'Size:' : 'Ukuran:'}</span>
                                                             <strong className="text-foreground">{item.volume}</strong>
                                                             {item.variant_name && (
                                                                 <span className="text-[#4A070B] font-medium ml-0.5">
@@ -216,7 +232,7 @@ export default function CartPage({
                                                             )}
                                                         </span>
                                                         <span className="text-[11px]">
-                                                            Harga Satuan: <strong className="text-[#4A070B] dark:text-[#E8D0BA]">{item.unit_price_formatted}</strong>
+                                                            {isEn ? 'Unit Price:' : 'Harga Satuan:'} <strong className="text-[#4A070B] dark:text-[#E8D0BA]">{item.unit_price_formatted}</strong>
                                                         </span>
                                                     </div>
                                                 </div>
@@ -232,7 +248,7 @@ export default function CartPage({
                                                         disabled={item.quantity <= 1 || isItemUpdating}
                                                         onClick={() => handleUpdateQuantity(item, item.quantity - 1)}
                                                         className="h-7 w-7 p-0 cursor-pointer text-muted-foreground hover:text-foreground text-xs"
-                                                        aria-label="Kurangi jumlah"
+                                                        aria-label={isEn ? 'Decrease quantity' : 'Kurangi jumlah'}
                                                     >
                                                         &minus;
                                                     </Button>
@@ -245,7 +261,7 @@ export default function CartPage({
                                                         disabled={item.quantity >= 20 || isItemUpdating}
                                                         onClick={() => handleUpdateQuantity(item, item.quantity + 1)}
                                                         className="h-7 w-7 p-0 cursor-pointer text-muted-foreground hover:text-foreground text-xs"
-                                                        aria-label="Tambah jumlah"
+                                                        aria-label={isEn ? 'Increase quantity' : 'Tambah jumlah'}
                                                     >
                                                         &#43;
                                                     </Button>
@@ -268,7 +284,7 @@ export default function CartPage({
                                                     disabled={isItemRemoving}
                                                     onClick={() => handleRemove(item.id)}
                                                     className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors cursor-pointer shrink-0"
-                                                    title="Hapus dari keranjang"
+                                                    title={isEn ? 'Remove from bag' : 'Hapus dari keranjang'}
                                                 >
                                                     <svg
                                                         className="w-4 h-4"
@@ -296,7 +312,7 @@ export default function CartPage({
                                     href="/products"
                                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#4A070B] hover:text-[#360407]"
                                 >
-                                    <span>←</span> Lanjut Pilih Wewangian Lain
+                                    <span>←</span> {isEn ? 'Continue Shopping' : 'Lanjut Pilih Wewangian Lain'}
                                 </Link>
                             </div>
                         </div>
@@ -305,20 +321,20 @@ export default function CartPage({
                         <div className="hidden lg:block lg:col-span-4">
                             <div className="rounded-lg border border-border/80 bg-card/60 backdrop-blur-xs p-5 sm:p-6 shadow-none sticky top-28 space-y-4">
                                 <h2 className="font-bold text-base text-foreground tracking-tight pb-3 border-b border-border/80">
-                                    Ringkasan Pesanan
+                                    {isEn ? 'Order Summary' : 'Ringkasan Pesanan'}
                                 </h2>
 
                                 {/* Line items */}
                                 <div className="space-y-2.5 text-xs">
                                     <div className="flex items-center justify-between text-muted-foreground">
-                                        <span>Subtotal Produk</span>
+                                        <span>{isEn ? 'Product Subtotal' : 'Subtotal Produk'}</span>
                                         <span className="font-bold text-foreground">{subtotal_formatted}</span>
                                     </div>
 
                                     {voucherApplied && voucherDiscount > 0 && (
                                         <div className="flex items-center justify-between text-emerald-700 dark:text-emerald-400 font-semibold bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 rounded-md text-xs">
                                             <div className="flex items-center gap-2">
-                                                <span>Diskon ({voucherCode.toUpperCase()})</span>
+                                                <span>{isEn ? 'Discount' : 'Diskon'} ({voucherCode.toUpperCase()})</span>
                                                 <button
                                                     type="button"
                                                     onClick={() => {
@@ -327,9 +343,9 @@ export default function CartPage({
                                                         setVoucherCode('');
                                                     }}
                                                     className="text-[11px] text-destructive hover:underline cursor-pointer font-medium"
-                                                    title="Hapus voucher"
+                                                    title={isEn ? 'Remove voucher' : 'Hapus voucher'}
                                                 >
-                                                    (Hapus)
+                                                    {isEn ? '(Remove)' : '(Hapus)'}
                                                 </button>
                                             </div>
                                             <span className="font-bold">- Rp {voucherDiscount.toLocaleString('id-ID')}</span>
@@ -343,7 +359,7 @@ export default function CartPage({
                                         <form onSubmit={handleApplyVoucher} className="flex gap-2">
                                             <Input
                                                 type="text"
-                                                placeholder="Kode Voucher Promo"
+                                                placeholder={isEn ? 'Promo Voucher Code' : 'Kode Voucher Promo'}
                                                 value={voucherCode}
                                                 onChange={(e) => setVoucherCode(e.target.value)}
                                                 className="h-9 rounded-md border border-border/80 bg-background/80 text-xs uppercase tracking-wider focus:border-[#4A070B] focus:ring-1 focus:ring-[#4A070B]/25 shadow-none"
@@ -353,7 +369,7 @@ export default function CartPage({
                                                 variant="outline"
                                                 className="h-9 px-3 rounded-md border border-[#4A070B] text-[#4A070B] hover:bg-[#4A070B] hover:text-white text-xs font-semibold shadow-none cursor-pointer shrink-0 transition-colors"
                                             >
-                                                Terapkan
+                                                {isEn ? 'Apply' : 'Terapkan'}
                                             </Button>
                                         </form>
                                     </div>
@@ -365,10 +381,10 @@ export default function CartPage({
                                 <div className="flex items-baseline justify-between pt-1">
                                     <div>
                                         <div className="text-xs uppercase font-bold tracking-wider text-muted-foreground">
-                                            Total Pembayaran
+                                            {isEn ? 'Total Payment' : 'Total Pembayaran'}
                                         </div>
                                         <div className="text-[10px] text-muted-foreground">
-                                            Ongkos kirim dihitung saat checkout
+                                            {isEn ? 'Shipping calculated at checkout' : 'Ongkos kirim dihitung saat checkout'}
                                         </div>
                                     </div>
                                     <div className="text-2xl font-extrabold text-[#4A070B] dark:text-[#E8D0BA]">
@@ -398,7 +414,7 @@ export default function CartPage({
                                                 d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
                                             />
                                         </svg>
-                                        <span>Lanjut ke Pembayaran</span>
+                                        <span>{isEn ? 'Proceed to Checkout' : 'Lanjut ke Pembayaran'}</span>
                                     </Button>
                                 </Link>
                             </div>
@@ -430,7 +446,7 @@ export default function CartPage({
                                         }}
                                         className="text-[11px] text-destructive hover:underline font-semibold cursor-pointer shrink-0 ml-2"
                                     >
-                                        Hapus
+                                        {isEn ? 'Remove' : 'Hapus'}
                                     </button>
                                 </div>
                             ) : (
@@ -446,7 +462,7 @@ export default function CartPage({
                                         </svg>
                                         <Input
                                             type="text"
-                                            placeholder="Punya Kode Voucher Promo?"
+                                            placeholder={isEn ? 'Have a Promo Voucher?' : 'Punya Kode Voucher Promo?'}
                                             value={voucherCode}
                                             onChange={(e) => setVoucherCode(e.target.value)}
                                             className="h-8.5 pl-8 pr-2.5 rounded-md border border-border/80 bg-background text-xs uppercase tracking-wider focus:border-[#4A070B] focus:ring-1 focus:ring-[#4A070B]/25 shadow-none"
@@ -458,7 +474,7 @@ export default function CartPage({
                                         size="sm"
                                         className="h-8.5 px-3 rounded-md border border-[#4A070B] text-[#4A070B] hover:bg-[#4A070B] hover:text-white text-xs font-semibold shadow-none cursor-pointer shrink-0 transition-colors"
                                     >
-                                        Terapkan
+                                        {isEn ? 'Apply' : 'Terapkan'}
                                     </Button>
                                 </form>
                             )}
@@ -469,7 +485,7 @@ export default function CartPage({
                             {/* Summary info: Total Pembayaran */}
                             <div className="flex flex-col min-w-0">
                                 <span className="text-[10.5px] font-medium text-muted-foreground truncate">
-                                    Total ({totalItemsCount} produk)
+                                    {isEn ? `Total (${totalItemsCount} items)` : `Total (${totalItemsCount} produk)`}
                                 </span>
                                 <div className="flex items-baseline gap-1.5 flex-wrap">
                                     <span className="text-lg font-black text-[#4A070B] dark:text-[#E8D0BA] tracking-tight">

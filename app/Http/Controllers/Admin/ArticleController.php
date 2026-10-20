@@ -53,11 +53,14 @@ class ArticleController extends Controller
     {
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
+            'title_en' => ['nullable', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', 'unique:articles,slug'],
             'thumbnail' => ['nullable'],
             'read_time' => ['nullable', 'string', 'max:50'],
             'excerpt' => ['required', 'string', 'max:1000'],
+            'excerpt_en' => ['nullable', 'string', 'max:1000'],
             'content' => ['required', 'string'],
+            'content_en' => ['nullable', 'string'],
         ]);
 
         $thumbnail = null;
@@ -105,11 +108,14 @@ class ArticleController extends Controller
     {
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
+            'title_en' => ['nullable', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', Rule::unique('articles', 'slug')->ignore($article->id)],
             'thumbnail' => ['nullable'],
             'read_time' => ['nullable', 'string', 'max:50'],
             'excerpt' => ['required', 'string', 'max:1000'],
+            'excerpt_en' => ['nullable', 'string', 'max:1000'],
             'content' => ['required', 'string'],
+            'content_en' => ['nullable', 'string'],
         ]);
 
         $thumbnail = $article->thumbnail;

@@ -51,6 +51,7 @@ class BrandController extends Controller
             'slug' => ['nullable', 'string', 'max:255', 'unique:brands,slug'],
             'thumbnail' => ['nullable', 'string', 'max:500'],
             'description' => ['nullable', 'string', 'max:1000'],
+            'description_en' => ['nullable', 'string', 'max:1000'],
         ]);
 
         if (empty($validated['slug'])) {
@@ -79,6 +80,7 @@ class BrandController extends Controller
             'slug' => ['nullable', 'string', 'max:255', Rule::unique('brands', 'slug')->ignore($brand->id)],
             'thumbnail' => ['nullable', 'string', 'max:500'],
             'description' => ['nullable', 'string', 'max:1000'],
+            'description_en' => ['nullable', 'string', 'max:1000'],
         ]);
 
         if (empty($validated['slug'])) {

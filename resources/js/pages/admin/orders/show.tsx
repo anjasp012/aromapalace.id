@@ -104,8 +104,7 @@ export default function AdminOrderShow({ order }: OrderShowProps) {
             case 'selesai': return 4;
             case 'dikirim':
             case 'pengambilan': return 3;
-            case 'diproses':
-            case 'menunggu_konfirmasi': return 2;
+            case 'diproses': return 2;
             case 'menunggu_pembayaran':
             default: return 1;
         }
@@ -143,8 +142,6 @@ export default function AdminOrderShow({ order }: OrderShowProps) {
                 return <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">{isPickup ? 'Siap Diambil di Butik' : 'Dalam Pengiriman'}</Badge>;
             case 'diproses':
                 return <Badge variant="secondary" className="bg-amber-50 text-amber-700 border-amber-200">Sedang Diproses</Badge>;
-            case 'menunggu_konfirmasi':
-                return <Badge variant="outline" className="text-amber-600 border-amber-300">Menunggu Konfirmasi</Badge>;
             case 'dibatalkan':
                 return <Badge variant="destructive">Pesanan Dibatalkan</Badge>;
             case 'menunggu_pembayaran':
@@ -201,7 +198,7 @@ export default function AdminOrderShow({ order }: OrderShowProps) {
 
                         {/* Direct Action Buttons */}
                         <div className="flex flex-wrap items-center gap-2">
-                            {(order.order_status === 'diproses' || order.order_status === 'menunggu_konfirmasi') && (
+                            {order.order_status === 'diproses' && (
                                 <Button
                                     size="sm"
                                     onClick={() => handleUpdateStatus('dikirim')}

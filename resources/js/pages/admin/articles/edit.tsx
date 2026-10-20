@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { TextEditor } from '@/components/ui/text-editor';
@@ -25,11 +26,14 @@ import {
 interface ArticleItem {
     id: number;
     title: string;
+    title_en?: string | null;
     slug: string;
     thumbnail?: string | null;
     read_time: string;
     excerpt: string;
+    excerpt_en?: string | null;
     content: string;
+    content_en?: string | null;
 }
 
 interface ArticleEditProps {
@@ -45,19 +49,25 @@ export default function AdminArticleEdit({ article }: ArticleEditProps) {
     const { data, setData, post, processing, errors } = useForm<{
         _method: string;
         title: string;
+        title_en: string;
         slug: string;
         thumbnail: File | string | null;
         read_time: string;
         excerpt: string;
+        excerpt_en: string;
         content: string;
+        content_en: string;
     }>({
         _method: 'put',
         title: article.title || '',
+        title_en: article.title_en || '',
         slug: article.slug || '',
         thumbnail: article.thumbnail || '',
         read_time: article.read_time || '4 mnt',
         excerpt: article.excerpt || '',
+        excerpt_en: article.excerpt_en || '',
         content: article.content || '',
+        content_en: article.content_en || '',
     });
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -308,17 +318,37 @@ export default function AdminArticleEdit({ article }: ArticleEditProps) {
                             )}
                         </div>
 
-                        {/* 2. Judul Artikel */}
-                        <div className="space-y-1.5">
-                            <label className="font-medium text-foreground">Judul Artikel *</label>
-                            <Input
-                                type="text"
-                                value={data.title}
-                                onChange={(e) => setData('title', e.target.value)}
-                                className="h-9"
-                                required
-                            />
-                            {errors.title && <p className="text-destructive text-[11px]">{errors.title}</p>}
+                        {/* 2. Judul Artikel (ID & EN) */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                                <div className="flex items-center justify-between">
+                                    <label className="font-medium text-foreground">Judul Artikel (Indonesia) *</label>
+                                    <Badge variant="outline" className="text-[10px] py-0">🇮🇩 ID</Badge>
+                                </div>
+                                <Input
+                                    type="text"
+                                    value={data.title}
+                                    onChange={(e) => setData('title', e.target.value)}
+                                    className="h-9"
+                                    required
+                                />
+                                {errors.title && <p className="text-destructive text-[11px]">{errors.title}</p>}
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <div className="flex items-center justify-between">
+                                    <label className="font-medium text-foreground">Judul Artikel (English)</label>
+                                    <Badge variant="outline" className="text-[10px] py-0">🇬🇧 EN</Badge>
+                                </div>
+                                <Input
+                                    type="text"
+                                    placeholder="Article title in English..."
+                                    value={data.title_en}
+                                    onChange={(e) => setData('title_en', e.target.value)}
+                                    className="h-9"
+                                />
+                                {errors.title_en && <p className="text-destructive text-[11px]">{errors.title_en}</p>}
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -345,27 +375,68 @@ export default function AdminArticleEdit({ article }: ArticleEditProps) {
                             </div>
                         </div>
 
-                        <div className="space-y-1.5">
-                            <label className="font-medium text-foreground">Cuplikan Ringkasan (Excerpt) *</label>
-                            <Textarea
-                                rows={2}
-                                value={data.excerpt}
-                                onChange={(e) => setData('excerpt', e.target.value)}
-                                className="text-xs"
-                                required
-                            />
-                            {errors.excerpt && <p className="text-destructive text-[11px]">{errors.excerpt}</p>}
+                        {/* 3. Cuplikan Ringkasan (ID & EN) */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                                <div className="flex items-center justify-between">
+                                    <label className="font-medium text-foreground">Cuplikan Ringkasan (Indonesia) *</label>
+                                    <Badge variant="outline" className="text-[10px] py-0">🇮🇩 ID</Badge>
+                                </div>
+                                <Textarea
+                                    rows={2}
+                                    value={data.excerpt}
+                                    onChange={(e) => setData('excerpt', e.target.value)}
+                                    className="text-xs"
+                                    required
+                                />
+                                {errors.excerpt && <p className="text-destructive text-[11px]">{errors.excerpt}</p>}
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <div className="flex items-center justify-between">
+                                    <label className="font-medium text-foreground">Cuplikan Ringkasan (English)</label>
+                                    <Badge variant="outline" className="text-[10px] py-0">🇬🇧 EN</Badge>
+                                </div>
+                                <Textarea
+                                    rows={2}
+                                    placeholder="Short 1-2 sentence preview in English..."
+                                    value={data.excerpt_en}
+                                    onChange={(e) => setData('excerpt_en', e.target.value)}
+                                    className="text-xs"
+                                />
+                                {errors.excerpt_en && <p className="text-destructive text-[11px]">{errors.excerpt_en}</p>}
+                            </div>
                         </div>
 
-                        <div className="space-y-1.5">
-                            <label className="font-medium text-foreground">Isi Lengkap Artikel *</label>
-                            <TextEditor
-                                value={data.content}
-                                onChange={(val) => setData('content', val)}
-                                placeholder="Tulis narasi lengkap jurnal di sini..."
-                                error={errors.content}
-                            />
-                            {errors.content && <p className="text-destructive text-[11px]">{errors.content}</p>}
+                        {/* 4. Isi Lengkap Artikel (ID & EN) */}
+                        <div className="space-y-4 pt-2 border-t border-border/60">
+                            <div className="space-y-1.5">
+                                <div className="flex items-center justify-between">
+                                    <label className="font-medium text-foreground">Isi Lengkap Artikel (Indonesia) *</label>
+                                    <Badge variant="outline" className="text-[10px] py-0">🇮🇩 ID</Badge>
+                                </div>
+                                <TextEditor
+                                    value={data.content}
+                                    onChange={(val) => setData('content', val)}
+                                    placeholder="Tulis narasi lengkap jurnal di sini..."
+                                    error={errors.content}
+                                />
+                                {errors.content && <p className="text-destructive text-[11px]">{errors.content}</p>}
+                            </div>
+
+                            <div className="space-y-1.5 pt-2">
+                                <div className="flex items-center justify-between">
+                                    <label className="font-medium text-foreground">Isi Lengkap Artikel (English)</label>
+                                    <Badge variant="outline" className="text-[10px] py-0">🇬🇧 EN</Badge>
+                                </div>
+                                <TextEditor
+                                    value={data.content_en}
+                                    onChange={(val) => setData('content_en', val)}
+                                    placeholder="Write the full English article story here..."
+                                    error={errors.content_en}
+                                />
+                                {errors.content_en && <p className="text-destructive text-[11px]">{errors.content_en}</p>}
+                            </div>
                         </div>
                     </CardContent>
                 </Card>

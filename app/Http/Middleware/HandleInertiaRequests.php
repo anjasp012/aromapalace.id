@@ -42,6 +42,7 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'locale' => fn () => app()->getLocale(),
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
@@ -55,7 +56,7 @@ class HandleInertiaRequests extends Middleware
                     ->where(function ($q) {
                         $q->whereNull('expires_at')->orWhere('expires_at', '>=', now());
                     })
-                    ->select(['id', 'code', 'name', 'description', 'terms', 'type', 'value', 'min_order_amount', 'max_discount_amount'])
+                    ->select(['id', 'code', 'name', 'name_en', 'description', 'description_en', 'terms', 'type', 'value', 'min_order_amount', 'max_discount_amount'])
                     ->get();
             }),
             'auth' => [

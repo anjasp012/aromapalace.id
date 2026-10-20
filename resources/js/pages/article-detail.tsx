@@ -11,17 +11,21 @@ import {
     ArrowLeft,
     MessageCircle,
 } from 'lucide-react';
+import { useTranslation } from '@/lib/i18n';
 
 export interface ArticleDetailData {
     id: number;
     slug: string;
     title: string;
+    title_en?: string;
     thumbnail?: string;
     image?: string;
     readTime: string;
     date: string;
     excerpt: string;
+    excerpt_en?: string;
     content: string;
+    content_en?: string;
 }
 
 interface ArticleDetailProps {
@@ -33,8 +37,13 @@ export default function ArticleDetail({
     article,
     relatedArticles = [],
 }: ArticleDetailProps) {
+    const { t, pickText, isEn } = useTranslation();
     const [copied, setCopied] = useState(false);
     const thumbnailSrc = article.thumbnail || article.image || '';
+
+    const activeTitle = pickText(article.title, article.title_en);
+    const activeExcerpt = pickText(article.excerpt, article.excerpt_en);
+    const activeContent = pickText(article.content, article.content_en);
 
     const handleCopyLink = () => {
         if (typeof window !== 'undefined') {
@@ -47,7 +56,11 @@ export default function ArticleDetail({
     const handleShareWhatsApp = () => {
         if (typeof window !== 'undefined') {
             const url = encodeURIComponent(window.location.href);
-            const text = encodeURIComponent(`Baca artikel "${article.title}" di Aroma Palace:\n${url}`);
+            const text = encodeURIComponent(
+                isEn
+                    ? `Read article "${activeTitle}" on Aroma Palace:\n${url}`
+                    : `Baca artikel "${activeTitle}" di Aroma Palace:\n${url}`
+            );
             window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
         }
     };
@@ -127,8 +140,8 @@ export default function ArticleDetail({
     return (
         <Layout>
             <Head>
-                <title>{`${article.title} - Aroma Palace`}</title>
-                <meta name="description" content={article.excerpt} />
+                <title>{`${activeTitle} - Aroma Palace`}</title>
+                <meta name="description" content={activeExcerpt} />
             </Head>
 
             <article className="bg-background min-h-screen pb-20">
@@ -140,15 +153,15 @@ export default function ArticleDetail({
                                 <svg className="w-3.5 h-3.5 text-[#4A070B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                                 </svg>
-                                <span>Beranda</span>
+                                <span>{t('nav.home')}</span>
                             </Link>
                             <span>/</span>
                             <Link href="/articles" className="hover:text-foreground transition-colors">
-                                Artikel &amp; Jurnal
+                                {isEn ? 'Articles & Journal' : 'Artikel & Jurnal'}
                             </Link>
                             <span>/</span>
                             <span className="font-semibold text-foreground truncate max-w-[200px] sm:max-w-none">
-                                {article.title}
+                                {activeTitle}
                             </span>
                         </nav>
                     </div>
@@ -157,11 +170,11 @@ export default function ArticleDetail({
                 {/* 2. ARTICLE HEADER SECTION */}
                 <header className="max-w-4xl mx-auto px-4 sm:px-6 pt-10 sm:pt-12 pb-6 space-y-4">
                     <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-foreground leading-tight sm:leading-snug">
-                        {article.title}
+                        {activeTitle}
                     </h1>
 
                     <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                        {article.excerpt}
+                        {activeExcerpt}
                     </p>
 
                     {/* Metadata & Actions */}
@@ -174,7 +187,7 @@ export default function ArticleDetail({
                             <span>&bull;</span>
                             <span className="flex items-center gap-1">
                                 <Clock className="w-3.5 h-3.5" />
-                                {article.readTime} baca
+                                {article.readTime} {isEn ? 'read' : 'baca'}
                             </span>
                         </div>
 
@@ -199,12 +212,12 @@ export default function ArticleDetail({
                                 {copied ? (
                                     <>
                                         <Check className="w-3.5 h-3.5 text-emerald-600" />
-                                        <span className="text-emerald-600 font-semibold">Tersalin!</span>
+                                        <span className="text-emerald-600 font-semibold">{isEn ? 'Copied!' : 'Tersalin!'}</span>
                                     </>
                                 ) : (
                                     <>
                                         <Share2 className="w-3.5 h-3.5" />
-                                        <span>Salin Tautan</span>
+                                        <span>{isEn ? 'Copy Link' : 'Salin Tautan'}</span>
                                     </>
                                 )}
                             </Button>
@@ -218,7 +231,7 @@ export default function ArticleDetail({
                         <div className="relative overflow-hidden rounded-xl aspect-[16/9] sm:aspect-[21/10] bg-muted shadow-xs border border-border/80">
                             <img
                                 src={thumbnailSrc}
-                                alt={article.title}
+                                alt={activeTitle}
                                 className="w-full h-full object-cover"
                             />
                         </div>
@@ -228,7 +241,7 @@ export default function ArticleDetail({
                 {/* 4. MAIN ARTICLE CONTENT */}
                 <div className="max-w-3xl mx-auto px-4 sm:px-6">
                     <div className="prose prose-neutral dark:prose-invert max-w-none">
-                        {renderFormattedContent(article.content)}
+                        {renderFormattedContent(activeContent)}
                     </div>
                 </div>
 
@@ -237,12 +250,12 @@ export default function ArticleDetail({
                     <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 sm:py-14 border-t border-border/70">
                         <div className="flex items-center justify-between mb-4 sm:mb-6">
                             <h2 className="text-xl sm:text-2xl tracking-tight text-foreground">
-                                <span className="font-normal">Artikel &amp;</span>{' '}
-                                <span className="font-bold">Jurnal Terkait</span>
+                                <span className="font-normal">{isEn ? 'Related' : 'Artikel &'}</span>{' '}
+                                <span className="font-bold">{isEn ? 'Articles & Journal' : 'Jurnal Terkait'}</span>
                             </h2>
                             <Button asChild variant="ghost" size="sm" className="text-xs">
                                 <Link href="/articles">
-                                    Baca Semua &rarr;
+                                    {isEn ? 'View All →' : 'Baca Semua →'}
                                 </Link>
                             </Button>
                         </div>

@@ -5,13 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
     Accordion,
     AccordionItem,
     AccordionTrigger,
     AccordionContent,
 } from '@/components/ui/accordion';
+import { useTranslation } from '@/lib/i18n';
 
 interface Pillar {
     title: string;
@@ -30,6 +31,7 @@ interface AboutProps {
 }
 
 export default function About({ pillars, faqs }: AboutProps) {
+    const { t } = useTranslation();
     const { data, setData, post, processing, errors, reset, wasSuccessful } = useForm({
         name: '',
         email: '',
@@ -46,19 +48,19 @@ export default function About({ pillars, faqs }: AboutProps) {
 
     return (
         <Layout>
-            <Head title="Tentang Atelier &amp; Konsultasi • Aroma Palace" />
+            <Head title={`${t('about.meta_title')}`} />
 
             {/* HERO SECTION */}
             <section className="py-14 sm:py-20 border-b border-border bg-muted/30">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center space-y-4">
                     <Badge variant="secondary" className="mx-auto w-fit">
-                        Filosofi Kami
+                        {t('about.philosophy_badge')}
                     </Badge>
                     <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-foreground max-w-3xl mx-auto leading-tight">
-                        Seni Meracik Wewangian Abadi dari Bahan Alami Terbaik
+                        {t('about.hero_title')}
                     </h1>
                     <p className="max-w-2xl mx-auto text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                        Lahir dari dedikasi mendalam untuk menghidupkan kembali keagungan ekstraits oriental klasik dan ekstrak botani Grasse berkualitas murni dengan waktu maserasi sempurna.
+                        {t('about.hero_subtitle')}
                     </p>
                 </div>
             </section>
@@ -67,9 +69,9 @@ export default function About({ pillars, faqs }: AboutProps) {
             <section className="py-12 sm:py-16 border-b border-border">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
                     <div className="text-center max-w-xl mx-auto space-y-2">
-                        <Badge variant="outline">Standar Kualitas</Badge>
+                        <Badge variant="outline">{t('about.quality_standard')}</Badge>
                         <h2 className="text-2xl sm:text-3xl tracking-tight text-foreground">
-                            <span className="font-normal">Empat Pilar</span>{' '}
+                            <span className="font-normal">{t('about.four_pillars_prefix')}</span>{' '}
                             <span className="font-bold">Aroma Palace</span>
                         </h2>
                     </div>
@@ -100,68 +102,68 @@ export default function About({ pillars, faqs }: AboutProps) {
                         <div className="lg:col-span-6">
                             <Card className="p-6 sm:p-8 shadow-none rounded-lg">
                                 <CardHeader className="p-0 pb-6 space-y-1.5">
-                                    <Badge variant="secondary" className="w-fit">Layanan Eksklusif</Badge>
-                                    <CardTitle className="text-xl font-bold">Konsultasi Parfum Privat</CardTitle>
+                                    <Badge variant="secondary" className="w-fit">{t('about.consultation_badge')}</Badge>
+                                    <CardTitle className="text-xl font-bold">{t('about.consultation_title')}</CardTitle>
                                     <CardDescription className="text-xs">
-                                        Diskusikan karakter wewangian yang cocok untuk kepribadian Anda bersama konsultan parfum kami.
+                                        {t('about.consultation_desc')}
                                     </CardDescription>
                                 </CardHeader>
 
                                 {wasSuccessful && (
                                     <div className="mb-4 rounded-lg bg-muted p-3 text-xs text-foreground font-medium border border-border">
-                                        ✓ Permintaan konsultasi berhasil dikirim. Tim kami akan menghubungi Anda dalam 24 jam.
+                                        {t('about.consultation_success')}
                                     </div>
                                 )}
 
                                 <form onSubmit={handleSubmit} className="space-y-4">
                                     <div className="space-y-1.5">
-                                        <label className="text-xs font-medium text-foreground">Nama Lengkap</label>
+                                        <label className="text-xs font-medium text-foreground">{t('auth.full_name')}</label>
                                         <Input
                                             type="text"
                                             required
                                             value={data.name}
                                             onChange={(e) => setData('name', e.target.value)}
-                                            placeholder="Contoh: Budi Pratama"
+                                            placeholder={t('about.name_placeholder')}
                                             className="text-xs h-9"
                                         />
                                         {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
                                     </div>
 
                                     <div className="space-y-1.5">
-                                        <label className="text-xs font-medium text-foreground">Alamat Email</label>
+                                        <label className="text-xs font-medium text-foreground">{t('auth.email')}</label>
                                         <Input
                                             type="email"
                                             required
                                             value={data.email}
                                             onChange={(e) => setData('email', e.target.value)}
-                                            placeholder="email@domain.com"
+                                            placeholder={t('about.email_placeholder')}
                                             className="text-xs h-9"
                                         />
                                         {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
                                     </div>
 
                                     <div className="space-y-1.5">
-                                        <label className="text-xs font-medium text-foreground">Karakter Aroma yang Disukai</label>
+                                        <label className="text-xs font-medium text-foreground">{t('about.scent_family_label')}</label>
                                         <select
                                             value={data.scent_family}
                                             onChange={(e) => setData('scent_family', e.target.value)}
                                             className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs text-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring cursor-pointer"
                                         >
-                                            <option value="Oriental Woody">Oriental Woody (Oud, Amber, Sandalwood)</option>
-                                            <option value="Velvet Floral">Velvet Floral (Taif Rose, Iris, Jasmine)</option>
-                                            <option value="Clean Woody">Clean Woody (Cedar, Vetiver, Musk)</option>
-                                            <option value="Fresh Citrus">Fresh Citrus (Neroli, Bergamot, Lemon)</option>
-                                            <option value="Smoky Leather">Smoky Leather (Tobacco, Birch Tar, Incense)</option>
+                                            <option value="Oriental Woody">{t('about.family_woody')}</option>
+                                            <option value="Velvet Floral">{t('about.family_floral')}</option>
+                                            <option value="Clean Woody">{t('about.family_clean')}</option>
+                                            <option value="Fresh Citrus">{t('about.family_citrus')}</option>
+                                            <option value="Smoky Leather">{t('about.family_leather')}</option>
                                         </select>
                                     </div>
 
                                     <div className="space-y-1.5">
-                                        <label className="text-xs font-medium text-foreground">Catatan / Momen Penggunaan</label>
+                                        <label className="text-xs font-medium text-foreground">{t('about.notes_label')}</label>
                                         <Textarea
                                             rows={3}
                                             value={data.notes}
                                             onChange={(e) => setData('notes', e.target.value)}
-                                            placeholder="Ceritakan suasana atau kesan aroma yang Anda dambakan..."
+                                            placeholder={t('about.notes_placeholder')}
                                             className="text-xs resize-none"
                                         />
                                         {errors.notes && <p className="text-xs text-destructive">{errors.notes}</p>}
@@ -172,7 +174,7 @@ export default function About({ pillars, faqs }: AboutProps) {
                                         disabled={processing}
                                         className="w-full text-xs h-10 mt-2"
                                     >
-                                        {processing ? 'Mengirim...' : 'Kirim Permintaan Konsultasi'}
+                                        {processing ? t('about.submitting') : t('about.submit_consultation')}
                                     </Button>
                                 </form>
                             </Card>
@@ -181,10 +183,10 @@ export default function About({ pillars, faqs }: AboutProps) {
                         {/* FAQs Accordion */}
                         <div className="lg:col-span-6 flex flex-col justify-center space-y-4">
                             <div className="space-y-1">
-                                <Badge variant="outline">Pertanyaan Umum</Badge>
+                                <Badge variant="outline">{t('about.faq_badge')}</Badge>
                                 <h2 className="text-2xl tracking-tight text-foreground">
-                                    <span className="font-normal">Tanya Jawab</span>{' '}
-                                    <span className="font-bold">Terpopuler</span>
+                                    <span className="font-normal">{t('about.faq_prefix')}</span>{' '}
+                                    <span className="font-bold">{t('about.faq_suffix')}</span>
                                 </h2>
                             </div>
 

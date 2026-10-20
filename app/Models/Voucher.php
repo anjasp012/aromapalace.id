@@ -15,7 +15,9 @@ use Illuminate\Support\Facades\Cache;
  * @property int $id
  * @property string $code
  * @property string $name
+ * @property string|null $name_en
  * @property string|null $description
+ * @property string|null $description_en
  * @property array<int, string>|null $terms
  * @property string $type
  * @property int $value
@@ -33,7 +35,9 @@ use Illuminate\Support\Facades\Cache;
 #[Fillable([
     'code',
     'name',
+    'name_en',
     'description',
+    'description_en',
     'terms',
     'type',
     'value',

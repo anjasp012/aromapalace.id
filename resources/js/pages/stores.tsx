@@ -2,6 +2,7 @@ import { Head, router } from '@inertiajs/react';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import L from 'leaflet';
 import Layout from '@/components/Layout';
+import { useTranslation } from '@/lib/i18n';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,7 @@ export interface StoreItem {
     id: number;
     name: string;
     description: string;
+    description_en?: string | null;
     thumbnail?: string | null;
     latitude: number;
     longitude: number;
@@ -38,6 +40,7 @@ export default function StoresPage({
     stores = [],
     searchQuery = '',
 }: StoresProps) {
+    const { t, pickText, isEn } = useTranslation();
     const [search, setSearch] = useState(searchQuery);
     const [isSearching, setIsSearching] = useState(false);
     const [selectedStoreId, setSelectedStoreId] = useState<number | null>(
@@ -133,9 +136,9 @@ export default function StoresPage({
                 <div style="font-family: inherit; font-size: 12px; line-height: 1.4; min-width: 200px; padding: 2px;">
                     ${store.thumbnail ? `<img src="${store.thumbnail}" style="width: 100%; height: 95px; object-fit: cover; border-radius: 6px; margin-bottom: 6px;" />` : ''}
                     <strong style="color: #4A070B; font-size: 13px; display: block; margin-bottom: 4px;">${store.name}</strong>
-                    <p style="color: #666; margin: 0 0 8px 0; font-size: 11px; line-height: 1.35;">${store.description || ''}</p>
+                    <p style="color: #666; margin: 0 0 8px 0; font-size: 11px; line-height: 1.35;">${pickText(store.description, store.description_en) || ''}</p>
                     <a href="${store.gmaps_link}" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 4px; background: #4A070B; color: #fff; padding: 5px 12px; border-radius: 6px; font-size: 11px; text-decoration: none; font-weight: 600;">
-                        <span>Petunjuk Arah</span> &rarr;
+                        <span>${isEn ? 'Directions' : 'Petunjuk Arah'}</span> &rarr;
                     </a>
                 </div>
             `;
@@ -272,11 +275,10 @@ export default function StoresPage({
 
     return (
         <Layout>
-            <Head>
-                <title>Lokasi Butik &amp; Gerai Resmi • Aroma Palace</title>
+            <Head title={`${t('stores.title')} • Aroma Palace`}>
                 <meta
                     name="description"
-                    content="Kunjungi butik fisik Aroma Palace di kota Anda. Lihat peta terpadu seluruh gerai resmi di Indonesia."
+                    content={t('stores.meta_desc')}
                 />
             </Head>
 
@@ -284,11 +286,11 @@ export default function StoresPage({
             <div className="border-b border-border/70 bg-gradient-to-b from-muted/30 via-background to-background py-10 sm:py-14">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center space-y-3">
                     <h1 className="text-3xl sm:text-4xl lg:text-5xl tracking-tight text-foreground">
-                        <span className="font-light">Lokasi Butik &amp;</span>{' '}
-                        <span className="font-bold text-[#4A070B] dark:text-[#E8D0BA]">Gerai Resmi</span>
+                        <span className="font-light">{isEn ? 'Boutique Locations &' : 'Lokasi Butik &'}</span>{' '}
+                        <span className="font-bold text-[#4A070B] dark:text-[#E8D0BA]">{isEn ? 'Official Ateliers' : 'Gerai Resmi'}</span>
                     </h1>
                     <p className="max-w-2xl mx-auto text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                        Temukan butik fisik Aroma Palace terdekat dalam satu peta terpadu untuk merasakan pengalaman olfaktori eksklusif dan konsultasi wewangian secara langsung.
+                        {t('stores.subtitle')}
                     </p>
                 </div>
             </div>
@@ -301,11 +303,11 @@ export default function StoresPage({
                         <span className="text-xs text-muted-foreground">
                             {searchQuery ? (
                                 <>
-                                    Menampilkan hasil untuk <strong className="text-foreground font-bold">&ldquo;{searchQuery}&rdquo;</strong> ({stores.length} gerai)
+                                    {t('stores.showing_results', { query: searchQuery, count: stores.length })}
                                 </>
                             ) : (
                                 <>
-                                    Menampilkan <strong className="text-foreground font-bold">{stores.length}</strong> butik &amp; gerai resmi
+                                    {t('stores.showing_all', { count: stores.length })}
                                 </>
                             )}
                         </span>
@@ -316,7 +318,7 @@ export default function StoresPage({
                                 onClick={handleClearSearch}
                                 className="h-6 px-2 text-[11px] text-[#4A070B] dark:text-[#E8D0BA] hover:underline cursor-pointer"
                             >
-                                Hapus Pencarian
+                                {t('stores.clear_search')}
                             </Button>
                         )}
                     </div>
@@ -331,7 +333,7 @@ export default function StoresPage({
                             )}
                             <Input
                                 type="text"
-                                placeholder="Cari nama mall, kota, atau butik..."
+                                placeholder={t('stores.search_placeholder')}
                                 value={search}
                                 onChange={(e) => handleSearchChange(e.target.value)}
                                 className="pl-9 pr-8 text-xs h-9 bg-card border-border/80 shadow-none focus-visible:ring-1 focus-visible:ring-[#4A070B]"
@@ -381,7 +383,7 @@ export default function StoresPage({
 
                                             {/* Description */}
                                             <p className="text-xs text-muted-foreground leading-relaxed">
-                                                {store.description}
+                                                {pickText(store.description, store.description_en)}
                                             </p>
 
                                             {/* Optional Thumbnail */}
@@ -431,7 +433,7 @@ export default function StoresPage({
                                                             className="inline-flex items-center gap-1"
                                                         >
                                                             <Navigation className="w-3 h-3 text-[#4A070B] dark:text-[#E8D0BA]" />
-                                                            <span>Rute</span>
+                                                            <span>{t('stores.directions')}</span>
                                                         </a>
                                                     </Button>
                                                 </div>
@@ -442,9 +444,9 @@ export default function StoresPage({
                             })
                         ) : (
                             <div className="py-12 px-6 text-center space-y-4">
-                                <h3 className="text-base font-bold text-foreground">Tidak Ada Gerai Ditemukan</h3>
+                                <h3 className="text-base font-bold text-foreground">{t('stores.empty_title')}</h3>
                                 <p className="text-xs text-muted-foreground max-w-sm mx-auto leading-relaxed">
-                                    Tidak ada butik atau gerai fisik yang sesuai dengan kata kunci pencarian Anda.
+                                    {t('stores.empty_desc')}
                                 </p>
                                 <div className="pt-2">
                                     <Button
@@ -453,7 +455,7 @@ export default function StoresPage({
                                         onClick={handleClearSearch}
                                         className="text-xs rounded-md border-border/80 cursor-pointer"
                                     >
-                                        Tampilkan Semua Lokasi
+                                        {isEn ? 'Show All Locations' : 'Tampilkan Semua Lokasi'}
                                     </Button>
                                 </div>
                             </div>
@@ -473,7 +475,7 @@ export default function StoresPage({
                                     className="pointer-events-auto shadow-xs h-8 text-xs font-medium cursor-pointer bg-background/90 hover:bg-background border border-border/80 flex items-center gap-1.5"
                                 >
                                     <RotateCcw className="w-3 h-3 text-muted-foreground" />
-                                    <span>Tampilkan Semua Titik</span>
+                                    <span>{isEn ? 'Show All Points' : 'Tampilkan Semua Titik'}</span>
                                 </Button>
                             </div>
 
@@ -497,7 +499,7 @@ export default function StoresPage({
                             <div className="space-y-1">
                                 <p className="text-xs font-bold text-foreground">Private Scent Lounge</p>
                                 <p className="text-[11px] text-muted-foreground leading-relaxed">
-                                    Ruang eksplorasi aroma privat dengan penciuman biji kopi dan penetralisir olfaktori.
+                                    {isEn ? 'Private scent discovery space with olfactory neutralizers and bespoke consultations.' : 'Ruang eksplorasi aroma privat dengan penciuman biji kopi dan penetralisir olfaktori.'}
                                 </p>
                             </div>
                         </div>
@@ -507,9 +509,9 @@ export default function StoresPage({
                                 <Compass className="w-4.5 h-4.5" />
                             </div>
                             <div className="space-y-1">
-                                <p className="text-xs font-bold text-foreground">Konsultasi Personal</p>
+                                <p className="text-xs font-bold text-foreground">{isEn ? 'Personal Consultation' : 'Konsultasi Personal'}</p>
                                 <p className="text-[11px] text-muted-foreground leading-relaxed">
-                                    Dipandu oleh perfumer profesional untuk menemukan signature scent yang ideal bagi Anda.
+                                    {isEn ? 'Guided by professional perfumers to help you discover your ideal signature fragrance.' : 'Dipandu oleh perfumer profesional untuk menemukan signature scent yang ideal bagi Anda.'}
                                 </p>
                             </div>
                         </div>
@@ -519,9 +521,9 @@ export default function StoresPage({
                                 <StoreIcon className="w-4.5 h-4.5" />
                             </div>
                             <div className="space-y-1">
-                                <p className="text-xs font-bold text-foreground">Instant Store Pickup</p>
+                                <p className="text-xs font-bold text-foreground">{isEn ? 'Instant Store Pickup' : 'Pengambilan di Gerai'}</p>
                                 <p className="text-[11px] text-muted-foreground leading-relaxed">
-                                    Pesan online melalui website dan ambil pesanan langsung di gerai butik terdekat.
+                                    {isEn ? 'Order online and collect your fine fragrance packages directly at the nearest boutique.' : 'Pesan online melalui website dan ambil pesanan langsung di gerai butik terdekat.'}
                                 </p>
                             </div>
                         </div>
@@ -531,9 +533,9 @@ export default function StoresPage({
                                 <MapPin className="w-4.5 h-4.5" />
                             </div>
                             <div className="space-y-1">
-                                <p className="text-xs font-bold text-foreground">Lokasi Strategis</p>
+                                <p className="text-xs font-bold text-foreground">{isEn ? 'Prime Locations' : 'Lokasi Strategis'}</p>
                                 <p className="text-[11px] text-muted-foreground leading-relaxed">
-                                    Hadir di pusat perbelanjaan dan pusat gaya hidup premium kota-kota besar Indonesia.
+                                    {isEn ? 'Present in premier lifestyle centers and luxury districts across major Indonesian cities.' : 'Hadir di pusat perbelanjaan dan pusat gaya hidup premium kota-kota besar Indonesia.'}
                                 </p>
                             </div>
                         </div>

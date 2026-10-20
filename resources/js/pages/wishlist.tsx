@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import Layout from '@/components/Layout';
+import { useTranslation } from '@/lib/i18n';
 import ProductCard, { type ProductItem } from '@/components/ProductCard';
 import ProductQuickViewModal from '@/components/ProductQuickViewModal';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,7 @@ interface WishlistPageProps {
 }
 
 export default function WishlistPage({ items = [] }: WishlistPageProps) {
+    const { t, isEn } = useTranslation();
     const [selectedBottle, setSelectedBottle] = useState<ProductItem | null>(null);
 
     const handleToggleWishlist = (productId: number) => {
@@ -62,17 +64,17 @@ export default function WishlistPage({ items = [] }: WishlistPageProps) {
 
     return (
         <Layout>
-            <Head title="Wishlist Wewangian Saya • Aroma Palace" />
+            <Head title={`${t('wishlist.title')} • Aroma Palace`} />
 
             {/* PAGE HEADER BANNER (Matches products.tsx style) */}
             <div className="border-b border-border/70 bg-gradient-to-b from-muted/30 via-background to-background py-10 sm:py-14">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center space-y-3">
                     <h1 className="text-3xl sm:text-4xl lg:text-5xl tracking-tight text-foreground">
-                        <span className="font-light">Wishlist</span>{' '}
-                        <span className="font-bold text-[#4A070B] dark:text-[#E8D0BA]">Wewangian Saya</span>
+                        <span className="font-light">{isEn ? 'My Fragrance' : 'Wishlist'}</span>{' '}
+                        <span className="font-bold text-[#4A070B] dark:text-[#E8D0BA]">{isEn ? 'Wishlist' : 'Wewangian Saya'}</span>
                     </h1>
                     <p className="max-w-2xl mx-auto text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                        Daftar aroma mewah Dubai pilihan yang Anda simpan. Pantau ketersediaan produk dan pindahkan ke keranjang kapan pun Anda siap memiliki.
+                        {t('wishlist.subtitle')}
                     </p>
                 </div>
             </div>
@@ -83,10 +85,10 @@ export default function WishlistPage({ items = [] }: WishlistPageProps) {
                     /* EMPTY STATE (Matches products.tsx empty state design) */
                     <div className="py-16 px-6 text-center space-y-4">
                         <h3 className="text-base font-bold text-foreground">
-                            Wishlist Anda Masih Kosong
+                            {t('wishlist.empty_title')}
                         </h3>
                         <p className="text-xs text-muted-foreground max-w-md mx-auto leading-relaxed">
-                            Belum ada wewangian yang Anda simpan. Jelajahi katalog mahakarya parfum kami dan klik ikon hati untuk menyimpan aroma impian Anda.
+                            {t('wishlist.empty_desc')}
                         </p>
                         <div className="pt-2">
                             <Link href="/products">
@@ -94,7 +96,7 @@ export default function WishlistPage({ items = [] }: WishlistPageProps) {
                                     size="sm"
                                     className="bg-[#4A070B] hover:bg-[#360407] text-white rounded-md px-6 h-10 text-xs font-semibold cursor-pointer shadow-none"
                                 >
-                                    Jelajahi Koleksi Parfum
+                                    {t('wishlist.explore')}
                                 </Button>
                             </Link>
                         </div>
@@ -105,10 +107,10 @@ export default function WishlistPage({ items = [] }: WishlistPageProps) {
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/80">
                             <div className="flex items-center gap-2">
                                 <span className="text-xs text-muted-foreground">
-                                    Menampilkan <strong className="text-foreground font-bold">{items.length}</strong> wewangian tersimpan
+                                    {t('wishlist.showing_count', { count: items.length })}
                                 </span>
                                 <Badge variant="secondary" className="text-[10px] bg-[#4A070B]/10 text-[#4A070B] border-0 rounded-md">
-                                    Tersimpan
+                                    {t('wishlist.saved_badge')}
                                 </Badge>
                             </div>
 
@@ -116,7 +118,7 @@ export default function WishlistPage({ items = [] }: WishlistPageProps) {
                                 href="/products"
                                 className="text-xs font-semibold text-[#4A070B] hover:text-[#360407] transition-colors"
                             >
-                                + Cari Wewangian Lain
+                                {t('wishlist.find_more')}
                             </Link>
                         </div>
 
@@ -143,7 +145,7 @@ export default function WishlistPage({ items = [] }: WishlistPageProps) {
                                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                                             </svg>
-                                            <span>Masuk Keranjang</span>
+                                            <span>{t('wishlist.add_to_cart')}</span>
                                         </Button>
                                     </div>
                                 </div>

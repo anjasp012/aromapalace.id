@@ -57,11 +57,14 @@ class ArticleController extends Controller
                 'id' => $article->id,
                 'slug' => $article->slug,
                 'title' => $article->title,
+                'title_en' => $article->title_en,
                 'readTime' => $article->read_time,
                 'date' => $article->created_at->format('d M Y'),
                 'thumbnail' => $article->thumbnail,
                 'excerpt' => $article->excerpt,
+                'excerpt_en' => $article->excerpt_en,
                 'content' => $article->content,
+                'content_en' => $article->content_en,
             ],
             'relatedArticles' => $relatedArticles,
         ]);
@@ -78,9 +81,11 @@ class ArticleController extends Controller
             'id' => $art->id,
             'slug' => $art->slug,
             'title' => $art->title,
+            'title_en' => $art->title_en,
             'readTime' => $art->read_time,
             'date' => $art->created_at->format('d M Y'),
             'excerpt' => $art->excerpt,
+            'excerpt_en' => $art->excerpt_en,
             'thumbnail' => $art->thumbnail,
         ];
     }

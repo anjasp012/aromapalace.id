@@ -232,7 +232,7 @@ test('orders page provides tab counts and supports serverside status filtering',
         'payment_channel' => 'BCA Virtual Account',
         'payment_code' => '8808112345679',
         'payment_status' => 'paid',
-        'status' => 'menunggu_konfirmasi',
+        'status' => 'diproses',
         'subtotal' => 1200000,
         'discount_amount' => 0,
         'total_amount' => 1200000,
@@ -314,7 +314,6 @@ test('orders page provides tab counts and supports serverside status filtering',
             ->where('active_tab', 'all')
             ->where('tab_counts.all', 4)
             ->where('tab_counts.menunggu_pembayaran', 1)
-            ->where('tab_counts.menunggu_konfirmasi', 1)
             ->where('tab_counts.diproses', 2)
             ->where('tab_counts.dikirim', 1)
             ->where('tab_counts.selesai', 0)
@@ -329,16 +328,6 @@ test('orders page provides tab counts and supports serverside status filtering',
             ->where('active_tab', 'menunggu_pembayaran')
             ->has('orders', 1)
             ->where('orders.0.order_number', 'AP-ORDER-PND')
-        );
-
-    // Filter menunggu_konfirmasi
-    $responseMenungguKonfirmasi = $this->actingAs($user)->get(route('account.orders', ['status' => 'menunggu_konfirmasi']));
-    $responseMenungguKonfirmasi->assertOk()
-        ->assertInertia(fn ($page) => $page
-            ->component('orders')
-            ->where('active_tab', 'menunggu_konfirmasi')
-            ->has('orders', 1)
-            ->where('orders.0.order_number', 'AP-ORDER-CNF')
         );
 
     // Filter diproses

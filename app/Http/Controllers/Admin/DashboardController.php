@@ -26,8 +26,7 @@ class DashboardController extends Controller
             'menunggu_pembayaran' => Order::where('status', 'menunggu_pembayaran')
                 ->orWhere(fn ($q) => $q->whereNull('status')->where('payment_status', 'pending'))
                 ->count(),
-            'menunggu_konfirmasi' => Order::where('status', 'menunggu_konfirmasi')->count(),
-            'diproses' => Order::whereIn('status', ['diproses', 'menunggu_konfirmasi'])->count(),
+            'diproses' => Order::where('status', 'diproses')->count(),
             'dikirim' => Order::where('status', 'dikirim')->where('delivery_type', 'delivery')->count(),
             'pengambilan' => Order::where('status', 'dikirim')->where('delivery_type', 'pickup')->count(),
             'selesai' => Order::where('status', 'selesai')
@@ -36,9 +35,9 @@ class DashboardController extends Controller
             'dibatalkan' => Order::where('status', 'dibatalkan')->orWhere('payment_status', 'cancelled')->count(),
         ];
 
-        // Action needed: orders awaiting confirmation or currently processing
+        // Action needed: orders currently processing
         $actionNeededOrders = Order::with(['items', 'store', 'user'])
-            ->whereIn('status', ['menunggu_konfirmasi', 'diproses'])
+            ->where('status', 'diproses')
             ->latest()
             ->take(6)
             ->get()
@@ -58,7 +57,7 @@ class DashboardController extends Controller
                 'total_orders' => $totalOrders,
                 'total_customers' => $totalCustomers,
                 'total_products' => $totalProducts,
-                'needs_action_count' => $statusCounts['menunggu_konfirmasi'] + $statusCounts['diproses'],
+                'needs_action_count' => $statusCounts['diproses'],
             ],
             'status_counts' => $statusCounts,
             'action_needed_orders' => $actionNeededOrders,
@@ -84,7 +83,6 @@ class DashboardController extends Controller
             'selesai' => 'Selesai',
             'dikirim' => $isPickup ? 'Pengambilan' : 'Dikirim',
             'diproses' => 'Diproses',
-            'menunggu_konfirmasi' => 'Menunggu Konfirmasi',
             'menunggu_pembayaran' => 'Menunggu Pembayaran',
             'dibatalkan' => 'Dibatalkan',
             default => ucfirst(str_replace('_', ' ', $orderStatus)),

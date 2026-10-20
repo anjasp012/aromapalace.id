@@ -20,12 +20,12 @@ import {
     TrendingUp,
     TrendingDown,
     Sparkles,
-    ArrowLeft,
     Coins,
     Loader2,
     Info,
     ChevronRight,
 } from 'lucide-react';
+import { useTranslation } from '@/lib/i18n';
 
 interface MembershipData {
     id: number;
@@ -55,7 +55,9 @@ interface PointHistoryData {
 interface RewardData {
     id: number;
     name: string;
+    name_en?: string;
     description: string;
+    description_en?: string;
     points_required: number;
     reward_type: string;
     reward_value: number;
@@ -69,7 +71,9 @@ interface UserVoucherData {
     id: number;
     code: string;
     name: string;
+    name_en?: string;
     description: string | null;
+    description_en?: string | null;
     type: string;
     formatted_discount: string;
     min_order_amount_formatted: string;
@@ -101,6 +105,7 @@ export default function MembershipPage({
 }: MembershipPageProps) {
     const { auth } = usePage<{ auth?: { user?: { id: number; name: string; email: string } } }>().props;
     const user = auth?.user;
+    const { t, pickText, isEn } = useTranslation();
 
     const [activeTab, setActiveTab] = useState<'rewards' | 'history'>('rewards');
     const [historyFilter, setHistoryFilter] = useState<'all' | 'masuk' | 'berkurang'>('all');
@@ -111,10 +116,10 @@ export default function MembershipPage({
 
     const displayName = user?.name
         ? user.name
-              .trim()
-              .split(' ')
-              .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-              .join(' ')
+            .trim()
+            .split(' ')
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+            .join(' ')
         : (user?.email?.split('@')[0] || 'Member');
 
     const initial = displayName.charAt(0).toUpperCase();
@@ -123,7 +128,11 @@ export default function MembershipPage({
         navigator.clipboard.writeText(code);
         setCopiedCode(code);
         if (window.showPromoToast) {
-            window.showPromoToast(`Kode "${code}" berhasil disalin!`);
+            window.showPromoToast(
+                isEn
+                    ? `Code "${code}" copied successfully!`
+                    : `Kode "${code}" berhasil disalin!`
+            );
         }
         setTimeout(() => setCopiedCode(null), 2500);
     };
@@ -131,7 +140,9 @@ export default function MembershipPage({
     const handleJoin = () => {
         if (!user) {
             router.get('/login', {
-                notice: 'Silakan masuk terlebih dahulu untuk mengaktifkan Royale Points Anda.',
+                notice: isEn
+                    ? 'Please log in first to activate your Royale Points.'
+                    : 'Silakan masuk terlebih dahulu untuk mengaktifkan Royale Points Anda.',
             });
             return;
         }
@@ -170,29 +181,11 @@ export default function MembershipPage({
 
     return (
         <Layout showFooter={false}>
-            <Head title="Royale Points & Rewards • Aroma Palace" />
+            <Head title={`Royale Points & Rewards • Aroma Palace`} />
 
             <div className="min-h-screen bg-[#F8F9FA] dark:bg-background">
                 {/* CONSISTENT CONTAINER MATCHING ACCOUNT PAGE */}
                 <div className="max-w-xl mx-auto px-4 pt-4 sm:pt-6 pb-20">
-                    {/* TOP HEADER WITH BACK BUTTON */}
-                    <div className="flex items-center gap-3 mb-3.5">
-                        <Link
-                            href="/account"
-                            className="w-9 h-9 rounded-full bg-card border border-border/80 flex items-center justify-center text-foreground hover:bg-muted transition cursor-pointer shrink-0 shadow-2xs"
-                            title="Kembali ke Akun"
-                        >
-                            <ArrowLeft className="w-4 h-4" />
-                        </Link>
-                        <div className="min-w-0 flex-1">
-                            <h1 className="text-base sm:text-lg font-bold text-foreground leading-tight truncate">
-                                Royale Points
-                            </h1>
-                            <p className="text-xs text-muted-foreground truncate">
-                                Poin loyalitas &amp; voucher hadiah belanja
-                            </p>
-                        </div>
-                    </div>
 
                     {/* NON-MEMBER PROMO CARD */}
                     {!is_member ? (
@@ -204,16 +197,18 @@ export default function MembershipPage({
                                 <div>
                                     <div className="inline-flex items-center gap-1.5 text-[10.5px] font-bold text-amber-900 dark:text-amber-200 bg-amber-200/60 dark:bg-amber-900/40 px-2 py-0.5 rounded-full mb-1">
                                         <Sparkles className="w-3 h-3 text-[#E5A844]" />
-                                        <span>Bonus Selamat Datang 100 Poin</span>
+                                        <span>{isEn ? 'Welcome Bonus 100 Points' : 'Bonus Selamat Datang 100 Poin'}</span>
                                     </div>
                                     <h2 className="text-sm sm:text-base font-bold text-foreground">
-                                        Aktifkan Royale Points (Gratis)
+                                        {isEn ? 'Activate Royale Points (Free)' : 'Aktifkan Royale Points (Gratis)'}
                                     </h2>
                                 </div>
                             </div>
 
                             <p className="text-xs text-muted-foreground leading-relaxed">
-                                Dapatkan 1 poin untuk setiap pembelanjaan Rp 10.000 wewangian mewah Aroma Palace, lalu tukarkan poin Anda dengan voucher diskon belanja.
+                                {isEn
+                                    ? 'Earn 1 point for every Rp 10,000 spent on Aroma Palace luxury fragrances, then redeem your points for discount vouchers.'
+                                    : 'Dapatkan 1 poin untuk setiap pembelanjaan Rp 10.000 wewangian mewah Aroma Palace, lalu tukarkan poin Anda dengan voucher diskon belanja.'}
                             </p>
 
                             <Button
@@ -227,7 +222,7 @@ export default function MembershipPage({
                                 ) : (
                                     <Crown className="w-4 h-4 mr-2 text-[#E5A844]" />
                                 )}
-                                Gabung Sekarang (Gratis)
+                                {isEn ? 'Join Now (Free)' : 'Gabung Sekarang (Gratis)'}
                             </Button>
                         </div>
                     ) : (
@@ -250,12 +245,12 @@ export default function MembershipPage({
                                         </Badge>
                                     </div>
                                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
-                                        <span>No. Member: <strong className="font-mono text-foreground font-semibold">{membership?.membership_number}</strong></span>
+                                        <span>{isEn ? 'Member ID:' : 'No. Member:'} <strong className="font-mono text-foreground font-semibold">{membership?.membership_number}</strong></span>
                                         <button
                                             type="button"
                                             onClick={() => handleCopy(membership?.membership_number || '')}
                                             className="text-muted-foreground hover:text-foreground transition p-0.5 cursor-pointer"
-                                            title="Salin No. Member"
+                                            title={isEn ? 'Copy Member ID' : 'Salin No. Member'}
                                         >
                                             {copiedCode === membership?.membership_number ? (
                                                 <Check className="w-3.5 h-3.5 text-emerald-500" />
@@ -270,27 +265,27 @@ export default function MembershipPage({
                             {/* Saldo Poin Display (Styled like the warm pill on account.tsx) */}
                             <div className="rounded-xl sm:rounded-2xl bg-[#FDF8EE] dark:bg-amber-950/25 border border-[#F3E7C4] dark:border-amber-800/30 p-4 text-center">
                                 <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
-                                    Saldo Poin Anda
+                                    {isEn ? 'Your Points Balance' : 'Saldo Poin Anda'}
                                 </span>
                                 <div className="flex items-center justify-center gap-2 mt-1">
                                     <Crown className="w-6 h-6 text-[#E5A844]" />
                                     <span className="text-3xl sm:text-4xl font-extrabold text-[#4A070B] dark:text-[#E8D0BA]">
                                         {membership?.points_formatted}
                                     </span>
-                                    <span className="text-sm font-bold text-foreground/80">Poin</span>
+                                    <span className="text-sm font-bold text-foreground/80">{isEn ? 'Points' : 'Poin'}</span>
                                 </div>
                             </div>
 
                             {/* Poin Masuk & Poin Berkurang Quick Stats */}
                             <div className="grid grid-cols-2 gap-2 text-center">
                                 <div className="p-3 rounded-xl bg-muted/40 border border-border/50">
-                                    <span className="text-[11px] text-muted-foreground font-medium block">Poin Masuk</span>
+                                    <span className="text-[11px] text-muted-foreground font-medium block">{isEn ? 'Points Earned' : 'Poin Masuk'}</span>
                                     <span className="text-sm sm:text-base font-extrabold text-emerald-600 dark:text-emerald-400">
                                         +{total_points_in_formatted}
                                     </span>
                                 </div>
                                 <div className="p-3 rounded-xl bg-muted/40 border border-border/50">
-                                    <span className="text-[11px] text-muted-foreground font-medium block">Poin Berkurang</span>
+                                    <span className="text-[11px] text-muted-foreground font-medium block">{isEn ? 'Points Redeemed' : 'Poin Berkurang'}</span>
                                     <span className="text-sm sm:text-base font-extrabold text-red-600 dark:text-red-400">
                                         -{total_points_out_formatted}
                                     </span>
@@ -300,7 +295,13 @@ export default function MembershipPage({
                             {/* Point Earning Rule Notice */}
                             <div className="p-3 rounded-xl bg-muted/30 border border-border/50 text-[11px] text-muted-foreground flex items-center gap-2 leading-relaxed">
                                 <Info className="w-4 h-4 text-[#E5A844] shrink-0" />
-                                <span>Tiap belanja <strong>Rp 10.000</strong> mendapat <strong>1 Poin</strong>. Poin dapat langsung ditukar dengan voucher belanja di bawah.</span>
+                                <span>
+                                    {isEn ? (
+                                        <>Every <strong>Rp 10,000</strong> spent earns <strong>1 Point</strong>. Points can be directly redeemed for discount vouchers below.</>
+                                    ) : (
+                                        <>Tiap belanja <strong>Rp 10.000</strong> mendapat <strong>1 Poin</strong>. Poin dapat langsung ditukar dengan voucher belanja di bawah.</>
+                                    )}
+                                </span>
                             </div>
                         </div>
                     )}
@@ -310,30 +311,28 @@ export default function MembershipPage({
                         <button
                             type="button"
                             onClick={() => setActiveTab('rewards')}
-                            className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                                activeTab === 'rewards'
+                            className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${activeTab === 'rewards'
                                     ? 'bg-card text-foreground shadow-2xs'
                                     : 'text-muted-foreground hover:text-foreground'
-                            }`}
+                                }`}
                         >
                             <Gift className="w-3.5 h-3.5" />
-                            <span>Tukar Voucher</span>
+                            <span>{isEn ? 'Redeem Vouchers' : 'Tukar Voucher'}</span>
                             <span className="text-[10px] px-1.5 py-0 rounded-full bg-muted font-normal">{rewards.length}</span>
                         </button>
                         <button
                             type="button"
                             onClick={() => setActiveTab('history')}
                             disabled={!is_member}
-                            className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                                activeTab === 'history'
+                            className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${activeTab === 'history'
                                     ? 'bg-card text-foreground shadow-2xs'
                                     : !is_member
-                                    ? 'opacity-40 cursor-not-allowed text-muted-foreground'
-                                    : 'text-muted-foreground hover:text-foreground'
-                            }`}
+                                        ? 'opacity-40 cursor-not-allowed text-muted-foreground'
+                                        : 'text-muted-foreground hover:text-foreground'
+                                }`}
                         >
                             <History className="w-3.5 h-3.5" />
-                            <span>Riwayat Poin</span>
+                            <span>{isEn ? 'Points History' : 'Riwayat Poin'}</span>
                             {histories.length > 0 && (
                                 <span className="text-[10px] px-1.5 py-0 rounded-full bg-muted font-normal">{histories.length}</span>
                             )}
@@ -350,11 +349,11 @@ export default function MembershipPage({
                                         <div className="flex items-center gap-2">
                                             <Sparkles className="w-4 h-4 text-amber-600" />
                                             <h3 className="text-xs sm:text-sm font-bold text-foreground">
-                                                Voucher Aktif Anda ({user_vouchers.length})
+                                                {isEn ? 'Your Active Vouchers' : 'Voucher Aktif Anda'} ({user_vouchers.length})
                                             </h3>
                                         </div>
                                         <Link href="/products" className="text-xs font-semibold text-[#4A070B] dark:text-[#E8D0BA] hover:underline flex items-center gap-0.5">
-                                            <span>Belanja</span>
+                                            <span>{isEn ? 'Shop' : 'Belanja'}</span>
                                             <ChevronRight className="w-3 h-3" />
                                         </Link>
                                     </div>
@@ -371,10 +370,10 @@ export default function MembershipPage({
                                                             {v.formatted_discount}
                                                         </Badge>
                                                         <span className="text-[10px] text-muted-foreground truncate">
-                                                            s/d {v.expires_at || 'Selamanya'}
+                                                            {isEn ? 'until' : 's/d'} {v.expires_at || (isEn ? 'Lifetime' : 'Selamanya')}
                                                         </span>
                                                     </div>
-                                                    <h4 className="text-xs font-bold text-foreground truncate">{v.name}</h4>
+                                                    <h4 className="text-xs font-bold text-foreground truncate">{pickText(v.name, v.name_en)}</h4>
                                                     <p className="text-[11px] text-muted-foreground truncate">{v.min_order_amount_formatted}</p>
                                                 </div>
 
@@ -389,12 +388,12 @@ export default function MembershipPage({
                                                         {copiedCode === v.code ? (
                                                             <>
                                                                 <Check className="w-3 h-3 mr-1 text-emerald-500" />
-                                                                Tersalin
+                                                                {isEn ? 'Copied' : 'Tersalin'}
                                                             </>
                                                         ) : (
                                                             <>
                                                                 <Copy className="w-3 h-3 mr-1" />
-                                                                Salin
+                                                                {isEn ? 'Copy' : 'Salin'}
                                                             </>
                                                         )}
                                                     </Button>
@@ -408,8 +407,8 @@ export default function MembershipPage({
                             {/* Available Catalog Rewards */}
                             <div className="space-y-2.5">
                                 <div className="px-1 flex items-center justify-between text-xs text-muted-foreground">
-                                    <span>Pilih reward untuk ditukarkan:</span>
-                                    {is_member && <span>Saldo: <strong className="text-foreground">{membership?.points_formatted} Poin</strong></span>}
+                                    <span>{isEn ? 'Select rewards to redeem:' : 'Pilih reward untuk ditukarkan:'}</span>
+                                    {is_member && <span>{isEn ? 'Balance:' : 'Saldo:'} <strong className="text-foreground">{membership?.points_formatted} {isEn ? 'Points' : 'Poin'}</strong></span>}
                                 </div>
 
                                 {rewards.map((reward) => (
@@ -424,12 +423,12 @@ export default function MembershipPage({
                                                 </Badge>
                                                 <div className="flex items-center gap-1 text-xs font-bold text-amber-600 dark:text-amber-400">
                                                     <Coins className="w-3.5 h-3.5" />
-                                                    <span>{reward.points_required} Poin</span>
+                                                    <span>{reward.points_required} {isEn ? 'Points' : 'Poin'}</span>
                                                 </div>
                                             </div>
 
-                                            <h4 className="text-xs sm:text-sm font-bold text-foreground pt-0.5">{reward.name}</h4>
-                                            <p className="text-xs text-muted-foreground leading-relaxed">{reward.description}</p>
+                                            <h4 className="text-xs sm:text-sm font-bold text-foreground pt-0.5">{pickText(reward.name, reward.name_en)}</h4>
+                                            <p className="text-xs text-muted-foreground leading-relaxed">{pickText(reward.description, reward.description_en)}</p>
                                             <p className="text-[11px] text-muted-foreground font-medium">{reward.min_order_formatted}</p>
                                         </div>
 
@@ -441,7 +440,7 @@ export default function MembershipPage({
                                                     size="sm"
                                                     className="w-full text-xs font-semibold h-8 cursor-pointer rounded-xl"
                                                 >
-                                                    Aktifkan untuk Menukar
+                                                    {isEn ? 'Activate to Redeem' : 'Aktifkan untuk Menukar'}
                                                 </Button>
                                             ) : reward.can_redeem ? (
                                                 <Button
@@ -450,7 +449,7 @@ export default function MembershipPage({
                                                     className="w-full bg-[#4A070B] hover:bg-[#360407] text-white text-xs font-semibold h-8 cursor-pointer shadow-none rounded-xl"
                                                 >
                                                     <Gift className="w-3.5 h-3.5 mr-1" />
-                                                    Tukar ({reward.points_required} Poin)
+                                                    {isEn ? `Redeem (${reward.points_required} Points)` : `Tukar (${reward.points_required} Poin)`}
                                                 </Button>
                                             ) : (
                                                 <Button
@@ -459,7 +458,7 @@ export default function MembershipPage({
                                                     size="sm"
                                                     className="w-full text-xs font-medium h-8 opacity-60 rounded-xl"
                                                 >
-                                                    Kurang {reward.shortage} Poin
+                                                    {isEn ? `Need ${reward.shortage} More Points` : `Kurang ${reward.shortage} Poin`}
                                                 </Button>
                                             )}
                                         </div>
@@ -478,31 +477,28 @@ export default function MembershipPage({
                                     variant={historyFilter === 'all' ? 'default' : 'outline'}
                                     size="sm"
                                     onClick={() => setHistoryFilter('all')}
-                                    className={`text-xs h-7 px-3 rounded-full cursor-pointer ${
-                                        historyFilter === 'all' ? 'bg-[#4A070B] text-white' : ''
-                                    }`}
+                                    className={`text-xs h-7 px-3 rounded-full cursor-pointer ${historyFilter === 'all' ? 'bg-[#4A070B] text-white' : ''
+                                        }`}
                                 >
-                                    Semua ({histories.length})
+                                    {isEn ? `All (${histories.length})` : `Semua (${histories.length})`}
                                 </Button>
                                 <Button
                                     variant={historyFilter === 'masuk' ? 'default' : 'outline'}
                                     size="sm"
                                     onClick={() => setHistoryFilter('masuk')}
-                                    className={`text-xs h-7 px-3 rounded-full cursor-pointer ${
-                                        historyFilter === 'masuk' ? 'bg-emerald-700 text-white' : ''
-                                    }`}
+                                    className={`text-xs h-7 px-3 rounded-full cursor-pointer ${historyFilter === 'masuk' ? 'bg-emerald-700 text-white' : ''
+                                        }`}
                                 >
-                                    Poin Masuk (+)
+                                    {isEn ? 'Points In (+)' : 'Poin Masuk (+)'}
                                 </Button>
                                 <Button
                                     variant={historyFilter === 'berkurang' ? 'default' : 'outline'}
                                     size="sm"
                                     onClick={() => setHistoryFilter('berkurang')}
-                                    className={`text-xs h-7 px-3 rounded-full cursor-pointer ${
-                                        historyFilter === 'berkurang' ? 'bg-red-700 text-white' : ''
-                                    }`}
+                                    className={`text-xs h-7 px-3 rounded-full cursor-pointer ${historyFilter === 'berkurang' ? 'bg-red-700 text-white' : ''
+                                        }`}
                                 >
-                                    Poin Berkurang (-)
+                                    {isEn ? 'Points Out (-)' : 'Poin Berkurang (-)'}
                                 </Button>
                             </div>
 
@@ -510,8 +506,10 @@ export default function MembershipPage({
                             {filteredHistories.length === 0 ? (
                                 <div className="p-8 text-center rounded-2xl border border-dashed border-border/80 bg-card/40 space-y-2">
                                     <History className="w-8 h-8 mx-auto text-muted-foreground/40" />
-                                    <div className="text-xs font-semibold text-foreground">Tidak Ada Riwayat Poin</div>
-                                    <p className="text-[11px] text-muted-foreground">Belum ada transaksi poin pada kategori ini.</p>
+                                    <div className="text-xs font-semibold text-foreground">{isEn ? 'No Points History' : 'Tidak Ada Riwayat Poin'}</div>
+                                    <p className="text-[11px] text-muted-foreground">
+                                        {isEn ? 'No points activity recorded in this category.' : 'Belum ada transaksi poin pada kategori ini.'}
+                                    </p>
                                 </div>
                             ) : (
                                 <div className="rounded-2xl border border-border/80 bg-card overflow-hidden divide-y divide-border/60 shadow-2xs">
@@ -522,11 +520,10 @@ export default function MembershipPage({
                                         >
                                             <div className="flex items-center gap-3 min-w-0">
                                                 <div
-                                                    className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                                                        item.is_positive
+                                                    className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${item.is_positive
                                                             ? 'bg-emerald-500/10 text-emerald-600'
                                                             : 'bg-red-500/10 text-red-600'
-                                                    }`}
+                                                        }`}
                                                 >
                                                     {item.is_positive ? (
                                                         <TrendingUp className="w-4 h-4" />
@@ -553,16 +550,15 @@ export default function MembershipPage({
 
                                             <div className="text-right shrink-0">
                                                 <div
-                                                    className={`text-xs sm:text-sm font-extrabold ${
-                                                        item.is_positive
+                                                    className={`text-xs sm:text-sm font-extrabold ${item.is_positive
                                                             ? 'text-emerald-600 dark:text-emerald-400'
                                                             : 'text-red-600 dark:text-red-400'
-                                                    }`}
+                                                        }`}
                                                 >
-                                                    {item.points_formatted} Poin
+                                                    {item.points_formatted} {isEn ? 'Points' : 'Poin'}
                                                 </div>
                                                 <div className="text-[10px] text-muted-foreground">
-                                                    Saldo: {item.balance_after_formatted}
+                                                    {isEn ? 'Balance:' : 'Saldo:'} {item.balance_after_formatted}
                                                 </div>
                                             </div>
                                         </div>
@@ -583,10 +579,18 @@ export default function MembershipPage({
                                 {selectedReward.formatted_discount}
                             </Badge>
                             <DialogTitle className="text-base font-bold">
-                                Konfirmasi Penukaran Poin
+                                {isEn ? 'Confirm Points Redemption' : 'Konfirmasi Penukaran Poin'}
                             </DialogTitle>
                             <DialogDescription className="text-xs">
-                                Anda akan menukarkan <strong>{selectedReward.points_required} Poin</strong> untuk voucher <strong>{selectedReward.name}</strong>. Saldo poin Anda akan berkurang dan kode voucher langsung aktif.
+                                {isEn ? (
+                                    <>
+                                        You are about to redeem <strong>{selectedReward.points_required} Points</strong> for the voucher <strong>{pickText(selectedReward.name, selectedReward.name_en)}</strong>. Your points balance will be deducted and your voucher will become immediately active.
+                                    </>
+                                ) : (
+                                    <>
+                                        Anda akan menukarkan <strong>{selectedReward.points_required} Poin</strong> untuk voucher <strong>{selectedReward.name}</strong>. Saldo poin Anda akan berkurang dan kode voucher langsung aktif.
+                                    </>
+                                )}
                             </DialogDescription>
                         </DialogHeader>
 
@@ -597,7 +601,7 @@ export default function MembershipPage({
                                 onClick={() => setSelectedReward(null)}
                                 className="cursor-pointer rounded-xl text-xs"
                             >
-                                Batal
+                                {isEn ? 'Cancel' : 'Batal'}
                             </Button>
                             <Button
                                 size="sm"
@@ -605,7 +609,7 @@ export default function MembershipPage({
                                 onClick={handleConfirmRedeem}
                                 className="bg-[#4A070B] hover:bg-[#360407] text-white cursor-pointer rounded-xl text-xs"
                             >
-                                {isRedeeming ? 'Memproses...' : 'Tukarkan Sekarang'}
+                                {isRedeeming ? (isEn ? 'Processing...' : 'Memproses...') : (isEn ? 'Redeem Now' : 'Tukarkan Sekarang')}
                             </Button>
                         </DialogFooter>
                     </DialogContent>

@@ -4,6 +4,7 @@ import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
+import { useTranslation } from '@/lib/i18n';
 
 interface LoginProps {
     status?: string;
@@ -11,6 +12,7 @@ interface LoginProps {
 }
 
 export default function Login({ status, notice }: LoginProps) {
+    const { t } = useTranslation();
     const [showPassword, setShowPassword] = useState(false);
 
     const { data, setData, post, processing, errors } = useForm({
@@ -26,18 +28,17 @@ export default function Login({ status, notice }: LoginProps) {
 
     return (
         <Layout>
-            <Head title="Masuk ke Akun - Aroma Palace" />
+            <Head title={`${t('auth.login_title')} - Aroma Palace`} />
 
             <div className="min-h-[75vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background via-muted/20 to-background">
                 <div className="w-full max-w-md space-y-6">
                     {/* Header */}
                     <div className="text-center space-y-2">
-
                         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-sans">
-                            Masuk ke Akun
+                            {t('auth.login_title')}
                         </h1>
                         <p className="text-xs sm:text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
-                            Akses keranjang belanja, wishlist wewangian impian, dan penawaran eksklusif Aroma Palace.
+                            {t('auth.login_subtitle')}
                         </p>
                     </div>
 
@@ -64,12 +65,12 @@ export default function Login({ status, notice }: LoginProps) {
                                 {/* Email */}
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-semibold text-foreground block">
-                                        Alamat Email
+                                        {t('auth.email')}
                                     </label>
                                     <Input
                                         type="email"
                                         name="email"
-                                        placeholder="nama@email.com"
+                                        placeholder={t('auth.email_placeholder')}
                                         value={data.email}
                                         onChange={(e) => setData('email', e.target.value)}
                                         className="h-10 text-xs shadow-none border-border/80 focus-visible:ring-1 focus-visible:ring-[#4A070B] focus-visible:border-[#4A070B]"
@@ -85,7 +86,7 @@ export default function Login({ status, notice }: LoginProps) {
                                 <div className="space-y-1.5">
                                     <div className="flex items-center justify-between">
                                         <label className="text-xs font-semibold text-foreground block">
-                                            Kata Sandi
+                                            {t('auth.password')}
                                         </label>
                                     </div>
                                     <div className="relative">
@@ -104,7 +105,7 @@ export default function Login({ status, notice }: LoginProps) {
                                             className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground text-xs cursor-pointer"
                                             tabIndex={-1}
                                         >
-                                            {showPassword ? 'Tutup' : 'Lihat'}
+                                            {showPassword ? t('auth.hide') : t('auth.show')}
                                         </button>
                                     </div>
                                     {errors.password && (
@@ -121,10 +122,10 @@ export default function Login({ status, notice }: LoginProps) {
                                             onChange={(e) => setData('remember', e.target.checked)}
                                             className="rounded border-border text-[#4A070B] focus:ring-[#4A070B]"
                                         />
-                                        <span>Ingat saya</span>
+                                        <span>{t('auth.remember_me')}</span>
                                     </label>
                                     <span className="text-[11px] text-[#4A070B] cursor-pointer">
-                                        Lupa kata sandi?
+                                        {t('auth.forgot_password')}
                                     </span>
                                 </div>
 
@@ -134,17 +135,17 @@ export default function Login({ status, notice }: LoginProps) {
                                     disabled={processing}
                                     className="w-full h-10.5 rounded-md bg-[#4A070B] hover:bg-[#360407] text-white text-xs font-bold uppercase tracking-wider shadow-none transition cursor-pointer mt-2"
                                 >
-                                    {processing ? 'Memproses...' : 'Masuk Sekarang'}
+                                    {processing ? t('auth.processing') : t('auth.sign_in_button')}
                                 </Button>
 
                                 {/* Register Link */}
                                 <p className="text-center text-xs text-muted-foreground pt-2">
-                                    Belum memiliki akun?{' '}
+                                    {t('auth.no_account')}{' '}
                                     <Link
                                         href="/register"
                                         className="text-[#4A070B] font-bold"
                                     >
-                                        Daftar Sekarang
+                                        {t('auth.register_now')}
                                     </Link>
                                 </p>
                             </form>

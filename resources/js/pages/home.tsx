@@ -18,6 +18,7 @@ import CategoryCard, { type CategoryItem } from '@/components/CategoryCard';
 import VoucherCard, { type VoucherItem } from '@/components/VoucherCard';
 import ArticleCard, { type ArticleItem } from '@/components/ArticleCard';
 import BrandCard, { type BrandItem } from '@/components/BrandCard';
+import { useTranslation } from '@/lib/i18n';
 
 interface HomeProps {
     popularProducts?: ProductItem[];
@@ -41,6 +42,7 @@ export default function Home({
     const { props } = usePage<any>();
     const user = props?.auth?.user;
     const isAdmin = Boolean(props?.auth?.is_admin || user?.role === 'admin');
+    const { t, pickText, isEn } = useTranslation();
 
     const activeVouchers = propVouchers;
     const repeatedVouchers: VoucherItem[] = activeVouchers.length > 0
@@ -51,8 +53,10 @@ export default function Home({
     const banners = [
         {
             id: 1,
-            title: 'The Art of Fragrance',
-            subtitle: 'Jelajahi koleksi wewangian mewah dunia dengan keharuman artisanal eksklusif yang memikat setiap indera.',
+            title: isEn ? 'The Art of Fragrance' : 'Seni Wewangian Mahakarya',
+            subtitle: isEn
+                ? 'Explore our world-renowned luxury fragrance collection with artisanal scents that captivate every sense.'
+                : 'Jelajahi koleksi wewangian mewah dunia dengan keharuman artisanal eksklusif yang memikat setiap indera.',
             image: 'https://images.unsplash.com/photo-1615397349754-cfa2066a298e?auto=format&fit=crop&w=1200&q=80',
             link: '/products',
             flareColor: '#D4A373', // warm amber oud
@@ -61,8 +65,10 @@ export default function Home({
         },
         {
             id: 2,
-            title: 'Flash Sale Diskon hingga 20%',
-            subtitle: 'Gunakan kode promo AROMA20 untuk potongan harga spesial di pesanan pertama wewangian ekstrak & niche terpilih.',
+            title: isEn ? 'Flash Sale up to 20% Off' : 'Flash Sale Diskon hingga 20%',
+            subtitle: isEn
+                ? 'Use promo code AROMA20 for special discounts on first orders of selected extrait & niche fragrances.'
+                : 'Gunakan kode promo AROMA20 untuk potongan harga spesial di pesanan pertama wewangian ekstrak & niche terpilih.',
             image: 'https://images.unsplash.com/photo-1547887537-6158d64c35b3?auto=format&fit=crop&w=1200&q=80',
             link: '/products?discount=1',
             flareColor: '#80141C', // deep velvet burgundy
@@ -71,8 +77,10 @@ export default function Home({
         },
         {
             id: 3,
-            title: 'Store Pickup Sekarang Tersedia',
-            subtitle: 'Pesan langsung secara online, ambil di gerai flagship Grand Indonesia, Senayan City, & TP5 Surabaya.',
+            title: isEn ? 'Boutique Store Pickup Available' : 'Store Pickup Sekarang Tersedia',
+            subtitle: isEn
+                ? 'Order online with ease, pick up at our flagship boutiques in Grand Indonesia, Senayan City, & TP5 Surabaya.'
+                : 'Pesan langsung secara online, ambil di gerai flagship Grand Indonesia, Senayan City, & TP5 Surabaya.',
             image: 'https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?auto=format&fit=crop&w=1200&q=80',
             link: '/products',
             flareColor: '#B88E58', // boutique champagne gold
@@ -533,12 +541,12 @@ export default function Home({
                     <section id="categories">
                         <div className="flex items-center justify-between mb-4 sm:mb-6">
                             <h2 className="text-xl sm:text-2xl tracking-tight text-foreground">
-                                <span className="font-normal">Kategori</span>{' '}
-                                <span className="font-bold">Produk</span>
+                                <span className="font-normal">{isEn ? 'Product' : 'Kategori'}</span>{' '}
+                                <span className="font-bold">{isEn ? 'Categories' : 'Produk'}</span>
                             </h2>
                             <Button asChild variant="ghost" size="sm" className="text-xs">
                                 <Link href="/products">
-                                    Lihat Semua &rarr;
+                                    {t('common.see_all')} &rarr;
                                 </Link>
                             </Button>
                         </div>
@@ -558,12 +566,12 @@ export default function Home({
                     <section id="best-sellers">
                         <div className="flex items-center justify-between mb-4 sm:mb-6">
                             <h2 className="text-xl sm:text-2xl tracking-tight text-foreground">
-                                <span className="font-normal">Produk</span>{' '}
-                                <span className="font-bold">Populer</span>
+                                <span className="font-normal">{isEn ? 'Popular' : 'Produk'}</span>{' '}
+                                <span className="font-bold">{isEn ? 'Fragrances' : 'Populer'}</span>
                             </h2>
                             <Button asChild variant="ghost" size="sm" className="text-xs">
                                 <Link href="/products?sort=popular">
-                                    Lihat Semua &rarr;
+                                    {t('common.see_all')} &rarr;
                                 </Link>
                             </Button>
                         </div>
@@ -587,20 +595,22 @@ export default function Home({
                         <Card className="bg-primary text-primary-foreground p-6 sm:p-10 lg:p-12 overflow-hidden border-none shadow-none rounded-lg">
                             <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
                                 <div className="md:col-span-7 space-y-3">
-                                    <Badge variant="secondary" className="w-fit">Penawaran Eksklusif</Badge>
+                                    <Badge variant="secondary" className="w-fit">{isEn ? 'Exclusive Offer' : 'Penawaran Eksklusif'}</Badge>
                                     <h2 className="text-2xl sm:text-4xl tracking-tight">
-                                        <span className="font-normal">Promo Spesial</span>{' '}
-                                        <span className="font-bold">Hari Ini!</span>
+                                        <span className="font-normal">{isEn ? "Today's" : 'Promo Spesial'}</span>{' '}
+                                        <span className="font-bold">{isEn ? 'Special Deals!' : 'Hari Ini!'}</span>
                                     </h2>
                                     <p className="text-xs sm:text-sm opacity-90 max-w-md leading-relaxed">
-                                        Dapatkan diskon istimewa untuk berbagai koleksi wewangian terpilih dengan menggunakan kode voucher resmi Aroma Palace.
+                                        {isEn
+                                            ? 'Get special discounts for selected luxury fragrance collections with official Aroma Palace voucher codes.'
+                                            : 'Dapatkan diskon istimewa untuk berbagai koleksi wewangian terpilih dengan menggunakan kode voucher resmi Aroma Palace.'}
                                     </p>
                                     <div className="pt-2 flex flex-wrap gap-2.5">
                                         <Button asChild variant="secondary" size="default">
-                                            <Link href="/products?discount=1">Belanja Promo</Link>
+                                            <Link href="/products?discount=1">{isEn ? 'Shop Promo' : 'Belanja Promo'}</Link>
                                         </Button>
                                         <Button asChild variant="outline" size="default" className="bg-transparent border-primary-foreground/30 hover:bg-primary-foreground/10 text-primary-foreground">
-                                            <Link href="/cart">Cek Keranjang</Link>
+                                            <Link href="/cart">{isEn ? 'View Cart' : 'Cek Keranjang'}</Link>
                                         </Button>
                                     </div>
                                 </div>
@@ -608,7 +618,7 @@ export default function Home({
                                     <div className="relative w-full h-44 sm:h-64 rounded-xl overflow-hidden border border-primary-foreground/20">
                                         <img
                                             src="https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=700&q=80"
-                                            alt="Promo Spesial"
+                                            alt={isEn ? 'Special Promo' : 'Promo Spesial'}
                                             className="w-full h-full object-cover"
                                         />
                                     </div>
@@ -622,8 +632,8 @@ export default function Home({
                         <section id="vouchers">
                             <div className="flex items-center justify-between mb-4 sm:mb-6">
                                 <h2 className="text-xl sm:text-2xl tracking-tight text-foreground">
-                                    <span className="font-normal">Voucher &amp;</span>{' '}
-                                    <span className="font-bold">Promo Eksklusif</span>
+                                    <span className="font-normal">{isEn ? 'Vouchers &' : 'Voucher &'}</span>{' '}
+                                    <span className="font-bold">{isEn ? 'Exclusive Deals' : 'Promo Eksklusif'}</span>
                                 </h2>
                             </div>
 
@@ -692,12 +702,12 @@ export default function Home({
                     <section>
                         <div className="flex items-center justify-between mb-4 sm:mb-6">
                             <h2 className="text-xl sm:text-2xl tracking-tight text-foreground">
-                                <span className="font-normal">Dipilih</span>{' '}
-                                <span className="font-bold">Khusus Untukmu</span>
+                                <span className="font-normal">{isEn ? 'Curated' : 'Dipilih'}</span>{' '}
+                                <span className="font-bold">{isEn ? 'Just For You' : 'Khusus Untukmu'}</span>
                             </h2>
                             <Button asChild variant="ghost" size="sm" className="text-xs">
                                 <Link href="/products">
-                                    Lihat Semua &rarr;
+                                    {t('common.see_all')} &rarr;
                                 </Link>
                             </Button>
                         </div>
@@ -726,8 +736,8 @@ export default function Home({
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                             <div className="flex items-center justify-between mb-4 sm:mb-6">
                                 <h2 className="text-xl sm:text-2xl tracking-tight text-white">
-                                    <span className="font-normal text-white/90">Produk dengan</span>{' '}
-                                    <span className="font-bold text-white">Diskon</span>
+                                    <span className="font-normal text-white/90">{isEn ? 'Special' : 'Produk dengan'}</span>{' '}
+                                    <span className="font-bold text-white">{isEn ? 'Discounts' : 'Diskon'}</span>
                                 </h2>
                                 <Button
                                     asChild
@@ -736,7 +746,7 @@ export default function Home({
                                     className="text-xs text-white/90 hover:text-white hover:bg-white/10"
                                 >
                                     <Link href="/products?discount=1">
-                                        Lihat Semua &rarr;
+                                        {t('common.see_all')} &rarr;
                                     </Link>
                                 </Button>
                             </div>
@@ -809,12 +819,12 @@ export default function Home({
                     <section id="brands">
                         <div className="flex items-center justify-between mb-4 sm:mb-6">
                             <h2 className="text-xl sm:text-2xl tracking-tight text-foreground">
-                                <span className="font-normal">Brand</span>{' '}
-                                <span className="font-bold">Pilihan</span>
+                                <span className="font-normal">{isEn ? 'Featured' : 'Brand'}</span>{' '}
+                                <span className="font-bold">{isEn ? 'Brands' : 'Pilihan'}</span>
                             </h2>
                             <Button asChild variant="ghost" size="sm" className="text-xs">
                                 <Link href="/products">
-                                    Jelajahi Brand &rarr;
+                                    {isEn ? 'Explore Brands' : 'Jelajahi Brand'} &rarr;
                                 </Link>
                             </Button>
                         </div>
@@ -835,12 +845,12 @@ export default function Home({
                         <section id="articles">
                             <div className="flex items-center justify-between mb-4 sm:mb-6">
                                 <h2 className="text-xl sm:text-2xl tracking-tight text-foreground">
-                                    <span className="font-normal">Artikel &amp;</span>{' '}
-                                    <span className="font-bold">Jurnal Wewangian</span>
+                                    <span className="font-normal">{isEn ? 'Articles &' : 'Artikel &'}</span>{' '}
+                                    <span className="font-bold">{isEn ? 'Fragrance Journal' : 'Jurnal Wewangian'}</span>
                                 </h2>
                                 <Button asChild variant="ghost" size="sm" className="text-xs">
                                     <Link href="/articles">
-                                        Baca Semua &rarr;
+                                        {isEn ? 'Read All' : 'Baca Semua'} &rarr;
                                     </Link>
                                 </Button>
                             </div>
@@ -863,8 +873,14 @@ export default function Home({
                                     </svg>
                                 </div>
                                 <div className="space-y-1">
-                                    <p className="text-xs font-bold text-foreground">Kualitas Terjamin</p>
-                                    <p className="text-[11px] text-muted-foreground leading-relaxed">Produk premium pilihan terpercaya dari master perfumer dunia.</p>
+                                    <p className="text-xs font-bold text-foreground">
+                                        {isEn ? 'Guaranteed Quality' : 'Kualitas Terjamin'}
+                                    </p>
+                                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                        {isEn
+                                            ? 'Selected premium products from world master perfumers.'
+                                            : 'Produk premium pilihan terpercaya dari master perfumer dunia.'}
+                                    </p>
                                 </div>
                             </div>
 
@@ -875,8 +891,14 @@ export default function Home({
                                     </svg>
                                 </div>
                                 <div className="space-y-1">
-                                    <p className="text-xs font-bold text-foreground">Aroma Tahan Lama</p>
-                                    <p className="text-[11px] text-muted-foreground leading-relaxed">Konsentrasi minyak wangi murni hingga 35% untuk sillage maksimal.</p>
+                                    <p className="text-xs font-bold text-foreground">
+                                        {isEn ? 'Long-Lasting Scent' : 'Aroma Tahan Lama'}
+                                    </p>
+                                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                        {isEn
+                                            ? 'Pure fragrance oil concentration up to 35% for maximum sillage.'
+                                            : 'Konsentrasi minyak wangi murni hingga 35% untuk sillage maksimal.'}
+                                    </p>
                                 </div>
                             </div>
 
@@ -887,8 +909,14 @@ export default function Home({
                                     </svg>
                                 </div>
                                 <div className="space-y-1">
-                                    <p className="text-xs font-bold text-foreground">Garansi 100% Asli</p>
-                                    <p className="text-[11px] text-muted-foreground leading-relaxed">Jaminan uang kembali penuh bila terbukti tidak original.</p>
+                                    <p className="text-xs font-bold text-foreground">
+                                        {isEn ? '100% Authentic Guarantee' : 'Garansi 100% Asli'}
+                                    </p>
+                                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                        {isEn
+                                            ? 'Full money-back guarantee if proven inauthentic.'
+                                            : 'Jaminan uang kembali penuh bila terbukti tidak original.'}
+                                    </p>
                                 </div>
                             </div>
 
@@ -899,8 +927,14 @@ export default function Home({
                                     </svg>
                                 </div>
                                 <div className="space-y-1">
-                                    <p className="text-xs font-bold text-foreground">Pengiriman Seluruh Indonesia</p>
-                                    <p className="text-[11px] text-muted-foreground leading-relaxed">Kemasan aman anti pecah dengan bubble wrap berlapis tebal.</p>
+                                    <p className="text-xs font-bold text-foreground">
+                                        {isEn ? 'Nationwide Delivery' : 'Pengiriman Seluruh Indonesia'}
+                                    </p>
+                                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                        {isEn
+                                            ? 'Secure shatterproof packaging with extra thick bubble wrap.'
+                                            : 'Kemasan aman anti pecah dengan bubble wrap berlapis tebal.'}
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -921,14 +955,16 @@ export default function Home({
                     <DialogContent className="w-[calc(100vw-32px)] max-w-[calc(100vw-32px)] sm:w-full sm:max-w-md p-5 sm:p-6 rounded-2xl">
                         <DialogHeader className="text-left space-y-2">
                             <Badge variant="secondary" className="w-fit">{selectedVoucher.badge}</Badge>
-                            <DialogTitle className="text-lg font-bold">{selectedVoucher.title}</DialogTitle>
+                            <DialogTitle className="text-lg font-bold">
+                                {pickText(selectedVoucher.title, (selectedVoucher as any).title_en)}
+                            </DialogTitle>
                             <DialogDescription className="text-xs leading-relaxed">
-                                {selectedVoucher.desc}
+                                {pickText(selectedVoucher.desc, (selectedVoucher as any).desc_en)}
                             </DialogDescription>
                         </DialogHeader>
 
                         <div className="my-3 p-3.5 rounded-lg bg-muted border border-border text-xs space-y-2">
-                            <p className="font-semibold text-foreground">Syarat &amp; Ketentuan:</p>
+                            <p className="font-semibold text-foreground">{isEn ? 'Terms & Conditions:' : 'Syarat & Ketentuan:'}</p>
                             <ul className="list-disc list-inside space-y-1 text-muted-foreground">
                                 {selectedVoucher.terms.map((t, i) => (
                                     <li key={i}>{t}</li>
@@ -945,10 +981,10 @@ export default function Home({
                                 className="flex-1"
                                 size="sm"
                             >
-                                Salin Kode ({selectedVoucher.code})
+                                {isEn ? 'Copy Code' : 'Salin Kode'} ({selectedVoucher.code})
                             </Button>
                             <Button variant="outline" size="sm" onClick={() => setSelectedVoucher(null)}>
-                                Tutup
+                                {isEn ? 'Close' : 'Tutup'}
                             </Button>
                         </div>
                     </DialogContent>

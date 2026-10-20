@@ -38,7 +38,9 @@ interface VoucherItem {
     id: number;
     code: string;
     name: string;
+    name_en?: string | null;
     description?: string | null;
+    description_en?: string | null;
     type: 'percentage' | 'fixed';
     value: number;
     min_order_amount: number;
@@ -93,7 +95,9 @@ export default function AdminVouchersIndex({
     const form = useForm({
         code: '',
         name: '',
+        name_en: '',
         description: '',
+        description_en: '',
         type: 'percentage',
         value: 10,
         min_order_amount: 0,
@@ -144,7 +148,9 @@ export default function AdminVouchersIndex({
         form.setData({
             code: '',
             name: '',
+            name_en: '',
             description: '',
+            description_en: '',
             type: 'percentage',
             value: 10,
             min_order_amount: 0,
@@ -163,7 +169,9 @@ export default function AdminVouchersIndex({
         form.setData({
             code: voucher.code,
             name: voucher.name,
+            name_en: voucher.name_en || '',
             description: voucher.description || '',
+            description_en: voucher.description_en || '',
             type: voucher.type,
             value: voucher.value,
             min_order_amount: voucher.min_order_amount,
@@ -520,7 +528,10 @@ export default function AdminVouchersIndex({
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="font-medium text-foreground">Nama Voucher *</label>
+                                <div className="flex items-center justify-between">
+                                    <label className="font-medium text-foreground">Nama Voucher *</label>
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-semibold">🇮🇩 ID</span>
+                                </div>
                                 <Input
                                     type="text"
                                     placeholder="Diskon Pembukaan 10%"
@@ -530,6 +541,21 @@ export default function AdminVouchersIndex({
                                     required
                                 />
                                 {form.errors.name && <p className="text-destructive text-[11px]">{form.errors.name}</p>}
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <div className="flex items-center justify-between">
+                                    <label className="font-medium text-foreground">Nama Voucher (English)</label>
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-semibold">🇬🇧 EN</span>
+                                </div>
+                                <Input
+                                    type="text"
+                                    placeholder="Grand Opening 10% Off"
+                                    value={form.data.name_en}
+                                    onChange={(e) => form.setData('name_en', e.target.value)}
+                                    className="h-9"
+                                />
+                                {form.errors.name_en && <p className="text-destructive text-[11px]">{form.errors.name_en}</p>}
                             </div>
 
                             <div className="space-y-1.5">
@@ -613,12 +639,29 @@ export default function AdminVouchersIndex({
                             </div>
 
                             <div className="space-y-1.5 sm:col-span-2">
-                                <label className="font-medium text-foreground">Deskripsi &amp; Syarat (Opsional)</label>
+                                <div className="flex items-center justify-between">
+                                    <label className="font-medium text-foreground">Deskripsi &amp; Syarat (Indonesia)</label>
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-semibold">🇮🇩 ID</span>
+                                </div>
                                 <textarea
                                     rows={2}
                                     placeholder="Keterangan voucher atau ketentuan promosi..."
                                     value={form.data.description}
                                     onChange={(e) => form.setData('description', e.target.value)}
+                                    className="w-full rounded-md border border-input bg-transparent p-2.5 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                />
+                            </div>
+
+                            <div className="space-y-1.5 sm:col-span-2">
+                                <div className="flex items-center justify-between">
+                                    <label className="font-medium text-foreground">Deskripsi &amp; Syarat (English)</label>
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-semibold">🇬🇧 EN</span>
+                                </div>
+                                <textarea
+                                    rows={2}
+                                    placeholder="Voucher terms, eligibility or promotional notes in English..."
+                                    value={form.data.description_en}
+                                    onChange={(e) => form.setData('description_en', e.target.value)}
                                     className="w-full rounded-md border border-input bg-transparent p-2.5 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                 />
                             </div>

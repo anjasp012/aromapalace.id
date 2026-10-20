@@ -30,6 +30,7 @@ interface BrandItem {
     slug: string;
     thumbnail?: string | null;
     description?: string | null;
+    description_en?: string | null;
     products_count: number;
     created_at?: string;
 }
@@ -74,6 +75,7 @@ export default function AdminBrandsIndex({
         slug: '',
         thumbnail: '',
         description: '',
+        description_en: '',
     });
 
     const slugify = (text: string) => {
@@ -103,6 +105,7 @@ export default function AdminBrandsIndex({
             slug: '',
             thumbnail: '',
             description: '',
+            description_en: '',
         });
         form.clearErrors();
         setDialogOpen(true);
@@ -115,6 +118,7 @@ export default function AdminBrandsIndex({
             slug: brand.slug,
             thumbnail: brand.thumbnail || '',
             description: brand.description || '',
+            description_en: brand.description_en || '',
         });
         form.clearErrors();
         setDialogOpen(true);
@@ -417,15 +421,33 @@ export default function AdminBrandsIndex({
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="font-medium text-foreground">Deskripsi (Opsional)</label>
+                            <div className="flex items-center justify-between">
+                                <label className="font-medium text-foreground">Deskripsi (Indonesia)</label>
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-semibold">🇮🇩 ID</span>
+                            </div>
                             <textarea
-                                rows={3}
+                                rows={2}
                                 placeholder="Profil rumah parfum atau sejarah brand..."
                                 value={form.data.description}
                                 onChange={(e) => form.setData('description', e.target.value)}
                                 className="w-full rounded-md border border-input bg-transparent p-2.5 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                             />
                             {form.errors.description && <p className="text-destructive text-[11px]">{form.errors.description}</p>}
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <div className="flex items-center justify-between">
+                                <label className="font-medium text-foreground">Deskripsi (English)</label>
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-semibold">🇬🇧 EN</span>
+                            </div>
+                            <textarea
+                                rows={2}
+                                placeholder="Perfume house profile, heritage or brand story in English..."
+                                value={form.data.description_en}
+                                onChange={(e) => form.setData('description_en', e.target.value)}
+                                className="w-full rounded-md border border-input bg-transparent p-2.5 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                            />
+                            {form.errors.description_en && <p className="text-destructive text-[11px]">{form.errors.description_en}</p>}
                         </div>
 
                         <DialogFooter className="pt-2">

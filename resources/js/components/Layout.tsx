@@ -49,8 +49,14 @@ import {
     User,
     BookOpen,
     Crown,
+    Globe,
+    ChevronDown,
+    Check,
 } from 'lucide-react';
 import { autoRequestNotificationPermission, initFirebaseForegroundListener } from '@/lib/push-notification';
+import { useTranslation } from '@/lib/i18n';
+
+import { App as CapApp } from '@capacitor/app';
 
 interface LayoutProps {
     children: ReactNode;
@@ -135,6 +141,7 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
     const { url, props } = usePage<SharedProps>();
     const user = props?.auth?.user;
     const isAdmin = Boolean(props?.auth?.is_admin || user?.role === 'admin');
+    const { locale, isEn, isId, t, pickText, setLanguage } = useTranslation();
 
     // Header & Mobile Nav State
     const [slidRight, setSlidRight] = useState(false);
@@ -226,37 +233,37 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
 
     const mobileNavItems = useMemo(() => [
         {
-            label: 'Home',
+            label: isEn ? 'Home' : 'Beranda',
             href: '/',
             active: url === '/',
             icon: <Home className="w-5 h-5" />,
         },
         {
-            label: 'Artikel',
+            label: isEn ? 'Articles' : 'Artikel',
             href: '/articles',
             active: url.startsWith('/articles'),
             icon: <BookOpen className="w-5 h-5" />,
         },
         {
-            label: 'Katalog',
+            label: isEn ? 'Catalog' : 'Katalog',
             href: '/products',
             active: url.startsWith('/products'),
             icon: <Compass className="w-5 h-5" />,
         },
         {
-            label: 'Wish',
-            href: user ? '/wishlist' : '/login?notice=' + encodeURIComponent('Silakan masuk untuk melihat daftar favorit Anda.'),
+            label: isEn ? 'Wishlist' : 'Favorit',
+            href: user ? '/wishlist' : '/login?notice=' + encodeURIComponent(isEn ? 'Please sign in to view your wishlist.' : 'Silakan masuk untuk melihat daftar favorit Anda.'),
             active: url.startsWith('/wishlist'),
             badge: wishlistCount,
             icon: <Heart className="w-5 h-5" />,
         },
         {
-            label: user ? (isAdmin ? 'Admin' : 'Akun') : 'Akun',
+            label: user ? (isAdmin ? 'Admin' : (isEn ? 'Account' : 'Akun')) : (isEn ? 'Account' : 'Akun'),
             href: user ? (isAdmin ? '/admin/dashboard' : '/account') : '/login',
             active: url.startsWith('/account') || url.startsWith('/orders') || url.startsWith('/membership') || url.startsWith('/loyalty') || url.startsWith('/login') || url.startsWith('/register') || (isAdmin && url.startsWith('/admin')),
             icon: isAdmin ? <LayoutDashboard className="w-5 h-5" /> : <User className="w-5 h-5" />,
         },
-    ], [url, user, isAdmin, wishlistCount]);
+    ], [url, user, isAdmin, wishlistCount, isEn]);
 
     const getCsrfToken = () => {
         return (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '';
@@ -446,7 +453,7 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
     const copyPromoCode = (code: string) => {
         if (!code) return;
         navigator.clipboard?.writeText(code);
-        triggerToast(`Kode promo "${code}" berhasil disalin!`);
+        triggerToast(isEn ? `Promo code "${code}" copied!` : `Kode promo "${code}" berhasil disalin!`);
     };
 
     // Global Window bindings
@@ -541,6 +548,35 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
         }
     };
 
+    useEffect(() => {
+        // Listener tombol fisik / gesture Back di HP Android
+        const backListener = CapApp.addListener('backButton', ({ canGoBack }) => {
+            // 1. Jika ada popup/modal terbuka, tutup modal dulu
+            if (spotlightOpen) {
+                setSpotlightOpen(false);
+                return;
+            }
+            if (infoModalOpen) {
+                setInfoModalOpen(false);
+                return;
+            }
+            if (promoModalOpen) {
+                setPromoModalOpen(false);
+                return;
+            }
+            // 2. Jika di riwayat web ada halaman sebelumnya, mundur (history back)
+            if (window.location.pathname !== '/') {
+                window.history.back();
+            } else {
+                // 3. Jika sudah di halaman utama (/), baru keluar aplikasi
+                CapApp.exitApp();
+            }
+        });
+        return () => {
+            backListener.then(l => l.remove());
+        };
+    }, [spotlightOpen, infoModalOpen, promoModalOpen]);
+
     return (
         <div className="bg-background text-foreground flex flex-col min-h-screen" suppressHydrationWarning>
             {/* Top Announcement Bar */}
@@ -550,45 +586,107 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                         type="button"
                         onClick={() => handleOpenVoucherModal(activeHeaderVoucher)}
                         className="w-full md:w-auto flex items-center justify-center md:justify-start gap-1.5 text-xs text-white/95 hover:text-white transition cursor-pointer text-center md:text-left group"
-                        title="Klik untuk melihat detail voucher"
+                        title={isEn ? "Click to view voucher details" : "Klik untuk melihat detail voucher"}
                     >
                         <span className="text-[#E5A844] text-xs shrink-0 animate-pulse">✦</span>
                         <span className={`font-normal text-[11px] sm:text-xs tracking-tight transition-all duration-300 ${isVoucherFading ? 'opacity-0 -translate-y-0.5' : 'opacity-100 translate-y-0'}`}>
                             {activeHeaderVoucher ? (
                                 activeHeaderVoucher.type === 'percentage'
-                                    ? `Promo Spesial \u2013 Diskon hingga ${activeHeaderVoucher.value}%! Klaim Voucher \u2192`
-                                    : `Promo Spesial \u2013 Potongan Rp ${new Intl.NumberFormat('id-ID').format(activeHeaderVoucher.value)}! Klaim Voucher \u2192`
+                                    ? (isEn ? `Special Offer \u2013 Up to ${activeHeaderVoucher.value}% off! Claim Voucher \u2192` : `Promo Spesial \u2013 Diskon hingga ${activeHeaderVoucher.value}%! Klaim Voucher \u2192`)
+                                    : (isEn ? `Special Offer \u2013 Rp ${new Intl.NumberFormat('id-ID').format(activeHeaderVoucher.value)} off! Claim Voucher \u2192` : `Promo Spesial \u2013 Potongan Rp ${new Intl.NumberFormat('id-ID').format(activeHeaderVoucher.value)}! Klaim Voucher \u2192`)
                             ) : (
-                                'Promo Spesial \u2013 Diskon hingga 40%! Klaim Voucher \u2192'
+                                isEn ? 'Special Offer \u2013 Up to 40% off! Claim Voucher \u2192' : 'Promo Spesial \u2013 Diskon hingga 40%! Klaim Voucher \u2192'
                             )}
                         </span>
                     </button>
 
-                    <div className="hidden md:flex items-center gap-4 lg:gap-5 text-[11px]">
+                    <div className="flex items-center gap-3 sm:gap-4 lg:gap-5 text-[11px] shrink-0">
                         {/* Gratis Ongkir */}
-                        <div className="flex items-center gap-2">
+                        <div className="hidden md:flex items-center gap-2">
                             <svg className="w-4 h-4 text-[#E5A844] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a2 2 0 114 0m-4 0h2m-6 0H9m-4 0a2 2 0 114 0m6-6h3.586a1 1 0 01.707.293l2.414 2.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-5v5" />
                             </svg>
                             <div className="flex flex-col text-left leading-tight">
-                                <span className="font-bold text-white text-[10px] tracking-wider uppercase">GRATIS ONGKIR</span>
-                                <span className="text-[8.5px] text-[#E5A844] font-medium tracking-tight">SELURUH INDONESIA</span>
+                                <span className="font-bold text-white text-[10px] tracking-wider uppercase">{t('topbar.free_shipping')}</span>
+                                <span className="text-[8.5px] text-[#E5A844] font-medium tracking-tight">{t('topbar.free_shipping_sub')}</span>
                             </div>
                         </div>
 
                         {/* Divider */}
-                        <span className="text-white/25 select-none font-light">|</span>
+                        <span className="hidden md:inline text-white/25 select-none font-light">|</span>
 
                         {/* 100% Produk Asli */}
-                        <div className="flex items-center gap-2">
+                        <div className="hidden md:flex items-center gap-2">
                             <svg className="w-4 h-4 text-[#E5A844] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                             </svg>
                             <div className="flex flex-col text-left leading-tight">
-                                <span className="font-bold text-white text-[10px] tracking-wider uppercase">100% PRODUK ASLI</span>
-                                <span className="text-[8.5px] text-[#E5A844] font-medium tracking-tight">LANGSUNG DARI DUBAI</span>
+                                <span className="font-bold text-white text-[10px] tracking-wider uppercase">{t('topbar.authentic')}</span>
+                                <span className="text-[8.5px] text-[#E5A844] font-medium tracking-tight">{t('topbar.authentic_sub')}</span>
                             </div>
                         </div>
+
+                        {/* Divider */}
+                        <span className="hidden md:inline text-white/25 select-none font-light">|</span>
+
+                        {/* Language Switcher Dropdown in Maroon Topbar */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <button
+                                    type="button"
+                                    className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-black/30 hover:bg-black/50 border border-white/20 hover:border-[#E5A844]/60 text-white text-[11px] font-medium tracking-wide transition-all cursor-pointer shadow-xs focus:outline-none focus:ring-1 focus:ring-[#E5A844]/50 select-none group"
+                                    aria-label={isEn ? 'Switch Language' : 'Ganti Bahasa'}
+                                >
+                                    <Globe className="w-3 h-3 text-[#E5A844] shrink-0" />
+                                    <span className="font-semibold text-[10.5px] tracking-wide">
+                                        {isEn ? '🇬🇧 EN' : '🇮🇩 ID'}
+                                    </span>
+                                    <ChevronDown className="w-2.5 h-2.5 text-white/60 group-hover:text-white transition-transform duration-200" />
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                                align="end"
+                                sideOffset={6}
+                                className="w-48 p-1.5 rounded-xl bg-[#2A0306] border border-[#E5A844]/30 shadow-2xl text-white z-[60]"
+                            >
+                                <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#E5A844] border-b border-white/10 mb-1 flex items-center justify-between">
+                                    <span>{isEn ? 'Select Language' : 'Pilih Bahasa'}</span>
+                                    <Globe className="w-3 h-3 text-[#E5A844]/70" />
+                                </div>
+                                <DropdownMenuItem
+                                    onClick={() => setLanguage('id')}
+                                    className={`flex items-center justify-between px-2.5 py-2 text-xs rounded-lg cursor-pointer transition-colors ${isId
+                                        ? 'bg-[#E5A844]/20 text-[#E5A844] font-semibold'
+                                        : 'text-white/90 hover:bg-white/10 hover:text-white focus:bg-white/10 focus:text-white'
+                                        }`}
+                                >
+                                    <div className="flex items-center gap-2.5">
+                                        <span className="text-base leading-none">🇮🇩</span>
+                                        <div className="flex flex-col text-left">
+                                            <span className="leading-tight font-medium">Bahasa Indonesia</span>
+                                            <span className="text-[10px] text-white/60 font-normal">ID &bull; Indonesia</span>
+                                        </div>
+                                    </div>
+                                    {isId && <Check className="w-4 h-4 text-[#E5A844] shrink-0 ml-2" />}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    onClick={() => setLanguage('en')}
+                                    className={`flex items-center justify-between px-2.5 py-2 text-xs rounded-lg cursor-pointer transition-colors ${isEn
+                                        ? 'bg-[#E5A844]/20 text-[#E5A844] font-semibold'
+                                        : 'text-white/90 hover:bg-white/10 hover:text-white focus:bg-white/10 focus:text-white'
+                                        }`}
+                                >
+                                    <div className="flex items-center gap-2.5">
+                                        <span className="text-base leading-none">🇬🇧</span>
+                                        <div className="flex flex-col text-left">
+                                            <span className="leading-tight font-medium">English</span>
+                                            <span className="text-[10px] text-white/60 font-normal">EN &bull; International</span>
+                                        </div>
+                                    </div>
+                                    {isEn && <Check className="w-4 h-4 text-[#E5A844] shrink-0 ml-2" />}
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 </div>
             </div>
@@ -605,7 +703,7 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                 type="button"
                                 onClick={() => window.openSpotlight?.()}
                                 className="sm:hidden flex items-center justify-center w-9 h-9 text-[#4A070B] hover:text-[#360407] transition cursor-pointer rounded-full hover:bg-[#4A070B]/5 active:scale-95 shrink-0 -ml-1"
-                                aria-label="Cari Parfum"
+                                aria-label={isEn ? "Search Perfumes" : "Cari Parfum"}
                             >
                                 <svg className="w-5 h-5 text-[#4A070B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -622,7 +720,7 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                                 <span className="text-[#4A070B]/75 group-hover:text-[#4A070B] transition truncate font-light text-xs">
-                                    Cari parfum mewah...
+                                    {isEn ? 'Search luxury perfumes...' : 'Cari parfum mewah...'}
                                 </span>
                             </button>
                         </div>
@@ -660,7 +758,7 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                             </svg>
                                             <span className="text-[10px] sm:text-[11px] font-medium text-[#4A070B] group-hover:text-[#360407] leading-none mt-0.5">
-                                                {isAdmin ? 'Admin' : 'Akun'}
+                                                {isAdmin ? 'Admin' : (isEn ? 'Account' : 'Akun')}
                                             </span>
                                         </button>
                                     </DropdownMenuTrigger>
@@ -687,7 +785,7 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                                     <DropdownMenuItem asChild>
                                                         <Link href="/admin/dashboard" className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-semibold text-[#4A070B] dark:text-[#E8D0BA] cursor-pointer">
                                                             <LayoutDashboard className="w-4 h-4 text-[#4A070B] dark:text-[#E8D0BA] shrink-0" />
-                                                            <span>Dashboard Admin</span>
+                                                            <span>{isEn ? 'Admin Dashboard' : 'Dashboard Admin'}</span>
                                                         </Link>
                                                     </DropdownMenuItem>
                                                 ) : (
@@ -700,11 +798,11 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                                                 </div>
                                                                 {props?.auth?.membership ? (
                                                                     <span className="text-[10px] font-bold text-[#E5A844] bg-[#E5A844]/10 px-1.5 py-0.5 rounded">
-                                                                        {props.auth.membership.points_formatted} Poin
+                                                                        {props.auth.membership.points_formatted} {isEn ? 'Points' : 'Poin'}
                                                                     </span>
                                                                 ) : (
                                                                     <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">
-                                                                        +100 Poin
+                                                                        +100 {isEn ? 'Pts' : 'Poin'}
                                                                     </span>
                                                                 )}
                                                             </Link>
@@ -713,14 +811,14 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                                         <DropdownMenuItem asChild>
                                                             <Link href="/account" className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium cursor-pointer">
                                                                 <User className="w-4 h-4 text-[#4A070B] dark:text-[#E8D0BA] shrink-0" />
-                                                                <span>Pengaturan Akun</span>
+                                                                <span>{isEn ? 'Account Settings' : 'Pengaturan Akun'}</span>
                                                             </Link>
                                                         </DropdownMenuItem>
 
                                                         <DropdownMenuItem asChild>
                                                             <Link href="/account/orders" className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium cursor-pointer">
                                                                 <Package className="w-4 h-4 text-[#4A070B] dark:text-[#E8D0BA] shrink-0" />
-                                                                <span>Pesanan Saya</span>
+                                                                <span>{isEn ? 'My Orders' : 'Pesanan Saya'}</span>
                                                             </Link>
                                                         </DropdownMenuItem>
                                                     </>
@@ -736,7 +834,7 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                                         className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium text-destructive cursor-pointer hover:bg-destructive/10"
                                                     >
                                                         <LogOut className="w-4 h-4 shrink-0 text-destructive" />
-                                                        <span>Keluar</span>
+                                                        <span>{isEn ? 'Sign Out' : 'Keluar'}</span>
                                                     </Link>
                                                 </DropdownMenuItem>
                                             </>
@@ -744,24 +842,24 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                             <>
                                                 <div className="px-2.5 py-2 border-b border-border/60 mb-1">
                                                     <div className="text-xs font-bold text-foreground">
-                                                        Selamat Datang
+                                                        {isEn ? 'Welcome' : 'Selamat Datang'}
                                                     </div>
                                                     <div className="text-[10px] text-muted-foreground">
-                                                        Masuk untuk kemudahan belanja
+                                                        {isEn ? 'Sign in for convenient shopping' : 'Masuk untuk kemudahan belanja'}
                                                     </div>
                                                 </div>
 
                                                 <DropdownMenuItem asChild>
                                                     <Link href="/login" className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium cursor-pointer">
                                                         <LogIn className="w-4 h-4 text-[#4A070B] dark:text-[#E8D0BA] shrink-0" />
-                                                        <span>Masuk ke Akun</span>
+                                                        <span>{isEn ? 'Sign In' : 'Masuk ke Akun'}</span>
                                                     </Link>
                                                 </DropdownMenuItem>
 
                                                 <DropdownMenuItem asChild>
                                                     <Link href="/register" className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium cursor-pointer">
                                                         <UserPlus className="w-4 h-4 text-[#4A070B] dark:text-[#E8D0BA] shrink-0" />
-                                                        <span>Daftar Akun Baru</span>
+                                                        <span>{isEn ? 'Register New Account' : 'Daftar Akun Baru'}</span>
                                                     </Link>
                                                 </DropdownMenuItem>
 
@@ -774,7 +872,7 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                             {/* Wishlist: Disembunyikan untuk Admin, terlihat untuk Customer di desktop */}
                             {!isAdmin && (
                                 <Link
-                                    href={user ? '/wishlist' : '/login?notice=' + encodeURIComponent('Silakan masuk untuk mengakses halaman wishlist Anda.')}
+                                    href={user ? '/wishlist' : '/login?notice=' + encodeURIComponent(isEn ? 'Please sign in to access your wishlist.' : 'Silakan masuk untuk mengakses halaman wishlist Anda.')}
                                     className="hidden sm:flex flex-col items-center justify-center gap-0.5 text-[#4A070B] hover:text-[#360407] transition cursor-pointer px-1 py-0.5 group relative"
                                 >
                                     <div className="relative">
@@ -798,7 +896,7 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                 <Link
                                     href="/admin/dashboard"
                                     className="sm:hidden flex items-center justify-center text-[#4A070B] hover:text-[#360407] transition cursor-pointer w-9 h-9 group relative rounded-full hover:bg-[#4A070B]/5 active:scale-95 shrink-0 -mr-1"
-                                    aria-label="Dashboard Admin"
+                                    aria-label={isEn ? "Admin Dashboard" : "Dashboard Admin"}
                                 >
                                     <div className="relative flex items-center justify-center">
                                         <LayoutDashboard className="w-5 h-5 text-[#4A070B] group-hover:text-[#360407] transition" />
@@ -806,9 +904,9 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                 </Link>
                             ) : (
                                 <Link
-                                    href={user ? '/cart' : '/login?notice=' + encodeURIComponent('Silakan masuk untuk melihat keranjang belanja Anda.')}
+                                    href={user ? '/cart' : '/login?notice=' + encodeURIComponent(isEn ? 'Please sign in to view your shopping cart.' : 'Silakan masuk untuk melihat keranjang belanja Anda.')}
                                     className="flex items-center justify-center sm:flex-col sm:gap-0.5 text-[#4A070B] hover:text-[#360407] transition cursor-pointer w-9 h-9 sm:w-auto sm:h-auto sm:px-1 sm:py-0.5 group relative rounded-full sm:rounded-none hover:bg-[#4A070B]/5 sm:hover:bg-transparent active:scale-95 shrink-0 -mr-1"
-                                    aria-label="Keranjang Belanja"
+                                    aria-label={isEn ? "Shopping Cart" : "Keranjang Belanja"}
                                 >
                                     <div className="relative flex items-center justify-center">
                                         <svg className="w-5 h-5 sm:w-[18px] sm:h-[18px] text-[#4A070B] group-hover:text-[#360407] transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -821,7 +919,7 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                         )}
                                     </div>
                                     <span className="hidden sm:inline text-[10px] sm:text-[11px] font-medium text-[#4A070B] group-hover:text-[#360407] leading-none mt-0.5">
-                                        Keranjang
+                                        {isEn ? 'Cart' : 'Keranjang'}
                                     </span>
                                 </Link>
                             )}
@@ -841,7 +939,7 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                     : 'text-muted-foreground hover:text-foreground border-transparent hover:border-[#4A070B]/30'
                                     }`}
                             >
-                                BERANDA
+                                {isEn ? 'HOME' : 'BERANDA'}
                             </Link>
 
                             <DropdownMenu>
@@ -851,21 +949,21 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                         : 'text-muted-foreground hover:text-foreground border-transparent hover:border-[#4A070B]/30'
                                         }`}
                                 >
-                                    <span>KATALOG</span>
+                                    <span>{isEn ? 'CATALOG' : 'KATALOG'}</span>
                                     <svg className="w-3 h-3 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                                     </svg>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="start" className="w-56">
                                     <DropdownMenuItem asChild>
-                                        <Link href="/products">Semua Katalog</Link>
+                                        <Link href="/products">{isEn ? 'All Catalog' : 'Semua Katalog'}</Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem asChild>
-                                        <Link href="/products?category=parfum-wanita">Parfum Wanita</Link>
+                                        <Link href="/products?category=parfum-wanita">{isEn ? "Women's Perfume" : 'Parfum Wanita'}</Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem asChild>
-                                        <Link href="/products?category=parfum-pria">Parfum Pria</Link>
+                                        <Link href="/products?category=parfum-pria">{isEn ? "Men's Perfume" : 'Parfum Pria'}</Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem asChild>
                                         <Link href="/products?category=unisex-fragrance">Unisex Fragrance</Link>
@@ -886,7 +984,7 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                     : 'text-muted-foreground hover:text-foreground border-transparent hover:border-[#4A070B]/30'
                                     }`}
                             >
-                                TERLARIS
+                                {isEn ? 'BESTSELLERS' : 'TERLARIS'}
                             </Link>
 
                             <Link
@@ -896,7 +994,7 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                     : 'text-muted-foreground hover:text-foreground border-transparent hover:border-[#4A070B]/30'
                                     }`}
                             >
-                                PROMO SPESIAL
+                                {isEn ? 'SPECIAL OFFERS' : 'PROMO SPESIAL'}
                             </Link>
 
                             <Link
@@ -906,7 +1004,7 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                     : 'text-muted-foreground hover:text-foreground border-transparent hover:border-[#4A070B]/30'
                                     }`}
                             >
-                                ARTIKEL
+                                {isEn ? 'ARTICLES' : 'ARTIKEL'}
                             </Link>
 
                             <Link
@@ -916,7 +1014,7 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                     : 'text-muted-foreground hover:text-foreground border-transparent hover:border-[#4A070B]/30'
                                     }`}
                             >
-                                LOKASI TOKO
+                                {isEn ? 'STORE LOCATIONS' : 'LOKASI TOKO'}
                             </Link>
 
                             <Link
@@ -926,7 +1024,7 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                     : 'text-muted-foreground hover:text-foreground border-transparent hover:border-[#4A070B]/30'
                                     }`}
                             >
-                                TENTANG KAMI
+                                {isEn ? 'ABOUT US' : 'TENTANG KAMI'}
                             </Link>
 
                             <button
@@ -937,7 +1035,7 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                     : 'text-muted-foreground hover:text-foreground border-transparent hover:border-[#4A070B]/30'
                                     }`}
                             >
-                                HUBUNGI KAMI
+                                {isEn ? 'CONTACT US' : 'HUBUNGI KAMI'}
                             </button>
                         </div>
 
@@ -972,190 +1070,211 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
             {showFooter && (
                 <footer className={`bg-gradient-to-br from-[#4A070B] via-[#52090F] to-[#360407] text-white/80 border-t border-[#360407] mt-12 sm:mt-16 ${shouldShowBottomNav ? 'pb-20 md:pb-0' : ''}`}>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-14">
-                    <div className="grid grid-cols-2 lg:grid-cols-12 gap-8 pb-8 sm:pb-10 border-b border-white/10">
-                        {/* Baris 1 di Mobile / Col 1 di Desktop: Brand Info */}
-                        <div className="col-span-2 lg:col-span-4 space-y-3">
-                            <div className="flex items-center gap-2">
-                                <img
-                                    src="/images/logo.png"
-                                    alt="Aroma Palace"
-                                    className="w-7 h-7 object-contain rounded-full shadow-2xs"
-                                />
-                                <span className="font-bold text-white text-sm tracking-wider uppercase">
-                                    AROMA PALACE
-                                </span>
+                        <div className="grid grid-cols-2 lg:grid-cols-12 gap-8 pb-8 sm:pb-10 border-b border-white/10">
+                            {/* Baris 1 di Mobile / Col 1 di Desktop: Brand Info */}
+                            <div className="col-span-2 lg:col-span-4 space-y-3">
+                                <div className="flex items-center gap-2">
+                                    <img
+                                        src="/images/logo.png"
+                                        alt="Aroma Palace"
+                                        className="w-7 h-7 object-contain rounded-full shadow-2xs"
+                                    />
+                                    <span className="font-bold text-white text-sm tracking-wider uppercase">
+                                        AROMA PALACE
+                                    </span>
+                                </div>
+                                <p className="text-xs leading-relaxed max-w-sm text-white/70">
+                                    {isEn
+                                        ? 'World luxury fragrance collection and high-end artisanal perfumes. Crafted for true elegance in every spray.'
+                                        : 'Koleksi wewangian mewah dunia dan parfum artisanal berkualitas tinggi. Dirancang untuk keanggunan sejati dalam setiap semprotan.'}
+                                </p>
+                                <div className="pt-2 flex items-center gap-2.5">
+                                    <a
+                                        href="https://instagram.com"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        aria-label="Instagram"
+                                        className="w-8 h-8 rounded-full border border-white/15 bg-white/5 flex items-center justify-center text-white/70 hover:text-white hover:border-white/40 hover:bg-white/10 transition-all cursor-pointer shadow-2xs group"
+                                    >
+                                        <svg className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                                        </svg>
+                                    </a>
+
+                                    <a
+                                        href="https://tiktok.com"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        aria-label="TikTok"
+                                        className="w-8 h-8 rounded-full border border-white/15 bg-white/5 flex items-center justify-center text-white/70 hover:text-white hover:border-white/40 hover:bg-white/10 transition-all cursor-pointer shadow-2xs group"
+                                    >
+                                        <svg className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                                            <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.298-.002.595.042.88.13V9.4a6.33 6.33 0 0 0-1-.08A6.34 6.34 0 0 0 3 15.66a6.34 6.34 0 0 0 10.82 4.5 6.3 6.3 0 0 0 1.96-4.49V8.62a8.28 8.28 0 0 0 4.81 1.52v-3.45z" />
+                                        </svg>
+                                    </a>
+
+                                    <a
+                                        href="https://wa.me"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        aria-label="WhatsApp"
+                                        className="w-8 h-8 rounded-full border border-white/15 bg-white/5 flex items-center justify-center text-white/70 hover:text-white hover:border-white/40 hover:bg-white/10 transition-all cursor-pointer shadow-2xs group"
+                                    >
+                                        <svg className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                                            <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.23 8.23 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.19.53-1.11 1.04-1.54 1.1-.38.07-.88.1-2.58-.6a9.47 9.47 0 0 1-3.61-3.19c-.43-.58-.93-1.55-.93-2.37 0-.83.43-1.24.58-1.4.15-.17.33-.21.44-.21.11 0 .22 0 .32.01.1.01.24-.04.38.29.14.33.48 1.17.52 1.25.04.09.07.19.01.3-.06.12-.09.19-.18.29-.09.1-.19.23-.27.31-.09.09-.19.19-.08.38.11.19.49.8 1.05 1.3 1.03.92 1.54.98 1.74 1.08.19.09.31.08.43-.05.12-.13.51-.59.65-.79.14-.2.28-.17.47-.1.19.07 1.2.57 1.41.67.2.1.34.15.39.24.05.09.05.53-.14 1.06z" />
+                                        </svg>
+                                    </a>
+
+                                    <a
+                                        href="https://youtube.com"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        aria-label="YouTube"
+                                        className="w-8 h-8 rounded-full border border-white/15 bg-white/5 flex items-center justify-center text-white/70 hover:text-white hover:border-white/40 hover:bg-white/10 transition-all cursor-pointer shadow-2xs group"
+                                    >
+                                        <svg className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                                            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                                        </svg>
+                                    </a>
+                                </div>
                             </div>
-                            <p className="text-xs leading-relaxed max-w-sm text-white/70">
-                                Koleksi wewangian mewah dunia dan parfum artisanal berkualitas tinggi. Dirancang untuk keanggunan sejati dalam setiap semprotan.
-                            </p>
-                            <div className="pt-2 flex items-center gap-2.5">
-                                <a
-                                    href="https://instagram.com"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    aria-label="Instagram"
-                                    className="w-8 h-8 rounded-full border border-white/15 bg-white/5 flex items-center justify-center text-white/70 hover:text-white hover:border-white/40 hover:bg-white/10 transition-all cursor-pointer shadow-2xs group"
-                                >
-                                    <svg className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
-                                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-                                    </svg>
-                                </a>
 
-                                <a
-                                    href="https://tiktok.com"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    aria-label="TikTok"
-                                    className="w-8 h-8 rounded-full border border-white/15 bg-white/5 flex items-center justify-center text-white/70 hover:text-white hover:border-white/40 hover:bg-white/10 transition-all cursor-pointer shadow-2xs group"
-                                >
-                                    <svg className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
-                                        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.298-.002.595.042.88.13V9.4a6.33 6.33 0 0 0-1-.08A6.34 6.34 0 0 0 3 15.66a6.34 6.34 0 0 0 10.82 4.5 6.3 6.3 0 0 0 1.96-4.49V8.62a8.28 8.28 0 0 0 4.81 1.52v-3.45z" />
-                                    </svg>
-                                </a>
+                            {/* Baris 2 di Mobile / Col 2 di Desktop: Katalog */}
+                            <div className="col-span-1 lg:col-span-2 space-y-3">
+                                <h5 className="text-xs font-semibold uppercase tracking-wider text-white">{isEn ? 'Catalog' : 'Katalog'}</h5>
+                                <ul className="space-y-2 text-xs">
+                                    <li><Link href="/products" className="text-white/70 hover:text-white transition">{isEn ? 'All Collections' : 'Semua Koleksi'}</Link></li>
+                                    <li><Link href="/products?sort=popular" className="text-white/70 hover:text-white transition">{isEn ? 'Bestsellers' : 'Produk Terlaris'}</Link></li>
+                                    <li><Link href="/products?sort=newest" className="text-white/70 hover:text-white transition">{isEn ? 'New Arrivals' : 'Produk Terbaru'}</Link></li>
+                                    <li><Link href="/products?discount=1" className="text-white/70 hover:text-white transition">{isEn ? 'Special Offers' : 'Promo Diskon'}</Link></li>
+                                    <li><Link href="/articles" className="text-white/70 hover:text-white transition">{isEn ? 'Articles & Journal' : 'Artikel & Jurnal'}</Link></li>
+                                    <li><Link href="/stores" className="text-white/70 hover:text-white transition">{isEn ? 'Boutique & Stores' : 'Lokasi Butik & Toko'}</Link></li>
+                                    <li><Link href="/about" className="text-white/70 hover:text-white transition">{isEn ? 'About Atelier' : 'Tentang Atelier'}</Link></li>
+                                </ul>
+                            </div>
 
-                                <a
-                                    href="https://wa.me"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    aria-label="WhatsApp"
-                                    className="w-8 h-8 rounded-full border border-white/15 bg-white/5 flex items-center justify-center text-white/70 hover:text-white hover:border-white/40 hover:bg-white/10 transition-all cursor-pointer shadow-2xs group"
-                                >
-                                    <svg className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
-                                        <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.23 8.23 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.19.53-1.11 1.04-1.54 1.1-.38.07-.88.1-2.58-.6a9.47 9.47 0 0 1-3.61-3.19c-.43-.58-.93-1.55-.93-2.37 0-.83.43-1.24.58-1.4.15-.17.33-.21.44-.21.11 0 .22 0 .32.01.1.01.24-.04.38.29.14.33.48 1.17.52 1.25.04.09.07.19.01.3-.06.12-.09.19-.18.29-.09.1-.19.23-.27.31-.09.09-.19.19-.08.38.11.19.49.8 1.05 1.3 1.03.92 1.54.98 1.74 1.08.19.09.31.08.43-.05.12-.13.51-.59.65-.79.14-.2.28-.17.47-.1.19.07 1.2.57 1.41.67.2.1.34.15.39.24.05.09.05.53-.14 1.06z" />
-                                    </svg>
-                                </a>
+                            {/* Baris 2 di Mobile / Col 3 di Desktop: Layanan Pelanggan */}
+                            <div className="col-span-1 lg:col-span-3 space-y-3">
+                                <h5 className="text-xs font-semibold uppercase tracking-wider text-white">{isEn ? 'Customer Care' : 'Layanan Pelanggan'}</h5>
+                                <ul className="space-y-2 text-xs">
+                                    <li>
+                                        <button
+                                            type="button"
+                                            onClick={() => window.openInfoModal?.('faq')}
+                                            className="text-white/70 hover:text-white transition text-left cursor-pointer"
+                                        >
+                                            {isEn ? 'Frequently Asked Questions (FAQ)' : 'Tanya Jawab (FAQ)'}
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button
+                                            type="button"
+                                            onClick={() => window.openInfoModal?.('shipping')}
+                                            className="text-white/70 hover:text-white transition text-left cursor-pointer"
+                                        >
+                                            {isEn ? 'Shipping & Delivery' : 'Pengiriman & Ekspedisi'}
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button
+                                            type="button"
+                                            onClick={() => window.openInfoModal?.('returns')}
+                                            className="text-white/70 hover:text-white transition text-left cursor-pointer"
+                                        >
+                                            {isEn ? 'Warranty & Returns' : 'Garansi & Pengembalian'}
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button
+                                            type="button"
+                                            onClick={() => window.openInfoModal?.('privacy')}
+                                            className="text-white/70 hover:text-white transition text-left cursor-pointer"
+                                        >
+                                            {isEn ? 'Privacy Policy' : 'Kebijakan Privasi'}
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button
+                                            type="button"
+                                            onClick={() => window.openInfoModal?.('terms')}
+                                            className="text-white/70 hover:text-white transition text-left cursor-pointer"
+                                        >
+                                            {isEn ? 'Terms & Conditions' : 'Syarat & Ketentuan'}
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button
+                                            type="button"
+                                            onClick={() => window.openContactModal?.()}
+                                            className="text-white/70 hover:text-white transition text-left cursor-pointer"
+                                        >
+                                            {isEn ? 'Contact Concierge' : 'Hubungi Concierge'}
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
 
-                                <a
-                                    href="https://youtube.com"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    aria-label="YouTube"
-                                    className="w-8 h-8 rounded-full border border-white/15 bg-white/5 flex items-center justify-center text-white/70 hover:text-white hover:border-white/40 hover:bg-white/10 transition-all cursor-pointer shadow-2xs group"
-                                >
-                                    <svg className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
-                                        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-                                    </svg>
-                                </a>
+                            {/* Desktop & Tablet only: Unduh Aplikasi (Disembunyikan di Mobile) */}
+                            <div className="hidden sm:block sm:col-span-2 lg:col-span-3 space-y-3">
+                                <h5 className="text-xs font-semibold uppercase tracking-wider text-white">{isEn ? 'Download App' : 'Unduh Aplikasi'}</h5>
+                                <p className="text-xs leading-relaxed text-white/70">
+                                    {isEn ? 'Download our application for exclusive access to the Dubai perfume catalog.' : 'Unduh aplikasi kami untuk akses eksklusif katalog parfum Dubai.'}
+                                </p>
+                                <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-2.5 pt-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => triggerToast(isEn ? 'Aroma Palace app for iOS will be available soon on the App Store!' : 'Aplikasi Aroma Palace untuk iOS akan segera tersedia di App Store!')}
+                                        className="flex items-center gap-2.5 px-3 py-2 rounded border border-white/15 bg-white/5 hover:bg-white/10 hover:border-white/30 transition text-left cursor-pointer group shadow-none"
+                                    >
+                                        <svg className="w-5 h-5 shrink-0 fill-current text-white group-hover:scale-105 transition-transform" viewBox="0 0 24 24">
+                                            <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.38c.62-.75 1.04-1.8 1.01-2.88-.93.04-2.07.62-2.73 1.39-.58.67-.99 1.74-.93 2.79 1.05.08 2.03-.55 2.65-1.3" />
+                                        </svg>
+                                        <div className="leading-tight">
+                                            <span className="text-[9px] uppercase tracking-wider block text-white/60">{isEn ? 'Download on' : 'Unduh di'}</span>
+                                            <span className="text-xs font-semibold text-white">App Store</span>
+                                        </div>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => triggerToast(isEn ? 'Aroma Palace app for Android will be available soon on Google Play Store!' : 'Aplikasi Aroma Palace untuk Android akan segera tersedia di Google Play Store!')}
+                                        className="flex items-center gap-2.5 px-3 py-2 rounded border border-white/15 bg-white/5 hover:bg-white/10 hover:border-white/30 transition text-left cursor-pointer group shadow-none"
+                                    >
+                                        <svg className="w-5 h-5 shrink-0 fill-current text-white group-hover:scale-105 transition-transform" viewBox="0 0 24 24">
+                                            <path d="M3.609 1.814L13.792 12 3.61 22.186a1.5 1.5 0 0 1-.61-.986V2.8a1.5 1.5 0 0 1 .609-.986zm11.242 11.245l2.454 2.454-11.836 6.833 9.382-9.287zm0-2.118L5.469 1.654l11.836 6.833-2.454 2.454zm1.06 1.059l3.523 2.034a1.2 1.2 0 0 0 0-2.08l-3.523-2.034 1.06 2.08z" />
+                                        </svg>
+                                        <div className="leading-tight">
+                                            <span className="text-[9px] uppercase tracking-wider block text-white/60">{isEn ? 'Get it on' : 'Temukan di'}</span>
+                                            <span className="text-xs font-semibold text-white">Google Play</span>
+                                        </div>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
-                        {/* Baris 2 di Mobile / Col 2 di Desktop: Katalog */}
-                        <div className="col-span-1 lg:col-span-2 space-y-3">
-                            <h5 className="text-xs font-semibold uppercase tracking-wider text-white">Katalog</h5>
-                            <ul className="space-y-2 text-xs">
-                                <li><Link href="/products" className="text-white/70 hover:text-white transition">Semua Koleksi</Link></li>
-                                <li><Link href="/products?sort=popular" className="text-white/70 hover:text-white transition">Produk Terlaris</Link></li>
-                                <li><Link href="/products?sort=newest" className="text-white/70 hover:text-white transition">Produk Terbaru</Link></li>
-                                <li><Link href="/products?discount=1" className="text-white/70 hover:text-white transition">Promo Diskon</Link></li>
-                                <li><Link href="/articles" className="text-white/70 hover:text-white transition">Artikel &amp; Jurnal</Link></li>
-                                <li><Link href="/stores" className="text-white/70 hover:text-white transition">Lokasi Butik &amp; Toko</Link></li>
-                            </ul>
-                        </div>
-
-                        {/* Baris 2 di Mobile / Col 3 di Desktop: Layanan Pelanggan */}
-                        <div className="col-span-1 lg:col-span-3 space-y-3">
-                            <h5 className="text-xs font-semibold uppercase tracking-wider text-white">Bantuan &amp; Kebijakan</h5>
-                            <ul className="space-y-2 text-xs">
-                                <li>
-                                    <button
-                                        type="button"
-                                        onClick={() => window.openInfoModal?.('faq')}
-                                        className="text-white/70 hover:text-white transition text-left cursor-pointer"
-                                    >
-                                        Tanya Jawab (FAQ)
-                                    </button>
-                                </li>
-                                <li>
-                                    <button
-                                        type="button"
-                                        onClick={() => window.openInfoModal?.('shipping')}
-                                        className="text-white/70 hover:text-white transition text-left cursor-pointer"
-                                    >
-                                        Pengiriman &amp; Ekspedisi
-                                    </button>
-                                </li>
-                                <li>
-                                    <button
-                                        type="button"
-                                        onClick={() => window.openInfoModal?.('returns')}
-                                        className="text-white/70 hover:text-white transition text-left cursor-pointer"
-                                    >
-                                        Garansi &amp; Pengembalian
-                                    </button>
-                                </li>
-                                <li>
-                                    <button
-                                        type="button"
-                                        onClick={() => window.openInfoModal?.('privacy')}
-                                        className="text-white/70 hover:text-white transition text-left cursor-pointer"
-                                    >
-                                        Kebijakan Privasi
-                                    </button>
-                                </li>
-                            </ul>
-                        </div>
-
-                        {/* Desktop & Tablet only: Unduh Aplikasi (Disembunyikan di Mobile) */}
-                        <div className="hidden sm:block sm:col-span-2 lg:col-span-3 space-y-3">
-                            <h5 className="text-xs font-semibold uppercase tracking-wider text-white">Unduh Aplikasi</h5>
-                            <p className="text-xs leading-relaxed text-white/70">
-                                Unduh aplikasi kami untuk akses eksklusif katalog parfum Dubai.
-                            </p>
-                            <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-2.5 pt-1">
+                        {/* Bottom Bar */}
+                        <div className="pt-6 sm:pt-8 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 text-xs text-white/60 text-center sm:text-left">
+                            <p>{isEn ? '© 2026 Aroma Palace. All rights reserved.' : '© 2026 Aroma Palace. Hak cipta dilindungi undang-undang.'}</p>
+                            <div className="flex items-center gap-4 text-white/60">
                                 <button
                                     type="button"
-                                    onClick={() => triggerToast('Aplikasi Aroma Palace untuk iOS akan segera tersedia di App Store!')}
-                                    className="flex items-center gap-2.5 px-3 py-2 rounded border border-white/15 bg-white/5 hover:bg-white/10 hover:border-white/30 transition text-left cursor-pointer group shadow-none"
+                                    onClick={() => window.openInfoModal?.('privacy')}
+                                    className="hover:text-white transition cursor-pointer"
                                 >
-                                    <svg className="w-5 h-5 shrink-0 fill-current text-white group-hover:scale-105 transition-transform" viewBox="0 0 24 24">
-                                        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.38c.62-.75 1.04-1.8 1.01-2.88-.93.04-2.07.62-2.73 1.39-.58.67-.99 1.74-.93 2.79 1.05.08 2.03-.55 2.65-1.3" />
-                                    </svg>
-                                    <div className="leading-tight">
-                                        <span className="text-[9px] uppercase tracking-wider block text-white/60">Unduh di</span>
-                                        <span className="text-xs font-semibold text-white">App Store</span>
-                                    </div>
+                                    {isEn ? 'Privacy Policy' : 'Kebijakan Privasi'}
                                 </button>
-
+                                <span className="text-white/30">&bull;</span>
                                 <button
                                     type="button"
-                                    onClick={() => triggerToast('Aplikasi Aroma Palace untuk Android akan segera tersedia di Google Play Store!')}
-                                    className="flex items-center gap-2.5 px-3 py-2 rounded border border-white/15 bg-white/5 hover:bg-white/10 hover:border-white/30 transition text-left cursor-pointer group shadow-none"
+                                    onClick={() => window.openInfoModal?.('terms')}
+                                    className="hover:text-white transition cursor-pointer"
                                 >
-                                    <svg className="w-5 h-5 shrink-0 fill-current text-white group-hover:scale-105 transition-transform" viewBox="0 0 24 24">
-                                        <path d="M3.609 1.814L13.792 12 3.61 22.186a1.5 1.5 0 0 1-.61-.986V2.8a1.5 1.5 0 0 1 .609-.986zm11.242 11.245l2.454 2.454-11.836 6.833 9.382-9.287zm0-2.118L5.469 1.654l11.836 6.833-2.454 2.454zm1.06 1.059l3.523 2.034a1.2 1.2 0 0 0 0-2.08l-3.523-2.034 1.06 2.08z" />
-                                    </svg>
-                                    <div className="leading-tight">
-                                        <span className="text-[9px] uppercase tracking-wider block text-white/60">Temukan di</span>
-                                        <span className="text-xs font-semibold text-white">Google Play</span>
-                                    </div>
+                                    {isEn ? 'Terms & Conditions' : 'Syarat & Ketentuan'}
                                 </button>
                             </div>
                         </div>
                     </div>
-
-                    {/* Bottom Bar */}
-                    <div className="pt-6 sm:pt-8 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 text-xs text-white/60 text-center sm:text-left">
-                        <p>© 2026 Aroma Palace. All rights reserved.</p>
-                        <div className="flex items-center gap-4 text-white/60">
-                            <button
-                                type="button"
-                                onClick={() => window.openInfoModal?.('privacy')}
-                                className="hover:text-white transition cursor-pointer"
-                            >
-                                Privasi
-                            </button>
-                            <span className="text-white/30">&bull;</span>
-                            <button
-                                type="button"
-                                onClick={() => window.openInfoModal?.('terms')}
-                                className="hover:text-white transition cursor-pointer"
-                            >
-                                Syarat &amp; Ketentuan
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </footer>
+                </footer>
             )}
 
             {/* Notification Toast */}
@@ -1173,28 +1292,28 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                         <DialogHeader className="text-left space-y-2">
                             <Badge variant="secondary" className="w-fit">
                                 {selectedHeaderVoucher.type === 'percentage'
-                                    ? `Diskon ${selectedHeaderVoucher.value}%`
-                                    : `Potongan Rp ${new Intl.NumberFormat('id-ID').format(selectedHeaderVoucher.value)}`}
+                                    ? (isEn ? `Discount ${selectedHeaderVoucher.value}%` : `Diskon ${selectedHeaderVoucher.value}%`)
+                                    : (isEn ? `Save Rp ${new Intl.NumberFormat('id-ID').format(selectedHeaderVoucher.value)}` : `Potongan Rp ${new Intl.NumberFormat('id-ID').format(selectedHeaderVoucher.value)}`)}
                             </Badge>
                             <DialogTitle className="text-lg font-bold">
-                                {selectedHeaderVoucher.name}
+                                {isEn && selectedHeaderVoucher.name_en ? selectedHeaderVoucher.name_en : selectedHeaderVoucher.name}
                             </DialogTitle>
                             <DialogDescription className="text-xs leading-relaxed">
-                                {selectedHeaderVoucher.description || `Gunakan kode promo ${selectedHeaderVoucher.code} untuk mendapatkan diskon istimewa.`}
+                                {(isEn && selectedHeaderVoucher.description_en) ? selectedHeaderVoucher.description_en : (selectedHeaderVoucher.description || (isEn ? `Use promo code ${selectedHeaderVoucher.code} for an exclusive discount.` : `Gunakan kode promo ${selectedHeaderVoucher.code} untuk mendapatkan diskon istimewa.`))}
                             </DialogDescription>
                         </DialogHeader>
 
                         <div className="my-3 p-3.5 rounded-lg bg-muted border border-border text-xs space-y-2">
-                            <p className="font-semibold text-foreground">Syarat &amp; Ketentuan:</p>
+                            <p className="font-semibold text-foreground">{isEn ? 'Terms & Conditions:' : 'Syarat & Ketentuan:'}</p>
                             <ul className="list-disc list-inside space-y-1 text-muted-foreground">
                                 {(selectedHeaderVoucher.terms && selectedHeaderVoucher.terms.length > 0
                                     ? selectedHeaderVoucher.terms
                                     : [
-                                        `Gunakan kode promo ${selectedHeaderVoucher.code} saat checkout.`,
+                                        isEn ? `Use promo code ${selectedHeaderVoucher.code} at checkout.` : `Gunakan kode promo ${selectedHeaderVoucher.code} saat checkout.`,
                                         selectedHeaderVoucher.min_order_amount > 0
-                                            ? `Minimal belanja Rp ${new Intl.NumberFormat('id-ID').format(selectedHeaderVoucher.min_order_amount)}.`
-                                            : 'Tanpa minimal belanja.',
-                                        'Berlaku selama periode promosi aktif.',
+                                            ? (isEn ? `Minimum spend Rp ${new Intl.NumberFormat('id-ID').format(selectedHeaderVoucher.min_order_amount)}.` : `Minimal belanja Rp ${new Intl.NumberFormat('id-ID').format(selectedHeaderVoucher.min_order_amount)}.`)
+                                            : (isEn ? 'No minimum spend required.' : 'Tanpa minimal belanja.'),
+                                        isEn ? 'Valid during the active promotional period.' : 'Berlaku selama periode promosi aktif.',
                                     ]
                                 ).map((t, i) => (
                                     <li key={i}>{t}</li>
@@ -1211,10 +1330,10 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                 className="flex-1 cursor-pointer"
                                 size="sm"
                             >
-                                Salin Kode ({selectedHeaderVoucher.code})
+                                {isEn ? 'Copy Code' : 'Salin Kode'} ({selectedHeaderVoucher.code})
                             </Button>
                             <Button variant="outline" size="sm" onClick={() => setPromoModalOpen(false)} className="cursor-pointer">
-                                Tutup
+                                {isEn ? 'Close' : 'Tutup'}
                             </Button>
                         </div>
                     </DialogContent>
@@ -1245,7 +1364,7 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                     executeSearch(searchQuery);
                                 }
                             }}
-                            placeholder="Cari nama parfum atau brand..."
+                            placeholder={isEn ? "Search perfume name or brand..." : "Cari nama parfum atau brand..."}
                             className="border-none shadow-none focus-visible:ring-0 text-sm h-9 px-2 bg-transparent placeholder:text-muted-foreground/70"
                         />
                         {searchQuery && (
@@ -1255,7 +1374,7 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                 onClick={() => setSearchQuery('')}
                                 className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
                             >
-                                Bersihkan
+                                {isEn ? 'Clear' : 'Bersihkan'}
                             </Button>
                         )}
                         <Button
@@ -1263,7 +1382,7 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                             onClick={() => executeSearch(searchQuery)}
                             className="h-8 px-3 text-xs bg-[#4A070B] hover:bg-[#360407] text-white shrink-0 font-medium"
                         >
-                            Cari
+                            {isEn ? 'Search' : 'Cari'}
                         </Button>
                     </div>
 
@@ -1276,7 +1395,7 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                         <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
                                             <span className="flex items-center gap-1.5 font-semibold text-foreground">
                                                 <History className="w-3.5 h-3.5 text-muted-foreground" />
-                                                Pencarian Terakhir
+                                                {isEn ? 'Recent Searches' : 'Pencarian Terakhir'}
                                             </span>
                                             <button
                                                 type="button"
@@ -1284,7 +1403,7 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                                 className="text-xs text-muted-foreground hover:text-destructive transition flex items-center gap-1 cursor-pointer"
                                             >
                                                 <Trash2 className="w-3 h-3" />
-                                                Hapus Semua
+                                                {isEn ? 'Clear All' : 'Hapus Semua'}
                                             </button>
                                         </div>
                                         <div className="flex flex-wrap gap-2">
@@ -1303,7 +1422,7 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                                             removeSearchHistory(item);
                                                         }}
                                                         className="text-muted-foreground hover:text-destructive transition p-0.5 rounded-full hover:bg-background/80 ml-0.5"
-                                                        title="Hapus riwayat"
+                                                        title={isEn ? "Delete history" : "Hapus riwayat"}
                                                     >
                                                         <X className="w-3 h-3" />
                                                     </button>
@@ -1316,9 +1435,9 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                         <div className="w-12 h-12 rounded-full bg-muted/50 border border-border flex items-center justify-center mx-auto mb-3 text-muted-foreground">
                                             <Search className="w-5 h-5" />
                                         </div>
-                                        <p className="text-sm font-semibold text-foreground">Mulai Pencarian</p>
+                                        <p className="text-sm font-semibold text-foreground">{isEn ? 'Start Searching' : 'Mulai Pencarian'}</p>
                                         <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
-                                            Ketik nama parfum atau brand untuk melihat saran dan hasil pencarian.
+                                            {isEn ? 'Type perfume or brand name to view suggestions and search results.' : 'Ketik nama parfum atau brand untuk melihat saran dan hasil pencarian.'}
                                         </p>
                                     </div>
                                 )}
@@ -1328,7 +1447,7 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                 {isLoadingSuggestions && (
                                     <div className="py-2 flex items-center justify-center gap-2 text-xs text-muted-foreground">
                                         <Loader2 className="w-4 h-4 animate-spin text-[#4A070B]" />
-                                        <span>Mencari saran wewangian...</span>
+                                        <span>{isEn ? 'Searching fragrance suggestions...' : 'Mencari saran wewangian...'}</span>
                                     </div>
                                 )}
 
@@ -1336,7 +1455,7 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                 {suggestions.brands.length > 0 && (
                                     <div className="space-y-2">
                                         <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                                            Brand Terkait ({suggestions.brands.length})
+                                            {isEn ? 'Related Brands' : 'Brand Terkait'} ({suggestions.brands.length})
                                         </p>
                                         <div className="flex flex-wrap gap-2">
                                             {suggestions.brands.map((b) => (
@@ -1348,7 +1467,7 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                                 >
                                                     <span>{b.name}</span>
                                                     <span className="text-[10px] text-muted-foreground font-normal">
-                                                        ({b.products_count} Koleksi)
+                                                        ({b.products_count} {isEn ? 'Collections' : 'Koleksi'})
                                                     </span>
                                                 </button>
                                             ))}
@@ -1360,7 +1479,7 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                 {suggestions.products.length > 0 && (
                                     <div className="space-y-2">
                                         <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                                            Produk ({suggestions.products.length})
+                                            {isEn ? 'Products' : 'Produk'} ({suggestions.products.length})
                                         </p>
                                         <div className="divide-y divide-border/60 border border-border/70 rounded-xl overflow-hidden bg-card">
                                             {suggestions.products.map((p) => (
@@ -1401,7 +1520,8 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                     <span className="flex items-center gap-2 truncate">
                                         <Search className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                                         <span className="truncate">
-                                            Lihat semua hasil pencarian untuk <strong className="text-[#4A070B]">"{searchQuery}"</strong>
+                                            {isEn ? 'View all search results for ' : 'Lihat semua hasil pencarian untuk '}
+                                            <strong className="text-[#4A070B]">"{searchQuery}"</strong>
                                         </span>
                                     </span>
                                     <ArrowRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
@@ -1410,8 +1530,8 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                 {/* Empty suggestions state */}
                                 {!isLoadingSuggestions && suggestions.products.length === 0 && suggestions.brands.length === 0 && (
                                     <div className="py-8 text-center text-xs text-muted-foreground space-y-1">
-                                        <p className="font-semibold text-foreground">Tidak Ditemukan Hasil</p>
-                                        <p>Tidak ada produk atau brand yang sesuai dengan "{searchQuery}".</p>
+                                        <p className="font-semibold text-foreground">{isEn ? 'No Results Found' : 'Tidak Ditemukan Hasil'}</p>
+                                        <p>{isEn ? `No products or brands match "${searchQuery}".` : `Tidak ada produk atau brand yang sesuai dengan "${searchQuery}".`}</p>
                                     </div>
                                 )}
                             </div>
@@ -1420,8 +1540,8 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
 
                     {/* Dialog Footer with shortcuts */}
                     <div className="px-4 py-2.5 bg-muted/30 border-t border-border/80 flex items-center justify-between text-[11px] text-muted-foreground">
-                        <span>Tekan <kbd className="px-1.5 py-0.5 text-[10px] bg-background border border-border rounded font-mono">↵ Enter</kbd> untuk mencari</span>
-                        <span>Tekan <kbd className="px-1.5 py-0.5 text-[10px] bg-background border border-border rounded font-mono">Esc</kbd> untuk menutup</span>
+                        <span>{isEn ? <>Press <kbd className="px-1.5 py-0.5 text-[10px] bg-background border border-border rounded font-mono">↵ Enter</kbd> to search</> : <>Tekan <kbd className="px-1.5 py-0.5 text-[10px] bg-background border border-border rounded font-mono">↵ Enter</kbd> untuk mencari</>}</span>
+                        <span>{isEn ? <>Press <kbd className="px-1.5 py-0.5 text-[10px] bg-background border border-border rounded font-mono">Esc</kbd> to close</> : <>Tekan <kbd className="px-1.5 py-0.5 text-[10px] bg-background border border-border rounded font-mono">Esc</kbd> untuk menutup</>}</span>
                     </div>
                 </DialogContent>
             </Dialog>
@@ -1430,57 +1550,80 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
             <Dialog open={infoModalOpen} onOpenChange={setInfoModalOpen}>
                 <DialogContent className="w-[calc(100vw-32px)] max-w-[calc(100vw-32px)] sm:w-full sm:max-w-xl p-5 sm:p-6 rounded-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle className="text-lg font-bold">Layanan Pelanggan &amp; Bantuan</DialogTitle>
+                        <DialogTitle className="text-lg font-bold">
+                            {isEn ? 'Customer Service & Help' : 'Layanan Pelanggan & Bantuan'}
+                        </DialogTitle>
                         <DialogDescription className="text-xs">
-                            Informasi lengkap seputar pembelian, pengiriman, dan garansi wewangian kami.
+                            {isEn
+                                ? 'Comprehensive information regarding orders, delivery, and guarantees for our fine fragrances.'
+                                : 'Informasi lengkap seputar pembelian, pengiriman, dan garansi wewangian kami.'}
                         </DialogDescription>
                     </DialogHeader>
 
                     <Tabs value={infoActiveTab} onValueChange={setInfoActiveTab} className="mt-2">
-                        <TabsList className="grid grid-cols-4 w-full">
+                        <TabsList className="grid grid-cols-5 w-full">
                             <TabsTrigger value="faq" className="text-xs">FAQ</TabsTrigger>
-                            <TabsTrigger value="shipping" className="text-xs">Pengiriman</TabsTrigger>
-                            <TabsTrigger value="returns" className="text-xs">Garansi</TabsTrigger>
-                            <TabsTrigger value="privacy" className="text-xs">Privasi</TabsTrigger>
+                            <TabsTrigger value="shipping" className="text-xs">{isEn ? 'Shipping' : 'Pengiriman'}</TabsTrigger>
+                            <TabsTrigger value="returns" className="text-xs">{isEn ? 'Warranty' : 'Garansi'}</TabsTrigger>
+                            <TabsTrigger value="privacy" className="text-xs">{isEn ? 'Privacy' : 'Privasi'}</TabsTrigger>
+                            <TabsTrigger value="terms" className="text-xs">{isEn ? 'Terms' : 'Ketentuan'}</TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="faq" className="mt-4">
                             <Accordion type="single" collapsible defaultValue="faq-1">
                                 <AccordionItem value="faq-1">
-                                    <AccordionTrigger className="text-xs font-medium">Berapa lama daya tahan Extrait de Parfum?</AccordionTrigger>
+                                    <AccordionTrigger className="text-xs font-medium">
+                                        {isEn ? 'How long does Extrait de Parfum last?' : 'Berapa lama daya tahan Extrait de Parfum?'}
+                                    </AccordionTrigger>
                                     <AccordionContent className="text-xs text-muted-foreground leading-relaxed">
-                                        Konsentrasi Extrait de Parfum kami berkisar antara 28% hingga 35%, mampu bertahan 12-16 jam pada kulit dan beberapa hari pada pakaian.
+                                        {isEn
+                                            ? 'Our Extrait de Parfum concentration ranges between 28% and 35%, delivering 12–16 hours of longevity on skin and several days on clothing.'
+                                            : 'Konsentrasi Extrait de Parfum kami berkisar antara 28% hingga 35%, mampu bertahan 12-16 jam pada kulit dan beberapa hari pada pakaian.'}
                                     </AccordionContent>
                                 </AccordionItem>
                                 <AccordionItem value="faq-2">
-                                    <AccordionTrigger className="text-xs font-medium">Apakah seluruh produk dijamin asli?</AccordionTrigger>
+                                    <AccordionTrigger className="text-xs font-medium">
+                                        {isEn ? 'Are all fragrances guaranteed authentic?' : 'Apakah seluruh produk dijamin asli?'}
+                                    </AccordionTrigger>
                                     <AccordionContent className="text-xs text-muted-foreground leading-relaxed">
-                                        100% dijamin original. Kami memiliki jaminan uang kembali bila produk terbukti tidak authentic.
+                                        {isEn
+                                            ? '100% guaranteed authentic. We provide a full money-back guarantee should any bottle prove non-authentic.'
+                                            : '100% dijamin original. Kami memiliki jaminan uang kembali bila produk terbukti tidak authentic.'}
                                     </AccordionContent>
                                 </AccordionItem>
                                 <AccordionItem value="faq-3">
-                                    <AccordionTrigger className="text-xs font-medium">Apakah tersedia tester / vial kit?</AccordionTrigger>
+                                    <AccordionTrigger className="text-xs font-medium">
+                                        {isEn ? 'Are discovery vials or tester sets available?' : 'Apakah tersedia tester / vial kit?'}
+                                    </AccordionTrigger>
                                     <AccordionContent className="text-xs text-muted-foreground leading-relaxed">
-                                        Ya, kami menyediakan Discovery Set 5 x 5ml dengan voucher potongan untuk pembelian produk ukuran penuh.
+                                        {isEn
+                                            ? 'Yes, we provide Discovery Sets of 5 x 5ml with voucher credits redeemable towards your full-sized bottle purchase.'
+                                            : 'Ya, kami menyediakan Discovery Set 5 x 5ml dengan voucher potongan untuk pembelian produk ukuran penuh.'}
                                     </AccordionContent>
                                 </AccordionItem>
                             </Accordion>
                         </TabsContent>
 
                         <TabsContent value="shipping" className="mt-4 space-y-2.5 text-xs text-muted-foreground">
-                            <p className="font-semibold text-foreground">Kebijakan Pengiriman:</p>
-                            <p>Pesanan sebelum pukul 15.00 WIB dikirim pada hari yang sama menggunakan bubble wrap tebal dan kotak kayu bersegel.</p>
-                            <p>Gratis ongkos kirim berlaku untuk pesanan di atas Rp 500.000 ke seluruh kota di Indonesia.</p>
+                            <p className="font-semibold text-foreground">{isEn ? 'Shipping Policy:' : 'Kebijakan Pengiriman:'}</p>
+                            <p>{isEn ? 'Orders placed before 3:00 PM WIB are dispatched the same day using heavy protective packaging and sealed wooden crates.' : 'Pesanan sebelum pukul 15.00 WIB dikirim pada hari yang sama menggunakan bubble wrap tebal dan kotak kayu bersegel.'}</p>
+                            <p>{isEn ? 'Complimentary shipping applies to orders over Rp 500,000 to all cities across Indonesia.' : 'Gratis ongkos kirim berlaku untuk pesanan di atas Rp 500.000 ke seluruh kota di Indonesia.'}</p>
                         </TabsContent>
 
                         <TabsContent value="returns" className="mt-4 space-y-2.5 text-xs text-muted-foreground">
-                            <p className="font-semibold text-foreground">Garansi &amp; Retur:</p>
-                            <p>Barang dapat ditukar jika kemasan pecah atau mengalami kebocoran saat pengiriman dengan menyertakan video unboxing resmi.</p>
+                            <p className="font-semibold text-foreground">{isEn ? 'Warranty & Returns:' : 'Garansi & Retur:'}</p>
+                            <p>{isEn ? 'Items can be exchanged promptly if flacons arrive broken or leak during shipment, accompanied by official unboxing video proof.' : 'Barang dapat ditukar jika kemasan pecah atau mengalami kebocoran saat pengiriman dengan menyertakan video unboxing resmi.'}</p>
                         </TabsContent>
 
                         <TabsContent value="privacy" className="mt-4 space-y-2.5 text-xs text-muted-foreground">
-                            <p className="font-semibold text-foreground">Privasi Pelanggan:</p>
-                            <p>Data pribadi Anda aman dan dilindungi dengan enkripsi SSL 256-bit standar industri perbankan.</p>
+                            <p className="font-semibold text-foreground">{isEn ? 'Customer Privacy:' : 'Privasi Pelanggan:'}</p>
+                            <p>{isEn ? 'Your personal data is encrypted and protected with banking-standard 256-bit SSL encryption.' : 'Data pribadi Anda aman dan dilindungi dengan enkripsi SSL 256-bit standar industri perbankan.'}</p>
+                        </TabsContent>
+
+                        <TabsContent value="terms" className="mt-4 space-y-2.5 text-xs text-muted-foreground">
+                            <p className="font-semibold text-foreground">{isEn ? 'Terms & Conditions:' : 'Syarat & Ketentuan:'}</p>
+                            <p>{isEn ? 'By accessing and ordering through Aroma Palace, you agree to our terms of service, payment options, and delivery policies.' : 'Dengan mengakses dan bertransaksi di Aroma Palace, Anda menyetujui seluruh ketentuan belanja, sistem pembayaran, dan ekspedisi kami.'}</p>
+                            <p>{isEn ? 'All perfume formulations sold are 100% authentic luxury fragrances stored in climate-controlled cellars.' : 'Seluruh varian parfum yang dijual 100% orisinal dan disimpan dalam suhu terkontrol untuk menjaga kestabilan aroma terbaik.'}</p>
                         </TabsContent>
                     </Tabs>
                 </DialogContent>
@@ -1490,10 +1633,12 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
             <Dialog open={storeModalOpen} onOpenChange={setStoreModalOpen}>
                 <DialogContent className="w-[calc(100vw-32px)] max-w-[calc(100vw-32px)] sm:w-full sm:max-w-lg p-5 sm:p-6 rounded-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader className="text-left space-y-1">
-                        <Badge variant="secondary" className="w-fit">Boutique &amp; Store Locator</Badge>
-                        <DialogTitle className="text-lg font-bold">Lokasi Butik Aroma Palace</DialogTitle>
+                        <Badge variant="secondary" className="w-fit">{isEn ? 'Boutique & Store Locator' : 'Lokasi Butik & Toko'}</Badge>
+                        <DialogTitle className="text-lg font-bold">{isEn ? 'Aroma Palace Boutique Locations' : 'Lokasi Butik Aroma Palace'}</DialogTitle>
                         <DialogDescription className="text-xs">
-                            Kunjungi butik fisik kami untuk merasakan pengalaman olfaktori eksklusif dan konsultasi aroma privat bersama master perfumer.
+                            {isEn
+                                ? 'Visit our physical boutiques for an exclusive olfactory journey and private scent consultation with master perfumers.'
+                                : 'Kunjungi butik fisik kami untuk merasakan pengalaman olfaktori eksklusif dan konsultasi aroma privat bersama master perfumer.'}
                         </DialogDescription>
                     </DialogHeader>
 
@@ -1502,13 +1647,13 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                         <div className="p-3.5 rounded-lg border border-border bg-muted/40 space-y-1.5">
                             <div className="flex items-center justify-between">
                                 <h4 className="text-xs font-bold text-foreground">Flagship Boutique Jakarta</h4>
-                                <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20">Buka Hari Ini</Badge>
+                                <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20">{isEn ? 'Open Today' : 'Buka Hari Ini'}</Badge>
                             </div>
                             <p className="text-xs text-muted-foreground leading-relaxed">
                                 Senayan City Mall, Ground Floor Unit G-12, Jl. Asia Afrika Lot 19, Jakarta Pusat 10270
                             </p>
                             <div className="flex items-center justify-between pt-1 text-[11px] text-muted-foreground">
-                                <span>Jam Buka: 10:00 &ndash; 22:00 WIB</span>
+                                <span>{isEn ? 'Hours: 10:00 – 22:00 WIB' : 'Jam Buka: 10:00 – 22:00 WIB'}</span>
                                 <span className="font-medium text-foreground">Tel: (021) 7278-1234</span>
                             </div>
                         </div>
@@ -1517,13 +1662,13 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                         <div className="p-3.5 rounded-lg border border-border bg-muted/40 space-y-1.5">
                             <div className="flex items-center justify-between">
                                 <h4 className="text-xs font-bold text-foreground">Boutique Surabaya</h4>
-                                <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20">Buka Hari Ini</Badge>
+                                <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20">{isEn ? 'Open Today' : 'Buka Hari Ini'}</Badge>
                             </div>
                             <p className="text-xs text-muted-foreground leading-relaxed">
                                 Tunjungan Plaza 5, Level UG Unit 08-09, Jl. Basuki Rahmat, Surabaya 60261
                             </p>
                             <div className="flex items-center justify-between pt-1 text-[11px] text-muted-foreground">
-                                <span>Jam Buka: 10:00 &ndash; 22:00 WIB</span>
+                                <span>{isEn ? 'Hours: 10:00 – 22:00 WIB' : 'Jam Buka: 10:00 – 22:00 WIB'}</span>
                                 <span className="font-medium text-foreground">Tel: (031) 531-9988</span>
                             </div>
                         </div>
@@ -1532,13 +1677,13 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                         <div className="p-3.5 rounded-lg border border-border bg-muted/40 space-y-1.5">
                             <div className="flex items-center justify-between">
                                 <h4 className="text-xs font-bold text-foreground">Flagship Atelier Dubai</h4>
-                                <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/20">Headquarters</Badge>
+                                <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/20">{isEn ? 'Headquarters' : 'Kantor Pusat'}</Badge>
                             </div>
                             <p className="text-xs text-muted-foreground leading-relaxed">
                                 The Dubai Mall, Fashion Avenue Level 2, Downtown Dubai, United Arab Emirates
                             </p>
                             <div className="flex items-center justify-between pt-1 text-[11px] text-muted-foreground">
-                                <span>Jam Buka: 10:00 &ndash; 23:00 GST</span>
+                                <span>{isEn ? 'Hours: 10:00 – 23:00 GST' : 'Jam Buka: 10:00 – 23:00 GST'}</span>
                                 <span className="font-medium text-foreground">+971 4 362 7500</span>
                             </div>
                         </div>
@@ -1546,7 +1691,7 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
 
                     <div className="flex justify-end pt-1">
                         <Button variant="outline" size="sm" onClick={() => setStoreModalOpen(false)}>
-                            Tutup
+                            {isEn ? 'Close' : 'Tutup'}
                         </Button>
                     </div>
                 </DialogContent>
@@ -1557,9 +1702,11 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                 <DialogContent className="w-[calc(100vw-32px)] max-w-[calc(100vw-32px)] sm:w-full sm:max-w-md p-5 sm:p-6 rounded-2xl">
                     <DialogHeader className="text-left space-y-1">
                         <Badge variant="secondary" className="w-fit">Concierge Service</Badge>
-                        <DialogTitle className="text-lg font-bold">Hubungi Tim Aroma Palace</DialogTitle>
+                        <DialogTitle className="text-lg font-bold">{isEn ? 'Contact Aroma Palace Concierge' : 'Hubungi Tim Aroma Palace'}</DialogTitle>
                         <DialogDescription className="text-xs">
-                            Konsultan parfum kami siap membantu Anda memilih aroma terbaik atau memeriksa status pesanan Anda.
+                            {isEn
+                                ? 'Our fragrance advisors are ready to assist you in selecting your signature scent or checking your order status.'
+                                : 'Konsultan parfum kami siap membantu Anda memilih aroma terbaik atau memeriksa status pesanan Anda.'}
                         </DialogDescription>
                     </DialogHeader>
 
@@ -1577,7 +1724,7 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                             </div>
                             <div className="leading-tight flex-1">
                                 <span className="text-xs font-semibold text-foreground group-hover:text-primary transition block">WhatsApp VIP Concierge</span>
-                                <span className="text-[11px] text-muted-foreground">+62 812-3456-7890 (Layanan 24 Jam)</span>
+                                <span className="text-[11px] text-muted-foreground">+62 812-3456-7890 ({isEn ? '24-Hour Service' : 'Layanan 24 Jam'})</span>
                             </div>
                         </a>
 
@@ -1607,15 +1754,15 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                 </svg>
                             </div>
                             <div className="leading-tight flex-1">
-                                <span className="text-xs font-semibold text-foreground group-hover:text-primary transition block">Konsultasi Aroma Personal</span>
-                                <span className="text-[11px] text-muted-foreground">Kirim brief wewangian di halaman Tentang Atelier</span>
+                                <span className="text-xs font-semibold text-foreground group-hover:text-primary transition block">{isEn ? 'Personal Scent Consultation' : 'Konsultasi Aroma Personal'}</span>
+                                <span className="text-[11px] text-muted-foreground">{isEn ? 'Send your fragrance brief on our About Atelier page' : 'Kirim brief wewangian di halaman Tentang Atelier'}</span>
                             </div>
                         </Link>
                     </div>
 
                     <div className="flex justify-end pt-1">
                         <Button variant="outline" size="sm" onClick={() => setContactModalOpen(false)}>
-                            Tutup
+                            {isEn ? 'Close' : 'Tutup'}
                         </Button>
                     </div>
                 </DialogContent>
@@ -1624,7 +1771,7 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
             {/* MOBILE FLOATING BOTTOM MENUBAR (Hanya muncul di mode mobile md:hidden) */}
             {shouldShowBottomNav && (
                 <nav
-                    aria-label="Navigasi Bawah Mobile"
+                    aria-label={isEn ? "Mobile Bottom Navigation" : "Navigasi Bawah Mobile"}
                     className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t border-border/80 shadow-[0_-4px_25px_rgba(0,0,0,0.08)] pb-[max(env(safe-area-inset-bottom),0px)]"
                 >
                     <div className="grid grid-cols-5 h-14 items-stretch">
@@ -1634,11 +1781,10 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                 <Link
                                     key={item.label}
                                     href={item.href}
-                                    className={`h-full flex flex-col items-center justify-center gap-0.5 px-1 transition relative select-none ${
-                                        isActive
-                                            ? 'text-[#4A070B] dark:text-[#E8D0BA] font-bold'
-                                            : 'text-muted-foreground hover:text-foreground font-medium'
-                                    }`}
+                                    className={`h-full flex flex-col items-center justify-center gap-0.5 px-1 transition relative select-none ${isActive
+                                        ? 'text-[#4A070B] dark:text-[#E8D0BA] font-bold'
+                                        : 'text-muted-foreground hover:text-foreground font-medium'
+                                        }`}
                                 >
                                     {isActive && (
                                         <span className="absolute -top-px left-0 right-0 h-0.5 bg-[#4A070B] dark:bg-[#E8D0BA]" />

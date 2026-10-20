@@ -101,7 +101,7 @@ test('admin can view order detail page', function () {
         'payment_channel' => 'BCA Virtual Account',
         'payment_code' => '8271092819',
         'payment_status' => 'paid',
-        'status' => 'menunggu_konfirmasi',
+        'status' => 'diproses',
         'subtotal' => 750000,
         'discount_amount' => 0,
         'total_amount' => 750000,
@@ -129,7 +129,7 @@ test('admin can view order detail page', function () {
         );
 });
 
-test('admin can update order status from menunggu_konfirmasi to diproses and sync payment_status to paid', function () {
+test('admin can update order status from menunggu_pembayaran to diproses and sync payment_status to paid', function () {
     $admin = User::factory()->admin()->create();
     $customer = User::factory()->create();
 
@@ -147,7 +147,7 @@ test('admin can update order status from menunggu_konfirmasi to diproses and syn
         'payment_channel' => 'QRIS',
         'payment_code' => 'QRIS-777',
         'payment_status' => 'pending',
-        'status' => 'menunggu_konfirmasi',
+        'status' => 'menunggu_pembayaran',
         'subtotal' => 600000,
         'discount_amount' => 0,
         'total_amount' => 600000,

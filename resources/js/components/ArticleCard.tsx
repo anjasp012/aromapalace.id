@@ -1,16 +1,19 @@
 import { Link } from '@inertiajs/react';
 import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/lib/i18n';
 
 export interface ArticleItem {
     id?: number;
     slug: string;
     title: string;
+    title_en?: string;
     thumbnail?: string;
     image?: string;
     readTime: string;
     date: string;
     excerpt: string;
+    excerpt_en?: string;
 }
 
 interface ArticleCardProps {
@@ -19,8 +22,11 @@ interface ArticleCardProps {
 }
 
 export default function ArticleCard({ article, className }: ArticleCardProps) {
+    const { pickText, isEn } = useTranslation();
     const articleUrl = `/articles/${article.slug}`;
     const thumbnailSrc = article.thumbnail || article.image || '';
+    const displayTitle = pickText(article.title, article.title_en);
+    const displayExcerpt = pickText(article.excerpt, article.excerpt_en);
 
     return (
         <Card
@@ -34,7 +40,7 @@ export default function ArticleCard({ article, className }: ArticleCardProps) {
                 <Link href={articleUrl} className="block overflow-hidden relative aspect-[16/10] bg-muted">
                     <img
                         src={thumbnailSrc}
-                        alt={article.title}
+                        alt={displayTitle}
                         loading="lazy"
                         className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                     />
@@ -45,17 +51,17 @@ export default function ArticleCard({ article, className }: ArticleCardProps) {
                     <div className="flex items-center gap-2 text-[11px] text-muted-foreground font-medium">
                         <span>{article.date}</span>
                         <span className="text-muted-foreground/40">&bull;</span>
-                        <span>{article.readTime} baca</span>
+                        <span>{article.readTime} {isEn ? 'read' : 'baca'}</span>
                     </div>
 
                     <CardTitle className="text-sm sm:text-base font-bold leading-snug line-clamp-2">
                         <Link href={articleUrl} className="hover:text-[#4A070B] dark:hover:text-[#E8D0BA] transition-colors">
-                            {article.title}
+                            {displayTitle}
                         </Link>
                     </CardTitle>
 
                     <CardDescription className="text-xs leading-relaxed line-clamp-2 text-muted-foreground/90">
-                        {article.excerpt}
+                        {displayExcerpt}
                     </CardDescription>
                 </CardHeader>
             </div>
@@ -66,7 +72,7 @@ export default function ArticleCard({ article, className }: ArticleCardProps) {
                     href={articleUrl}
                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground group-hover:text-[#4A070B] dark:group-hover:text-[#E8D0BA] transition-colors cursor-pointer"
                 >
-                    <span>Baca Selengkapnya</span>
+                    <span>{isEn ? 'Read More' : 'Baca Selengkapnya'}</span>
                     <svg
                         className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1"
                         fill="none"

@@ -157,6 +157,7 @@ class CatalogService
             'tag' => null,
             'mood' => null,
             'description' => $p->description,
+            'description_en' => $p->description_en,
             'longevity' => null,
             'sillage' => null,
             'season' => null,

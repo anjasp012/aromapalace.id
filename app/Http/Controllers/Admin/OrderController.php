@@ -48,10 +48,8 @@ class OrderController extends Controller
                 $q->where('status', 'menunggu_pembayaran')
                     ->orWhere(fn ($sub) => $sub->whereNull('status')->where('payment_status', 'pending'));
             });
-        } elseif ($status === 'menunggu_konfirmasi') {
-            $query->where('status', 'menunggu_konfirmasi');
         } elseif ($status === 'diproses') {
-            $query->whereIn('status', ['diproses', 'menunggu_konfirmasi']);
+            $query->where('status', 'diproses');
         } elseif ($status === 'dikirim') {
             $query->where('status', 'dikirim')->where(function ($q) {
                 $q->where('delivery_type', 'delivery')->orWhereNull('delivery_type');
@@ -77,8 +75,7 @@ class OrderController extends Controller
             'menunggu_pembayaran' => Order::where('status', 'menunggu_pembayaran')
                 ->orWhere(fn ($q) => $q->whereNull('status')->where('payment_status', 'pending'))
                 ->count(),
-            'menunggu_konfirmasi' => Order::where('status', 'menunggu_konfirmasi')->count(),
-            'diproses' => Order::whereIn('status', ['diproses', 'menunggu_konfirmasi'])->count(),
+            'diproses' => Order::where('status', 'diproses')->count(),
             'dikirim' => Order::where('status', 'dikirim')->where(function ($q) {
                 $q->where('delivery_type', 'delivery')->orWhereNull('delivery_type');
             })->count(),
@@ -129,7 +126,7 @@ class OrderController extends Controller
             'status' => [
                 'required',
                 'string',
-                'in:menunggu_pembayaran,menunggu_konfirmasi,diproses,dikirim,pengambilan,selesai,dibatalkan',
+                'in:menunggu_pembayaran,diproses,dikirim,pengambilan,selesai,dibatalkan',
             ],
             'notes' => ['nullable', 'string', 'max:500'],
         ]);
@@ -171,7 +168,6 @@ class OrderController extends Controller
             'selesai' => 'Selesai',
             'dikirim' => $orderModel->delivery_type === 'pickup' ? 'Pengambilan di Butik' : 'Dikirim',
             'diproses' => 'Diproses',
-            'menunggu_konfirmasi' => 'Menunggu Konfirmasi',
             'menunggu_pembayaran' => 'Menunggu Pembayaran',
             'dibatalkan' => 'Dibatalkan',
             default => $newStatus,
@@ -198,7 +194,6 @@ class OrderController extends Controller
             'selesai' => 'Selesai',
             'dikirim' => $isPickup ? 'Pengambilan' : 'Dikirim',
             'diproses' => 'Diproses',
-            'menunggu_konfirmasi' => 'Menunggu Konfirmasi',
             'menunggu_pembayaran' => 'Menunggu Pembayaran',
             'dibatalkan' => 'Dibatalkan',
             default => ucfirst(str_replace('_', ' ', $orderStatus)),
@@ -271,7 +266,6 @@ class OrderController extends Controller
             'selesai' => 'Selesai',
             'dikirim' => $isPickup ? 'Pengambilan' : 'Dikirim',
             'diproses' => 'Diproses',
-            'menunggu_konfirmasi' => 'Menunggu Konfirmasi',
             'menunggu_pembayaran' => 'Menunggu Pembayaran',
             'dibatalkan' => 'Dibatalkan',
             default => ucfirst(str_replace('_', ' ', $orderStatus)),

@@ -89,6 +89,7 @@ class ProductController extends Controller
                     'name' => $product->brand->name,
                 ] : null,
                 'description' => $product->description,
+                'description_en' => $product->description_en,
                 'primary_image' => $primaryImage,
                 'images_count' => $product->galleries->count(),
                 'total_stock' => $totalStock,
@@ -169,6 +170,7 @@ class ProductController extends Controller
             'category_id' => ['nullable', 'integer', 'exists:categories,id'],
             'brand_id' => ['nullable', 'integer', 'exists:brands,id'],
             'description' => ['nullable', 'string'],
+            'description_en' => ['nullable', 'string'],
             'images' => ['nullable', 'array'],
             'images.*' => ['nullable'],
             'variants' => ['required', 'array', 'min:1'],
@@ -198,6 +200,7 @@ class ProductController extends Controller
                 'category_id' => $validated['category_id'] ?? null,
                 'brand_id' => $validated['brand_id'] ?? null,
                 'description' => $validated['description'] ?? null,
+                'description_en' => $validated['description_en'] ?? null,
             ]);
 
             // Save gallery images
@@ -287,6 +290,7 @@ class ProductController extends Controller
                 'category_id' => $product->category_id,
                 'brand_id' => $product->brand_id,
                 'description' => $product->description,
+                'description_en' => $product->description_en,
                 'images' => $product->galleries->pluck('image')->all(),
                 'variants' => $product->variants->map(fn (ProductVariant $variant) => [
                     'id' => $variant->id,
@@ -320,6 +324,7 @@ class ProductController extends Controller
             'category_id' => ['nullable', 'integer', 'exists:categories,id'],
             'brand_id' => ['nullable', 'integer', 'exists:brands,id'],
             'description' => ['nullable', 'string'],
+            'description_en' => ['nullable', 'string'],
             'existing_images' => ['nullable', 'array'],
             'existing_images.*' => ['string'],
             'images' => ['nullable', 'array'],
@@ -352,6 +357,7 @@ class ProductController extends Controller
                 'category_id' => $validated['category_id'] ?? null,
                 'brand_id' => $validated['brand_id'] ?? null,
                 'description' => $validated['description'] ?? null,
+                'description_en' => $validated['description_en'] ?? null,
             ]);
 
             // Sync galleries

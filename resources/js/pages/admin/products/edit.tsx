@@ -52,6 +52,7 @@ interface ProductDetailProps {
     category_id: number | null;
     brand_id: number | null;
     description: string | null;
+    description_en?: string | null;
     images: string[];
     variants: VariantFormItem[];
 }
@@ -82,6 +83,7 @@ export default function AdminProductEdit({
         category_id: string;
         brand_id: string;
         description: string;
+        description_en: string;
         existing_images: string[];
         images: File[];
         variants: VariantFormItem[];
@@ -92,6 +94,7 @@ export default function AdminProductEdit({
         category_id: product.category_id ? String(product.category_id) : '',
         brand_id: product.brand_id ? String(product.brand_id) : '',
         description: product.description || '',
+        description_en: product.description_en || '',
         existing_images: product.images || [],
         images: [],
         variants: product.variants.map((v) => ({
@@ -338,16 +341,34 @@ export default function AdminProductEdit({
                                 {errors.brand_id && <p className="text-destructive text-[11px]">{errors.brand_id}</p>}
                             </div>
 
-                            <div className="space-y-1.5 lg:col-span-4">
-                                <label className="font-medium text-foreground">Deskripsi Parfum</label>
+                            <div className="space-y-1.5 lg:col-span-2">
+                                <div className="flex items-center justify-between">
+                                    <label className="font-medium text-foreground">Deskripsi Parfum (Indonesia)</label>
+                                    <Badge variant="outline" className="text-[10px] py-0">🇮🇩 ID</Badge>
+                                </div>
                                 <Textarea
                                     rows={4}
                                     value={data.description}
                                     onChange={(e) => setData('description', e.target.value)}
-                                    placeholder="Penjelasan aroma, piramida notes wewangian, dan karakter parfum..."
+                                    placeholder="Penjelasan aroma, piramida notes wewangian, dan karakter parfum dalam Bahasa Indonesia..."
                                     className="min-h-24 text-xs"
                                 />
                                 {errors.description && <p className="text-destructive text-[11px]">{errors.description}</p>}
+                            </div>
+
+                            <div className="space-y-1.5 lg:col-span-2">
+                                <div className="flex items-center justify-between">
+                                    <label className="font-medium text-foreground">Deskripsi Parfum (English)</label>
+                                    <Badge variant="outline" className="text-[10px] py-0">🇬🇧 EN</Badge>
+                                </div>
+                                <Textarea
+                                    rows={4}
+                                    value={data.description_en}
+                                    onChange={(e) => setData('description_en', e.target.value)}
+                                    placeholder="Fragrance notes pyramid, olfactory character, and inspiration in English..."
+                                    className="min-h-24 text-xs"
+                                />
+                                {errors.description_en && <p className="text-destructive text-[11px]">{errors.description_en}</p>}
                             </div>
                         </div>
                     </CardContent>

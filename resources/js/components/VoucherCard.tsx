@@ -2,13 +2,16 @@ import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/comp
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/lib/i18n';
 
 export interface VoucherItem {
     code: string;
     badge: string;
     expiry: string;
     title: string;
+    title_en?: string;
     desc: string;
+    desc_en?: string;
     minSpend: string;
     maxDiscount?: string;
     terms: string[];
@@ -29,6 +32,10 @@ export default function VoucherCard({
     onSelect,
     className,
 }: VoucherCardProps) {
+    const { pickText, isEn } = useTranslation();
+    const displayTitle = pickText(voucher.title, voucher.title_en);
+    const displayDesc = pickText(voucher.desc, voucher.desc_en);
+
     return (
         <Card className={cn('flex flex-col justify-between shadow-none rounded-lg py-0 gap-0', className)}>
             <CardHeader className="p-3.5 sm:p-5 space-y-1.5 sm:space-y-2">
@@ -36,7 +43,9 @@ export default function VoucherCard({
                     <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0.5 whitespace-nowrap font-medium">
                         {voucher.badge}
                     </Badge>
-                    <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">s/d {voucher.expiry}</span>
+                    <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">
+                        {isEn ? 'until' : 's/d'} {voucher.expiry}
+                    </span>
                 </div>
                 <CardTitle
                     onClick={() => onSelect?.(voucher)}
@@ -45,17 +54,17 @@ export default function VoucherCard({
                         onSelect ? 'cursor-pointer hover:text-primary transition-colors' : ''
                     )}
                 >
-                    {voucher.title}
+                    {displayTitle}
                 </CardTitle>
                 <CardDescription className="text-[11px] sm:text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                    {voucher.desc}
+                    {displayDesc}
                 </CardDescription>
             </CardHeader>
 
             <CardFooter className="flex flex-row items-center justify-between border-t p-3 sm:px-5 sm:!py-3 mt-auto gap-2">
                 <div className="min-w-0">
                     <span className="text-[9px] sm:text-[10px] uppercase font-semibold text-muted-foreground block leading-tight">
-                        Kode Promo
+                        {isEn ? 'Promo Code' : 'Kode Promo'}
                     </span>
                     <span className="text-xs sm:text-sm font-mono font-bold text-foreground tracking-wide truncate block">
                         {voucher.code}
@@ -68,7 +77,7 @@ export default function VoucherCard({
                         onClick={() => onCopy(voucher.code)}
                         className="h-7.5 text-[11px] sm:h-9 sm:text-xs px-2.5 sm:px-3 shrink-0 cursor-pointer"
                     >
-                        {isCopied ? 'Tersalin' : 'Salin Kode'}
+                        {isCopied ? (isEn ? 'Copied' : 'Tersalin') : (isEn ? 'Copy Code' : 'Salin Kode')}
                     </Button>
                 )}
             </CardFooter>

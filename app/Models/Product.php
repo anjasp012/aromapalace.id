@@ -19,6 +19,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $category_id
  * @property int|null $brand_id
  * @property string|null $description
+ * @property string|null $description_en
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Category|null $category
@@ -38,6 +39,7 @@ use Illuminate\Support\Carbon;
     'category_id',
     'brand_id',
     'description',
+    'description_en',
 ])]
 class Product extends Model
 {

@@ -27,6 +27,7 @@ import {
     Info,
     Store,
 } from 'lucide-react';
+import { useTranslation } from '@/lib/i18n';
 
 interface UserData {
     id: number;
@@ -40,6 +41,8 @@ interface MembershipData {
     membership_number: string;
     points: number;
     points_formatted: string;
+    tier_label?: string;
+    multiplier?: number;
 }
 
 interface OrderCounts {
@@ -63,6 +66,7 @@ export default function AccountPage({
     order_counts,
     wishlist_count = 0,
 }: AccountPageProps) {
+    const { t, isEn } = useTranslation();
     const [pointsInfoOpen, setPointsInfoOpen] = useState(false);
     const [editProfileOpen, setEditProfileOpen] = useState(false);
     const [changePasswordOpen, setChangePasswordOpen] = useState(false);
@@ -99,7 +103,7 @@ export default function AccountPage({
         setProfileError(null);
 
         if (!editName.trim()) {
-            setProfileError('Nama tidak boleh kosong.');
+            setProfileError(isEn ? 'Name cannot be empty.' : 'Nama tidak boleh kosong.');
             return;
         }
 
@@ -113,7 +117,7 @@ export default function AccountPage({
                     setEditProfileOpen(false);
                 },
                 onError: (errors) => {
-                    setProfileError(errors.name || 'Gagal memperbarui profil.');
+                    setProfileError(errors.name || (isEn ? 'Failed to update profile.' : 'Gagal memperbarui profil.'));
                 },
                 onFinish: () => setIsUpdatingProfile(false),
             }
@@ -125,12 +129,12 @@ export default function AccountPage({
         setPasswordError(null);
 
         if (newPassword.length < 8) {
-            setPasswordError('Kata sandi baru minimal 8 karakter.');
+            setPasswordError(isEn ? 'New password must be at least 8 characters.' : 'Kata sandi baru minimal 8 karakter.');
             return;
         }
 
         if (newPassword !== confirmPassword) {
-            setPasswordError('Konfirmasi kata sandi tidak cocok.');
+            setPasswordError(isEn ? 'Password confirmation does not match.' : 'Konfirmasi kata sandi tidak cocok.');
             return;
         }
 
@@ -151,7 +155,7 @@ export default function AccountPage({
                     setConfirmPassword('');
                 },
                 onError: (errors) => {
-                    setPasswordError(errors.current_password || errors.password || 'Gagal memperbarui kata sandi.');
+                    setPasswordError(errors.current_password || errors.password || (isEn ? 'Failed to update password.' : 'Gagal memperbarui kata sandi.'));
                 },
                 onFinish: () => setIsUpdatingPassword(false),
             }
@@ -160,7 +164,7 @@ export default function AccountPage({
 
     return (
         <Layout showFooter={false}>
-            <Head title="Akun Saya • Aroma Palace" />
+            <Head title={`${t('account.title')} • Aroma Palace`} />
 
             <div className="min-h-screen bg-[#F8F9FA] dark:bg-background">
                 {/* MAIN CONTENT CONTAINER */}
@@ -178,7 +182,7 @@ export default function AccountPage({
                                 </div>
                                 <div
                                     className="absolute bottom-0 right-0 w-5 h-5 rounded-full bg-[#E5A844] text-[#4A070B] flex items-center justify-center ring-2 ring-card shadow-xs"
-                                    title="Akun Terverifikasi"
+                                    title={t('account.verified_badge')}
                                 >
                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -192,19 +196,19 @@ export default function AccountPage({
                                     {displayName}
                                 </h1>
                                 <p className="text-xs text-muted-foreground mt-0.5">
-                                    Sejak {user.joined_at}
+                                    {t('account.since')} {user.joined_at}
                                 </p>
                             </div>
                         </div>
 
-                        {/* Royale Points Pill (Matching reference saldotoco Rp0 >) */}
+                        {/* Royale Points Pill */}
                         <Link
                             href="/membership"
                             className="rounded-xl sm:rounded-2xl bg-[#FDF8EE] dark:bg-amber-950/25 border border-[#F3E7C4] dark:border-amber-800/30 px-4 py-3 flex items-center justify-between gap-3 transition hover:border-[#E5A844]/60 group cursor-pointer shadow-2xs"
                         >
                             <div className="flex items-center gap-2">
                                 <span className="text-xs sm:text-sm font-semibold text-foreground">
-                                    Royale Points
+                                    {t('account.royale_points')}
                                 </span>
                                 <button
                                     type="button"
@@ -214,7 +218,7 @@ export default function AccountPage({
                                         setPointsInfoOpen(true);
                                     }}
                                     className="text-muted-foreground/70 hover:text-foreground transition cursor-pointer"
-                                    title="Informasi Poin"
+                                    title={t('account.info_points')}
                                 >
                                     <Info className="w-3.5 h-3.5" />
                                 </button>
@@ -223,29 +227,29 @@ export default function AccountPage({
                             <div className="flex items-center gap-1.5">
                                 <Crown className="w-4 h-4 text-[#E5A844]" />
                                 <span className="text-xs sm:text-sm font-extrabold text-[#4A070B] dark:text-[#E8D0BA]">
-                                    {membership ? `${membership.points_formatted} Poin` : '0 Poin'}
+                                    {membership ? `${membership.points_formatted} ${t('account.points_suffix')}` : `0 ${t('account.points_suffix')}`}
                                 </span>
                                 <ChevronRight className="w-4 h-4 text-[#E5A844] group-hover:translate-x-0.5 transition-transform" />
                             </div>
                         </Link>
                     </div>
 
-                    {/* Pesanan Saya Card (Matching reference Pesanan Saya -> Lihat Semua) */}
+                    {/* Pesanan Saya Card */}
                     <div className="rounded-2xl border border-border/80 bg-card p-4 sm:p-5 shadow-2xs mb-3.5 space-y-3.5">
                         <div className="flex items-center justify-between pb-2.5 border-b border-border/70">
                             <h2 className="text-xs sm:text-sm font-bold text-foreground">
-                                Pesanan Saya
+                                {t('account.my_orders')}
                             </h2>
                             <Link
                                 href="/account/orders"
                                 className="text-xs font-semibold text-[#4A070B] dark:text-[#E8D0BA] flex items-center gap-1 hover:underline group"
                             >
-                                <span>Lihat Semua</span>
+                                <span>{t('account.view_all')}</span>
                                 <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                             </Link>
                         </div>
 
-                        {/* 3 Status Columns (Matching reference: Belum Dibayar, Berlangsung, Tiba di Tujuan) */}
+                        {/* 3 Status Columns */}
                         <div className="grid grid-cols-3 gap-2 text-center">
                             {/* Belum Dibayar */}
                             <Link
@@ -263,7 +267,7 @@ export default function AccountPage({
                                     )}
                                 </div>
                                 <span className="text-[11px] sm:text-xs font-medium text-foreground">
-                                    Belum Dibayar
+                                    {t('account.unpaid')}
                                 </span>
                             </Link>
 
@@ -283,7 +287,7 @@ export default function AccountPage({
                                     )}
                                 </div>
                                 <span className="text-[11px] sm:text-xs font-medium text-foreground">
-                                    Berlangsung
+                                    {t('account.in_progress')}
                                 </span>
                             </Link>
 
@@ -303,23 +307,23 @@ export default function AccountPage({
                                     )}
                                 </div>
                                 <span className="text-[11px] sm:text-xs font-medium text-foreground">
-                                    Tiba di Tujuan
+                                    {t('account.completed')}
                                 </span>
                             </Link>
                         </div>
                     </div>
 
-                    {/* Aktivitas Saya List (Matching reference Aktivitas Saya list) */}
+                    {/* Aktivitas Saya List */}
                     <div className="mb-4">
                         <div className="flex items-center gap-2 mb-2 px-1">
                             <span className="w-1.5 h-4.5 rounded-full bg-[#E5A844]" />
                             <h3 className="text-sm font-bold text-foreground">
-                                Aktivitas Saya
+                                {t('account.my_activity')}
                             </h3>
                         </div>
 
                         <div className="rounded-2xl border border-border/80 bg-card divide-y divide-border/60 overflow-hidden shadow-2xs">
-                            {/* Profil Pengguna (Matching reference anjas putra row) */}
+                            {/* Profil Pengguna */}
                             <button
                                 type="button"
                                 onClick={() => setEditProfileOpen(true)}
@@ -336,7 +340,7 @@ export default function AccountPage({
                                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
                             </button>
 
-                            {/* Favorit Saya (Matching reference Favorit Saya row) */}
+                            {/* Favorit Saya */}
                             <Link
                                 href="/wishlist"
                                 className="flex items-center justify-between p-3.5 hover:bg-muted/40 transition cursor-pointer"
@@ -346,20 +350,20 @@ export default function AccountPage({
                                         <Heart className="w-4 h-4" />
                                     </div>
                                     <span className="text-xs sm:text-sm font-semibold text-foreground">
-                                        Favorit Saya
+                                        {t('account.my_favorites')}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     {wishlist_count > 0 && (
                                         <Badge variant="secondary" className="text-[10px] px-2 py-0.5">
-                                            {wishlist_count} item
+                                            {wishlist_count} {isEn ? 'items' : 'item'}
                                         </Badge>
                                     )}
                                     <ChevronRight className="w-4 h-4 text-muted-foreground" />
                                 </div>
                             </Link>
 
-                            {/* Lokasi Butik & Toko (Matching reference Toko Favorit row) */}
+                            {/* Lokasi Butik & Toko */}
                             <Link
                                 href="/stores"
                                 className="flex items-center justify-between p-3.5 hover:bg-muted/40 transition cursor-pointer"
@@ -369,7 +373,7 @@ export default function AccountPage({
                                         <Store className="w-4 h-4" />
                                     </div>
                                     <span className="text-xs sm:text-sm font-semibold text-foreground">
-                                        Lokasi Butik &amp; Toko
+                                        {t('account.boutiques')}
                                     </span>
                                 </div>
                                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
@@ -409,7 +413,7 @@ export default function AccountPage({
                                         <KeyRound className="w-4 h-4" />
                                     </div>
                                     <span className="text-xs sm:text-sm font-semibold text-foreground">
-                                        Keamanan &amp; Kata Sandi
+                                        {t('account.change_password')}
                                     </span>
                                 </div>
                                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
@@ -427,7 +431,7 @@ export default function AccountPage({
                                         <MessageCircle className="w-4 h-4" />
                                     </div>
                                     <span className="text-xs sm:text-sm font-semibold text-foreground">
-                                        WhatsApp VIP Concierge
+                                        {t('account.help_center')}
                                     </span>
                                 </div>
                                 <ExternalLink className="w-4 h-4 text-muted-foreground" />
@@ -443,7 +447,7 @@ export default function AccountPage({
                             className="w-full text-xs font-semibold py-4 rounded-xl border-destructive/25 text-destructive hover:bg-destructive/10 cursor-pointer shadow-xs flex items-center justify-center gap-2"
                         >
                             <LogOut className="w-4 h-4" />
-                            <span>Keluar dari Akun</span>
+                            <span>{t('account.logout')}</span>
                         </Button>
                     </div>
                 </div>
@@ -455,10 +459,10 @@ export default function AccountPage({
                     <form onSubmit={handleUpdateProfile}>
                         <DialogHeader className="text-left space-y-1">
                             <DialogTitle className="text-base font-bold text-foreground">
-                                Edit Informasi Profil
+                                {t('account.update_profile_title')}
                             </DialogTitle>
                             <DialogDescription className="text-xs text-muted-foreground">
-                                Ubah nama tampilan yang digunakan pada akun Anda.
+                                {t('account.update_profile_desc')}
                             </DialogDescription>
                         </DialogHeader>
 
@@ -470,19 +474,21 @@ export default function AccountPage({
 
                         <div className="space-y-3.5 my-4">
                             <div className="space-y-1">
-                                <label className="text-xs font-semibold text-foreground">Nama Lengkap</label>
+                                <label className="text-xs font-semibold text-foreground">{t('auth.full_name')}</label>
                                 <Input
                                     type="text"
                                     value={editName}
                                     onChange={(e) => setEditName(e.target.value)}
-                                    placeholder="Nama Anda"
+                                    placeholder={t('auth.full_name_placeholder')}
                                     required
                                     className="text-xs rounded-xl"
                                 />
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-xs font-semibold text-foreground">Email (Tetap)</label>
+                                <label className="text-xs font-semibold text-foreground">
+                                    {t('auth.email')} ({isEn ? 'Fixed' : 'Tetap'})
+                                </label>
                                 <Input
                                     type="email"
                                     value={user.email}
@@ -501,7 +507,7 @@ export default function AccountPage({
                                 disabled={isUpdatingProfile}
                                 className="cursor-pointer rounded-xl"
                             >
-                                Batal
+                                {t('common.cancel')}
                             </Button>
                             <Button
                                 type="submit"
@@ -509,7 +515,7 @@ export default function AccountPage({
                                 disabled={isUpdatingProfile}
                                 className="bg-[#4A070B] hover:bg-[#360407] text-white cursor-pointer rounded-xl"
                             >
-                                {isUpdatingProfile ? 'Menyimpan...' : 'Simpan Perubahan'}
+                                {isUpdatingProfile ? t('account.saving') : t('account.save_changes')}
                             </Button>
                         </DialogFooter>
                     </form>
@@ -522,10 +528,10 @@ export default function AccountPage({
                     <form onSubmit={handleUpdatePassword}>
                         <DialogHeader className="text-left space-y-1">
                             <DialogTitle className="text-base font-bold text-foreground">
-                                Ubah Kata Sandi
+                                {t('account.change_password_title')}
                             </DialogTitle>
                             <DialogDescription className="text-xs text-muted-foreground">
-                                Masukkan kata sandi saat ini dan buat kata sandi baru.
+                                {t('account.change_password_desc')}
                             </DialogDescription>
                         </DialogHeader>
 
@@ -537,36 +543,36 @@ export default function AccountPage({
 
                         <div className="space-y-3.5 my-4">
                             <div className="space-y-1">
-                                <label className="text-xs font-semibold text-foreground">Kata Sandi Saat Ini</label>
+                                <label className="text-xs font-semibold text-foreground">{t('account.current_password')}</label>
                                 <Input
                                     type="password"
                                     value={currentPassword}
                                     onChange={(e) => setCurrentPassword(e.target.value)}
-                                    placeholder="Kata sandi saat ini"
+                                    placeholder={t('account.current_password')}
                                     required
                                     className="text-xs rounded-xl"
                                 />
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-xs font-semibold text-foreground">Kata Sandi Baru</label>
+                                <label className="text-xs font-semibold text-foreground">{t('account.new_password')}</label>
                                 <Input
                                     type="password"
                                     value={newPassword}
                                     onChange={(e) => setNewPassword(e.target.value)}
-                                    placeholder="Minimal 8 karakter"
+                                    placeholder={t('auth.password_min')}
                                     required
                                     className="text-xs rounded-xl"
                                 />
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-xs font-semibold text-foreground">Konfirmasi Kata Sandi Baru</label>
+                                <label className="text-xs font-semibold text-foreground">{t('account.confirm_password')}</label>
                                 <Input
                                     type="password"
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
-                                    placeholder="Ulangi kata sandi baru"
+                                    placeholder={t('account.confirm_password')}
                                     required
                                     className="text-xs rounded-xl"
                                 />
@@ -582,7 +588,7 @@ export default function AccountPage({
                                 disabled={isUpdatingPassword}
                                 className="cursor-pointer rounded-xl"
                             >
-                                Batal
+                                {t('common.cancel')}
                             </Button>
                             <Button
                                 type="submit"
@@ -590,7 +596,7 @@ export default function AccountPage({
                                 disabled={isUpdatingPassword}
                                 className="bg-[#4A070B] hover:bg-[#360407] text-white cursor-pointer rounded-xl"
                             >
-                                {isUpdatingPassword ? 'Memperbarui...' : 'Ubah Kata Sandi'}
+                                {isUpdatingPassword ? (isEn ? 'Updating...' : 'Memperbarui...') : t('account.change_password')}
                             </Button>
                         </DialogFooter>
                     </form>
@@ -605,26 +611,26 @@ export default function AccountPage({
                             <Crown className="w-5 h-5" />
                         </div>
                         <DialogTitle className="text-base font-bold text-foreground">
-                            Tentang Royale Points
+                            {t('account.points_modal_title')}
                         </DialogTitle>
                         <DialogDescription className="text-xs text-muted-foreground leading-relaxed">
-                            Royale Points adalah program loyalitas untuk setiap transaksi di Aroma Palace. Poin dapat ditukarkan dengan voucher diskon belanja.
+                            {t('account.points_modal_desc')}
                         </DialogDescription>
                     </DialogHeader>
 
                     <div className="space-y-2.5 my-3 text-xs bg-muted/40 p-3.5 rounded-2xl border border-border/80">
                         <div className="flex justify-between">
-                            <span className="text-muted-foreground">Nilai Poin</span>
-                            <span className="font-bold text-foreground">1 Poin = Rp 1</span>
+                            <span className="text-muted-foreground">{isEn ? 'Point Value' : 'Nilai Poin'}</span>
+                            <span className="font-bold text-foreground">{isEn ? '1 Point = Rp 1' : '1 Poin = Rp 1'}</span>
                         </div>
                         <div className="flex justify-between">
-                            <span className="text-muted-foreground">Tier Saat Ini</span>
+                            <span className="text-muted-foreground">{isEn ? 'Current Tier' : 'Tier Saat Ini'}</span>
                             <span className="font-bold text-[#4A070B] dark:text-[#E8D0BA]">
-                                {membership?.tier_label || 'Anggota Standar'}
+                                {membership?.tier_label || (isEn ? 'Standard Member' : 'Anggota Standar')}
                             </span>
                         </div>
                         <div className="flex justify-between">
-                            <span className="text-muted-foreground">Pengali Poin</span>
+                            <span className="text-muted-foreground">{isEn ? 'Point Multiplier' : 'Pengali Poin'}</span>
                             <span className="font-bold text-foreground">
                                 {membership ? `${membership.multiplier}x` : '1x'}
                             </span>
@@ -638,7 +644,7 @@ export default function AccountPage({
                             className="w-full bg-[#4A070B] hover:bg-[#360407] text-white cursor-pointer rounded-xl"
                         >
                             <Link href="/membership">
-                                Buka Halaman Royale Club
+                                {t('account.view_royale_club')}
                             </Link>
                         </Button>
                     </DialogFooter>
@@ -650,10 +656,10 @@ export default function AccountPage({
                 <DialogContent className="w-[calc(100vw-32px)] max-w-sm p-5 sm:p-6 rounded-2xl">
                     <DialogHeader className="text-left space-y-2">
                         <DialogTitle className="text-base font-bold text-foreground">
-                            Konfirmasi Keluar
+                            {t('account.logout_confirm_title')}
                         </DialogTitle>
                         <DialogDescription className="text-xs text-muted-foreground leading-relaxed">
-                            Apakah Anda yakin ingin keluar dari akun Aroma Palace Anda?
+                            {t('account.logout_confirm_desc')}
                         </DialogDescription>
                     </DialogHeader>
 
@@ -665,7 +671,7 @@ export default function AccountPage({
                             onClick={() => setLogoutConfirmOpen(false)}
                             className="cursor-pointer rounded-xl"
                         >
-                            Batal
+                            {t('common.cancel')}
                         </Button>
                         <Button
                             type="button"
@@ -676,7 +682,7 @@ export default function AccountPage({
                             }}
                             className="cursor-pointer rounded-xl"
                         >
-                            Ya, Keluar
+                            {t('account.confirm_logout')}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

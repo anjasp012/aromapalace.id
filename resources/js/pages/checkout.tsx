@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import Layout from '@/components/Layout';
+import { useTranslation } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
@@ -288,6 +289,8 @@ export default function CheckoutPage({
     payment_methods = [],
     user,
 }: CheckoutProps) {
+    const { t, pickText, isEn } = useTranslation();
+
     // Delivery Type: delivery vs pickup
     const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
 
@@ -488,17 +491,17 @@ export default function CheckoutPage({
 
     return (
         <Layout showFooter={false} showBottomNav={false}>
-            <Head title="Konfirmasi & Pembayaran Pesanan • Aroma Palace" />
+            <Head title={`${t('checkout.confirm_title')} & ${t('checkout.title')} • Aroma Palace`} />
 
             {/* PAGE HEADER BANNER (Exact match to cart.tsx) */}
             <div className="border-b border-border/70 bg-gradient-to-b from-muted/30 via-background to-background py-10 sm:py-14">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center space-y-3">
                     <h1 className="text-3xl sm:text-4xl lg:text-5xl tracking-tight text-foreground">
-                        <span className="font-light">Konfirmasi &amp;</span>{' '}
-                        <span className="font-bold text-[#4A070B] dark:text-[#E8D0BA]">Pembayaran</span>
+                        <span className="font-light">{isEn ? 'Order' : 'Konfirmasi &'}</span>{' '}
+                        <span className="font-bold text-[#4A070B] dark:text-[#E8D0BA]">{isEn ? 'Checkout' : 'Pembayaran'}</span>
                     </h1>
                     <p className="max-w-2xl mx-auto text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                        Periksa kembali alamat pengiriman, opsi kurir, dan metode pembayaran wewangian mewah pilihan Anda sebelum menyelesaikan transaksi.
+                        {t('checkout.subtitle')}
                     </p>
                 </div>
             </div>
@@ -517,10 +520,10 @@ export default function CheckoutPage({
                                 <div>
                                     <div className="flex items-center justify-between pb-3 border-b border-border/80 mb-3.5">
                                         <h2 className="font-bold text-base text-foreground tracking-tight">
-                                            Metode Penerimaan Pesanan
+                                            {t('checkout.delivery_method')}
                                         </h2>
                                         <span className="text-xs text-muted-foreground hidden sm:inline">
-                                            Pilih metode yang Anda inginkan
+                                            {t('checkout.delivery_method_desc')}
                                         </span>
                                     </div>
 
@@ -543,10 +546,10 @@ export default function CheckoutPage({
                                             </div>
                                             <div className="min-w-0">
                                                 <div className="text-xs sm:text-sm font-bold text-foreground">
-                                                    Kirim ke Alamat
+                                                    {t('checkout.courier_delivery')}
                                                 </div>
                                                 <div className="text-[11px] text-muted-foreground truncate">
-                                                    Dikirim via Kurir ke lokasi Anda
+                                                    {t('checkout.courier_delivery_sub')}
                                                 </div>
                                             </div>
                                         </button>
@@ -569,10 +572,10 @@ export default function CheckoutPage({
                                             </div>
                                             <div className="min-w-0">
                                                 <div className="text-xs sm:text-sm font-bold text-foreground">
-                                                    Ambil di Butik
+                                                    {t('checkout.store_pickup')}
                                                 </div>
                                                 <div className="text-[11px] text-muted-foreground truncate">
-                                                    Ambil sendiri di gerai resmi
+                                                    {t('checkout.store_pickup_sub')}
                                                 </div>
                                             </div>
                                         </button>
@@ -584,14 +587,14 @@ export default function CheckoutPage({
                                     <div className="space-y-4 pt-2 border-t border-border/70">
                                         <div className="flex items-center justify-between">
                                             <h3 className="font-bold text-xs sm:text-sm text-foreground tracking-tight">
-                                                Detail Alamat Pengiriman
+                                                {t('checkout.address_detail')}
                                             </h3>
                                             <button
                                                 type="button"
                                                 onClick={() => setIsEditingAddress(!isEditingAddress)}
                                                 className="text-xs sm:text-sm font-semibold text-[#4A070B] dark:text-[#E8D0BA] hover:underline cursor-pointer"
                                             >
-                                                {isEditingAddress ? 'Tutup' : 'Ubah Alamat'}
+                                                {isEditingAddress ? t('checkout.close_edit') : t('checkout.change_address')}
                                             </button>
                                         </div>
 
@@ -716,7 +719,7 @@ export default function CheckoutPage({
                                         {/* Pilih Pengiriman Section (Kurir Pengiriman) */}
                                         <div className="pt-3 border-t border-border/70 space-y-3">
                                             <h3 className="font-bold text-xs sm:text-sm text-foreground tracking-tight">
-                                                Pilih Pengiriman
+                                                {t('checkout.shipping_option')}
                                             </h3>
 
                                             {/* Clickable Courier Selector Box */}
@@ -780,14 +783,14 @@ export default function CheckoutPage({
                                         <div className="space-y-3">
                                             <div className="flex items-center justify-between">
                                                 <h3 className="font-bold text-xs sm:text-sm text-foreground tracking-tight">
-                                                    Pilih Gerai Butik Pengambilan
+                                                    {t('checkout.pickup_store')}
                                                 </h3>
                                                 <Link
                                                     href="/stores"
                                                     target="_blank"
                                                     className="text-xs sm:text-sm font-semibold text-[#4A070B] dark:text-[#E8D0BA] hover:underline flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer"
                                                 >
-                                                    <span>Peta Gerai</span>
+                                                    <span>{isEn ? 'Boutique Map' : 'Peta Gerai'}</span>
                                                     <ExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                                 </Link>
                                             </div>
@@ -967,14 +970,14 @@ export default function CheckoutPage({
                             <div className="rounded-lg border border-border/80 bg-card/60 backdrop-blur-xs p-5 sm:p-6 shadow-none space-y-4">
                                 <div className="flex items-center justify-between pb-3 border-b border-border/80">
                                     <h2 className="font-bold text-base text-foreground tracking-tight">
-                                        Pilih Metode Pembayaran
+                                        {t('checkout.payment_method')}
                                     </h2>
                                     <button
                                         type="button"
                                         onClick={() => setShowAllPayments(!showAllPayments)}
                                         className="text-xs font-semibold text-[#4A070B] dark:text-[#E8D0BA] flex items-center gap-0.5 cursor-pointer"
                                     >
-                                        {showAllPayments ? 'Tutup' : 'Lihat Lainnya'}
+                                        {showAllPayments ? t('checkout.hide_payment') : t('checkout.see_all_payment')}
                                     </button>
                                 </div>
 
@@ -1038,7 +1041,7 @@ export default function CheckoutPage({
                             {/* CARD 4: RINGKASAN BELANJA */}
                             <div className="rounded-lg border border-border/80 bg-card/60 backdrop-blur-xs p-5 sm:p-6 shadow-none space-y-4">
                                 <h2 className="font-bold text-base text-foreground tracking-tight pb-3 border-b border-border/80">
-                                    Ringkasan Belanja
+                                    {t('checkout.order_summary')}
                                 </h2>
 
                                 {/* Line items */}
@@ -1167,7 +1170,7 @@ export default function CheckoutPage({
                                     href="/cart"
                                     className="inline-flex items-center gap-1.5 font-semibold text-xs text-[#4A070B] dark:text-[#E8D0BA] hover:text-[#360407] transition-colors"
                                 >
-                                    <span>←</span> Kembali ke Keranjang
+                                    <span>←</span> {isEn ? 'Back to Cart' : 'Kembali ke Keranjang'}
                                 </Link>
                             </div>
                         </div>
@@ -1297,10 +1300,10 @@ export default function CheckoutPage({
                                 </div>
                                 <div>
                                     <h3 className="font-bold text-sm sm:text-base text-foreground">
-                                        Konfirmasi Pesanan
+                                        {t('checkout.confirm_title')}
                                     </h3>
                                     <p className="text-[11px] text-muted-foreground">
-                                        Periksa kembali detail pesanan Anda sebelum membayar
+                                        {t('checkout.confirm_desc')}
                                     </p>
                                 </div>
                             </div>
