@@ -538,7 +538,7 @@ export default function Home({
                 </div>
 
                 {/* 7. PRODUK DENGAN DISKON (FULL-WIDTH SECTION SLIDER) */}
-                {repeatedDiscountedProducts.length > 0 && (
+                {discountedProducts.length > 0 && (
                     <section
                         id="discounts"
                         className="w-full bg-gradient-to-br from-[#4A070B] via-[#52090F] to-[#360407] border-y border-[#360407] py-8 sm:py-12"
@@ -561,27 +561,11 @@ export default function Home({
                                 </Button>
                             </div>
 
-                            <div
-                                className="relative group/deal"
-                                onMouseEnter={() => {
-                                    isDiscountHoveredRef.current = true;
-                                }}
-                                onMouseLeave={() => {
-                                    isDiscountHoveredRef.current = false;
-                                    lastDiscountTimeRef.current = null;
-                                }}
-                                onTouchStart={() => {
-                                    isDiscountHoveredRef.current = true;
-                                }}
-                                onTouchEnd={() => {
-                                    isDiscountHoveredRef.current = false;
-                                    lastDiscountTimeRef.current = null;
-                                }}
-                            >
+                            <div className="relative group/deal">
                                 <Button
                                     variant="outline"
                                     size="icon"
-                                    onClick={() => scrollSlider(discountSliderRef, -1, 220)}
+                                    onClick={() => discountApi?.scrollPrev()}
                                     aria-label="Scroll left"
                                     className="absolute -left-2 sm:-left-3.5 top-1/2 -translate-y-1/2 z-20 rounded-full shadow-md bg-white/95 text-neutral-900 hover:bg-white hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer opacity-0 pointer-events-none group-hover/deal:opacity-100 group-hover/deal:pointer-events-auto border-none"
                                 >
@@ -590,28 +574,30 @@ export default function Home({
                                     </svg>
                                 </Button>
 
-                                <div
-                                    ref={discountSliderRef}
-                                    onScroll={handleDiscountScroll}
-                                    className="flex items-stretch gap-4 overflow-x-auto pb-3 no-scrollbar"
-                                >
-                                    {repeatedDiscountedProducts.map((p, idx) => (
-                                        <ProductCard
-                                            key={`${p.id}-${idx}`}
-                                            product={p}
-                                            isWishlisted={wishlistedIds.includes(p.id)}
-                                            onToggleWishlist={toggleWishlist}
-                                            onQuickView={openQuickView}
-                                            darkTheme
-                                            className="w-[calc((100%-16px)/2.2)] sm:w-[calc((100%-32px)/3.5)] lg:w-[calc((100%-72px)/5.5)] shrink-0"
-                                        />
-                                    ))}
+                                <div ref={discountRef} className="overflow-hidden pb-3">
+                                    <div className="flex gap-4">
+                                        {discountedProducts.map((p, idx) => (
+                                            <div
+                                                key={`${p.id}-${idx}`}
+                                                className="w-[calc((100%-16px)/2.2)] sm:w-[calc((100%-32px)/3.5)] lg:w-[calc((100%-72px)/5.5)] shrink-0 min-w-0"
+                                            >
+                                                <ProductCard
+                                                    product={p}
+                                                    isWishlisted={wishlistedIds.includes(p.id)}
+                                                    onToggleWishlist={toggleWishlist}
+                                                    onQuickView={openQuickView}
+                                                    darkTheme
+                                                    className="w-full h-full"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
 
                                 <Button
                                     variant="outline"
                                     size="icon"
-                                    onClick={() => scrollSlider(discountSliderRef, 1, 220)}
+                                    onClick={() => discountApi?.scrollNext()}
                                     aria-label="Scroll right"
                                     className="absolute -right-2 sm:-right-3.5 top-1/2 -translate-y-1/2 z-20 rounded-full shadow-md bg-white/95 text-neutral-900 hover:bg-white hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer opacity-0 pointer-events-none group-hover/deal:opacity-100 group-hover/deal:pointer-events-auto border-none"
                                 >
