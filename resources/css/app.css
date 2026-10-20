@@ -105,15 +105,6 @@
     }
     body {
         @apply bg-background text-foreground antialiased;
-        /* Native app: no bounce scroll on iOS */
-        overscroll-behavior: none;
-        -webkit-overscroll-behavior: none;
-        /* Hide scrollbar visually */
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-    }
-    body::-webkit-scrollbar {
-        display: none;
     }
     /* Native app feel: no text selection on interactive elements */
     * {
@@ -121,12 +112,14 @@
         -webkit-touch-callout: none;
         caret-color: #4A070B;
     }
-    /* Disable text selection everywhere except input fields */
-    *:not(input):not(textarea):not([contenteditable]) {
-        -webkit-user-select: none;
-        user-select: none;
+    /* Disable text selection on touch screens only (native-like feel) */
+    @media (pointer: coarse) {
+        *:not(input):not(textarea):not([contenteditable]) {
+            -webkit-user-select: none;
+            user-select: none;
+        }
     }
-    /* Allow text selection in input/textarea */
+    /* Allow text selection in input/textarea always */
     input, textarea, [contenteditable] {
         -webkit-user-select: text;
         user-select: text;
@@ -138,15 +131,6 @@
     ::-moz-selection {
         background-color: #4A070B;
         color: #FFFFFF;
-    }
-    /* No cursor on mobile (native-like) */
-    @media (pointer: coarse) {
-        * {
-            cursor: none !important;
-        }
-        a, button, [role="button"], label, select {
-            cursor: default !important;
-        }
     }
     /* Smooth momentum scroll on scrollable areas */
     [data-scroll], .overflow-y-auto, .overflow-y-scroll, .overflow-x-auto, .overflow-x-scroll, .overflow-auto {
@@ -183,10 +167,12 @@ input[type=number] {
    Applied when running inside Capacitor / PWA
    ======================== */
 
-/* Respect device safe area (notch, home bar) */
+/* Respect device safe area (notch, home bar) & prevent bounce/pull-to-refresh */
 html.native-app body {
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
+    overscroll-behavior-y: none;
+    -webkit-overscroll-behavior-y: none;
 }
 
 /* Hide all scrollbars globally inside native app */
@@ -202,12 +188,6 @@ html.native-app *::-webkit-scrollbar {
 html.native-app img {
     -webkit-user-drag: none;
     user-drag: none;
-    pointer-events: none;
-}
-/* But allow clicking through images on links */
-html.native-app a img,
-html.native-app button img {
-    pointer-events: auto;
 }
 
 /* Smooth page transitions for native feel */
