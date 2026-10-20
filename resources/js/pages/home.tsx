@@ -461,27 +461,11 @@ export default function Home({
                                 </h2>
                             </div>
 
-                            <div
-                                className="relative group/voucher"
-                                onMouseEnter={() => {
-                                    isVoucherHoveredRef.current = true;
-                                }}
-                                onMouseLeave={() => {
-                                    isVoucherHoveredRef.current = false;
-                                    lastTimeRef.current = null;
-                                }}
-                                onTouchStart={() => {
-                                    isVoucherHoveredRef.current = true;
-                                }}
-                                onTouchEnd={() => {
-                                    isVoucherHoveredRef.current = false;
-                                    lastTimeRef.current = null;
-                                }}
-                            >
+                            <div className="relative group/voucher">
                                 <Button
                                     variant="outline"
                                     size="icon"
-                                    onClick={() => scrollSlider(voucherSliderRef, -1, 320)}
+                                    onClick={() => voucherApi?.scrollPrev()}
                                     aria-label="Scroll left"
                                     className="absolute -left-3.5 top-1/2 -translate-y-1/2 z-20 rounded-full shadow-md bg-background/90 hover:bg-background hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer opacity-0 pointer-events-none group-hover/voucher:opacity-100 group-hover/voucher:pointer-events-auto"
                                 >
@@ -490,27 +474,29 @@ export default function Home({
                                     </svg>
                                 </Button>
 
-                                <div
-                                    ref={voucherSliderRef}
-                                    onScroll={handleVoucherScroll}
-                                    className="flex items-stretch gap-3 sm:gap-4 overflow-x-auto pb-3 no-scrollbar"
-                                >
-                                    {repeatedVouchers.map((vouch, idx) => (
-                                        <VoucherCard
-                                            key={`${vouch.code}-${idx}`}
-                                            voucher={vouch}
-                                            isCopied={copiedCodes[vouch.code]}
-                                            onCopy={handleCopyCode}
-                                            onSelect={setSelectedVoucher}
-                                            className="w-[calc((100%-12px)/1.5)] sm:w-[calc((100%-24px)/2.2)] lg:w-[calc((100%-40px)/3.5)] shrink-0 snap-start"
-                                        />
-                                    ))}
+                                <div ref={voucherRef} className="overflow-hidden pb-3">
+                                    <div className="flex gap-3 sm:gap-4">
+                                        {activeVouchers.map((vouch, idx) => (
+                                            <div
+                                                key={`${vouch.code}-${idx}`}
+                                                className="w-[calc((100%-12px)/1.3)] sm:w-[calc((100%-24px)/2.2)] lg:w-[calc((100%-40px)/3.5)] shrink-0 min-w-0"
+                                            >
+                                                <VoucherCard
+                                                    voucher={vouch}
+                                                    isCopied={copiedCodes[vouch.code]}
+                                                    onCopy={handleCopyCode}
+                                                    onSelect={setSelectedVoucher}
+                                                    className="w-full h-full"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
 
                                 <Button
                                     variant="outline"
                                     size="icon"
-                                    onClick={() => scrollSlider(voucherSliderRef, 1, 320)}
+                                    onClick={() => voucherApi?.scrollNext()}
                                     aria-label="Scroll right"
                                     className="absolute -right-3.5 top-1/2 -translate-y-1/2 z-20 rounded-full shadow-md bg-background/90 hover:bg-background hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer opacity-0 pointer-events-none group-hover/voucher:opacity-100 group-hover/voucher:pointer-events-auto"
                                 >
