@@ -30,6 +30,10 @@ export function initNativeApp(): void {
 
     document.documentElement.classList.add('native-app', `native-${Capacitor.getPlatform()}`);
 
+    // Native app feel: no long-press context menu, no dragging images/links.
+    document.addEventListener('contextmenu', (e) => e.preventDefault(), { passive: false });
+    document.addEventListener('dragstart', (e) => e.preventDefault(), { passive: false });
+
     setupStatusBar();
     hideSplashWhenReady();
     setupLifecycle();
@@ -37,9 +41,11 @@ export function initNativeApp(): void {
 }
 
 function setupStatusBar(): void {
+    // Burgundy bar with white text.
     StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
+    StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
     if (Capacitor.getPlatform() === 'android') {
-        StatusBar.setBackgroundColor({ color: '#360407' }).catch(() => {});
+        StatusBar.setBackgroundColor({ color: '#4A070B' }).catch(() => {});
     }
 }
 
@@ -50,7 +56,7 @@ function setupStatusBar(): void {
 function hideSplashWhenReady(): void {
     const hide = () => {
         window.requestAnimationFrame(() => {
-            SplashScreen.hide({ fadeOutDuration: 250 }).catch(() => {});
+            SplashScreen.hide({ fadeOutDuration: 400 }).catch(() => {});
         });
     };
 
@@ -120,7 +126,7 @@ function showOfflineBanner(): void {
         bottom: '0',
         zIndex: '9999',
         padding: '10px 16px calc(10px + env(safe-area-inset-bottom))',
-        background: '#360407',
+        background: '#4A070B',
         color: '#fff',
         fontSize: '13px',
         textAlign: 'center',

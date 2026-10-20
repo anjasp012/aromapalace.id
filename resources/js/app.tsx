@@ -5,10 +5,9 @@ const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 void createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
-    progress: {
-        color: '#4B5563',
-    },
+    progress: false,
 });
 
-// No-op on the website; only runs inside the iOS/Android app shell.
+// No-op on the website; only runs inside the iOS/Android app shell
+// (status bar, splash, lifecycle, offline banner: see lib/native-app.ts).
 initNativeApp();

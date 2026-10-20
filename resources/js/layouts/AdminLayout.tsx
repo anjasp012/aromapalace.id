@@ -414,7 +414,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                 <main className="flex-1 p-4 lg:p-6 space-y-6">{children}</main>
 
                 {/* Footer */}
-                <footer className="border-t py-4 px-4 lg:px-6 text-center text-xs text-muted-foreground">
+                <footer className="hidden md:block border-t py-4 px-4 lg:px-6 text-center text-xs text-muted-foreground">
                     &copy; {new Date().getFullYear()} Aroma Palace &bull; Admin CMS
                 </footer>
             </div>

@@ -17,7 +17,7 @@ const config: CapacitorConfig = {
   webDir: 'mobile/www',
   // Lets the website detect the app via the User-Agent if ever needed.
   appendUserAgent: 'AromaPalaceApp',
-  backgroundColor: '#360407',
+  backgroundColor: '#4A070B',
   server: {
     url: serverUrl,
     // Shown by the WebView when the site cannot be loaded (no internet, server down).
@@ -32,8 +32,8 @@ const config: CapacitorConfig = {
     ],
   },
   ios: {
-    // Keep page content below the status bar / notch (the site has no safe-area padding).
-    contentInset: 'automatic',
+    // Safe areas (notch, home bar) are handled in CSS: html.native-app body in resources/css/app.css.
+    contentInset: 'never',
     scrollEnabled: true,
     limitsNavigationsToAppBoundDomains: false,
   },
@@ -45,15 +45,17 @@ const config: CapacitorConfig = {
       // Hidden from JS (resources/js/lib/native-app.ts) once the first page is painted.
       launchAutoHide: false,
       launchShowDuration: 8000,
-      backgroundColor: '#650506',
-      showSpinner: false,
+      backgroundColor: '#4A070B',
+      androidSplashResourceName: 'splash',
       androidScaleType: 'CENTER_CROP',
-      splashFullScreen: false,
-      splashImmersive: false,
+      splashFullScreen: true,
+      splashImmersive: true,
+      showSpinner: false,
     },
     StatusBar: {
+      // DARK = white text, for the burgundy bar.
       style: 'DARK',
-      backgroundColor: '#360407',
+      backgroundColor: '#4A070B',
       overlaysWebView: false,
     },
   },
