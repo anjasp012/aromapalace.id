@@ -3,29 +3,783 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title>Aroma Palace</title>
+    <title>Aroma Palace • Koleksi Parfum Mewah (Offline)</title>
     <style>
-        html, body { margin: 0; height: 100%; background: #4A070B; color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-        main { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; box-sizing: border-box; text-align: center; }
-        img { width: 112px; height: 112px; border-radius: 50%; margin-bottom: 24px; }
-        h1 { font-size: 20px; margin: 0 0 8px; }
-        p { font-size: 14px; line-height: 1.5; margin: 0 0 24px; color: rgba(255, 255, 255, .8); max-width: 320px; }
-        button { background: #E5A844; color: #4A070B; border: 0; border-radius: 999px; padding: 12px 28px; font-size: 15px; font-weight: 600; }
+        :root {
+            --primary: #4A070B;
+            --primary-dark: #360407;
+            --gold: #E5A844;
+            --gold-light: #F7E7CE;
+            --bg: #0D090A;
+            --card-bg: #1A1214;
+            --card-border: rgba(229, 168, 68, 0.15);
+            --text-main: #FDFBF7;
+            --text-muted: #A39698;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding-bottom: 90px;
+            overflow-x: hidden;
+        }
+
+        /* TOP STATUS & HEADER */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: linear-gradient(180deg, var(--primary-dark) 0%, rgba(54, 4, 7, 0.95) 100%);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(229, 168, 68, 0.2);
+            padding: env(safe-area-inset-top, 12px) 16px 12px;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .brand-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-logo {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 1.5px solid var(--gold);
+            object-fit: cover;
+            background: #fff;
+        }
+
+        .brand-title {
+            font-size: 17px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            color: var(--gold-light);
+            text-transform: uppercase;
+        }
+
+        .brand-subtitle {
+            font-size: 10px;
+            letter-spacing: 0.5px;
+            color: var(--gold);
+            text-transform: uppercase;
+        }
+
+        .offline-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(229, 168, 68, 0.15);
+            border: 1px solid rgba(229, 168, 68, 0.35);
+            padding: 5px 12px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--gold);
+        }
+
+        .offline-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--gold);
+            animation: pulse 2s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.85); }
+        }
+
+        /* OFFLINE NOTICE BAR */
+        .notice-bar {
+            background: rgba(74, 7, 11, 0.6);
+            border-bottom: 1px solid var(--card-border);
+            padding: 10px 16px;
+            text-align: center;
+            font-size: 12px;
+            color: var(--gold-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-retry {
+            background: var(--gold);
+            color: var(--primary-dark);
+            border: none;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-retry:active {
+            transform: scale(0.96);
+            opacity: 0.9;
+        }
+
+        /* CONTAINER */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        /* HERO CARD */
+        .hero {
+            position: relative;
+            background: linear-gradient(135deg, #360407 0%, #1A0204 100%);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 24px 20px;
+            margin-bottom: 24px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 260px;
+            height: 260px;
+            background: radial-gradient(circle, rgba(229, 168, 68, 0.25) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-tag {
+            display: inline-block;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--gold);
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .hero-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1.25;
+            margin-bottom: 8px;
+        }
+
+        .hero-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.5;
+            max-width: 480px;
+            margin-bottom: 16px;
+        }
+
+        /* SECTION TITLES */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 24px 0 14px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-badge {
+            font-size: 10px;
+            color: var(--gold);
+            background: rgba(229, 168, 68, 0.15);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        /* CATEGORIES SCROLLER */
+        .category-scroll {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            margin-bottom: 20px;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .category-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .cat-chip {
+            flex-shrink: 0;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .cat-chip.active {
+            background: var(--primary);
+            border-color: var(--gold);
+            color: #fff;
+        }
+
+        /* PRODUCT GRID */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        @media (min-width: 640px) {
+            .product-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 16px;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .product-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 20px;
+            }
+        }
+
+        .product-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+
+        .product-card:active {
+            transform: scale(0.98);
+        }
+
+        .card-img-wrap {
+            position: relative;
+            width: 100%;
+            padding-top: 100%;
+            background: #120B0D;
+            overflow: hidden;
+        }
+
+        .card-img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .card-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: rgba(54, 4, 7, 0.85);
+            border: 1px solid rgba(229, 168, 68, 0.4);
+            color: var(--gold-light);
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .card-body {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .card-brand {
+            font-size: 10px;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .card-name {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.3;
+            margin-bottom: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            min-height: 34px;
+        }
+
+        .card-volume {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .card-footer-box {
+            margin-top: auto;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-price {
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--gold);
+        }
+
+        .card-btn {
+            background: rgba(229, 168, 68, 0.15);
+            border: 1px solid rgba(229, 168, 68, 0.35);
+            color: var(--gold);
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 8px;
+        }
+
+        /* BOUTIQUE LOCATIONS */
+        .boutique-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .boutique-name {
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 2px;
+        }
+
+        .boutique-desc {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .boutique-hours {
+            font-size: 10px;
+            color: var(--gold);
+            font-weight: 600;
+        }
+
+        /* BOTTOM NAV */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(26, 18, 20, 0.98);
+            border-top: 1px solid rgba(229, 168, 68, 0.2);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 8px 16px calc(8px + env(safe-area-inset-bottom, 0px));
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 10px;
+            font-weight: 600;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px 12px;
+        }
+
+        .nav-item.active {
+            color: var(--gold);
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            stroke-width: 2;
+        }
+
+        /* TOAST */
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #360407;
+            border: 1px solid var(--gold);
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 200;
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+            white-space: nowrap;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
-    <main>
-        <img src="logo.png" alt="Aroma Palace">
-        <h1>Tidak ada koneksi internet</h1>
-        <p>Periksa Wi-Fi atau data seluler Anda, lalu coba lagi.<br><small>No internet connection. Please check your network and try again.</small></p>
-        <button type="button" id="retry">Coba Lagi</button>
+    <!-- HEADER -->
+    <header class="header">
+        <div class="header-content">
+            <div class="brand-box">
+                <img src="logo.png" alt="Aroma Palace" class="brand-logo" onerror="this.style.display='none'">
+                <div>
+                    <div class="brand-title">Aroma Palace</div>
+                    <div class="brand-subtitle">Dubai Haute Parfumerie</div>
+                </div>
+            </div>
+            <div class="offline-pill" id="btn-status">
+                <span class="offline-dot"></span>
+                <span>Offline</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- NOTICE BAR -->
+    <div class="notice-bar">
+        <span>Mode Offline • Menampilkan katalog tersimpan di perangkat Anda.</span>
+        <button type="button" class="btn-retry" id="btn-retry">Coba Hubungkan</button>
+    </div>
+
+    <!-- MAIN BODY -->
+    <main class="container">
+        <!-- HERO CARD -->
+        <section class="hero">
+            <span class="hero-tag">Aroma Palace Heritage</span>
+            <h1 class="hero-title">Mahakarya Wewangian Eksklusif Dubai</h1>
+            <p class="hero-desc">Koleksi wewangian mewah berkarakter kuat dari Timur Tengah. Anda tetap dapat menjelajahi katalog pilihan kami dalam mode offline.</p>
+            <button type="button" class="btn-retry" onclick="triggerToast('Menghubungkan ke server...'); retryConnection();">
+                Perbarui Data Online
+            </button>
+        </section>
+
+        <!-- CATEGORIES -->
+        <div class="section-header">
+            <h2 class="section-title">Koleksi Aroma <span class="section-badge">Pilihan</span></h2>
+        </div>
+        <div class="category-scroll" id="category-container">
+            <button class="cat-chip active" onclick="filterCategory('all', this)">Semua Koleksi</button>
+            <button class="cat-chip" onclick="filterCategory('oud', this)">Oud & Woods</button>
+            <button class="cat-chip" onclick="filterCategory('floral', this)">Floral & Rose</button>
+            <button class="cat-chip" onclick="filterCategory('amber', this)">Amber & Spices</button>
+            <button class="cat-chip" onclick="filterCategory('citrus', this)">Fresh Citrus</button>
+        </div>
+
+        <!-- PRODUCT GRID -->
+        <div class="section-header">
+            <h2 class="section-title">Katalog Wewangian Unggulan</h2>
+            <span class="section-badge" id="product-count-badge">6 Produk</span>
+        </div>
+        <div class="product-grid" id="product-grid">
+            <!-- Dynamic products rendered via JS -->
+        </div>
+
+        <!-- BOUTIQUE LOCATIONS -->
+        <div class="section-header" style="margin-top: 36px;">
+            <h2 class="section-title">Gerai Butik Resmi Aroma Palace</h2>
+        </div>
+        <div id="boutique-container">
+            <div class="boutique-card" onclick="triggerToast('Butik Grand Indonesia: Lantai 1 East Mall, Buka 10:00 - 22:00 WIB')">
+                <div>
+                    <div class="boutique-name">Aroma Palace Grand Indonesia</div>
+                    <div class="boutique-desc">Lantai 1 East Mall, MH Thamrin, Jakarta Pusat</div>
+                </div>
+                <div class="boutique-hours">10.00 - 22.00 WIB</div>
+            </div>
+            <div class="boutique-card" onclick="triggerToast('Butik Senayan City: Ground Floor Luxury Wing, Buka 10:00 - 22:00 WIB')">
+                <div>
+                    <div class="boutique-name">Aroma Palace Senayan City</div>
+                    <div class="boutique-desc">Ground Floor Luxury Wing, Jakarta Selatan</div>
+                </div>
+                <div class="boutique-hours">10.00 - 22.00 WIB</div>
+            </div>
+            <div class="boutique-card" onclick="triggerToast('Butik Tunjungan Plaza: TP 6 Lantai 2, Surabaya, Buka 10:00 - 22:00 WIB')">
+                <div>
+                    <div class="boutique-name">Aroma Palace Tunjungan Plaza 6</div>
+                    <div class="boutique-desc">Lantai 2 Luxury Gallery, Surabaya</div>
+                </div>
+                <div class="boutique-hours">10.00 - 22.00 WIB</div>
+            </div>
+        </div>
     </main>
+
+    <!-- BOTTOM NAV -->
+    <nav class="bottom-nav">
+        <button type="button" class="nav-item active" onclick="window.scrollTo({top:0, behavior:'smooth'})">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+            </svg>
+            <span>Beranda</span>
+        </button>
+        <button type="button" class="nav-item" onclick="triggerToast('Katalog lengkap membutuhkan koneksi internet. Mencoba menyambungkan...'); retryConnection();">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7"/>
+            </svg>
+            <span>Katalog</span>
+        </button>
+        <button type="button" class="nav-item" onclick="triggerToast('Wishlist tersimpan online. Menghubungkan...'); retryConnection();">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+            </svg>
+            <span>Wishlist</span>
+        </button>
+        <button type="button" class="nav-item" onclick="triggerToast('Akun & Riwayat pesanan memerlukan internet. Menghubungkan...'); retryConnection();">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+            <span>Akun</span>
+        </button>
+    </nav>
+
+    <!-- TOAST -->
+    <div id="toast" class="toast">Mode Offline Aktif</div>
+
     <script src="server-url.js"></script>
     <script>
-        var target = window.APP_SERVER_URL || (window.Capacitor && window.Capacitor.getServerUrl && window.Capacitor.getServerUrl()) || '/';
-        function retry() { window.location.replace(target); }
-        document.getElementById('retry').addEventListener('click', retry);
-        window.addEventListener('online', retry);
+        // TARGET SERVER URL
+        var targetServer = window.APP_SERVER_URL || (window.Capacitor && window.Capacitor.getServerUrl && window.Capacitor.getServerUrl()) || 'https://aromapalace.id';
+
+        function retryConnection() {
+            window.location.replace(targetServer);
+        }
+
+        document.getElementById('btn-retry').addEventListener('click', retryConnection);
+        document.getElementById('btn-status').addEventListener('click', retryConnection);
+        window.addEventListener('online', retryConnection);
+
+        // Periodically test network availability
+        setInterval(function() {
+            if (navigator.onLine) {
+                fetch(targetServer + '/favicon.ico', { method: 'HEAD', mode: 'no-cors' })
+                    .then(function() {
+                        retryConnection();
+                    })
+                    .catch(function() {});
+            }
+        }, 5000);
+
+        function triggerToast(text) {
+            var toast = document.getElementById('toast');
+            toast.textContent = text;
+            toast.classList.add('show');
+            setTimeout(function() {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // DEFAULT CURATED PERFUMES (Offline Fallback)
+        var defaultPerfumes = [
+            {
+                id: 1,
+                name: 'Royal Amber Oud Supreme',
+                brand: 'Aroma Palace Signature',
+                category: 'oud',
+                volume: '100ml Extrait',
+                price: 'Rp 1.850.000',
+                image: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=600&q=80',
+                badge: 'Mahakarya'
+            },
+            {
+                id: 2,
+                name: 'Velvet Rose & Damask Royale',
+                brand: 'Al-Haramain Private',
+                category: 'floral',
+                volume: '100ml Eau de Parfum',
+                price: 'Rp 1.450.000',
+                image: 'https://images.unsplash.com/photo-1547887537-6158d64c35b3?auto=format&fit=crop&w=600&q=80',
+                badge: 'Best Seller'
+            },
+            {
+                id: 3,
+                name: 'Imperial Leather & Saffron Night',
+                brand: 'Rasasi Royale',
+                category: 'oud',
+                volume: '80ml Extrait de Parfum',
+                price: 'Rp 1.650.000',
+                image: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=600&q=80',
+                badge: 'Rare Dubai'
+            },
+            {
+                id: 4,
+                name: 'Baccarat Gold & Amber Elixir',
+                brand: 'Maison Royale',
+                category: 'amber',
+                volume: '75ml Extrait',
+                price: 'Rp 2.150.000',
+                image: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?auto=format&fit=crop&w=600&q=80',
+                badge: 'Signature'
+            },
+            {
+                id: 5,
+                name: 'Dubai Desert Breeze & Bergamot',
+                brand: 'Lattafa Prestige',
+                category: 'citrus',
+                volume: '100ml Eau de Parfum',
+                price: 'Rp 1.250.000',
+                image: 'https://images.unsplash.com/photo-1595425970377-c9703cf48b6d?auto=format&fit=crop&w=600&q=80',
+                badge: 'Fresh Exclusive'
+            },
+            {
+                id: 6,
+                name: 'Sultan White Musk Al-Khas',
+                brand: 'Ajmal Fine Fragrance',
+                category: 'amber',
+                volume: '100ml Pure Oil',
+                price: 'Rp 1.750.000',
+                image: 'https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?auto=format&fit=crop&w=600&q=80',
+                badge: 'Oud Legend'
+            }
+        ];
+
+        var activeCatalog = defaultPerfumes;
+
+        // Try reading real cached products from localStorage
+        try {
+            var cached = localStorage.getItem('aromapalace_cached_home');
+            if (cached) {
+                var parsed = JSON.parse(cached);
+                var items = parsed.popularProducts || parsed.recommendedProducts || [];
+                if (items && items.length > 0) {
+                    activeCatalog = items.map(function(item) {
+                        return {
+                            id: item.id,
+                            name: item.name,
+                            brand: item.brand || 'Aroma Palace',
+                            category: (item.category || item.family || 'oud').toLowerCase(),
+                            volume: item.volume || '100ml',
+                            price: item.price || (item.raw_price ? 'Rp ' + Number(item.raw_price).toLocaleString('id-ID') : 'Rp 1.450.000'),
+                            image: item.image || defaultPerfumes[0].image,
+                            badge: item.discountBadge || item.tag || 'Tersimpan'
+                        };
+                    });
+                }
+            }
+        } catch (e) {
+            console.warn('Failed to parse offline cache:', e);
+        }
+
+        function renderProducts(category) {
+            var grid = document.getElementById('product-grid');
+            grid.innerHTML = '';
+
+            var filtered = activeCatalog;
+            if (category && category !== 'all') {
+                filtered = activeCatalog.filter(function(p) {
+                    var c = (p.category || '').toLowerCase();
+                    return c.indexOf(category.toLowerCase()) !== -1;
+                });
+            }
+
+            document.getElementById('product-count-badge').textContent = filtered.length + ' Produk';
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding: 40px; color: var(--text-muted); font-size: 13px;">Tidak ada wewangian dalam kategori ini.</div>';
+                return;
+            }
+
+            filtered.forEach(function(item) {
+                var card = document.createElement('div');
+                card.className = 'product-card';
+                card.onclick = function() {
+                    triggerToast(item.name + ' (' + item.price + '). Sambungkan internet untuk pemesanan langsung.');
+                };
+
+                card.innerHTML =
+                    '<div class="card-img-wrap">' +
+                        '<img src="' + item.image + '" alt="' + item.name + '" class="card-img" onerror="this.src=\'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=600&q=80\'">' +
+                        '<span class="card-badge">' + (item.badge || 'Dubai Exclusive') + '</span>' +
+                    '</div>' +
+                    '<div class="card-body">' +
+                        '<div class="card-brand">' + item.brand + '</div>' +
+                        '<div class="card-name">' + item.name + '</div>' +
+                        '<div class="card-volume">' + item.volume + '</div>' +
+                        '<div class="card-footer-box">' +
+                            '<div class="card-price">' + item.price + '</div>' +
+                            '<span class="card-btn">Lihat</span>' +
+                        '</div>' +
+                    '</div>';
+
+                grid.appendChild(card);
+            });
+        }
+
+        function filterCategory(cat, btn) {
+            document.querySelectorAll('.cat-chip').forEach(function(el) {
+                el.classList.remove('active');
+            });
+            btn.classList.add('active');
+            renderProducts(cat);
+        }
+
+        // Initial render
+        renderProducts('all');
     </script>
 </body>
 </html>
