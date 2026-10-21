@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Services\CatalogService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class OrderController extends Controller
 {
@@ -268,5 +270,108 @@ class OrderController extends Controller
                 'email' => $user->email,
             ],
         ]);
+    }
+
+    /**
+     * Generate and stream/download native PDF invoice.
+     */
+    public function downloadInvoice(Request $request, string $order): SymfonyResponse
+    {
+        $user = $request->user();
+
+        $orderQuery = Order::where(function ($q) use ($order) {
+            $q->where('order_number', $order)
+                ->orWhere('id', is_numeric($order) ? (int) $order : 0);
+        });
+
+        if (! $user || ! $user->isAdmin()) {
+            if (! $user) {
+                abort(401, 'Silakan masuk terlebih dahulu.');
+            }
+            $orderQuery->where('user_id', $user->id);
+        }
+
+        $orderModel = $orderQuery
+            ->with(['items', 'voucher', 'store'])
+            ->firstOrFail();
+
+        $items = $orderModel->items->map(function (OrderItem $item) {
+            return [
+                'id' => $item->id,
+                'product_name' => $item->product_name,
+                'variant_name' => $item->variant_name,
+                'volume' => $item->volume,
+                'price' => (int) $item->price,
+                'price_formatted' => 'Rp '.number_format($item->price, 0, ',', '.'),
+                'quantity' => (int) $item->quantity,
+                'total_price' => (int) $item->total_price,
+                'total_price_formatted' => 'Rp '.number_format($item->total_price, 0, ',', '.'),
+            ];
+        });
+
+        $dateFormatted = $orderModel->created_at ? $orderModel->created_at->format('d F Y, H:i').' WIB' : now()->format('d F Y, H:i').' WIB';
+        $invDateCode = $orderModel->created_at ? $orderModel->created_at->format('Ymd') : date('Ymd');
+        $invoiceNumber = 'INV/'.$invDateCode.'/AP/'.str_pad((string) $orderModel->id, 8, '0', STR_PAD_LEFT);
+
+        $orderStatus = $orderModel->status ?: match ($orderModel->payment_status) {
+            'paid' => 'diproses',
+            'cancelled' => 'dibatalkan',
+            default => 'menunggu_pembayaran',
+        };
+
+        $isPaid = $orderModel->payment_status === 'paid'
+            || in_array($orderStatus, ['diproses', 'dikirim', 'selesai']);
+
+        $pdfData = [
+            'order' => [
+                'id' => $orderModel->id,
+                'order_number' => $orderModel->order_number,
+                'invoice_number' => $invoiceNumber,
+                'created_at' => $dateFormatted,
+                'delivery_type' => $orderModel->delivery_type,
+                'recipient_name' => $orderModel->recipient_name,
+                'recipient_phone' => $orderModel->recipient_phone,
+                'shipping_address' => $orderModel->shipping_address,
+                'city' => $orderModel->city,
+                'postal_code' => $orderModel->postal_code,
+                'courier' => $orderModel->courier,
+                'shipping_cost' => (int) $orderModel->shipping_cost,
+                'shipping_cost_formatted' => $orderModel->shipping_cost > 0 ? 'Rp '.number_format($orderModel->shipping_cost, 0, ',', '.') : 'Rp 0',
+                'payment_method' => $orderModel->payment_method,
+                'payment_channel' => $orderModel->payment_channel,
+                'payment_status' => $orderModel->payment_status,
+                'order_status' => $orderStatus,
+                'is_paid' => $isPaid,
+                'subtotal' => (int) $orderModel->subtotal,
+                'subtotal_formatted' => 'Rp '.number_format($orderModel->subtotal, 0, ',', '.'),
+                'discount_amount' => (int) $orderModel->discount_amount,
+                'discount_amount_formatted' => 'Rp '.number_format($orderModel->discount_amount, 0, ',', '.'),
+                'voucher_code' => $orderModel->voucher_code,
+                'total_amount' => (int) $orderModel->total_amount,
+                'total_amount_formatted' => 'Rp '.number_format($orderModel->total_amount, 0, ',', '.'),
+                'items_count' => $items->sum('quantity'),
+                'items' => $items,
+            ],
+            'seller' => [
+                'name' => 'Aroma Palace Official',
+                'store_name' => $orderModel->store ? $orderModel->store->name : 'Aroma Palace Boutique',
+            ],
+            'buyer' => [
+                'name' => $orderModel->recipient_name ?: $user->name,
+                'email' => $user->email,
+            ],
+        ];
+
+        $fileName = 'Invoice-'.$orderModel->order_number.'.pdf';
+
+        $pdf = Pdf::loadView('invoices.pdf', $pdfData)
+            ->setPaper('a4', 'portrait')
+            ->setOption([
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => true,
+                'defaultFont' => 'sans-serif',
+            ]);
+
+        return $pdf->download($fileName);
     }
 }

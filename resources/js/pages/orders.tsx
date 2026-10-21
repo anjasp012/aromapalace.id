@@ -26,6 +26,7 @@ import {
     FileText,
     Printer,
     Loader2,
+    Download,
 } from 'lucide-react';
 
 interface OrderItemData {
@@ -208,6 +209,47 @@ export default function OrdersPage({
         }
         setCopiedInvoice(true);
         setTimeout(() => setCopiedInvoice(false), 2000);
+    };
+
+    const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false);
+
+    const handleDownloadInvoice = async (orderNumber: string) => {
+        setIsDownloadingInvoice(true);
+        try {
+            const downloadUrl = `/orders/${orderNumber}/invoice/download`;
+            const response = await fetch(downloadUrl);
+            if (response.ok) {
+                const blob = await response.blob();
+                const fileName = `Invoice-${orderNumber}.pdf`;
+                const file = new File([blob], fileName, { type: 'application/pdf' });
+
+                // iOS Native Share Sheet bawaan iPhone (UIActivityViewController)
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        files: [file],
+                        title: `Invoice #${orderNumber}`,
+                    });
+                    setIsDownloadingInvoice(false);
+                    return;
+                }
+
+                // Fallback download file langsung
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                setIsDownloadingInvoice(false);
+                return;
+            }
+        } catch (err) {
+            console.error('Download invoice failed:', err);
+        }
+        setIsDownloadingInvoice(false);
+        window.location.href = `/orders/${orderNumber}/invoice/download`;
     };
 
     const renderTransactionStatusBadge = (status: string, label: string) => {
@@ -1106,40 +1148,21 @@ export default function OrdersPage({
                             </div>
 
                             <div className="flex items-center gap-2">
-                                {/* Print / Cetak Button */}
+                                {/* Download Button (Triggers iOS Native Share Sheet or PDF download) */}
                                 <button
                                     type="button"
-                                    onClick={() => {
-                                        const isIOS = typeof navigator !== 'undefined' && (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
-                                        if (isIOS) {
-                                            // iOS WebKit memblokir print dari iframe. Buka langsung di tab baru/Safari agar AirPrint & Simpan PDF aktif
-                                            window.open(`/orders/${invoiceModalOrder.order_number}/invoice`, '_blank');
-                                            return;
-                                        }
-                                        try {
-                                            iframeRef.current?.contentWindow?.focus();
-                                            iframeRef.current?.contentWindow?.print();
-                                        } catch {
-                                            window.open(`/orders/${invoiceModalOrder.order_number}/invoice`, '_blank');
-                                        }
-                                    }}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#4A070B] hover:bg-[#360407] text-white text-xs font-semibold shadow-xs transition active:scale-95 cursor-pointer"
-                                    title="Cetak atau Simpan PDF"
+                                    onClick={() => handleDownloadInvoice(invoiceModalOrder.order_number)}
+                                    disabled={isDownloadingInvoice}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#4A070B] hover:bg-[#360407] text-white text-xs font-semibold shadow-xs transition active:scale-95 cursor-pointer disabled:opacity-70"
+                                    title="Download Invoice (PDF)"
                                 >
-                                    <Printer className="w-3.5 h-3.5" />
-                                    <span className="hidden sm:inline">Cetak / PDF</span>
+                                    {isDownloadingInvoice ? (
+                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    ) : (
+                                        <Download className="w-3.5 h-3.5" />
+                                    )}
+                                    <span>Download</span>
                                 </button>
-
-                                {/* Open in New Tab Button */}
-                                <a
-                                    href={`/orders/${invoiceModalOrder.order_number}/invoice`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition cursor-pointer"
-                                    title="Buka di Tab Baru"
-                                >
-                                    <ExternalLink className="w-4 h-4" />
-                                </a>
 
                                 {/* Close Button */}
                                 <button
