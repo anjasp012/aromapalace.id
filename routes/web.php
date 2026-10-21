@@ -11,6 +11,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PageController;
 use App\Http\Controllers\PakasirWebhookController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
@@ -32,6 +33,13 @@ Route::post('/consultation', [AboutController::class, 'consultation'])->name('co
 Route::get('/membership', [MembershipController::class, 'index'])->name('membership.index');
 Route::get('/loyalty', fn () => redirect()->route('membership.index'));
 Route::get('/orders', fn () => redirect()->route('account.orders'));
+
+Route::get('/privacy-policy', [PageController::class, 'privacyPolicy'])->name('privacy.policy');
+Route::get('/privacy', fn () => redirect()->route('privacy.policy'));
+
+Route::get('/support', [PageController::class, 'support'])->name('support');
+Route::get('/contact', fn () => redirect()->route('support'));
+Route::post('/support/inquiry', [PageController::class, 'supportInquiry'])->name('support.inquiry');
 
 Route::get('/api/search/suggestions', [SearchController::class, 'suggestions'])->name('search.suggestions');
 Route::get('/search-history', [SearchController::class, 'index'])->name('search.history.index');

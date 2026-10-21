@@ -57,8 +57,8 @@ const config: CapacitorConfig = {
     StatusBar: {
       // DARK = white text, for the burgundy bar.
       style: 'DARK',
-      backgroundColor: '#4A070B',
-      overlaysWebView: false,
+      backgroundColor: '#360407',
+      overlaysWebView: true,
     },
   },
 };

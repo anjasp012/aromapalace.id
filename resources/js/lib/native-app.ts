@@ -41,11 +41,11 @@ export function initNativeApp(): void {
 }
 
 function setupStatusBar(): void {
-    // Burgundy bar with white text.
+    // Burgundy bar with white text (#360407 matches the luxury top announcement bar).
     StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
-    StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
+    StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {});
     if (Capacitor.getPlatform() === 'android') {
-        StatusBar.setBackgroundColor({ color: '#4A070B' }).catch(() => {});
+        StatusBar.setBackgroundColor({ color: '#360407' }).catch(() => {});
     }
 }
 

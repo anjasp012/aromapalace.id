@@ -245,12 +245,6 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
             icon: <BookOpen className="w-5 h-5" />,
         },
         {
-            label: isEn ? 'Catalog' : 'Katalog',
-            href: '/products',
-            active: url.startsWith('/products'),
-            icon: <Compass className="w-5 h-5" />,
-        },
-        {
             label: isEn ? 'Wishlist' : 'Favorit',
             href: user ? '/wishlist' : '/login?notice=' + encodeURIComponent(isEn ? 'Please sign in to view your wishlist.' : 'Silakan masuk untuk melihat daftar favorit Anda.'),
             active: url.startsWith('/wishlist'),
@@ -258,9 +252,15 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
             icon: <Heart className="w-5 h-5" />,
         },
         {
+            label: isEn ? 'Transactions' : 'Transaksi',
+            href: user ? '/account/orders' : '/login?notice=' + encodeURIComponent(isEn ? 'Please sign in to view your orders.' : 'Silakan masuk untuk melihat transaksi Anda.'),
+            active: url.startsWith('/account/orders') || url.startsWith('/orders') || url.startsWith('/payment'),
+            icon: <Package className="w-5 h-5" />,
+        },
+        {
             label: user ? (isAdmin ? 'Admin' : (isEn ? 'Account' : 'Akun')) : (isEn ? 'Account' : 'Akun'),
             href: user ? (isAdmin ? '/admin/dashboard' : '/account') : '/login',
-            active: url.startsWith('/account') || url.startsWith('/orders') || url.startsWith('/membership') || url.startsWith('/loyalty') || url.startsWith('/login') || url.startsWith('/register') || (isAdmin && url.startsWith('/admin')),
+            active: (url === '/account' || url.startsWith('/membership') || url.startsWith('/loyalty') || url.startsWith('/login') || url.startsWith('/register') || (isAdmin && url.startsWith('/admin'))) && !url.startsWith('/account/orders') && !url.startsWith('/orders') && !url.startsWith('/payment'),
             icon: isAdmin ? <LayoutDashboard className="w-5 h-5" /> : <User className="w-5 h-5" />,
         },
     ], [url, user, isAdmin, wishlistCount, isEn]);
@@ -579,9 +579,11 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
 
     return (
         <div className="bg-background text-foreground flex flex-col min-h-screen" suppressHydrationWarning>
-            {/* Top Announcement Bar */}
-            <div className="bg-[#360407] text-white text-xs py-2 relative z-40" suppressHydrationWarning>
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+            {/* Sticky Navigation Wrapper with Status Bar Safe Area */}
+            <div className="sticky top-0 z-40 shadow-xs">
+                {/* Top Announcement Bar */}
+                <div className="bg-[#360407] text-white text-xs pt-[env(safe-area-inset-top,0px)]" suppressHydrationWarning>
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between py-1.5 sm:py-2">
                     <button
                         type="button"
                         onClick={() => handleOpenVoucherModal(activeHeaderVoucher)}
@@ -692,7 +694,7 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
             </div>
 
             {/* Main Navigation Bar */}
-            <header className="bg-background border-b border-[#4A070B]/20 sticky top-0 z-40">
+            <header className="bg-background border-b border-[#4A070B]/20">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     {/* Upper Row: Search | Centered Logo | User Actions */}
                     <div className="relative flex items-center justify-between py-2 sm:py-4 min-h-[60px] sm:min-h-[84px]">
@@ -1083,6 +1085,7 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                     </nav>
                 </div>
             </header>
+        </div>
 
             {/* Main Content Area */}
             <main className={`flex-1 ${shouldShowBottomNav ? 'pb-20 md:pb-0' : ''}`}>
@@ -1208,13 +1211,20 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                         </button>
                                     </li>
                                     <li>
-                                        <button
-                                            type="button"
-                                            onClick={() => window.openInfoModal?.('privacy')}
-                                            className="text-white/70 hover:text-white transition text-left cursor-pointer"
+                                        <Link
+                                            href="/support"
+                                            className="text-white/70 hover:text-white transition text-left block"
+                                        >
+                                            {isEn ? 'Customer Support & Help' : 'Pusat Bantuan & Layanan'}
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link
+                                            href="/privacy-policy"
+                                            className="text-white/70 hover:text-white transition text-left block"
                                         >
                                             {isEn ? 'Privacy Policy' : 'Kebijakan Privasi'}
-                                        </button>
+                                        </Link>
                                     </li>
                                     <li>
                                         <button

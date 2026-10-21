@@ -255,7 +255,7 @@ export default function OrdersPage({
                             <span>Ukuran:</span>
                             <strong className="text-foreground">{item.volume}</strong>
                             {item.variant_name && (
-                                <span className="text-[#4A070B] dark:text-[#E8D0BA] font-medium ml-0.5">
+                                <span className="hidden sm:inline text-[#4A070B] dark:text-[#E8D0BA] font-medium ml-0.5">
                                     ({item.variant_name})
                                 </span>
                             )}
@@ -482,7 +482,8 @@ export default function OrdersPage({
                             return (
                                 <div
                                     key={order.id}
-                                    className="rounded-lg border border-border/80 bg-card/60 backdrop-blur-xs p-5 sm:p-6 shadow-none space-y-4 transition-colors"
+                                    onClick={() => setSelectedOrder(order)}
+                                    className="rounded-lg border border-border/80 bg-card/60 backdrop-blur-xs p-5 sm:p-6 shadow-none space-y-4 transition-colors cursor-pointer sm:cursor-default"
                                 >
                                     {/* Order Card Header */}
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-border/80 text-xs">
@@ -490,10 +491,10 @@ export default function OrdersPage({
                                             <span className="font-extrabold text-foreground tracking-wide font-mono">
                                                 #{order.order_number}
                                             </span>
-                                            <span className="text-muted-foreground">•</span>
-                                            <span className="text-muted-foreground">{order.created_at}</span>
-                                            <span className="text-muted-foreground">•</span>
-                                            <span className="text-muted-foreground">{order.payment_channel}</span>
+                                            <span className="hidden sm:inline text-muted-foreground">•</span>
+                                            <span className="hidden sm:inline text-muted-foreground">{order.created_at}</span>
+                                            <span className="hidden sm:inline text-muted-foreground">•</span>
+                                            <span className="hidden sm:inline text-muted-foreground">{order.payment_channel}</span>
                                         </div>
 
                                         <div>
@@ -516,7 +517,10 @@ export default function OrdersPage({
                                                 <div className="pt-0.5">
                                                     <button
                                                         type="button"
-                                                        onClick={() => toggleOrderItems(order.id)}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            toggleOrderItems(order.id);
+                                                        }}
                                                         className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#4A070B] dark:text-[#E8D0BA] hover:opacity-85 transition-opacity cursor-pointer py-1 px-2.5 rounded-md bg-muted/40 hover:bg-muted/70 border border-border/80"
                                                     >
                                                         {isExpanded ? (
@@ -547,8 +551,8 @@ export default function OrdersPage({
                                             </div>
                                         </div>
 
-                                        {/* Action buttons: Detail Pesanan on the left, Selesaikan Pembayaran on the right */}
-                                        <div className="flex items-center gap-2 flex-wrap">
+                                        {/* Action buttons: Detail Pesanan on the left, Selesaikan Pembayaran on the right (hidden on mobile, visible on desktop) */}
+                                        <div className="hidden sm:flex items-center gap-2 flex-wrap" onClick={(e) => e.stopPropagation()}>
                                             <Button
                                                 type="button"
                                                 variant="outline"

@@ -91,7 +91,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                 }`}
             >
                 {/* Brand Header */}
-                <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6 justify-between">
+                <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6 justify-between pt-[env(safe-area-inset-top,0px)] box-content">
                     <Link href="/admin/dashboard" className="flex items-center gap-2.5 font-semibold text-foreground">
                         <img
                             src="/images/logo.png"
@@ -345,7 +345,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
             {/* Main Content Area */}
             <div className="flex flex-col min-w-0 min-h-screen">
                 {/* Header Topbar */}
-                <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6 sticky top-0 z-30 justify-between">
+                <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6 sticky top-0 z-30 justify-between pt-[env(safe-area-inset-top,0px)] box-content">
                     <div className="flex items-center gap-3">
                         <Button
                             type="button"

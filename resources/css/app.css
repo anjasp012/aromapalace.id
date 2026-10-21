@@ -183,10 +183,15 @@ input[type=number] {
    Applied when running inside Capacitor / PWA
    ======================== */
 
-/* Respect device safe area (notch, home bar) & prevent bounce/pull-to-refresh */
+/* Safe area CSS variables */
+:root {
+    --safe-area-top: env(safe-area-inset-top, 0px);
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Respect device safe area & prevent pull-to-refresh on native app */
 html.native-app body {
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
     overscroll-behavior-y: none;
     -webkit-overscroll-behavior-y: none;
 }
