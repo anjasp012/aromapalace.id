@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import { Card } from '@/components/ui/card';
 import {
     ShieldCheck,
     Lock,
@@ -11,27 +10,16 @@ import {
     Database,
     Trash2,
     Eye,
-    Bell,
-    Mail,
-    Phone,
-    HelpCircle,
     ArrowRight,
-    CheckCircle2,
-    FileText,
-    ExternalLink,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 
 interface PrivacyPolicyProps {
     last_updated?: string;
-    support_email?: string;
-    dpo_contact?: string;
 }
 
 export default function PrivacyPolicyPage({
     last_updated = '2026-04-01',
-    support_email = 'privacy@aromapalace.id',
-    dpo_contact = '+62 812-3456-7890',
 }: PrivacyPolicyProps) {
     const { isEn } = useTranslation();
     const [activeSection, setActiveSection] = useState<string>('overview');
@@ -51,7 +39,7 @@ export default function PrivacyPolicyPage({
                     </p>
                     <ul className="list-disc pl-5 space-y-1.5">
                         <li>
-                            <strong className="text-foreground">Personal Identification:</strong> Full name, email address, WhatsApp/mobile telephone number, and delivery street addresses.
+                            <strong className="text-foreground">Personal Identification:</strong> Full name, delivery street addresses, and telephone number.
                         </li>
                         <li>
                             <strong className="text-foreground">Account Credentials:</strong> Hashed passwords, Royale Club membership tier status, collected reward points, and consultation preferences.
@@ -71,7 +59,7 @@ export default function PrivacyPolicyPage({
                     </p>
                     <ul className="list-disc pl-5 space-y-1.5">
                         <li>
-                            <strong className="text-foreground">Identitas Pribadi:</strong> Nama lengkap, alamat surel (email), nomor telepon/WhatsApp, dan alamat fisik pengiriman pesanan.
+                            <strong className="text-foreground">Identitas Pribadi:</strong> Nama lengkap, alamat fisik pengiriman pesanan, dan nomor telepon.
                         </li>
                         <li>
                             <strong className="text-foreground">Data Akun &amp; Keanggotaan:</strong> Kata sandi terenkripsi (hash), tier keanggotaan Royale Club, saldo poin wewangian, dan riwayat konsultasi olfaktori.
@@ -220,14 +208,14 @@ export default function PrivacyPolicyPage({
                             . Confirming deletion immediately wipes your profile, wishlist, address records, and push tokens.
                         </li>
                         <li>
-                            <strong className="text-foreground">Data Export &amp; Rectification:</strong> You may request a machine-readable archive of your order records or update outdated details via your account portal or by emailing our Data Protection Officer.
+                            <strong className="text-foreground">Data Export &amp; Rectification:</strong> You may request a machine-readable archive of your order records or update outdated details via your account portal or through our Customer Support Hub.
                         </li>
                         <li>
-                            <strong className="text-foreground">Assisted Deletion via Email:</strong> Alternatively, you can email{' '}
-                            <a href={`mailto:${support_email}`} className="text-[#4A070B] dark:text-[#E8D0BA] underline font-semibold">
-                                {support_email}
-                            </a>{' '}
-                            with subject <em>&ldquo;Account Deletion Request&rdquo;</em> from your registered email. Our compliance team will process the erasure within 48 business hours.
+                            <strong className="text-foreground">Assisted Support:</strong> Alternatively, you can request account deletion assistance through our{' '}
+                            <Link href="/support" className="text-[#4A070B] dark:text-[#E8D0BA] underline font-semibold">
+                                Customer Support Hub
+                            </Link>
+                            . Our compliance team will process the erasure within 48 business hours.
                         </li>
                     </ul>
                 </div>
@@ -245,14 +233,14 @@ export default function PrivacyPolicyPage({
                             . Konfirmasi penghapusan akan segera menghapus data profil, wishlist, alamat, dan token notifikasi Anda secara permanen.
                         </li>
                         <li>
-                            <strong className="text-foreground">Koreksi &amp; Hak Akses:</strong> Anda berhak meninjau, mengubah, atau memperbarui informasi akun kapan saja melalui dasbor profil.
+                            <strong className="text-foreground">Koreksi &amp; Hak Akses:</strong> Anda berhak meninjau, mengubah, atau memperbarui informasi akun kapan saja melalui dasbor profil atau Pusat Bantuan.
                         </li>
                         <li>
-                            <strong className="text-foreground">Bantuan Penghapusan Melalui Email:</strong> Anda juga dapat mengirimkan permohonan melalui email ke{' '}
-                            <a href={`mailto:${support_email}`} className="text-[#4A070B] dark:text-[#E8D0BA] underline font-semibold">
-                                {support_email}
-                            </a>{' '}
-                            dengan judul <em>&ldquo;Permohonan Penghapusan Akun&rdquo;</em> menggunakan alamat email yang terdaftar. Tim kami akan menyelesaikannya dalam waktu maksimal 2 hari kerja.
+                            <strong className="text-foreground">Bantuan Penghapusan Melalui Pusat Dukungan:</strong> Anda juga dapat mengajukan permohonan bantuan melalui{' '}
+                            <Link href="/support" className="text-[#4A070B] dark:text-[#E8D0BA] underline font-semibold">
+                                Pusat Bantuan &amp; Dukungan
+                            </Link>
+                            . Tim kami akan menyelesaikannya dalam waktu maksimal 2 hari kerja.
                         </li>
                     </ul>
                 </div>
@@ -281,16 +269,16 @@ export default function PrivacyPolicyPage({
         },
         {
             id: 'contact',
-            icon: <Mail className="w-4 h-4 text-[#E5A844]" />,
-            title: isEn ? '7. Data Protection Officer (DPO) Contact' : '7. Kontak Petugas Perlindungan Data',
+            icon: <ShieldCheck className="w-4 h-4 text-[#E5A844]" />,
+            title: isEn ? '7. Data Protection Office Contact' : '7. Kontak Kantor Perlindungan Data',
             summary: isEn
-                ? 'Reach out to our dedicated privacy concierge for any inquiry.'
-                : 'Hubungi petugas privasi kami untuk setiap pertanyaan atau penegakan hak data Anda.',
+                ? 'Information regarding our dedicated privacy concierge and office location.'
+                : 'Informasi mengenai kantor perlindungan data dan pusat bantuan privasi kami.',
             content: (
                 <div className="space-y-3 text-xs text-muted-foreground leading-relaxed">
                     <p>
                         {isEn
-                            ? 'If you have questions, inquiries, or complaints regarding this Privacy Policy or your data protection rights, please contact our Data Protection Officer:'
+                            ? 'If you have questions, inquiries, or complaints regarding this Privacy Policy or your data protection rights, please visit our office or contact our Customer Support Hub:'
                             : 'Apabila Anda memiliki pertanyaan, klarifikasi, atau keluhan seputar Kebijakan Privasi ini atau hak data Anda, silakan hubungi tim kami:'}
                     </p>
                     <div className="p-4 rounded-xl border border-border/80 bg-muted/30 space-y-2">
@@ -299,9 +287,13 @@ export default function PrivacyPolicyPage({
                             <span>Aroma Palace Legal &amp; Data Protection Office</span>
                         </div>
                         <div className="text-xs text-muted-foreground space-y-1">
-                            <div><strong>Email:</strong> <a href={`mailto:${support_email}`} className="text-[#4A070B] dark:text-[#E8D0BA] underline">{support_email}</a></div>
-                            <div><strong>WhatsApp Concierge:</strong> <a href={`https://wa.me/${dpo_contact.replace(/[^0-9]/g, '')}`} className="text-[#4A070B] dark:text-[#E8D0BA] underline">{dpo_contact}</a></div>
-                            <div><strong>Address:</strong> Menara Aroma Lt. 18, Kawasan Mega Kuningan, Jakarta Selatan 12950, Indonesia</div>
+                            <div><strong>{isEn ? 'Address:' : 'Alamat:'}</strong> Menara Aroma Lt. 18, Kawasan Mega Kuningan, Jakarta Selatan 12950, Indonesia</div>
+                            <div>
+                                <strong>{isEn ? 'Support Hub:' : 'Pusat Bantuan:'}</strong>{' '}
+                                <Link href="/support" className="text-[#4A070B] dark:text-[#E8D0BA] underline font-semibold">
+                                    {isEn ? 'Visit Customer Support Hub' : 'Kunjungi Pusat Bantuan & Dukungan'}
+                                </Link>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -397,25 +389,15 @@ export default function PrivacyPolicyPage({
                     </h3>
                     <p className="text-xs text-muted-foreground max-w-lg mx-auto">
                         {isEn
-                            ? 'Our dedicated Customer Concierge and Data Protection Officers are at your service 24/7.'
+                            ? 'Our dedicated Customer Concierge and Data Protection Officers are at your service.'
                             : 'Tim Customer Concierge dan Petugas Perlindungan Data kami siap melayani Anda.'}
                     </p>
-                    <div className="pt-2 flex items-center justify-center gap-3 flex-wrap">
+                    <div className="pt-2 flex items-center justify-center gap-3">
                         <Link href="/support">
-                            <Button variant="outline" size="sm" className="text-xs font-semibold h-9 px-4">
+                            <Button className="bg-[#4A070B] hover:bg-[#360407] text-white text-xs font-semibold h-9 px-6 cursor-pointer">
                                 {isEn ? 'Customer Support Hub' : 'Pusat Bantuan & Dukungan'}
                             </Button>
                         </Link>
-                        <a
-                            href={`https://wa.me/${dpo_contact.replace(/[^0-9]/g, '')}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            <Button size="sm" className="bg-[#4A070B] hover:bg-[#360407] text-white text-xs font-semibold h-9 px-4">
-                                <span>WhatsApp VIP Concierge</span>
-                                <ExternalLink className="w-3.5 h-3.5 ml-1.5" />
-                            </Button>
-                        </a>
                     </div>
                 </div>
             </div>
