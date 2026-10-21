@@ -378,7 +378,7 @@ export default function Home({
                             </Button>
                         </div>
 
-                        <div className="flex sm:grid overflow-x-auto sm:overflow-visible gap-2 sm:gap-2.5 lg:gap-3 pb-2 sm:pb-0 scrollbar-none snap-x snap-mandatory sm:grid-cols-4 lg:grid-cols-9">
+                        <div className="-mx-4 px-4 sm:mx-0 sm:px-0 flex sm:grid overflow-x-auto sm:overflow-visible gap-2 sm:gap-2.5 lg:gap-3 pb-2 sm:pb-0 scrollbar-none snap-x snap-mandatory sm:grid-cols-4 lg:grid-cols-9">
                             {categoriesList.map((cat, idx) => (
                                 <CategoryCard
                                     key={cat.slug}
@@ -403,7 +403,7 @@ export default function Home({
                             </Button>
                         </div>
 
-                        <div className="flex sm:grid overflow-x-auto sm:overflow-visible gap-3 sm:gap-5 pb-3 sm:pb-0 snap-x snap-mandatory scrollbar-none sm:grid-cols-3 lg:grid-cols-5">
+                        <div className="-mx-4 px-4 sm:mx-0 sm:px-0 flex sm:grid overflow-x-auto sm:overflow-visible gap-3 sm:gap-5 pb-3 sm:pb-0 snap-x snap-mandatory scrollbar-none sm:grid-cols-3 lg:grid-cols-5">
                             {popularProducts.map((p) => (
                                 <ProductCard
                                     key={p.id}
@@ -477,7 +477,7 @@ export default function Home({
                                     </svg>
                                 </Button>
 
-                                <div ref={voucherRef} className="overflow-hidden pb-3">
+                                <div ref={voucherRef} className="-mx-4 px-4 sm:mx-0 sm:px-0 overflow-hidden pb-3">
                                     <div className="flex gap-3 sm:gap-4">
                                         {activeVouchers.map((vouch, idx) => (
                                             <div
@@ -525,7 +525,7 @@ export default function Home({
                             </Button>
                         </div>
 
-                        <div className="flex sm:grid overflow-x-auto sm:overflow-visible gap-3 sm:gap-5 pb-3 sm:pb-0 snap-x snap-mandatory scrollbar-none sm:grid-cols-3 lg:grid-cols-5">
+                        <div className="-mx-4 px-4 sm:mx-0 sm:px-0 flex sm:grid overflow-x-auto sm:overflow-visible gap-3 sm:gap-5 pb-3 sm:pb-0 snap-x snap-mandatory scrollbar-none sm:grid-cols-3 lg:grid-cols-5">
                             {recommendedProducts.map((p) => (
                                 <ProductCard
                                     key={p.id}
@@ -577,7 +577,7 @@ export default function Home({
                                     </svg>
                                 </Button>
 
-                                <div ref={discountRef} className="overflow-hidden pb-3">
+                                <div ref={discountRef} className="-mx-4 px-4 sm:mx-0 sm:px-0 overflow-hidden pb-3">
                                     <div className="flex gap-4">
                                         {discountedProducts.map((p, idx) => (
                                             <div
@@ -628,7 +628,7 @@ export default function Home({
                             </Button>
                         </div>
 
-                        <div className="flex sm:grid overflow-x-auto sm:overflow-visible gap-3 sm:gap-4 pb-2 sm:pb-0 scrollbar-none snap-x snap-mandatory sm:grid-cols-3 lg:grid-cols-6">
+                        <div className="-mx-4 px-4 sm:mx-0 sm:px-0 flex sm:grid overflow-x-auto sm:overflow-visible gap-3 sm:gap-4 pb-2 sm:pb-0 scrollbar-none snap-x snap-mandatory sm:grid-cols-3 lg:grid-cols-6">
                             {brandList.map((b) => (
                                 <BrandCard
                                     key={b.slug}

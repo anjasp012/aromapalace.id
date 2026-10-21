@@ -88,5 +88,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/payment/{order}/check', [PaymentController::class, 'checkStatus'])->name('payment.check');
     Route::get('/payment', fn () => redirect()->route('checkout.index'));
     Route::get('/orders/{order}/invoice', [OrderController::class, 'invoice'])->name('orders.invoice');
+    Route::get('/orders/{order}/invoice/download', [OrderController::class, 'downloadInvoice'])->name('orders.invoice.download');
     Route::get('/invoice/{order}', [OrderController::class, 'invoice'])->name('invoice.show');
 });
