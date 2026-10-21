@@ -1321,13 +1321,12 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                         <div className="pt-6 sm:pt-8 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 text-xs text-white/60 text-center sm:text-left">
                             <p>{isEn ? '© 2026 Aroma Palace. All rights reserved.' : '© 2026 Aroma Palace. Hak cipta dilindungi undang-undang.'}</p>
                             <div className="flex items-center gap-4 text-white/60">
-                                <button
-                                    type="button"
-                                    onClick={() => window.openInfoModal?.('privacy')}
-                                    className="hover:text-white transition cursor-pointer"
+                                <Link
+                                    href="/privacy-policy"
+                                    className="hover:text-white transition"
                                 >
                                     {isEn ? 'Privacy Policy' : 'Kebijakan Privasi'}
-                                </button>
+                                </Link>
                                 <span className="text-white/30">&bull;</span>
                                 <button
                                     type="button"
@@ -1626,11 +1625,10 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                     </DialogHeader>
 
                     <Tabs value={infoActiveTab} onValueChange={setInfoActiveTab} className="mt-2">
-                        <TabsList className="grid grid-cols-5 w-full">
+                        <TabsList className="grid grid-cols-4 w-full">
                             <TabsTrigger value="faq" className="text-xs">FAQ</TabsTrigger>
                             <TabsTrigger value="shipping" className="text-xs">{isEn ? 'Shipping' : 'Pengiriman'}</TabsTrigger>
                             <TabsTrigger value="returns" className="text-xs">{isEn ? 'Warranty' : 'Garansi'}</TabsTrigger>
-                            <TabsTrigger value="privacy" className="text-xs">{isEn ? 'Privacy' : 'Privasi'}</TabsTrigger>
                             <TabsTrigger value="terms" className="text-xs">{isEn ? 'Terms' : 'Ketentuan'}</TabsTrigger>
                         </TabsList>
 
@@ -1678,11 +1676,6 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                         <TabsContent value="returns" className="mt-4 space-y-2.5 text-xs text-muted-foreground">
                             <p className="font-semibold text-foreground">{isEn ? 'Warranty & Returns:' : 'Garansi & Retur:'}</p>
                             <p>{isEn ? 'Items can be exchanged promptly if flacons arrive broken or leak during shipment, accompanied by official unboxing video proof.' : 'Barang dapat ditukar jika kemasan pecah atau mengalami kebocoran saat pengiriman dengan menyertakan video unboxing resmi.'}</p>
-                        </TabsContent>
-
-                        <TabsContent value="privacy" className="mt-4 space-y-2.5 text-xs text-muted-foreground">
-                            <p className="font-semibold text-foreground">{isEn ? 'Customer Privacy:' : 'Privasi Pelanggan:'}</p>
-                            <p>{isEn ? 'Your personal data is encrypted and protected with banking-standard 256-bit SSL encryption.' : 'Data pribadi Anda aman dan dilindungi dengan enkripsi SSL 256-bit standar industri perbankan.'}</p>
                         </TabsContent>
 
                         <TabsContent value="terms" className="mt-4 space-y-2.5 text-xs text-muted-foreground">
