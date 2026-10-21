@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,9 @@ import {
     ShoppingBag,
     Store,
     Crown,
+    FileText,
+    Printer,
+    Loader2,
 } from 'lucide-react';
 
 interface OrderItemData {
@@ -129,6 +132,9 @@ export default function OrdersPage({
     const membershipData = auth?.membership;
 
     const [selectedOrder, setSelectedOrder] = useState<OrderData | null>(null);
+    const [invoiceModalOrder, setInvoiceModalOrder] = useState<OrderData | null>(null);
+    const [iframeLoading, setIframeLoading] = useState(true);
+    const iframeRef = useRef<HTMLIFrameElement>(null);
     const [copiedCode, setCopiedCode] = useState(false);
     const [copiedInvoice, setCopiedInvoice] = useState(false);
     const [showTracking, setShowTracking] = useState(true);
@@ -136,16 +142,19 @@ export default function OrdersPage({
 
     // Lock body scroll and close on Escape when modal is open
     useEffect(() => {
-        if (selectedOrder) {
+        if (selectedOrder || invoiceModalOrder) {
             const originalOverflow = document.body.style.overflow;
             document.body.style.overflow = 'hidden';
 
             const handleKeyDown = (e: KeyboardEvent) => {
                 if (e.key === 'Escape') {
-                    setSelectedOrder(null);
+                    if (invoiceModalOrder) {
+                        setInvoiceModalOrder(null);
+                    } else {
+                        setSelectedOrder(null);
+                    }
                 }
             };
-
             window.addEventListener('keydown', handleKeyDown);
 
             return () => {
@@ -153,7 +162,7 @@ export default function OrdersPage({
                 window.removeEventListener('keydown', handleKeyDown);
             };
         }
-    }, [selectedOrder]);
+    }, [selectedOrder, invoiceModalOrder]);
 
     const handleTabChange = (tabKey: string) => {
         router.get(
@@ -669,25 +678,17 @@ export default function OrdersPage({
                                                 <span className="font-mono text-foreground font-medium">
                                                     INV/{selectedOrder.order_number.replace('AP-', '')}
                                                 </span>
-                                                {/* Desktop: Buka tab baru */}
-                                                <a
-                                                    href={`/orders/${selectedOrder.order_number}/invoice`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="hidden sm:inline-flex font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer items-center gap-1"
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setIframeLoading(true);
+                                                        setInvoiceModalOrder(selectedOrder);
+                                                    }}
+                                                    className="inline-flex font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer items-center gap-1.5 text-xs py-0.5 px-1 rounded hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors"
                                                 >
+                                                    <FileText className="w-3.5 h-3.5" />
                                                     <span>Lihat Invoice</span>
-                                                    <ExternalLink className="w-3.5 h-3.5" />
-                                                </a>
-
-                                                {/* Mobile: Buka di tab yang sama tanpa membuka tab baru */}
-                                                <Link
-                                                    href={`/orders/${selectedOrder.order_number}/invoice`}
-                                                    className="sm:hidden inline-flex font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer items-center gap-1"
-                                                >
-                                                    <span>Lihat Invoice</span>
-                                                    <ExternalLink className="w-3.5 h-3.5" />
-                                                </Link>
+                                                </button>
                                             </div>
 
                                             <div className="flex items-center justify-between gap-2">
@@ -1064,6 +1065,96 @@ export default function OrdersPage({
                     </div>
                 );
             })()}
+
+            {/* INVOICE IFRAME PREVIEW MODAL */}
+            {invoiceModalOrder && (
+                <div
+                    className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200"
+                    onClick={() => setInvoiceModalOrder(null)}
+                >
+                    <div
+                        className="bg-card text-card-foreground border border-border/80 rounded-2xl shadow-2xl max-w-4xl w-full h-[94vh] sm:h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+                        onClick={(e) => e.stopPropagation()}
+                        role="dialog"
+                        aria-modal="true"
+                    >
+                        {/* Modal Header */}
+                        <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-border/80 bg-muted/40 shrink-0">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="w-8 h-8 rounded-lg bg-[#4A070B]/10 dark:bg-[#E8D0BA]/15 text-[#4A070B] dark:text-[#E8D0BA] flex items-center justify-center shrink-0">
+                                    <FileText className="w-4 h-4" />
+                                </div>
+                                <div className="min-w-0">
+                                    <h3 className="text-xs sm:text-sm font-bold text-foreground truncate">
+                                        Invoice #{invoiceModalOrder.order_number}
+                                    </h3>
+                                    <p className="text-[10px] sm:text-[11px] text-muted-foreground truncate">
+                                        Aroma Palace Official Boutique
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                {/* Print / Cetak Button */}
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        try {
+                                            iframeRef.current?.contentWindow?.focus();
+                                            iframeRef.current?.contentWindow?.print();
+                                        } catch {
+                                            window.open(`/orders/${invoiceModalOrder.order_number}/invoice`, '_blank');
+                                        }
+                                    }}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-bold shadow-xs cursor-pointer transition active:scale-95"
+                                    title="Cetak atau Simpan PDF"
+                                >
+                                    <Printer className="w-3.5 h-3.5" />
+                                    <span className="hidden sm:inline">Cetak / PDF</span>
+                                </button>
+
+                                {/* Open in New Tab Button */}
+                                <a
+                                    href={`/orders/${invoiceModalOrder.order_number}/invoice`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center justify-center w-8 h-8 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground cursor-pointer transition"
+                                    title="Buka di Tab Baru"
+                                >
+                                    <ExternalLink className="w-4 h-4" />
+                                </a>
+
+                                {/* Close Button */}
+                                <button
+                                    type="button"
+                                    onClick={() => setInvoiceModalOrder(null)}
+                                    className="inline-flex items-center justify-center w-8 h-8 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground cursor-pointer transition"
+                                    title="Tutup"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Modal Body with Iframe */}
+                        <div className="flex-1 w-full relative bg-white overflow-hidden">
+                            {iframeLoading && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/95 z-10 gap-2">
+                                    <Loader2 className="w-8 h-8 animate-spin text-[#4A070B]" />
+                                    <span className="text-xs text-gray-500 font-medium">Memuat invoice...</span>
+                                </div>
+                            )}
+                            <iframe
+                                ref={iframeRef}
+                                src={`/orders/${invoiceModalOrder.order_number}/invoice?embed=1`}
+                                className="w-full h-full border-0"
+                                title={`Invoice ${invoiceModalOrder.order_number}`}
+                                onLoad={() => setIframeLoading(false)}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
         </Layout>
     );
 }

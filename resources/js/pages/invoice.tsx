@@ -57,74 +57,88 @@ interface InvoiceProps {
 
 export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
     const { t, isEn } = useTranslation();
+    const [isEmbed, setIsEmbed] = React.useState(false);
+
+    React.useEffect(() => {
+        try {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('embed') === '1' || window.self !== window.top) {
+                setIsEmbed(true);
+            }
+        } catch {
+            setIsEmbed(true);
+        }
+    }, []);
 
     const handlePrint = () => {
         window.print();
     };
 
     return (
-        <div className="min-h-screen bg-[#F8F9FA] text-gray-900 py-6 sm:py-10 px-4 sm:px-6 print:bg-white print:p-0 print:m-0">
+        <div className={`min-h-screen text-gray-900 ${isEmbed ? 'bg-white p-2 sm:p-6' : 'bg-[#F8F9FA] py-4 sm:py-10 px-3 sm:px-6'} print:bg-white print:p-0 print:m-0`}>
             <Head title={`Invoice #${order.order_number} • Aroma Palace`} />
 
-            {/* Top Toolbar (Hidden on Print) */}
-            <div className="max-w-4xl mx-auto mb-6 flex items-center justify-between print:hidden">
-                <Link
-                    href="/account/orders"
-                    className="inline-flex items-center gap-2 text-xs font-semibold text-gray-600 hover:text-gray-900 transition-colors"
-                >
-                    <ArrowLeft className="w-4 h-4" />
-                    <span>{t('invoice.back_to_history')}</span>
-                </Link>
-
-                <div className="flex items-center gap-3">
-                    <button
-                        type="button"
-                        onClick={handlePrint}
-                        className="inline-flex items-center justify-center gap-2 px-6 py-2 rounded-lg bg-[#FFD100] hover:bg-[#E6BC00] text-gray-950 font-bold text-xs sm:text-sm shadow-xs transition-colors cursor-pointer select-none"
+            {/* Top Toolbar (Hidden on Print and in Embed Mode) */}
+            {!isEmbed && (
+                <div className="max-w-4xl mx-auto mb-4 sm:mb-6 flex items-center justify-between print:hidden">
+                    <Link
+                        href="/account/orders"
+                        className="inline-flex items-center gap-2 text-xs font-semibold text-gray-600 hover:text-gray-900 transition-colors"
                     >
-                        <Printer className="w-4 h-4" />
-                        <span>{t('invoice.download_btn')}</span>
-                    </button>
+                        <ArrowLeft className="w-4 h-4" />
+                        <span>{t('invoice.back_to_history')}</span>
+                    </Link>
+
+                    <div className="flex items-center gap-3">
+                        <button
+                            type="button"
+                            onClick={handlePrint}
+                            className="inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-2 rounded-lg bg-[#FFD100] hover:bg-[#E6BC00] text-gray-950 font-bold text-xs sm:text-sm shadow-xs transition-colors cursor-pointer select-none"
+                        >
+                            <Printer className="w-4 h-4" />
+                            <span>{t('invoice.download_btn')}</span>
+                        </button>
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Main Printable Invoice Paper */}
-            <div className="max-w-4xl mx-auto bg-white border border-gray-200/80 rounded-xl p-6 sm:p-12 shadow-xs print:border-none print:shadow-none print:p-0 print:m-0 print:rounded-none">
+            <div className={`max-w-4xl mx-auto bg-white ${isEmbed ? 'border-0 shadow-none p-2 sm:p-6' : 'border border-gray-200/80 rounded-xl p-4 sm:p-10 shadow-xs'} print:border-none print:shadow-none print:p-0 print:m-0 print:rounded-none`}>
                 {/* Header */}
-                <div className="flex items-start justify-between gap-4 pb-6 border-b border-gray-200">
+                <div className="flex items-start justify-between gap-4 pb-5 border-b border-gray-200">
                     <div>
-                        <div className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 font-serif">
+                        <div className="text-xl sm:text-3xl font-extrabold tracking-tight text-gray-900 font-serif">
                             aroma<span className="font-light text-gray-600">palace</span>
                         </div>
-                        <div className="text-[11px] text-gray-500 tracking-wider uppercase mt-1 font-medium">
+                        <div className="text-[10px] sm:text-[11px] text-gray-500 tracking-wider uppercase mt-0.5 font-medium">
                             {t('invoice.official_boutique')}
                         </div>
                     </div>
 
                     <div className="text-right">
-                        <h1 className="text-xl sm:text-2xl font-black tracking-wide text-gray-900">
+                        <h1 className="text-lg sm:text-2xl font-black tracking-wide text-gray-900">
                             INVOICE
                         </h1>
-                        <p className="text-xs text-gray-600 font-mono font-medium mt-1">
+                        <p className="text-[11px] sm:text-xs text-gray-600 font-mono font-medium mt-0.5 break-all">
                             {order.invoice_number}
                         </p>
                     </div>
                 </div>
 
                 {/* Two Columns: Diterbitkan Atas Nama & Ditujukan Untuk */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 py-6 border-b border-gray-200 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8 py-5 border-b border-gray-200 text-xs">
                     {/* Left Column: Penjual */}
                     <div>
-                        <div className="text-[10.5px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                        <div className="text-[10.5px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
                             {isEn ? 'Issued By' : 'Diterbitkan Atas Nama'}
                         </div>
                         <div className="space-y-1">
-                            <div className="flex">
-                                <span className="text-gray-500 w-20">{t('invoice.seller')}:</span>
+                            <div className="flex items-baseline">
+                                <span className="text-gray-500 w-20 shrink-0">{t('invoice.seller')}:</span>
                                 <span className="font-bold text-gray-900">{seller.name}</span>
                             </div>
-                            <div className="flex">
-                                <span className="text-gray-500 w-20">{isEn ? 'Boutique:' : 'Butik:'}</span>
+                            <div className="flex items-baseline">
+                                <span className="text-gray-500 w-20 shrink-0">{isEn ? 'Boutique:' : 'Butik:'}</span>
                                 <span className="text-gray-700">{seller.store_name}</span>
                             </div>
                         </div>
@@ -132,24 +146,57 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
 
                     {/* Right Column: Pembeli & Tanggal */}
                     <div>
-                        <div className="text-[10.5px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                        <div className="text-[10.5px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
                             {isEn ? 'Billed To' : 'Ditujukan Untuk'}
                         </div>
                         <div className="space-y-1">
-                            <div className="flex">
-                                <span className="text-gray-500 w-32">{t('invoice.buyer')}:</span>
+                            <div className="flex items-baseline">
+                                <span className="text-gray-500 w-20 sm:w-28 shrink-0">{t('invoice.buyer')}:</span>
                                 <span className="font-bold text-gray-900">{buyer.name}</span>
                             </div>
-                            <div className="flex">
-                                <span className="text-gray-500 w-32">{t('invoice.date')}:</span>
+                            <div className="flex items-baseline">
+                                <span className="text-gray-500 w-20 sm:w-28 shrink-0">{t('invoice.date')}:</span>
                                 <span className="text-gray-900 font-medium">{order.created_at}</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Products Table */}
-                <div className="py-6">
+                {/* Products Mobile Receipt List (Clean, non-squashed on small screens) */}
+                <div className="py-4 sm:hidden print:hidden">
+                    <div className="text-[10.5px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                        {isEn ? 'Order Items' : 'Daftar Produk'}
+                    </div>
+                    <div className="divide-y divide-gray-100 border-y border-gray-100">
+                        {order.items.map((item) => (
+                            <div key={item.id} className="py-3 space-y-1">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="min-w-0 flex-1">
+                                        <div className="font-bold text-xs text-gray-900 leading-snug">
+                                            {item.product_name}
+                                        </div>
+                                        {(item.variant_name || item.volume) && (
+                                            <div className="text-[11px] text-gray-500 mt-0.5">
+                                                {item.variant_name && <span>{isEn ? 'Variant' : 'Varian'}: {item.variant_name}</span>}
+                                                {item.variant_name && item.volume && <span> &bull; </span>}
+                                                {item.volume && <span>{item.volume}</span>}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="text-xs font-bold text-gray-900 shrink-0 text-right">
+                                        {item.total_price_formatted}
+                                    </div>
+                                </div>
+                                <div className="flex items-center justify-between text-[11px] text-gray-500 pt-0.5">
+                                    <span>{item.quantity} × {item.price_formatted}</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Products Table (Desktop & Print) */}
+                <div className="py-6 hidden sm:block print:block">
                     <div className="overflow-x-auto">
                         <table className="w-full text-xs">
                             <thead>
@@ -188,26 +235,26 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
                     </div>
                 </div>
 
-                {/* Payment & Financial Breakdown with Watermark Stamp */}
-                <div className="relative pt-2 pb-6 border-t border-gray-200">
-                    {/* Watermark Stamp Overlay */}
+                {/* Payment & Financial Breakdown with Contained Watermark Stamp */}
+                <div className="relative pt-3 pb-6 border-t border-gray-200 overflow-hidden">
+                    {/* Watermark Stamp Overlay (Contained with overflow-hidden and responsive sizing) */}
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0">
                         {order.is_paid ? (
-                            <div className="border-[3px] border-emerald-500/35 text-emerald-600/40 font-black text-4xl sm:text-6xl uppercase tracking-[0.25em] px-8 sm:px-12 py-3 rounded-2xl rotate-[-14deg]">
+                            <div className="border-2 sm:border-[3px] border-emerald-500/35 text-emerald-600/40 font-black text-3xl sm:text-6xl uppercase tracking-[0.2em] sm:tracking-[0.25em] px-6 sm:px-12 py-2 sm:py-3 rounded-xl sm:rounded-2xl rotate-[-12deg] max-w-[85%] text-center">
                                 {isEn ? 'PAID' : 'LUNAS'}
                             </div>
                         ) : (
-                            <div className="border-[3px] border-rose-500/35 text-rose-600/40 font-black text-4xl sm:text-6xl uppercase tracking-[0.25em] px-8 sm:px-12 py-3 rounded-2xl rotate-[-14deg]">
+                            <div className="border-2 sm:border-[3px] border-rose-500/35 text-rose-600/40 font-black text-2xl sm:text-5xl uppercase tracking-[0.15em] sm:tracking-[0.25em] px-4 sm:px-12 py-2 sm:py-3 rounded-xl sm:rounded-2xl rotate-[-12deg] max-w-[85%] text-center">
                                 {isEn ? 'UNPAID' : 'BELUM LUNAS'}
                             </div>
                         )}
                     </div>
 
                     {/* Breakdown Content Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 relative z-10 text-xs">
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-5 relative z-10 text-xs">
                         {/* Left: Payment Method Info */}
                         <div className="sm:col-span-5 space-y-1">
-                            <div className="text-[10.5px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                            <div className="text-[10.5px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
                                 {t('invoice.payment_method')}
                             </div>
                             <div className="font-bold text-gray-900 text-sm">
@@ -269,11 +316,11 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
                     </div>
                 </div>
 
-                {/* Bottom Shipping Information Box (Matching Screenshot) */}
-                <div className="bg-[#F8F9FA] border border-gray-200/80 rounded-lg p-4 sm:p-5 mt-4 text-xs">
-                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
+                {/* Bottom Shipping Information Box */}
+                <div className="bg-[#F8F9FA] border border-gray-200/80 rounded-lg p-3.5 sm:p-5 mt-4 text-xs">
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 sm:gap-4">
                         <div className="sm:col-span-4">
-                            <div className="text-[10.5px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                            <div className="text-[10.5px] font-bold text-gray-500 uppercase tracking-wider mb-1">
                                 {t('invoice.shipping_method')}
                             </div>
                             <div className="font-bold text-gray-900">
@@ -282,14 +329,14 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
                         </div>
 
                         <div className="sm:col-span-8">
-                            <div className="text-[10.5px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                            <div className="text-[10.5px] font-bold text-gray-500 uppercase tracking-wider mb-1">
                                 {t('invoice.shipping_address')}
                             </div>
                             <div className="space-y-0.5">
                                 <div className="font-bold text-gray-900">
                                     {order.recipient_name} ({order.recipient_phone})
                                 </div>
-                                <div className="text-gray-600 leading-relaxed">
+                                <div className="text-gray-600 leading-relaxed text-[11px] sm:text-xs">
                                     {order.shipping_address}{order.city ? `, ${order.city}` : ''}{order.postal_code ? `, ${order.postal_code}` : ''}
                                 </div>
                             </div>
@@ -297,8 +344,8 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
                     </div>
                 </div>
 
-                {/* Footer Note (Matching Screenshot) */}
-                <div className="pt-10 pb-2 text-center text-[11px] text-gray-500 space-y-1">
+                {/* Footer Note */}
+                <div className="pt-6 sm:pt-10 pb-2 text-center text-[10.5px] sm:text-[11px] text-gray-500 space-y-1">
                     <p>{isEn ? 'This is a computer-generated invoice and valid without signature.' : 'Invoice ini sah dan diproses oleh komputer.'}</p>
                     <p>
                         {isEn ? 'Need help? Contact ' : 'Jika butuh bantuan, silakan hubungi '}
