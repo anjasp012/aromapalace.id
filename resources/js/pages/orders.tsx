@@ -669,15 +669,25 @@ export default function OrdersPage({
                                                 <span className="font-mono text-foreground font-medium">
                                                     INV/{selectedOrder.order_number.replace('AP-', '')}
                                                 </span>
+                                                {/* Desktop: Buka tab baru */}
                                                 <a
                                                     href={`/orders/${selectedOrder.order_number}/invoice`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer inline-flex items-center gap-1"
+                                                    className="hidden sm:inline-flex font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer items-center gap-1"
                                                 >
                                                     <span>Lihat Invoice</span>
                                                     <ExternalLink className="w-3.5 h-3.5" />
                                                 </a>
+
+                                                {/* Mobile: Buka di tab yang sama tanpa membuka tab baru */}
+                                                <Link
+                                                    href={`/orders/${selectedOrder.order_number}/invoice`}
+                                                    className="sm:hidden inline-flex font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer items-center gap-1"
+                                                >
+                                                    <span>Lihat Invoice</span>
+                                                    <ExternalLink className="w-3.5 h-3.5" />
+                                                </Link>
                                             </div>
 
                                             <div className="flex items-center justify-between gap-2">

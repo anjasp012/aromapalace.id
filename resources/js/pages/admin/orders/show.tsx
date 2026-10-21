@@ -165,7 +165,8 @@ export default function AdminOrderShow({ order }: OrderShowProps) {
                         </Link>
                     </Button>
 
-                    <Button variant="outline" size="sm" asChild>
+                    {/* Desktop: Buka tab baru */}
+                    <Button variant="outline" size="sm" asChild className="hidden sm:inline-flex">
                         <a
                             href={`/orders/${order.order_number}/invoice`}
                             target="_blank"
@@ -175,6 +176,15 @@ export default function AdminOrderShow({ order }: OrderShowProps) {
                             <span>Lihat / Cetak Invoice</span>
                             <ExternalLink className="size-3 ml-1" />
                         </a>
+                    </Button>
+
+                    {/* Mobile: Buka di tab yang sama */}
+                    <Button variant="outline" size="sm" asChild className="sm:hidden inline-flex">
+                        <Link href={`/orders/${order.order_number}/invoice`}>
+                            <FileText className="size-3.5 mr-1.5" />
+                            <span>Lihat / Cetak Invoice</span>
+                            <ExternalLink className="size-3 ml-1" />
+                        </Link>
                     </Button>
                 </div>
 
