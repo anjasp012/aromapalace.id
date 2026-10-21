@@ -41,3 +41,9 @@ yarn-error.log
 /boost.json
 /opencode.json
 /opencode.jsonc
+
+# Signing keys and build outputs (never commit)
+*.p8
+*.apk
+*.aab
+.DS_Store
