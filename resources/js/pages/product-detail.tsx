@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { useTranslation, formatCategoryName } from '@/lib/i18n';
+import { Check, Loader2 } from 'lucide-react';
 
 export interface FragranceReview {
     name: string;
@@ -111,6 +112,8 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
     const [newReviewText, setNewReviewText] = useState('');
     const [customReviews, setCustomReviews] = useState<FragranceReview[]>(product.reviews || []);
     const [copiedShare, setCopiedShare] = useState(false);
+    const [isAddingToCart, setIsAddingToCart] = useState(false);
+    const [isAddedToCart, setIsAddedToCart] = useState(false);
 
     // Dynamic Variants / Size options from Database (optional)
     const availableSizes = useMemo(() => {
@@ -198,6 +201,10 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
             );
             return;
         }
+
+        if (isAddingToCart) return;
+        setIsAddingToCart(true);
+
         router.post(
             '/cart',
             {
@@ -208,6 +215,19 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
             },
             {
                 preserveScroll: true,
+                onSuccess: () => {
+                    // Smooth artificial delay so user perceives the feedback animation
+                    setTimeout(() => {
+                        setIsAddingToCart(false);
+                        setIsAddedToCart(true);
+                        setTimeout(() => {
+                            setIsAddedToCart(false);
+                        }, 2000);
+                    }, 400);
+                },
+                onError: () => {
+                    setIsAddingToCart(false);
+                },
             }
         );
     };
@@ -612,12 +632,36 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                                     {/* Add to Cart Button */}
                                     <Button
                                         onClick={handleAddToCart}
-                                        className="flex-1 h-11 rounded-md bg-[#4A070B] text-white hover:bg-[#360407] font-semibold text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer shadow-none transition-all min-w-0"
+                                        disabled={isAddingToCart}
+                                        className={cn(
+                                            "flex-1 h-11 rounded-md font-semibold text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer shadow-none transition-all duration-300 min-w-0 select-none",
+                                            isAddedToCart
+                                                ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-900/20"
+                                                : "bg-[#4A070B] text-white hover:bg-[#360407]"
+                                        )}
                                     >
-                                        <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                                        </svg>
-                                        <span className="truncate">{t('product.add_to_cart')}</span>
+                                        {isAddingToCart ? (
+                                            <>
+                                                <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
+                                                <span className="truncate">
+                                                    {isEn ? 'Adding to Cart...' : 'Memasukkan...'}
+                                                </span>
+                                            </>
+                                        ) : isAddedToCart ? (
+                                            <>
+                                                <Check className="w-4 h-4 shrink-0 stroke-[2.5] animate-in zoom-in-75 duration-200" />
+                                                <span className="truncate">
+                                                    {isEn ? 'Added to Cart!' : 'Berhasil Ditambahkan!'}
+                                                </span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <svg className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                                </svg>
+                                                <span className="truncate">{t('product.add_to_cart')}</span>
+                                            </>
+                                        )}
                                     </Button>
                                 </div>
                             ) : (

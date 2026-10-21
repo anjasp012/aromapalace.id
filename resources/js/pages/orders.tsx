@@ -485,10 +485,10 @@ export default function OrdersPage({
                                     onClick={() => setSelectedOrder(order)}
                                     className="rounded-lg border border-border/80 bg-card/60 backdrop-blur-xs p-5 sm:p-6 shadow-none space-y-4 transition-colors cursor-pointer sm:cursor-default"
                                 >
-                                    {/* Order Card Header */}
-                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-border/80 text-xs">
-                                        <div className="flex items-center gap-2.5 flex-wrap">
-                                            <span className="font-extrabold text-foreground tracking-wide font-mono">
+                                    {/* Order Card Header: flex row on mobile and desktop so no order & status are side-by-side */}
+                                    <div className="flex items-center justify-between gap-2 pb-3 border-b border-border/80 text-xs">
+                                        <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap min-w-0">
+                                            <span className="font-extrabold text-foreground tracking-wide font-mono truncate">
                                                 #{order.order_number}
                                             </span>
                                             <span className="hidden sm:inline text-muted-foreground">•</span>
@@ -497,7 +497,7 @@ export default function OrdersPage({
                                             <span className="hidden sm:inline text-muted-foreground">{order.payment_channel}</span>
                                         </div>
 
-                                        <div>
+                                        <div className="shrink-0">
                                             {renderStatusBadge(order.order_status || order.status, order.status_label)}
                                         </div>
                                     </div>
@@ -541,7 +541,7 @@ export default function OrdersPage({
                                     </div>
 
                                     {/* Order Card Footer */}
-                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-border/80">
+                                    <div className="flex items-center justify-between gap-3 pt-3 border-t border-border/80">
                                         <div>
                                             <div className="text-[11px] text-muted-foreground">
                                                 Total Pembayaran ({order.items_count} produk)
@@ -551,14 +551,14 @@ export default function OrdersPage({
                                             </div>
                                         </div>
 
-                                        {/* Action buttons: Detail Pesanan on the left, Selesaikan Pembayaran on the right (hidden on mobile, visible on desktop) */}
-                                        <div className="hidden sm:flex items-center gap-2 flex-wrap" onClick={(e) => e.stopPropagation()}>
+                                        {/* Action buttons: Detail Pesanan on desktop only, Selesaikan Pembayaran visible on both mobile & desktop when pending */}
+                                        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                                             <Button
                                                 type="button"
                                                 variant="outline"
                                                 size="sm"
                                                 onClick={() => setSelectedOrder(order)}
-                                                className="border border-border/80 hover:bg-muted text-xs font-semibold h-9 px-4 rounded-md shadow-none cursor-pointer bg-background text-foreground"
+                                                className="hidden sm:inline-flex border border-border/80 hover:bg-muted text-xs font-semibold h-9 px-4 rounded-md shadow-none cursor-pointer bg-background text-foreground"
                                             >
                                                 Detail Pesanan
                                             </Button>
@@ -567,9 +567,10 @@ export default function OrdersPage({
                                                 <Link href={`/payment/${order.order_number}`}>
                                                     <Button
                                                         size="sm"
-                                                        className="bg-[#4A070B] hover:bg-[#360407] text-white text-xs font-semibold h-9 px-4 rounded-md shadow-none cursor-pointer"
+                                                        className="bg-[#4A070B] hover:bg-[#360407] text-white text-xs font-semibold h-9 px-3.5 sm:px-4 rounded-md shadow-xs cursor-pointer active:scale-95 transition"
                                                     >
-                                                        Selesaikan Pembayaran
+                                                        <span className="sm:hidden">Bayar Sekarang</span>
+                                                        <span className="hidden sm:inline">Selesaikan Pembayaran</span>
                                                     </Button>
                                                 </Link>
                                             )}

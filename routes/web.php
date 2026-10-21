@@ -32,7 +32,7 @@ Route::get('/about', [AboutController::class, 'index'])->name('about');
 Route::post('/consultation', [AboutController::class, 'consultation'])->name('consultation.store');
 Route::get('/membership', [MembershipController::class, 'index'])->name('membership.index');
 Route::get('/loyalty', fn () => redirect()->route('membership.index'));
-Route::get('/orders', fn () => redirect()->route('account.orders'));
+Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
 
 Route::get('/privacy-policy', [PageController::class, 'privacyPolicy'])->name('privacy.policy');
 Route::get('/privacy', fn () => redirect()->route('privacy.policy'));

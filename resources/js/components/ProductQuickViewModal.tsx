@@ -11,6 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { type ProductItem } from '@/components/ProductCard';
 import { useTranslation, formatCategoryName } from '@/lib/i18n';
+import { Check, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface ProductQuickViewModalProps {
     product: ProductItem | null;
@@ -31,10 +33,14 @@ export default function ProductQuickViewModal({
     const { t, pickText, isEn } = useTranslation();
 
     const [quantity, setQuantity] = useState(1);
+    const [isAdding, setIsAdding] = useState(false);
+    const [isAdded, setIsAdded] = useState(false);
 
     useEffect(() => {
         if (open) {
             setQuantity(1);
+            setIsAdding(false);
+            setIsAdded(false);
         }
     }, [open, product]);
 
@@ -53,16 +59,27 @@ export default function ProductQuickViewModal({
             onOpenChange(false);
             return;
         }
-        if (onAddToCart) {
-            onAddToCart(product, quantity);
-        } else {
-            window.showCartToast?.(
-                isEn
-                    ? `${quantity}x ${product.name} (${product.volume || '100ml'}) added to your cart.`
-                    : `${quantity}x ${product.name} (${product.volume || '100ml'}) berhasil ditambahkan ke keranjang.`
-            );
-        }
-        onOpenChange(false);
+
+        if (isAdding) return;
+        setIsAdding(true);
+
+        setTimeout(() => {
+            if (onAddToCart) {
+                onAddToCart(product, quantity);
+            } else {
+                window.showCartToast?.(
+                    isEn
+                        ? `${quantity}x ${product.name} (${product.volume || '100ml'}) added to your cart.`
+                        : `${quantity}x ${product.name} (${product.volume || '100ml'}) berhasil ditambahkan ke keranjang.`
+                );
+            }
+            setIsAdding(false);
+            setIsAdded(true);
+            setTimeout(() => {
+                setIsAdded(false);
+                onOpenChange(false);
+            }, 600);
+        }, 350);
     };
 
     const categoryOrFamily = product.category || product.family;
@@ -175,8 +192,30 @@ export default function ProductQuickViewModal({
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-2">
-                                        <Button onClick={handleAdd} size="sm" className="bg-[#4A070B] hover:bg-[#360407] text-white cursor-pointer shadow-none">
-                                            {t('product.add_to_cart')}
+                                        <Button
+                                            onClick={handleAdd}
+                                            disabled={isAdding}
+                                            size="sm"
+                                            className={cn(
+                                                "cursor-pointer shadow-none transition-all duration-300",
+                                                isAdded
+                                                    ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-900/20"
+                                                    : "bg-[#4A070B] hover:bg-[#360407] text-white"
+                                            )}
+                                        >
+                                            {isAdding ? (
+                                                <span className="flex items-center gap-1.5">
+                                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                    <span className="truncate">{isEn ? 'Adding...' : 'Memasukkan...'}</span>
+                                                </span>
+                                            ) : isAdded ? (
+                                                <span className="flex items-center gap-1.5">
+                                                    <Check className="w-3.5 h-3.5 stroke-[2.5] animate-in zoom-in-75" />
+                                                    <span className="truncate">{isEn ? 'Added!' : 'Berhasil!'}</span>
+                                                </span>
+                                            ) : (
+                                                t('product.add_to_cart')
+                                            )}
                                         </Button>
                                         <Button asChild variant="outline" size="sm">
                                             <Link href={product.slug ? `/products/${product.slug}` : '/products'}>

@@ -55,8 +55,17 @@ import {
 } from 'lucide-react';
 import { autoRequestNotificationPermission, initFirebaseForegroundListener } from '@/lib/push-notification';
 import { useTranslation } from '@/lib/i18n';
+import { cn } from '@/lib/utils';
 
 import { App as CapApp } from '@capacitor/app';
+
+const limitWords = (text: string, maxWords: number = 6): string => {
+    if (!text) return '';
+    const words = text.trim().split(/\s+/);
+    if (words.length <= maxWords) return text;
+    const sliced = words.slice(0, maxWords).join(' ').replace(/[!→,.-]+$/, '').trim();
+    return `${sliced}....`;
+};
 
 interface LayoutProps {
     children: ReactNode;
@@ -170,6 +179,29 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
     const [currentVoucherIndex, setCurrentVoucherIndex] = useState(0);
     const [isVoucherFading, setIsVoucherFading] = useState(false);
     const [selectedHeaderVoucher, setSelectedHeaderVoucher] = useState<HeaderVoucher | null>(headerVouchers[0] || null);
+    const [isScrolledPastTopbar, setIsScrolledPastTopbar] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setIsScrolledPastTopbar(window.scrollY > 32);
+        };
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    const promoFullText = useMemo(() => {
+        if (activeHeaderVoucher) {
+            if (activeHeaderVoucher.type === 'percentage') {
+                return isEn
+                    ? `Special Offer \u2013 Up to ${activeHeaderVoucher.value}% off! Claim Voucher \u2192`
+                    : `Promo Spesial \u2013 Diskon hingga ${activeHeaderVoucher.value}%! Klaim Voucher \u2192`;
+            }
+            return isEn
+                ? `Special Offer \u2013 Rp ${new Intl.NumberFormat('id-ID').format(activeHeaderVoucher.value)} off! Claim Voucher \u2192`
+                : `Promo Spesial \u2013 Potongan Rp ${new Intl.NumberFormat('id-ID').format(activeHeaderVoucher.value)}! Klaim Voucher \u2192`;
+        }
+        return isEn ? 'Special Offer \u2013 Up to 40% off! Claim Voucher \u2192' : 'Promo Spesial \u2013 Diskon hingga 40%! Klaim Voucher \u2192';
+    }, [activeHeaderVoucher, isEn]);
 
     // Random rotating announcement every 4.5 seconds
     useEffect(() => {
@@ -579,26 +611,22 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
 
     return (
         <div className="bg-background text-foreground flex flex-col min-h-screen" suppressHydrationWarning>
-            {/* Sticky Navigation Wrapper with Status Bar Safe Area */}
-            <div className="sticky top-0 z-40 shadow-xs">
-                {/* Top Announcement Bar */}
-                <div className="bg-[#360407] text-white text-xs pt-[env(safe-area-inset-top,0px)]" suppressHydrationWarning>
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between py-1.5 sm:py-2">
+            {/* Top Announcement Bar (Scrolls normally with page, NOT sticky on mobile) */}
+            <div className="bg-[#360407] text-white text-xs pt-[env(safe-area-inset-top,0px)]" suppressHydrationWarning>
+                <div className="max-w-7xl mx-auto pl-0 pr-3 sm:px-6 lg:px-8 flex items-center justify-between py-1.5 sm:py-2 gap-2">
                     <button
                         type="button"
                         onClick={() => handleOpenVoucherModal(activeHeaderVoucher)}
-                        className="w-full md:w-auto flex items-center justify-center md:justify-start gap-1.5 text-xs text-white/95 hover:text-white transition cursor-pointer text-center md:text-left group"
+                        className="flex-1 min-w-0 flex items-center justify-start gap-1 sm:gap-1.5 text-xs text-white/95 hover:text-white transition cursor-pointer text-left pl-0 group"
                         title={isEn ? "Click to view voucher details" : "Klik untuk melihat detail voucher"}
                     >
-                        <span className="text-[#E5A844] text-xs shrink-0 animate-pulse">✦</span>
-                        <span className={`font-normal text-[11px] sm:text-xs tracking-tight transition-all duration-300 ${isVoucherFading ? 'opacity-0 -translate-y-0.5' : 'opacity-100 translate-y-0'}`}>
-                            {activeHeaderVoucher ? (
-                                activeHeaderVoucher.type === 'percentage'
-                                    ? (isEn ? `Special Offer \u2013 Up to ${activeHeaderVoucher.value}% off! Claim Voucher \u2192` : `Promo Spesial \u2013 Diskon hingga ${activeHeaderVoucher.value}%! Klaim Voucher \u2192`)
-                                    : (isEn ? `Special Offer \u2013 Rp ${new Intl.NumberFormat('id-ID').format(activeHeaderVoucher.value)} off! Claim Voucher \u2192` : `Promo Spesial \u2013 Potongan Rp ${new Intl.NumberFormat('id-ID').format(activeHeaderVoucher.value)}! Klaim Voucher \u2192`)
-                            ) : (
-                                isEn ? 'Special Offer \u2013 Up to 40% off! Claim Voucher \u2192' : 'Promo Spesial \u2013 Diskon hingga 40%! Klaim Voucher \u2192'
-                            )}
+                        <span className="text-[#E5A844] text-xs shrink-0 animate-pulse pl-0">✦</span>
+                        <span className={cn(
+                            "font-normal text-[11px] sm:text-xs tracking-tight transition-all duration-300 truncate",
+                            isVoucherFading ? "opacity-0 -translate-y-0.5" : "opacity-100 translate-y-0"
+                        )}>
+                            <span className="sm:hidden">{limitWords(promoFullText, 6)}</span>
+                            <span className="hidden sm:inline">{promoFullText}</span>
                         </span>
                     </button>
 
@@ -693,8 +721,13 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                 </div>
             </div>
 
-            {/* Main Navigation Bar */}
-            <header className="bg-background border-b border-[#4A070B]/20">
+            {/* Main Navigation Bar (Sticky with safe-area support when scrolled) */}
+            <header
+                className={cn(
+                    "sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-[#4A070B]/20 shadow-xs transition-[padding,background-color] duration-150",
+                    isScrolledPastTopbar ? "pt-[env(safe-area-inset-top,0px)]" : ""
+                )}
+            >
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     {/* Upper Row: Search | Centered Logo | User Actions */}
                     <div className="relative flex items-center justify-between py-2 sm:py-4 min-h-[60px] sm:min-h-[84px]">
@@ -1085,7 +1118,6 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                     </nav>
                 </div>
             </header>
-        </div>
 
             {/* Main Content Area */}
             <main className={`flex-1 ${shouldShowBottomNav ? 'pb-20 md:pb-0' : ''}`}>

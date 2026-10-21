@@ -19,7 +19,13 @@ class OrderController extends Controller
     {
         $user = $request->user();
 
-        if ($user && $user->isAdmin()) {
+        if (! $user) {
+            return redirect()->route('login', [
+                'notice' => 'Silakan masuk untuk melihat riwayat pesanan Anda.',
+            ]);
+        }
+
+        if ($user->isAdmin()) {
             return redirect()->route('admin.orders.index');
         }
 
