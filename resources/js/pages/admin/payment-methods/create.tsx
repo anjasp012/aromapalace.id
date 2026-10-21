@@ -17,7 +17,6 @@ export default function AdminPaymentMethodCreate() {
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useState(false);
-    const [showUrlInput, setShowUrlInput] = useState(false);
 
     const { data, setData, post, processing, errors } = useForm<{
         name: string;
@@ -99,7 +98,7 @@ export default function AdminPaymentMethodCreate() {
         >
             <Head title="Tambah Metode Pembayaran - Admin Panel" />
 
-            <form onSubmit={handleSubmit} className="w-full max-w-3xl space-y-6">
+            <form onSubmit={handleSubmit} className="w-full space-y-6">
                 {/* Header Actions */}
                 <div className="flex items-center justify-between">
                     <Button variant="ghost" size="sm" asChild className="p-0 hover:bg-transparent">
@@ -123,21 +122,8 @@ export default function AdminPaymentMethodCreate() {
                 {/* 1. Logo Icon Card */}
                 <Card>
                     <CardHeader>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <CardTitle className="text-base font-semibold">Logo Kanal / Bank (Icon)</CardTitle>
-                                <CardDescription>Upload icon resmi bank, kartu kredit, atau logo dompet digital.</CardDescription>
-                            </div>
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setShowUrlInput(!showUrlInput)}
-                                className="text-xs text-muted-foreground hover:text-primary"
-                            >
-                                {showUrlInput ? 'Gunakan Upload File' : 'Gunakan URL Gambar'}
-                            </Button>
-                        </div>
+                        <CardTitle className="text-base font-semibold">Logo Kanal / Bank (Icon)</CardTitle>
+                        <CardDescription>Upload icon resmi bank, kartu kredit, atau logo dompet digital.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <input
@@ -147,22 +133,6 @@ export default function AdminPaymentMethodCreate() {
                             className="hidden"
                             onChange={handleFileChange}
                         />
-
-                        {showUrlInput ? (
-                            <div className="space-y-2">
-                                <label className="text-xs font-medium text-foreground">URL Gambar Langsung</label>
-                                <Input
-                                    type="url"
-                                    placeholder="https://.../logo.png"
-                                    value={typeof data.icon === 'string' ? data.icon : ''}
-                                    onChange={(e) => {
-                                        setData('icon', e.target.value);
-                                        setPreviewUrl(e.target.value || null);
-                                    }}
-                                    className="h-9 text-xs"
-                                />
-                            </div>
-                        ) : null}
 
                         {previewUrl ? (
                             <div

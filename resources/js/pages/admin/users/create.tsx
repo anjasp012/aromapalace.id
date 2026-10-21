@@ -49,7 +49,7 @@ export default function AdminUserCreate() {
         >
             <Head title="Tambah Pengguna - Admin Panel" />
 
-            <form onSubmit={handleSubmit} className="w-full max-w-2xl space-y-6">
+            <form onSubmit={handleSubmit} className="w-full space-y-6">
                 {/* Header Actions */}
                 <div className="flex items-center justify-between">
                     <Button variant="ghost" size="sm" asChild className="p-0 hover:bg-transparent">

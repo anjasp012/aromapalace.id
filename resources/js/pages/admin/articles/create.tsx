@@ -21,7 +21,6 @@ export default function AdminArticleCreate() {
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useState(false);
-    const [showUrlInput, setShowUrlInput] = useState(false);
 
     const { data, setData, post, processing, errors } = useForm<{
         title: string;
@@ -242,32 +241,7 @@ export default function AdminArticleCreate() {
                                 </div>
                             )}
 
-                            {/* Optional External URL Toggle */}
-                            <div className="flex items-center justify-between pt-1">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowUrlInput(!showUrlInput)}
-                                    className="text-[11px] text-muted-foreground hover:text-foreground underline cursor-pointer"
-                                >
-                                    {showUrlInput ? 'Sembunyikan input URL' : 'Atau gunakan tautan URL gambar online'}
-                                </button>
-                                {errors.thumbnail && <p className="text-destructive text-[11px]">{errors.thumbnail}</p>}
-                            </div>
-
-                            {showUrlInput && (
-                                <div className="pt-1">
-                                    <Input
-                                        type="text"
-                                        placeholder="https://images.unsplash.com/..."
-                                        value={typeof data.thumbnail === 'string' ? data.thumbnail : ''}
-                                        onChange={(e) => {
-                                            setData('thumbnail', e.target.value);
-                                            setPreviewUrl(e.target.value);
-                                        }}
-                                        className="h-8 text-xs font-mono"
-                                    />
-                                </div>
-                            )}
+                            {errors.thumbnail && <p className="text-destructive text-[11px] pt-1">{errors.thumbnail}</p>}
                         </div>
 
                         {/* 2. Permalink & Waktu Baca */}

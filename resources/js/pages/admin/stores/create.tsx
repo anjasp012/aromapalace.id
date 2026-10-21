@@ -23,7 +23,6 @@ export default function AdminStoreCreate() {
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useState(false);
-    const [showUrlInput, setShowUrlInput] = useState(false);
 
     const { data, setData, post, processing, errors } = useForm<{
         name: string;
@@ -107,7 +106,7 @@ export default function AdminStoreCreate() {
         >
             <Head title="Tambah Butik Toko - Admin Panel" />
 
-            <form onSubmit={handleSubmit} className="w-full max-w-4xl space-y-6">
+            <form onSubmit={handleSubmit} className="w-full space-y-6">
                 {/* Header Actions */}
                 <div className="flex items-center justify-between">
                     <Button variant="ghost" size="sm" asChild className="p-0 hover:bg-transparent">
@@ -131,21 +130,8 @@ export default function AdminStoreCreate() {
                 {/* 1. Foto / Thumbnail Card */}
                 <Card>
                     <CardHeader>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <CardTitle className="text-base font-semibold">1. Foto Eksterior / Interior Butik</CardTitle>
-                                <CardDescription>Foto butik resmi yang ditampilkan pada pilihan metode pickup dan peta.</CardDescription>
-                            </div>
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setShowUrlInput(!showUrlInput)}
-                                className="text-xs text-muted-foreground hover:text-primary"
-                            >
-                                {showUrlInput ? 'Gunakan Upload File' : 'Gunakan URL Gambar'}
-                            </Button>
-                        </div>
+                        <CardTitle className="text-base font-semibold">1. Foto Eksterior / Interior Butik</CardTitle>
+                        <CardDescription>Foto butik resmi yang ditampilkan pada pilihan metode pickup dan peta.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <input
@@ -155,22 +141,6 @@ export default function AdminStoreCreate() {
                             className="hidden"
                             onChange={handleFileChange}
                         />
-
-                        {showUrlInput ? (
-                            <div className="space-y-2">
-                                <label className="text-xs font-medium text-foreground">URL Gambar Langsung</label>
-                                <Input
-                                    type="url"
-                                    placeholder="https://images.unsplash.com/photo-..."
-                                    value={typeof data.thumbnail === 'string' ? data.thumbnail : ''}
-                                    onChange={(e) => {
-                                        setData('thumbnail', e.target.value);
-                                        setPreviewUrl(e.target.value || null);
-                                    }}
-                                    className="h-9 text-xs"
-                                />
-                            </div>
-                        ) : null}
 
                         {previewUrl ? (
                             <div
