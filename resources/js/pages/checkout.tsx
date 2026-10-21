@@ -281,8 +281,8 @@ const COURIER_OPTIONS = [
 ];
 
 export default function CheckoutPage({
-    items,
-    subtotal,
+    items = [],
+    subtotal = 0,
     initial_voucher = '',
     available_vouchers = [],
     stores = [],
@@ -487,7 +487,7 @@ export default function CheckoutPage({
     }, [data.payment_method, activePaymentMethods]);
 
     const displayedPayments = showAllPayments ? sortedPayments : sortedPayments.slice(0, 4);
-    const totalItemsCount = items.length;
+    const totalItemsCount = items?.length ?? 0;
 
     return (
         <Layout showFooter={false} showBottomNav={false}>
@@ -893,7 +893,7 @@ export default function CheckoutPage({
                             <div className="rounded-lg border border-border/80 bg-card/60 backdrop-blur-xs p-5 sm:p-6 shadow-none space-y-4">
                                 {/* Products Item List (Styling tokens matching cart.tsx) */}
                                 <div className="divide-y divide-border/60">
-                                    {items.map((item) => (
+                                    {items?.map((item) => (
                                         <div
                                             key={item.id}
                                             className="flex items-start sm:items-center gap-3 sm:gap-4 py-3 first:pt-0 last:pb-0 transition-colors"

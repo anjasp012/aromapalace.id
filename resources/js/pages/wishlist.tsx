@@ -81,7 +81,7 @@ export default function WishlistPage({ items = [] }: WishlistPageProps) {
 
             {/* MAIN CONTAINER */}
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-                {items.length === 0 ? (
+                {!items || items.length === 0 ? (
                     /* EMPTY STATE (Matches products.tsx empty state design) */
                     <div className="py-16 px-6 text-center space-y-4">
                         <h3 className="text-base font-bold text-foreground">
