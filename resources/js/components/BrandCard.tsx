@@ -22,7 +22,12 @@ export default function BrandCard({ brand, className }: BrandCardProps) {
     const displayDesc = pickText(brand.description, brand.description_en);
 
     return (
-        <Link href={`/products?brand=${brand.slug}`} className={cn('block h-full group', className)}>
+        <Link
+            href={`/products?brand=${brand.slug}`}
+            prefetch="hover"
+            cacheFor={['30s', '1m']}
+            className={cn('block h-full group', className)}
+        >
             <Card className="p-2.5 sm:p-4 transition flex flex-col justify-between h-full py-2.5 sm:py-3 gap-0 shadow-none hover:border-foreground/30 rounded-lg w-full">
                 <div className="space-y-2 sm:space-y-3">
                     <div className="aspect-square rounded-md overflow-hidden bg-muted">
@@ -30,6 +35,7 @@ export default function BrandCard({ brand, className }: BrandCardProps) {
                             src={brand.image}
                             alt={brand.name}
                             loading="lazy"
+                            decoding="async"
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
                     </div>

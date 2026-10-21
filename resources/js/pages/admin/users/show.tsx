@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, router, useForm } from '@inertiajs/react';
+import { Link, router, useForm, Deferred } from '@inertiajs/react';
 import AdminLayout from '@/layouts/AdminLayout';
 import {
     ArrowLeft,
@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
     Dialog,
     DialogContent,
@@ -85,8 +86,8 @@ interface UserDetail {
 interface UsersShowProps {
     user: UserDetail;
     membership: MembershipDetail | null;
-    point_histories: PointHistory[];
-    recent_orders: OrderSummary[];
+    point_histories?: PointHistory[];
+    recent_orders?: OrderSummary[];
 }
 
 const orderStatusLabel: Record<string, string> = {
@@ -266,105 +267,165 @@ export default function AdminUsersShow({
                 {/* Two-Column Grid: Point History & Recent Orders */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Point History Card Table */}
-                    <Card className="py-0">
-                        <div className="p-4 border-b flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <History className="size-4 text-muted-foreground" />
-                                <span className="text-sm font-semibold text-foreground">Histori Poin Loyalitas</span>
+                    <Deferred
+                        data="point_histories"
+                        fallback={
+                            <Card className="py-0">
+                                <div className="p-4 border-b flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <History className="size-4 text-muted-foreground" />
+                                        <span className="text-sm font-semibold text-foreground">Histori Poin Loyalitas</span>
+                                    </div>
+                                    <Skeleton className="h-4 w-20" />
+                                </div>
+                                <div className="p-4 space-y-3">
+                                    {Array.from({ length: 5 }).map((_, i) => (
+                                        <div key={i} className="flex items-center justify-between py-2 border-b border-border/40 last:border-0">
+                                            <div className="space-y-1.5">
+                                                <Skeleton className="h-3.5 w-48" />
+                                                <Skeleton className="h-2.5 w-24" />
+                                            </div>
+                                            <div className="space-y-1 text-right">
+                                                <Skeleton className="h-3.5 w-16 ml-auto" />
+                                                <Skeleton className="h-2.5 w-12 ml-auto" />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </Card>
+                        }
+                    >
+                        <Card className="py-0">
+                            <div className="p-4 border-b flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <History className="size-4 text-muted-foreground" />
+                                    <span className="text-sm font-semibold text-foreground">Histori Poin Loyalitas</span>
+                                </div>
+                                <span className="text-xs text-muted-foreground">{(point_histories || []).length} catatan</span>
                             </div>
-                            <span className="text-xs text-muted-foreground">{point_histories.length} catatan</span>
-                        </div>
-                        <div className="overflow-x-auto max-h-96">
-                            <table className="w-full caption-bottom text-sm">
-                                <thead className="border-b bg-muted/50 text-muted-foreground">
-                                    <tr className="border-b transition-colors text-xs">
-                                        <th className="h-9 px-4 text-left font-medium">Keterangan</th>
-                                        <th className="h-9 px-4 text-right font-medium">Mutasi</th>
-                                        <th className="h-9 px-4 text-right font-medium">Saldo</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y text-xs">
-                                    {point_histories.length === 0 ? (
-                                        <tr>
-                                            <td colSpan={3} className="p-6 text-center text-muted-foreground">
-                                                Belum ada mutasi poin.
-                                            </td>
+                            <div className="overflow-x-auto max-h-96">
+                                <table className="w-full caption-bottom text-sm">
+                                    <thead className="border-b bg-muted/50 text-muted-foreground">
+                                        <tr className="border-b transition-colors text-xs">
+                                            <th className="h-9 px-4 text-left font-medium">Keterangan</th>
+                                            <th className="h-9 px-4 text-right font-medium">Mutasi</th>
+                                            <th className="h-9 px-4 text-right font-medium">Saldo</th>
                                         </tr>
-                                    ) : (
-                                        point_histories.map((h) => (
-                                            <tr key={h.id} className="hover:bg-muted/50 transition-colors">
-                                                <td className="p-3 align-middle">
-                                                    <div className="font-medium text-foreground">{h.description}</div>
-                                                    <div className="text-[11px] text-muted-foreground">{h.created_at}</div>
-                                                </td>
-                                                <td className="p-3 align-middle text-right font-bold whitespace-nowrap">
-                                                    <span className={h.is_positive ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}>
-                                                        {h.points_formatted}
-                                                    </span>
-                                                </td>
-                                                <td className="p-3 align-middle text-right font-mono text-muted-foreground whitespace-nowrap">
-                                                    {h.balance_after_formatted}
+                                    </thead>
+                                    <tbody className="divide-y text-xs">
+                                        {(!point_histories || point_histories.length === 0) ? (
+                                            <tr>
+                                                <td colSpan={3} className="p-6 text-center text-muted-foreground">
+                                                    Belum ada mutasi poin.
                                                 </td>
                                             </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </Card>
+                                        ) : (
+                                            point_histories.map((h) => (
+                                                <tr key={h.id} className="hover:bg-muted/50 transition-colors">
+                                                    <td className="p-3 align-middle">
+                                                        <div className="font-medium text-foreground">{h.description}</div>
+                                                        <div className="text-[11px] text-muted-foreground">{h.created_at}</div>
+                                                    </td>
+                                                    <td className="p-3 align-middle text-right font-bold whitespace-nowrap">
+                                                        <span className={h.is_positive ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}>
+                                                            {h.points_formatted}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-3 align-middle text-right font-mono text-muted-foreground whitespace-nowrap">
+                                                        {h.balance_after_formatted}
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </Card>
+                    </Deferred>
 
                     {/* Recent Orders Card Table */}
-                    <Card className="py-0">
-                        <div className="p-4 border-b flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <Package className="size-4 text-muted-foreground" />
-                                <span className="text-sm font-semibold text-foreground">Pesanan Terbaru</span>
+                    <Deferred
+                        data="recent_orders"
+                        fallback={
+                            <Card className="py-0">
+                                <div className="p-4 border-b flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Package className="size-4 text-muted-foreground" />
+                                        <span className="text-sm font-semibold text-foreground">Pesanan Terbaru</span>
+                                    </div>
+                                    <Skeleton className="h-4 w-20" />
+                                </div>
+                                <div className="p-4 space-y-3">
+                                    {Array.from({ length: 5 }).map((_, i) => (
+                                        <div key={i} className="flex items-center justify-between py-2 border-b border-border/40 last:border-0">
+                                            <div className="space-y-1.5">
+                                                <Skeleton className="h-3.5 w-36" />
+                                                <Skeleton className="h-2.5 w-24" />
+                                            </div>
+                                            <div className="space-y-1 text-right">
+                                                <Skeleton className="h-5 w-16 ml-auto" />
+                                                <Skeleton className="h-3.5 w-20 ml-auto" />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </Card>
+                        }
+                    >
+                        <Card className="py-0">
+                            <div className="p-4 border-b flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Package className="size-4 text-muted-foreground" />
+                                    <span className="text-sm font-semibold text-foreground">Pesanan Terbaru</span>
+                                </div>
+                                <span className="text-xs text-muted-foreground">{(recent_orders || []).length} pesanan</span>
                             </div>
-                            <span className="text-xs text-muted-foreground">{recent_orders.length} pesanan</span>
-                        </div>
-                        <div className="overflow-x-auto max-h-96">
-                            <table className="w-full caption-bottom text-sm">
-                                <thead className="border-b bg-muted/50 text-muted-foreground">
-                                    <tr className="border-b transition-colors text-xs">
-                                        <th className="h-9 px-4 text-left font-medium">No. Pesanan</th>
-                                        <th className="h-9 px-4 text-left font-medium">Status</th>
-                                        <th className="h-9 px-4 text-right font-medium">Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y text-xs">
-                                    {recent_orders.length === 0 ? (
-                                        <tr>
-                                            <td colSpan={3} className="p-6 text-center text-muted-foreground">
-                                                Belum ada riwayat pesanan.
-                                            </td>
+                            <div className="overflow-x-auto max-h-96">
+                                <table className="w-full caption-bottom text-sm">
+                                    <thead className="border-b bg-muted/50 text-muted-foreground">
+                                        <tr className="border-b transition-colors text-xs">
+                                            <th className="h-9 px-4 text-left font-medium">No. Pesanan</th>
+                                            <th className="h-9 px-4 text-left font-medium">Status</th>
+                                            <th className="h-9 px-4 text-right font-medium">Total</th>
                                         </tr>
-                                    ) : (
-                                        recent_orders.map((o) => (
-                                            <tr key={o.id} className="hover:bg-muted/50 transition-colors">
-                                                <td className="p-3 align-middle">
-                                                    <Link
-                                                        href={`/admin/orders/${o.id}`}
-                                                        className="font-mono font-medium text-foreground hover:underline"
-                                                    >
-                                                        {o.order_number}
-                                                    </Link>
-                                                    <div className="text-[11px] text-muted-foreground">{o.created_at}</div>
-                                                </td>
-                                                <td className="p-3 align-middle">
-                                                    <Badge variant="outline" className="text-[10px]">
-                                                        {orderStatusLabel[o.status] || o.status}
-                                                    </Badge>
-                                                </td>
-                                                <td className="p-3 align-middle text-right font-medium text-foreground whitespace-nowrap">
-                                                    {o.total_amount_formatted}
+                                    </thead>
+                                    <tbody className="divide-y text-xs">
+                                        {(!recent_orders || recent_orders.length === 0) ? (
+                                            <tr>
+                                                <td colSpan={3} className="p-6 text-center text-muted-foreground">
+                                                    Belum ada riwayat pesanan.
                                                 </td>
                                             </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </Card>
+                                        ) : (
+                                            recent_orders.map((o) => (
+                                                <tr key={o.id} className="hover:bg-muted/50 transition-colors">
+                                                    <td className="p-3 align-middle">
+                                                        <Link
+                                                            href={`/admin/orders/${o.id}`}
+                                                            prefetch="hover"
+                                                            cacheFor={['30s', '1m']}
+                                                            className="font-mono font-medium text-foreground hover:underline"
+                                                        >
+                                                            {o.order_number}
+                                                        </Link>
+                                                        <div className="text-[11px] text-muted-foreground">{o.created_at}</div>
+                                                    </td>
+                                                    <td className="p-3 align-middle">
+                                                        <Badge variant="outline" className="text-[10px]">
+                                                            {orderStatusLabel[o.status] || o.status}
+                                                        </Badge>
+                                                    </td>
+                                                    <td className="p-3 align-middle text-right font-medium text-foreground whitespace-nowrap">
+                                                        {o.total_amount_formatted}
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </Card>
+                    </Deferred>
                 </div>
             </div>
 

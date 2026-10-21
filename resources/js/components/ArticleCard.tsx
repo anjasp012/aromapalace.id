@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
 
@@ -37,11 +38,17 @@ export default function ArticleCard({ article, className }: ArticleCardProps) {
         >
             <div className="flex flex-col">
                 {/* Image Container with smooth hover zoom */}
-                <Link href={articleUrl} className="block overflow-hidden relative aspect-[16/10] bg-muted">
+                <Link
+                    href={articleUrl}
+                    prefetch="hover"
+                    cacheFor={['30s', '1m']}
+                    className="block overflow-hidden relative aspect-[16/10] bg-muted"
+                >
                     <img
                         src={thumbnailSrc}
                         alt={displayTitle}
                         loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                     />
                 </Link>
@@ -55,7 +62,12 @@ export default function ArticleCard({ article, className }: ArticleCardProps) {
                     </div>
 
                     <CardTitle className="text-sm sm:text-base font-bold leading-snug line-clamp-2">
-                        <Link href={articleUrl} className="hover:text-[#4A070B] dark:hover:text-[#E8D0BA] transition-colors">
+                        <Link
+                            href={articleUrl}
+                            prefetch="hover"
+                            cacheFor={['30s', '1m']}
+                            className="hover:text-[#4A070B] dark:hover:text-[#E8D0BA] transition-colors"
+                        >
                             {displayTitle}
                         </Link>
                     </CardTitle>
@@ -70,6 +82,8 @@ export default function ArticleCard({ article, className }: ArticleCardProps) {
             <CardFooter className="p-4 sm:p-5 pt-0 mt-auto">
                 <Link
                     href={articleUrl}
+                    prefetch="hover"
+                    cacheFor={['30s', '1m']}
                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground group-hover:text-[#4A070B] dark:group-hover:text-[#E8D0BA] transition-colors cursor-pointer"
                 >
                     <span>{isEn ? 'Read More' : 'Baca Selengkapnya'}</span>
@@ -86,3 +100,23 @@ export default function ArticleCard({ article, className }: ArticleCardProps) {
         </Card>
     );
 }
+
+export function ArticleCardSkeleton({ className }: { className?: string }) {
+    return (
+        <Card className={cn('flex flex-col justify-between overflow-hidden border border-border/80 bg-card rounded-lg py-0 gap-0', className)}>
+            <div className="flex flex-col">
+                <Skeleton className="aspect-[16/10] w-full" />
+                <div className="p-4 sm:p-5 pb-3 space-y-2">
+                    <Skeleton className="h-3 w-1/3" />
+                    <Skeleton className="h-5 w-4/5" />
+                    <Skeleton className="h-3 w-full" />
+                    <Skeleton className="h-3 w-2/3" />
+                </div>
+            </div>
+            <div className="p-4 sm:p-5 pt-0 mt-auto">
+                <Skeleton className="h-4 w-28" />
+            </div>
+        </Card>
+    );
+}
+

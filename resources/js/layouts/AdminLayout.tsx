@@ -123,6 +123,8 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
 
                         <Link
                             href="/admin/dashboard"
+                            prefetch="hover"
+                            cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
                             className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
                                 isDashboard
@@ -136,6 +138,8 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
 
                         <Link
                             href="/admin/orders"
+                            prefetch="hover"
+                            cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
                             className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
                                 isOrders
@@ -149,6 +153,8 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
 
                         <Link
                             href="/admin/users"
+                            prefetch="hover"
+                            cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
                             className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
                                 isUsers
@@ -168,6 +174,8 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
 
                         <Link
                             href="/admin/products"
+                            prefetch="hover"
+                            cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
                             className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
                                 isProducts
@@ -181,6 +189,8 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
 
                         <Link
                             href="/admin/categories"
+                            prefetch="hover"
+                            cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
                             className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
                                 isCategories
@@ -194,6 +204,8 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
 
                         <Link
                             href="/admin/brands"
+                            prefetch="hover"
+                            cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
                             className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
                                 isBrands
@@ -213,6 +225,8 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
 
                         <Link
                             href="/admin/vouchers"
+                            prefetch="hover"
+                            cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
                             className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
                                 isVouchers
@@ -226,6 +240,8 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
 
                         <Link
                             href="/admin/articles"
+                            prefetch="hover"
+                            cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
                             className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
                                 isArticles
@@ -245,6 +261,8 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
 
                         <Link
                             href="/admin/stores"
+                            prefetch="hover"
+                            cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
                             className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
                                 isStores
@@ -258,6 +276,8 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
 
                         <Link
                             href="/admin/payment-methods"
+                            prefetch="hover"
+                            cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
                             className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
                                 isPaymentMethods

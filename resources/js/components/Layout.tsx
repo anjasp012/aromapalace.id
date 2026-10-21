@@ -727,7 +727,12 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
 
                         {/* Center: Luxury Brand Logo (Matching demo-aromapalace.gagasan.tech) */}
                         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-auto z-10">
-                            <Link href="/" className="flex items-center gap-2 sm:gap-2.5 lg:gap-3 group">
+                            <Link
+                                href="/"
+                                prefetch="hover"
+                                cacheFor={['30s', '2m']}
+                                className="flex items-center gap-2 sm:gap-2.5 lg:gap-3 group"
+                            >
                                 <img
                                     src="/images/logo.png"
                                     alt="Aroma Palace"
@@ -873,6 +878,8 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                             {!isAdmin && (
                                 <Link
                                     href={user ? '/wishlist' : '/login?notice=' + encodeURIComponent(isEn ? 'Please sign in to access your wishlist.' : 'Silakan masuk untuk mengakses halaman wishlist Anda.')}
+                                    prefetch="hover"
+                                    cacheFor={['30s', '1m']}
                                     className="hidden sm:flex flex-col items-center justify-center gap-0.5 text-[#4A070B] hover:text-[#360407] transition cursor-pointer px-1 py-0.5 group relative"
                                 >
                                     <div className="relative">
@@ -895,6 +902,8 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                             {isAdmin ? (
                                 <Link
                                     href="/admin/dashboard"
+                                    prefetch="hover"
+                                    cacheFor={['30s', '1m']}
                                     className="sm:hidden flex items-center justify-center text-[#4A070B] hover:text-[#360407] transition cursor-pointer w-9 h-9 group relative rounded-full hover:bg-[#4A070B]/5 active:scale-95 shrink-0 -mr-1"
                                     aria-label={isEn ? "Admin Dashboard" : "Dashboard Admin"}
                                 >
@@ -905,6 +914,8 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                             ) : (
                                 <Link
                                     href={user ? '/cart' : '/login?notice=' + encodeURIComponent(isEn ? 'Please sign in to view your shopping cart.' : 'Silakan masuk untuk melihat keranjang belanja Anda.')}
+                                    prefetch="hover"
+                                    cacheFor={['30s', '1m']}
                                     className="flex items-center justify-center sm:flex-col sm:gap-0.5 text-[#4A070B] hover:text-[#360407] transition cursor-pointer w-9 h-9 sm:w-auto sm:h-auto sm:px-1 sm:py-0.5 group relative rounded-full sm:rounded-none hover:bg-[#4A070B]/5 sm:hover:bg-transparent active:scale-95 shrink-0 -mr-1"
                                     aria-label={isEn ? "Shopping Cart" : "Keranjang Belanja"}
                                 >
@@ -934,6 +945,8 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                         >
                             <Link
                                 href="/"
+                                prefetch="hover"
+                                cacheFor={['30s', '2m']}
                                 className={`inline-flex items-center py-2.5 sm:py-3.5 border-b-2 -mb-px transition whitespace-nowrap ${url === '/'
                                     ? 'text-[#4A070B] font-bold border-[#4A070B]'
                                     : 'text-muted-foreground hover:text-foreground border-transparent hover:border-[#4A070B]/30'
@@ -956,29 +969,31 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="start" className="w-56">
                                     <DropdownMenuItem asChild>
-                                        <Link href="/products">{isEn ? 'All Catalog' : 'Semua Katalog'}</Link>
+                                        <Link href="/products" prefetch="hover" cacheFor={['30s', '2m']}>{isEn ? 'All Catalog' : 'Semua Katalog'}</Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem asChild>
-                                        <Link href="/products?category=parfum-wanita">{isEn ? "Women's Perfume" : 'Parfum Wanita'}</Link>
+                                        <Link href="/products?category=parfum-wanita" prefetch="hover" cacheFor={['30s', '2m']}>{isEn ? "Women's Perfume" : 'Parfum Wanita'}</Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem asChild>
-                                        <Link href="/products?category=parfum-pria">{isEn ? "Men's Perfume" : 'Parfum Pria'}</Link>
+                                        <Link href="/products?category=parfum-pria" prefetch="hover" cacheFor={['30s', '2m']}>{isEn ? "Men's Perfume" : 'Parfum Pria'}</Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem asChild>
-                                        <Link href="/products?category=unisex-fragrance">Unisex Fragrance</Link>
+                                        <Link href="/products?category=unisex-fragrance" prefetch="hover" cacheFor={['30s', '2m']}>Unisex Fragrance</Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem asChild>
-                                        <Link href="/products?category=discovery-sets">Discovery Sets &amp; Vials</Link>
+                                        <Link href="/products?category=discovery-sets" prefetch="hover" cacheFor={['30s', '2m']}>Discovery Sets &amp; Vials</Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem asChild>
-                                        <Link href="/products?category=body-and-hair-mist">Body &amp; Hair Mist</Link>
+                                        <Link href="/products?category=body-and-hair-mist" prefetch="hover" cacheFor={['30s', '2m']}>Body &amp; Hair Mist</Link>
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
 
                             <Link
                                 href="/products?sort=popular"
+                                prefetch="hover"
+                                cacheFor={['30s', '2m']}
                                 className={`inline-flex items-center py-2.5 sm:py-3.5 border-b-2 -mb-px transition whitespace-nowrap ${url.includes('popular')
                                     ? 'text-[#4A070B] font-bold border-[#4A070B]'
                                     : 'text-muted-foreground hover:text-foreground border-transparent hover:border-[#4A070B]/30'
@@ -989,6 +1004,8 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
 
                             <Link
                                 href="/products?discount=1"
+                                prefetch="hover"
+                                cacheFor={['30s', '2m']}
                                 className={`inline-flex items-center py-2.5 sm:py-3.5 border-b-2 -mb-px transition whitespace-nowrap ${url.includes('discount')
                                     ? 'text-[#4A070B] font-bold border-[#4A070B]'
                                     : 'text-muted-foreground hover:text-foreground border-transparent hover:border-[#4A070B]/30'
@@ -999,6 +1016,8 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
 
                             <Link
                                 href="/articles"
+                                prefetch="hover"
+                                cacheFor={['30s', '2m']}
                                 className={`inline-flex items-center py-2.5 sm:py-3.5 border-b-2 -mb-px transition whitespace-nowrap ${url.startsWith('/articles')
                                     ? 'text-[#4A070B] font-bold border-[#4A070B]'
                                     : 'text-muted-foreground hover:text-foreground border-transparent hover:border-[#4A070B]/30'
@@ -1009,6 +1028,8 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
 
                             <Link
                                 href="/stores"
+                                prefetch="hover"
+                                cacheFor={['30s', '2m']}
                                 className={`inline-flex items-center py-2.5 sm:py-3.5 border-b-2 -mb-px transition whitespace-nowrap ${url.startsWith('/stores')
                                     ? 'text-[#4A070B] font-bold border-[#4A070B]'
                                     : 'text-muted-foreground hover:text-foreground border-transparent hover:border-[#4A070B]/30'
@@ -1019,6 +1040,8 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
 
                             <Link
                                 href="/about"
+                                prefetch="hover"
+                                cacheFor={['30s', '2m']}
                                 className={`inline-flex items-center py-2.5 sm:py-3.5 border-b-2 -mb-px transition whitespace-nowrap ${url === '/about'
                                     ? 'text-[#4A070B] font-bold border-[#4A070B]'
                                     : 'text-muted-foreground hover:text-foreground border-transparent hover:border-[#4A070B]/30'
@@ -1781,7 +1804,9 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                 <Link
                                     key={item.label}
                                     href={item.href}
-                                    className={`h-full flex flex-col items-center justify-center gap-0.5 px-1 transition relative select-none ${isActive
+                                    prefetch={['mount', 'hover']}
+                                    cacheFor={['30s', '2m']}
+                                    className={`h-full flex flex-col items-center justify-center gap-0.5 px-1 transition relative select-none active:scale-95 duration-100 ${isActive
                                         ? 'text-[#4A070B] dark:text-[#E8D0BA] font-bold'
                                         : 'text-muted-foreground hover:text-foreground font-medium'
                                         }`}

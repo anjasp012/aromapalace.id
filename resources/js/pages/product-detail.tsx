@@ -1,12 +1,13 @@
-import { Head, Link, usePage, router } from '@inertiajs/react';
+import { Head, Link, usePage, router, Deferred } from '@inertiajs/react';
 import { useState, useMemo, useEffect } from 'react';
 import Layout from '@/components/Layout';
-import ProductCard, { type ProductItem } from '@/components/ProductCard';
+import ProductCard, { type ProductItem, ProductCardSkeleton } from '@/components/ProductCard';
 import ProductQuickViewModal from '@/components/ProductQuickViewModal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
     Dialog,
     DialogContent,
@@ -75,7 +76,7 @@ export interface FragranceDetail {
 
 interface ProductDetailPageProps {
     product: FragranceDetail;
-    relatedProducts: FragranceDetail[];
+    relatedProducts?: FragranceDetail[];
 }
 
 export default function ProductDetail({ product, relatedProducts }: ProductDetailPageProps) {
@@ -816,26 +817,45 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
             </section>
 
             {/* RELATED PRODUCTS RECOMMENDATION */}
-            {relatedProducts && relatedProducts.length > 0 && (
-                <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
-                    <div className="mb-6">
-                        <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-                            {isEn ? 'Recommended Fragrances' : 'Rekomendasi Wewangian Terkait'}
-                        </h2>
-                    </div>
+            <Deferred
+                data="relatedProducts"
+                fallback={
+                    <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
+                        <div className="mb-6">
+                            <Skeleton className="h-7 w-64" />
+                        </div>
+                        <div className="flex sm:grid overflow-x-auto sm:overflow-visible gap-3 sm:gap-6 pb-3 sm:pb-0 scrollbar-none sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                                <ProductCardSkeleton
+                                    key={i}
+                                    className="w-[calc((100%-16px)/2.45)] sm:w-auto shrink-0 sm:shrink"
+                                />
+                            ))}
+                        </div>
+                    </section>
+                }
+            >
+                {relatedProducts && relatedProducts.length > 0 && (
+                    <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
+                        <div className="mb-6">
+                            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+                                {isEn ? 'Recommended Fragrances' : 'Rekomendasi Wewangian Terkait'}
+                            </h2>
+                        </div>
 
-                    <div className="flex sm:grid overflow-x-auto sm:overflow-visible gap-3 sm:gap-6 pb-3 sm:pb-0 snap-x snap-mandatory scrollbar-none sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                        {relatedProducts.slice(0, 10).map((item) => (
-                            <ProductCard
-                                key={item.id}
-                                product={item as unknown as ProductItem}
-                                onQuickView={(p) => setQuickViewBottle(p)}
-                                className="w-[calc((100%-16px)/2.45)] sm:w-auto shrink-0 sm:shrink snap-start"
-                            />
-                        ))}
-                    </div>
-                </section>
-            )}
+                        <div className="flex sm:grid overflow-x-auto sm:overflow-visible gap-3 sm:gap-6 pb-3 sm:pb-0 snap-x snap-mandatory scrollbar-none sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                            {relatedProducts.slice(0, 10).map((item) => (
+                                <ProductCard
+                                    key={item.id}
+                                    product={item as unknown as ProductItem}
+                                    onQuickView={(p) => setQuickViewBottle(p)}
+                                    className="w-[calc((100%-16px)/2.45)] sm:w-auto shrink-0 sm:shrink snap-start"
+                                />
+                            ))}
+                        </div>
+                    </section>
+                )}
+            </Deferred>
 
             {/* LIGHTBOX DIALOG FOR MAIN IMAGE */}
             <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>

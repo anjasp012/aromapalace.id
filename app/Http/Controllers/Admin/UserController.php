@@ -142,48 +142,12 @@ class UserController extends Controller
      */
     public function show(User $user): Response
     {
-        $user->load(['membership.pointHistories', 'orders']);
+        $user->load('membership');
 
         $membership = $user->membership;
 
-        $pointHistories = $membership
-            ? $membership->pointHistories()
-                ->latest()
-                ->take(30)
-                ->get()
-                ->map(fn (LoyaltyPointHistory $h) => [
-                    'id' => $h->id,
-                    'type' => $h->type,
-                    'category' => $h->points >= 0 ? 'masuk' : 'berkurang',
-                    'type_label' => $h->points >= 0 ? 'Poin Masuk' : 'Poin Berkurang',
-                    'points' => $h->points,
-                    'points_formatted' => ($h->points > 0 ? '+' : '').number_format($h->points, 0, ',', '.'),
-                    'balance_after' => $h->balance_after,
-                    'balance_after_formatted' => number_format($h->balance_after, 0, ',', '.'),
-                    'description' => $h->description,
-                    'reference_id' => $h->reference_id,
-                    'created_at' => $h->created_at?->format('d M Y, H:i').' WIB',
-                    'is_positive' => $h->points > 0,
-                ])
-                ->all()
-            : [];
-
         $totalPointsIn = $membership ? (int) $membership->pointHistories()->where('points', '>', 0)->sum('points') : 0;
         $totalPointsOut = $membership ? (int) abs($membership->pointHistories()->where('points', '<', 0)->sum('points')) : 0;
-
-        $recentOrders = $user->orders()
-            ->latest()
-            ->take(10)
-            ->get()
-            ->map(fn ($o) => [
-                'id' => $o->id,
-                'order_number' => $o->order_number,
-                'total_amount_formatted' => 'Rp '.number_format($o->total_amount, 0, ',', '.'),
-                'status' => $o->status ?? 'menunggu_pembayaran',
-                'payment_status' => $o->payment_status,
-                'created_at' => $o->created_at?->format('d M Y'),
-            ])
-            ->all();
 
         return Inertia::render('admin/users/show', [
             'user' => [
@@ -207,8 +171,42 @@ class UserController extends Controller
                 'total_points_out' => $totalPointsOut,
                 'total_points_out_formatted' => number_format($totalPointsOut, 0, ',', '.'),
             ] : null,
-            'point_histories' => $pointHistories,
-            'recent_orders' => $recentOrders,
+            'point_histories' => Inertia::defer(fn () => $membership
+                ? $membership->pointHistories()
+                    ->latest()
+                    ->take(30)
+                    ->get()
+                    ->map(fn (LoyaltyPointHistory $h) => [
+                        'id' => $h->id,
+                        'type' => $h->type,
+                        'category' => $h->points >= 0 ? 'masuk' : 'berkurang',
+                        'type_label' => $h->points >= 0 ? 'Poin Masuk' : 'Poin Berkurang',
+                        'points' => $h->points,
+                        'points_formatted' => ($h->points > 0 ? '+' : '').number_format($h->points, 0, ',', '.'),
+                        'balance_after' => $h->balance_after,
+                        'balance_after_formatted' => number_format($h->balance_after, 0, ',', '.'),
+                        'description' => $h->description,
+                        'reference_id' => $h->reference_id,
+                        'created_at' => $h->created_at?->format('d M Y, H:i').' WIB',
+                        'is_positive' => $h->points > 0,
+                    ])
+                    ->all()
+                : []
+            ),
+            'recent_orders' => Inertia::defer(fn () => $user->orders()
+                ->latest()
+                ->take(10)
+                ->get()
+                ->map(fn ($o) => [
+                    'id' => $o->id,
+                    'order_number' => $o->order_number,
+                    'total_amount_formatted' => 'Rp '.number_format($o->total_amount, 0, ',', '.'),
+                    'status' => $o->status ?? 'menunggu_pembayaran',
+                    'payment_status' => $o->payment_status,
+                    'created_at' => $o->created_at?->format('d M Y'),
+                ])
+                ->all()
+            ),
         ]);
     }
 

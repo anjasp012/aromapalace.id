@@ -2,6 +2,7 @@ import { Link, usePage } from '@inertiajs/react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useTranslation, formatCategoryName } from '@/lib/i18n';
 
@@ -69,6 +70,8 @@ export default function ProductCard({
             <div className="relative aspect-square bg-muted overflow-hidden rounded-lg">
                 <Link
                     href={productUrl}
+                    prefetch="hover"
+                    cacheFor={['30s', '1m']}
                     className="block w-full h-full cursor-pointer"
                 >
                     {product.image && (
@@ -76,6 +79,7 @@ export default function ProductCard({
                             src={product.image}
                             alt={product.name}
                             loading="lazy"
+                            decoding="async"
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
                     )}
@@ -152,7 +156,12 @@ export default function ProductCard({
                         darkTheme ? 'text-white hover:text-white/80' : 'text-foreground group-hover:text-primary'
                     )}
                 >
-                    <Link href={productUrl} className="">
+                    <Link
+                        href={productUrl}
+                        prefetch="hover"
+                        cacheFor={['30s', '1m']}
+                        className=""
+                    >
                         {product.name}
                     </Link>
                 </h3>
@@ -177,5 +186,19 @@ export default function ProductCard({
                 </div>
             </CardContent>
         </Card>
+    );
+}
+
+export function ProductCardSkeleton({ className }: { className?: string }) {
+    return (
+        <div className={cn('flex flex-col py-0 gap-0 rounded-lg bg-transparent', className)}>
+            <Skeleton className="aspect-square w-full rounded-lg" />
+            <div className="py-3 sm:py-4 space-y-2">
+                <Skeleton className="h-3 w-1/3" />
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+                <Skeleton className="h-3 w-1/4" />
+            </div>
+        </div>
     );
 }

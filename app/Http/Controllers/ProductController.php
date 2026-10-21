@@ -182,7 +182,7 @@ class ProductController extends Controller
 
         return Inertia::render('product-detail', [
             'product' => $product,
-            'relatedProducts' => $relatedProducts,
+            'relatedProducts' => Inertia::defer(fn () => $relatedProducts),
         ]);
     }
 
