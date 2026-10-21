@@ -73,9 +73,8 @@ export default function Login({ status, notice }: LoginProps) {
                                         placeholder={t('auth.email_placeholder')}
                                         value={data.email}
                                         onChange={(e) => setData('email', e.target.value)}
-                                        className="h-10 text-xs shadow-none border-border/80 focus-visible:ring-1 focus-visible:ring-[#4A070B] focus-visible:border-[#4A070B]"
+                                        className="h-10 text-base sm:text-sm shadow-none border-border/80 focus-visible:ring-1 focus-visible:ring-[#4A070B] focus-visible:border-[#4A070B]"
                                         required
-                                        autoFocus
                                     />
                                     {errors.email && (
                                         <p className="text-[11px] text-destructive">{errors.email}</p>
@@ -96,7 +95,7 @@ export default function Login({ status, notice }: LoginProps) {
                                             placeholder="••••••••"
                                             value={data.password}
                                             onChange={(e) => setData('password', e.target.value)}
-                                            className="h-10 text-xs pr-10 shadow-none border-border/80 focus-visible:ring-1 focus-visible:ring-[#4A070B] focus-visible:border-[#4A070B]"
+                                            className="h-10 text-base sm:text-sm pr-10 shadow-none border-border/80 focus-visible:ring-1 focus-visible:ring-[#4A070B] focus-visible:border-[#4A070B]"
                                             required
                                         />
                                         <button

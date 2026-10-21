@@ -1077,29 +1077,88 @@ export default function OrdersPage({
                 );
             })()}
 
-            {/* INVOICE IFRAME PREVIEW MODAL (Full Tokopedia Experience) */}
+            {/* INVOICE PREVIEW MODAL (Consistent Aroma Palace Theme & Safe Area Aware) */}
             {invoiceModalOrder && (
                 <div
-                    className="fixed inset-0 z-[70] flex items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-xs animate-in fade-in duration-200"
+                    className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 pt-[calc(env(safe-area-inset-top,0px)+0.75rem)] pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] overscroll-contain"
                     onClick={() => setInvoiceModalOrder(null)}
                 >
                     <div
-                        className="w-full h-full sm:max-w-3xl sm:h-[92vh] sm:rounded-2xl flex flex-col overflow-hidden shadow-2xl bg-[#1F1F1F] animate-in zoom-in-95 duration-200"
+                        className="bg-card text-card-foreground border border-border/80 rounded-2xl shadow-2xl max-w-3xl w-full h-[90vh] sm:h-[86vh] max-h-[90vh] sm:max-h-[86vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 overscroll-contain"
                         onClick={(e) => e.stopPropagation()}
                         role="dialog"
                         aria-modal="true"
                     >
-                        <div className="flex-1 w-full relative bg-[#1F1F1F] overflow-hidden">
+                        {/* Consistent Modal Header */}
+                        <div className="flex items-center justify-between px-5 sm:px-6 py-3.5 border-b border-border/80 shrink-0 bg-card">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="w-8 h-8 rounded-lg bg-[#4A070B]/10 dark:bg-[#E8D0BA]/15 text-[#4A070B] dark:text-[#E8D0BA] flex items-center justify-center shrink-0">
+                                    <FileText className="w-4 h-4" />
+                                </div>
+                                <div className="min-w-0">
+                                    <h3 className="font-extrabold text-sm sm:text-base text-foreground tracking-tight truncate">
+                                        Invoice #{invoiceModalOrder.order_number}
+                                    </h3>
+                                    <p className="text-[10px] sm:text-[11px] text-muted-foreground truncate">
+                                        Aroma Palace Official Boutique
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                {/* Print / Cetak Button */}
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        try {
+                                            iframeRef.current?.contentWindow?.focus();
+                                            iframeRef.current?.contentWindow?.print();
+                                        } catch {
+                                            window.open(`/orders/${invoiceModalOrder.order_number}/invoice`, '_blank');
+                                        }
+                                    }}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#4A070B] hover:bg-[#360407] text-white text-xs font-semibold shadow-xs transition active:scale-95 cursor-pointer"
+                                    title="Cetak atau Simpan PDF"
+                                >
+                                    <Printer className="w-3.5 h-3.5" />
+                                    <span className="hidden sm:inline">Cetak / PDF</span>
+                                </button>
+
+                                {/* Open in New Tab Button */}
+                                <a
+                                    href={`/orders/${invoiceModalOrder.order_number}/invoice`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition cursor-pointer"
+                                    title="Buka di Tab Baru"
+                                >
+                                    <ExternalLink className="w-4 h-4" />
+                                </a>
+
+                                {/* Close Button */}
+                                <button
+                                    type="button"
+                                    onClick={() => setInvoiceModalOrder(null)}
+                                    className="text-muted-foreground hover:text-foreground p-1.5 rounded-lg hover:bg-muted/70 transition-colors cursor-pointer"
+                                    aria-label="Tutup"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Modal Body with Iframe */}
+                        <div className="flex-1 w-full relative bg-[#F8F9FA] overflow-hidden">
                             {iframeLoading && (
-                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#1F1F1F] text-white z-10 gap-2">
-                                    <Loader2 className="w-8 h-8 animate-spin text-[#FFD100]" />
-                                    <span className="text-xs text-white/70 font-medium">Memuat invoice...</span>
+                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/90 z-10 gap-2">
+                                    <Loader2 className="w-8 h-8 animate-spin text-[#4A070B]" />
+                                    <span className="text-xs text-muted-foreground font-medium">Memuat invoice...</span>
                                 </div>
                             )}
                             <iframe
                                 ref={iframeRef}
-                                src={`/orders/${invoiceModalOrder.order_number}/invoice`}
-                                className="w-full h-full border-0 bg-[#1F1F1F]"
+                                src={`/orders/${invoiceModalOrder.order_number}/invoice?embed=1`}
+                                className="w-full h-full border-0 bg-[#F8F9FA]"
                                 title={`Invoice ${invoiceModalOrder.order_number}`}
                                 onLoad={() => setIframeLoading(false)}
                             />

@@ -137,6 +137,14 @@
         -webkit-overflow-scrolling: touch;
         overscroll-behavior: contain;
     }
+    /* Prevent iOS Safari auto-zoom on input focus (iOS automatically zooms when font-size < 16px) */
+    @media (max-width: 768px) {
+        input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+        select,
+        textarea {
+            font-size: 16px !important;
+        }
+    }
 }
 
 @layer components {

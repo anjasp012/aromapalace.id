@@ -62,9 +62,8 @@ export default function Register({ status }: RegisterProps) {
                                         placeholder={t('auth.full_name_placeholder')}
                                         value={data.name}
                                         onChange={(e) => setData('name', e.target.value)}
-                                        className="h-10 text-xs shadow-none border-border/80 focus-visible:ring-1 focus-visible:ring-[#4A070B] focus-visible:border-[#4A070B]"
+                                        className="h-10 text-base sm:text-sm shadow-none border-border/80 focus-visible:ring-1 focus-visible:ring-[#4A070B] focus-visible:border-[#4A070B]"
                                         required
-                                        autoFocus
                                     />
                                     {errors.name && (
                                         <p className="text-[11px] text-destructive">{errors.name}</p>
@@ -82,7 +81,7 @@ export default function Register({ status }: RegisterProps) {
                                         placeholder={t('auth.email_placeholder')}
                                         value={data.email}
                                         onChange={(e) => setData('email', e.target.value)}
-                                        className="h-10 text-xs shadow-none border-border/80 focus-visible:ring-1 focus-visible:ring-[#4A070B] focus-visible:border-[#4A070B]"
+                                        className="h-10 text-base sm:text-sm shadow-none border-border/80 focus-visible:ring-1 focus-visible:ring-[#4A070B] focus-visible:border-[#4A070B]"
                                         required
                                     />
                                     {errors.email && (
@@ -102,7 +101,7 @@ export default function Register({ status }: RegisterProps) {
                                             placeholder={t('auth.password_min')}
                                             value={data.password}
                                             onChange={(e) => setData('password', e.target.value)}
-                                            className="h-10 text-xs pr-10 shadow-none border-border/80 focus-visible:ring-1 focus-visible:ring-[#4A070B] focus-visible:border-[#4A070B]"
+                                            className="h-10 text-base sm:text-sm pr-10 shadow-none border-border/80 focus-visible:ring-1 focus-visible:ring-[#4A070B] focus-visible:border-[#4A070B]"
                                             required
                                         />
                                         <button

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Head } from '@inertiajs/react';
-import { X, Download } from 'lucide-react';
+import { ArrowLeft, Printer } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 
 interface InvoiceItem {
@@ -56,7 +56,19 @@ interface InvoiceProps {
 }
 
 export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
-    const { t, isEn } = useTranslation();
+    const { isEn } = useTranslation();
+    const [isEmbed, setIsEmbed] = React.useState(false);
+
+    React.useEffect(() => {
+        try {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('embed') === '1' || window.self !== window.top) {
+                setIsEmbed(true);
+            }
+        } catch {
+            setIsEmbed(true);
+        }
+    }, []);
 
     const handlePrint = () => {
         window.print();
@@ -79,46 +91,52 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
     };
 
     return (
-        <div className="min-h-screen bg-[#1F1F1F] text-gray-900 flex flex-col print:bg-white print:p-0 print:m-0">
+        <div className="min-h-screen bg-[#F8F9FA] text-gray-900 flex flex-col print:bg-white print:p-0 print:m-0">
             <Head title={`Invoice #${order.order_number} • Aroma Palace`} />
 
-            {/* TOP YELLOW APP BAR (Matching Tokopedia Mobile Screenshot) */}
-            <header className="sticky top-0 z-30 bg-[#FFD100] text-gray-950 px-4 py-3 sm:py-3.5 shadow-sm print:hidden flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <button
-                        type="button"
-                        onClick={handleClose}
-                        className="p-1 -ml-1 rounded-full hover:bg-black/10 transition cursor-pointer active:scale-95"
-                        title="Tutup"
-                    >
-                        <X className="w-6 h-6 text-gray-950 stroke-[2.5]" />
-                    </button>
-                    <span className="text-lg sm:text-xl font-bold tracking-tight text-gray-950 select-none">
-                        Invoice
-                    </span>
-                </div>
+            {/* STANDALONE TOP APP BAR (Consistent Aroma Palace Burgundy Theme, Hidden in Embed & Print) */}
+            {!isEmbed && (
+                <header className="sticky top-0 z-30 bg-[#4A070B] text-white px-4 pt-[calc(env(safe-area-inset-top,0px)+0.6rem)] pb-3 sm:py-3.5 shadow-md print:hidden flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <button
+                            type="button"
+                            onClick={handleClose}
+                            className="p-1 -ml-1 rounded-full hover:bg-white/10 transition cursor-pointer active:scale-95 text-white"
+                            title="Kembali ke Pesanan"
+                        >
+                            <ArrowLeft className="w-5 h-5 text-white" />
+                        </button>
+                        <span className="text-sm sm:text-base font-bold tracking-tight text-white select-none">
+                            Invoice #{order.order_number}
+                        </span>
+                    </div>
 
-                <div className="flex items-center gap-2">
-                    <button
-                        type="button"
-                        onClick={handlePrint}
-                        className="p-1.5 rounded-full hover:bg-black/10 transition cursor-pointer active:scale-95"
-                        title="Download / Cetak Invoice"
-                    >
-                        <Download className="w-6 h-6 text-gray-950 stroke-[2.2]" />
-                    </button>
-                </div>
-            </header>
+                    <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={handlePrint}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#F7D070] to-[#E5A844] hover:from-[#E5A844] hover:to-[#C98A2C] text-[#360407] text-xs font-bold shadow-xs transition active:scale-95 cursor-pointer"
+                            title="Cetak atau Simpan PDF"
+                        >
+                            <Printer className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">Cetak / PDF</span>
+                        </button>
+                    </div>
+                </header>
+            )}
 
-            {/* DARK PREVIEW CANVAS WITH SCROLLABLE WHITE PAPER */}
-            <main className="flex-1 overflow-x-auto py-4 sm:py-8 px-2 sm:px-6 flex justify-center items-start print:p-0 print:overflow-visible">
-                {/* Printable Invoice Paper Sheet (Matching Screenshot 1:1) */}
-                <div className="w-full max-w-2xl min-w-[360px] sm:min-w-[560px] bg-white rounded-xs sm:rounded-sm shadow-2xl p-5 sm:p-8 text-[11px] sm:text-xs leading-normal print:shadow-none print:p-0 print:m-0 print:max-w-none print:w-full print:rounded-none">
+            {/* PREVIEW CANVAS WITH SCROLLABLE WHITE PAPER */}
+            <main className={`flex-1 overflow-x-auto ${isEmbed ? 'p-2 sm:p-6' : 'py-4 sm:py-8 px-2 sm:px-6'} flex justify-center items-start print:p-0 print:overflow-visible`}>
+                {/* Printable Invoice Paper Sheet (Consistent Receipt Structure) */}
+                <div className={`w-full max-w-2xl min-w-[340px] sm:min-w-[560px] bg-white rounded-xl ${isEmbed ? 'border border-gray-200/80 shadow-xs' : 'border border-gray-200/80 shadow-md'} p-5 sm:p-8 text-[11px] sm:text-xs leading-normal print:shadow-none print:border-none print:p-0 print:m-0 print:max-w-none print:w-full print:rounded-none`}>
                     {/* Header Row: Logo & Invoice Title */}
                     <div className="flex items-start justify-between gap-4 pb-4 border-b border-gray-200">
                         <div>
                             <div className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 font-serif">
                                 aroma<span className="font-light text-gray-600">palace</span>
+                            </div>
+                            <div className="text-[10px] sm:text-[10.5px] text-gray-500 tracking-wider uppercase mt-0.5 font-medium">
+                                Official Luxury Boutique
                             </div>
                         </div>
 
@@ -142,6 +160,7 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
                             <div className="space-y-0.5">
                                 <div className="text-gray-500">Penjual:</div>
                                 <div className="font-bold text-gray-900">{seller.name}</div>
+                                <div className="text-gray-600 text-[10px]">{seller.store_name}</div>
                             </div>
                         </div>
 
@@ -167,18 +186,18 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
                     <div className="py-4">
                         <table className="w-full text-[10.5px] sm:text-xs">
                             <thead>
-                                <tr className="border-b border-gray-200 text-gray-700 font-bold">
-                                    <th className="py-2 text-left font-bold w-[45%]">Informasi Pesanan</th>
-                                    <th className="py-2 text-right font-bold w-[25%]">Harga Satuan</th>
-                                    <th className="py-2 text-center font-bold w-[12%]">Kuantitas</th>
-                                    <th className="py-2 text-right font-bold w-[18%]">Subtotal</th>
+                                <tr className="border-b border-gray-200 text-gray-700 font-bold bg-gray-50/70">
+                                    <th className="py-2 px-2 text-left font-bold w-[45%]">Informasi Pesanan</th>
+                                    <th className="py-2 px-2 text-right font-bold w-[23%]">Harga Satuan</th>
+                                    <th className="py-2 px-2 text-center font-bold w-[12%]">Kuantitas</th>
+                                    <th className="py-2 px-2 text-right font-bold w-[20%]">Subtotal</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {order.items.map((item) => (
                                     <tr key={item.id} className="align-top">
-                                        <td className="py-2.5 pr-2">
-                                            <div className="font-medium text-blue-600 hover:underline">
+                                        <td className="py-2.5 px-2">
+                                            <div className="font-semibold text-blue-600 hover:underline">
                                                 {item.product_name}
                                             </div>
                                             <div className="text-[10px] text-gray-500 mt-0.5 space-x-1">
@@ -193,7 +212,7 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
                                         <td className="py-2.5 px-2 text-center text-gray-800 font-medium">
                                             {item.quantity}
                                         </td>
-                                        <td className="py-2.5 pl-2 text-right text-gray-900 font-bold whitespace-nowrap">
+                                        <td className="py-2.5 px-2 text-right text-gray-900 font-bold whitespace-nowrap">
                                             {item.total_price_formatted}
                                         </td>
                                     </tr>
@@ -204,7 +223,7 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
 
                     {/* Financial Breakdown with Contained Watermark Stamp */}
                     <div className="relative pt-3 pb-4 border-t border-gray-200 overflow-hidden">
-                        {/* Rotated Watermark Stamp (Matching Tokopedia Screenshot: 2 lines "BELUM LUNAS" or 1 line "LUNAS") */}
+                        {/* Rotated Watermark Stamp (2 lines "BELUM LUNAS" or 1 line "LUNAS") */}
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0">
                             {order.is_paid ? (
                                 <div className="border-[2.5px] border-emerald-500/25 text-emerald-600/30 font-black text-2xl sm:text-4xl uppercase tracking-[0.2em] px-8 py-2.5 rounded-xl rotate-[-15deg] leading-tight text-center">
