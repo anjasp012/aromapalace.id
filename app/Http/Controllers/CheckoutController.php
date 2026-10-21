@@ -137,8 +137,13 @@ class CheckoutController extends Controller
             'stores' => $stores,
             'payment_methods' => $paymentMethods,
             'user' => [
+                'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'phone' => $user->phone ?? '',
+                'address' => $user->address ?? '',
+                'city' => $user->city ?? '',
+                'postal_code' => $user->postal_code ?? '',
             ],
         ]);
     }
@@ -374,6 +379,24 @@ class CheckoutController extends Controller
                     $order->items()->create($itemData);
                 }
 
+                // Save user's contact & address to profile if provided so they don't have to re-enter next time
+                $userUpdate = [];
+                if (! empty($validated['recipient_phone'])) {
+                    $userUpdate['phone'] = $validated['recipient_phone'];
+                }
+                if (! empty($validated['shipping_address'])) {
+                    $userUpdate['address'] = $validated['shipping_address'];
+                }
+                if (! empty($validated['city'])) {
+                    $userUpdate['city'] = $validated['city'];
+                }
+                if (! empty($validated['postal_code'])) {
+                    $userUpdate['postal_code'] = $validated['postal_code'];
+                }
+                if (! empty($userUpdate)) {
+                    $user->update($userUpdate);
+                }
+
                 // Clear the user's cart
                 $user->cartItems()->delete();
 
@@ -450,16 +473,11 @@ class CheckoutController extends Controller
             return 0;
         }
 
-        $voucher = Voucher::where('code', $code)->first();
+        $voucher = Voucher::where('code', $code)->where('is_active', true)->first();
         if ($voucher) {
             return $voucher->calculateDiscount($subtotal);
         }
 
-        return match ($code) {
-            'AROMA40' => (int) round($subtotal * 0.40),
-            'DUBAI25' => (int) round($subtotal * 0.25),
-            'ROYALE10' => (int) round($subtotal * 0.10),
-            default => 0,
-        };
+        return 0;
     }
 }

@@ -23,10 +23,10 @@ import {
     KeyRound,
     MessageCircle,
     ExternalLink,
-    User,
     Info,
     Store,
     Trash2,
+    Loader2,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 
@@ -34,6 +34,10 @@ interface UserData {
     id: number;
     name: string;
     email: string;
+    phone?: string;
+    address?: string;
+    city?: string;
+    postal_code?: string;
     role: string;
     joined_at: string;
 }
@@ -95,6 +99,10 @@ export default function AccountPage({
 
     // Profile form state
     const [editName, setEditName] = useState(user.name || '');
+    const [editPhone, setEditPhone] = useState(user.phone || '');
+    const [editAddress, setEditAddress] = useState(user.address || '');
+    const [editCity, setEditCity] = useState(user.city || '');
+    const [editPostalCode, setEditPostalCode] = useState(user.postal_code || '');
     const [profileError, setProfileError] = useState<string | null>(null);
     const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
 
@@ -145,14 +153,20 @@ export default function AccountPage({
         setIsUpdatingProfile(true);
         router.patch(
             '/account/profile',
-            { name: editName.trim() },
+            {
+                name: editName.trim(),
+                phone: editPhone.trim(),
+                address: editAddress.trim(),
+                city: editCity.trim(),
+                postal_code: editPostalCode.trim(),
+            },
             {
                 preserveScroll: true,
                 onSuccess: () => {
                     setEditProfileOpen(false);
                 },
                 onError: (errors) => {
-                    setProfileError(errors.name || (isEn ? 'Failed to update profile.' : 'Gagal memperbarui profil.'));
+                    setProfileError(Object.values(errors)[0] || (isEn ? 'Failed to update profile.' : 'Gagal memperbarui profil.'));
                 },
                 onFinish: () => setIsUpdatingProfile(false),
             }
@@ -553,6 +567,59 @@ export default function AccountPage({
                                     className="text-xs rounded-xl bg-muted/50 text-muted-foreground cursor-not-allowed"
                                 />
                             </div>
+
+                            <div className="space-y-1">
+                                <label className="text-xs font-semibold text-foreground">
+                                    {isEn ? 'Phone / WhatsApp Number' : 'Nomor Telepon / WhatsApp'}
+                                </label>
+                                <Input
+                                    type="tel"
+                                    value={editPhone}
+                                    onChange={(e) => setEditPhone(e.target.value)}
+                                    placeholder="contoh: 08123456789"
+                                    className="text-xs rounded-xl"
+                                />
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="text-xs font-semibold text-foreground">
+                                    {isEn ? 'Complete Shipping Address' : 'Alamat Pengiriman Lengkap'}
+                                </label>
+                                <Input
+                                    type="text"
+                                    value={editAddress}
+                                    onChange={(e) => setEditAddress(e.target.value)}
+                                    placeholder="Jalan, No Rumah, RT/RW, Kelurahan, Kecamatan"
+                                    className="text-xs rounded-xl"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-foreground">
+                                        {isEn ? 'City / Regency' : 'Kota / Kabupaten'}
+                                    </label>
+                                    <Input
+                                        type="text"
+                                        value={editCity}
+                                        onChange={(e) => setEditCity(e.target.value)}
+                                        placeholder="contoh: Jakarta Selatan"
+                                        className="text-xs rounded-xl"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-foreground">
+                                        {isEn ? 'Postal Code' : 'Kode Pos'}
+                                    </label>
+                                    <Input
+                                        type="text"
+                                        value={editPostalCode}
+                                        onChange={(e) => setEditPostalCode(e.target.value)}
+                                        placeholder="contoh: 12345"
+                                        className="text-xs rounded-xl"
+                                    />
+                                </div>
+                            </div>
                         </div>
 
                         <DialogFooter className="flex flex-row justify-end gap-2 pt-2">
@@ -570,9 +637,10 @@ export default function AccountPage({
                                 type="submit"
                                 size="sm"
                                 disabled={isUpdatingProfile}
-                                className="bg-[#4A070B] hover:bg-[#360407] text-white cursor-pointer rounded-xl"
+                                className="bg-[#4A070B] hover:bg-[#360407] text-white cursor-pointer rounded-xl flex items-center gap-1.5"
                             >
-                                {isUpdatingProfile ? t('account.saving') : t('account.save_changes')}
+                                {isUpdatingProfile && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                                <span>{isUpdatingProfile ? t('account.saving') : t('account.save_changes')}</span>
                             </Button>
                         </DialogFooter>
                     </form>
@@ -651,9 +719,10 @@ export default function AccountPage({
                                 type="submit"
                                 size="sm"
                                 disabled={isUpdatingPassword}
-                                className="bg-[#4A070B] hover:bg-[#360407] text-white cursor-pointer rounded-xl"
+                                className="bg-[#4A070B] hover:bg-[#360407] text-white cursor-pointer rounded-xl flex items-center gap-1.5"
                             >
-                                {isUpdatingPassword ? (isEn ? 'Updating...' : 'Memperbarui...') : t('account.change_password')}
+                                {isUpdatingPassword && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                                <span>{isUpdatingPassword ? (isEn ? 'Updating...' : 'Memperbarui...') : t('account.change_password')}</span>
                             </Button>
                         </DialogFooter>
                     </form>
@@ -799,9 +868,10 @@ export default function AccountPage({
                                 size="sm"
                                 variant="destructive"
                                 disabled={isDeletingAccount || !deletePassword}
-                                className="cursor-pointer rounded-xl"
+                                className="cursor-pointer rounded-xl flex items-center gap-1.5"
                             >
-                                {isDeletingAccount ? t('account.deleting') : t('account.confirm_delete')}
+                                {isDeletingAccount && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                                <span>{isDeletingAccount ? t('account.deleting') : t('account.confirm_delete')}</span>
                             </Button>
                         </DialogFooter>
                     </form>

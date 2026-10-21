@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 
 interface PaymentProps {
     order: {
@@ -465,9 +466,10 @@ function PaymentContent({ order }: PaymentProps) {
                                 variant="outline"
                                 onClick={handleCheckStatus}
                                 disabled={isChecking}
-                                className="h-11 rounded-md font-bold text-xs sm:text-sm text-foreground border-border/80 hover:bg-muted/50 cursor-pointer shadow-none"
+                                className="h-11 rounded-md font-bold text-xs sm:text-sm text-foreground border-border/80 hover:bg-muted/50 cursor-pointer shadow-none flex items-center justify-center gap-1.5"
                             >
-                                {isChecking ? 'Mengecek...' : 'Cek Status Bayar'}
+                                {isChecking && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                                <span>{isChecking ? 'Mengecek...' : 'Cek Status Bayar'}</span>
                             </Button>
                             <Link href="/products" className="block w-full">
                                 <Button

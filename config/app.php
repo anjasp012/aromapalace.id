@@ -54,6 +54,10 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    'admin_domain' => env('ADMIN_DOMAIN', 'admin.aromapalace.id'),
+
+    'admin_url' => env('ADMIN_URL', 'https://admin.aromapalace.id'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

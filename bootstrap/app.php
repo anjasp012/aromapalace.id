@@ -17,10 +17,25 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
         then: function () {
-            Route::middleware(['web', 'auth', 'admin'])
-                ->prefix('admin')
-                ->name('admin.')
-                ->group(base_path('routes/admin.php'));
+            $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
+
+            // Subdomain routes for admin (e.g. admin.aromapalace.id)
+            Route::domain($adminDomain)
+                ->middleware(['web', 'auth', 'admin'])
+                ->group(function () {
+                    // Primary routes on subdomain (e.g. /dashboard, /orders, /products)
+                    Route::name('admin.')->group(base_path('routes/admin.php'));
+
+                    // Compatibility alias with /admin prefix on the subdomain (/admin/dashboard, etc.)
+                    Route::prefix('admin')->group(base_path('routes/admin.php'));
+                });
+
+            // Local development fallback: allow /admin on localhost without custom hosts
+            if (app()->environment('local')) {
+                Route::middleware(['web', 'auth', 'admin'])
+                    ->prefix('admin')
+                    ->group(base_path('routes/admin.php'));
+            }
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {

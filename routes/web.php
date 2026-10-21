@@ -18,6 +18,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\WishlistController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::match(['get', 'post'], '/locale/{lang?}', [LocaleController::class, 'setLocale'])->name('locale.set');
@@ -91,3 +92,20 @@ Route::middleware('auth')->group(function () {
     Route::get('/orders/{order}/invoice/download', [OrderController::class, 'downloadInvoice'])->name('orders.invoice.download');
     Route::get('/invoice/{order}', [OrderController::class, 'invoice'])->name('invoice.show');
 });
+
+// Redirect /admin on the main domain to the admin subdomain (e.g. admin.aromapalace.id)
+Route::any('/admin/{path?}', function (Request $request, ?string $path = null) {
+    $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
+
+    // Prevent redirect loop if already on the admin domain
+    if ($request->getHost() === $adminDomain) {
+        return redirect('/'.($path ? ltrim($path, '/') : 'dashboard'));
+    }
+
+    $scheme = $request->getScheme();
+    $port = $request->getPort();
+    $portSuffix = ($port && ! in_array($port, [80, 443])) ? ":{$port}" : '';
+    $cleanPath = $path ? '/'.ltrim($path, '/') : '';
+
+    return redirect("{$scheme}://{$adminDomain}{$portSuffix}{$cleanPath}");
+})->where('path', '.*');

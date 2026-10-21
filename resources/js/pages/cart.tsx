@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
+import { Loader2 } from 'lucide-react';
 
 interface FragranceProduct {
     id: number;
@@ -97,21 +98,23 @@ export default function CartPage({
         });
     };
 
+    const [isNavigatingCheckout, setIsNavigatingCheckout] = useState(false);
+
     const handleApplyVoucher = (e: React.FormEvent) => {
         e.preventDefault();
         const code = voucherCode.trim().toUpperCase();
-        if (code === 'AROMA40' || code === 'ROYALE10' || code === 'DUBAI25') {
-            const discountPercent = code === 'AROMA40' ? 0.4 : code === 'DUBAI25' ? 0.25 : 0.1;
-            const disc = Math.round(subtotal * discountPercent);
-            setVoucherDiscount(disc);
-            setVoucherApplied(true);
-            const successMsg = isEn
-                ? `Voucher ${code} applied successfully! Discount of IDR ${disc.toLocaleString('en-US')}`
-                : `Voucher ${code} berhasil dipasang! Potongan diskon Rp ${disc.toLocaleString('id-ID')}`;
-            window.showPromoToast?.(successMsg);
-        } else {
-            alert(isEn ? 'Invalid voucher code. Try using: AROMA40, DUBAI25, or ROYALE10' : 'Kode voucher tidak valid. Coba gunakan: AROMA40, DUBAI25, atau ROYALE10');
+        if (!code) {
+            setVoucherDiscount(0);
+            setVoucherApplied(false);
+            return;
         }
+
+        // Keep code to be applied and validated on checkout
+        setVoucherApplied(true);
+        const successMsg = isEn
+            ? `Voucher ${code} will be applied at checkout.`
+            : `Kode voucher ${code} akan dihitung pada proses checkout.`;
+        window.showPromoToast?.(successMsg);
     };
 
     const finalTotal = Math.max(0, total - voucherDiscount);
@@ -196,9 +199,10 @@ export default function CartPage({
                                     size="sm"
                                     disabled={isClearing}
                                     onClick={handleClearCart}
-                                    className="h-7 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md cursor-pointer"
+                                    className="h-7 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md cursor-pointer flex items-center gap-1.5"
                                 >
-                                    {isClearing ? (isEn ? 'Clearing...' : 'Mengosongkan...') : (isEn ? 'Clear Cart' : 'Kosongkan Keranjang')}
+                                    {isClearing && <Loader2 className="w-3 h-3 animate-spin text-destructive" />}
+                                    <span>{isClearing ? (isEn ? 'Clearing...' : 'Mengosongkan...') : (isEn ? 'Clear Cart' : 'Kosongkan Keranjang')}</span>
                                 </Button>
                             </div>
 
@@ -297,22 +301,26 @@ export default function CartPage({
                                                     size="icon"
                                                     disabled={isItemRemoving}
                                                     onClick={() => handleRemove(item.id)}
-                                                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors cursor-pointer shrink-0"
+                                                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors cursor-pointer shrink-0 flex items-center justify-center"
                                                     title={isEn ? 'Remove from bag' : 'Hapus dari keranjang'}
                                                 >
-                                                    <svg
-                                                        className="w-4 h-4"
-                                                        fill="none"
-                                                        stroke="currentColor"
-                                                        viewBox="0 0 24 24"
-                                                    >
-                                                        <path
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            strokeWidth="1.8"
-                                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                                        />
-                                                    </svg>
+                                                    {isItemRemoving ? (
+                                                        <Loader2 className="w-4 h-4 animate-spin text-destructive" />
+                                                    ) : (
+                                                        <svg
+                                                            className="w-4 h-4"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            viewBox="0 0 24 24"
+                                                        >
+                                                            <path
+                                                                strokeLinecap="round"
+                                                                strokeLinejoin="round"
+                                                                strokeWidth="1.8"
+                                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                                            />
+                                                        </svg>
+                                                    )}
                                                 </Button>
                                             </div>
                                         </div>
@@ -509,14 +517,21 @@ export default function CartPage({
                             </div>
 
                             {/* Checkout Action Button */}
-                            <Link
-                                href={voucherApplied && voucherCode ? `/checkout?voucher=${encodeURIComponent(voucherCode)}` : '/checkout'}
-                                className="shrink-0"
+                            <Button
+                                size="default"
+                                disabled={isNavigatingCheckout}
+                                onClick={() => {
+                                    setIsNavigatingCheckout(true);
+                                    const targetUrl = voucherApplied && voucherCode
+                                        ? `/checkout?voucher=${encodeURIComponent(voucherCode)}`
+                                        : '/checkout';
+                                    router.visit(targetUrl);
+                                }}
+                                className="h-10.5 px-5 sm:px-6 bg-[#4A070B] hover:bg-[#360407] text-white font-semibold rounded-md text-xs sm:text-sm shadow-none transition active:scale-[0.98] cursor-pointer flex items-center gap-2 shrink-0 disabled:opacity-80"
                             >
-                                <Button
-                                    size="default"
-                                    className="h-10.5 px-5 sm:px-6 bg-[#4A070B] hover:bg-[#360407] text-white font-semibold rounded-md text-xs sm:text-sm shadow-none transition active:scale-[0.98] cursor-pointer flex items-center gap-2"
-                                >
+                                {isNavigatingCheckout ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin text-[#E5A844]" />
+                                ) : (
                                     <svg
                                         className="w-3.5 h-3.5 text-[#E5A844]"
                                         fill="none"
@@ -530,9 +545,9 @@ export default function CartPage({
                                             d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
                                         />
                                     </svg>
-                                    <span>Checkout ({totalItemsCount})</span>
-                                </Button>
-                            </Link>
+                                )}
+                                <span>{isNavigatingCheckout ? (isEn ? 'Processing...' : 'Memproses...') : `Checkout (${totalItemsCount})`}</span>
+                            </Button>
                         </div>
                     </div>
                 )}

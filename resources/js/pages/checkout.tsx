@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
-import { Truck, Store as StoreIcon, MapPin, ExternalLink, Clock, ShieldCheck } from 'lucide-react';
+import { Truck, Store as StoreIcon, MapPin, ExternalLink, Clock, ShieldCheck, Loader2 } from 'lucide-react';
 
 interface CheckoutItem {
     id: number;
@@ -81,8 +81,13 @@ interface CheckoutProps {
     stores?: StoreOption[];
     payment_methods?: PaymentMethodItem[];
     user: {
+        id?: number;
         name: string;
         email: string;
+        phone?: string;
+        address?: string;
+        city?: string;
+        postal_code?: string;
     };
 }
 
@@ -297,9 +302,10 @@ export default function CheckoutPage({
     // Default store
     const defaultStoreId = stores.length > 0 ? stores[0].id : null;
 
-    // Address Edit Toggle
-    const [isEditingAddress, setIsEditingAddress] = useState(false);
-    const [addressLabel, setAddressLabel] = useState('rumah');
+    // Address Edit Toggle: If user has no existing address and phone, auto open address form
+    const hasSavedAddress = Boolean(user?.address && user?.phone);
+    const [isEditingAddress, setIsEditingAddress] = useState(!hasSavedAddress);
+    const [addressLabel, setAddressLabel] = useState('Rumah');
 
     // Courier selection
     const [selectedCourierIndex, setSelectedCourierIndex] = useState(0);
@@ -325,9 +331,6 @@ export default function CheckoutPage({
             }
             return disc;
         }
-        if (v === 'AROMA40') return Math.round(subtotal * 0.4);
-        if (v === 'DUBAI25') return Math.round(subtotal * 0.25);
-        if (v === 'ROYALE10') return Math.round(subtotal * 0.1);
         return 0;
     });
 
@@ -339,11 +342,11 @@ export default function CheckoutPage({
     const { data, setData, post, processing, errors } = useForm({
         delivery_type: 'delivery' as 'delivery' | 'pickup',
         store_id: defaultStoreId as number | null,
-        recipient_name: user?.name || 'Raden Arya',
-        recipient_phone: '089529591732',
-        shipping_address: 'krenekan rt03/rw05, klepu, ceper, klaten, 57465',
-        city: 'Klepu, Ceper, Kabupaten Klaten, Jawa Tengah',
-        postal_code: '57465',
+        recipient_name: user?.name || '',
+        recipient_phone: user?.phone || '',
+        shipping_address: user?.address || '',
+        city: user?.city || '',
+        postal_code: user?.postal_code || '',
         courier: selectedCourier.id,
         payment_method: 'qris',
         voucher_code: initial_voucher,
@@ -401,16 +404,10 @@ export default function CheckoutPage({
             return;
         }
 
-        if (code === 'AROMA40' || code === 'DUBAI25' || code === 'ROYALE10') {
-            const pct = code === 'AROMA40' ? 0.4 : code === 'DUBAI25' ? 0.25 : 0.1;
-            const disc = Math.round(subtotal * pct);
-            setVoucherCodeInput(code);
-            setAppliedVoucher(code);
-            setVoucherDiscount(disc);
-            setData('voucher_code', code);
-        } else {
-            alert('Kode voucher tidak valid. Silakan periksa kembali kode promo Anda.');
-        }
+        // Invalid or unlisted code: clear applied voucher silently without disruptive alert
+        setAppliedVoucher('');
+        setVoucherDiscount(0);
+        setData('voucher_code', '');
     };
 
     const handleSelectCourier = (index: number) => {
@@ -433,14 +430,20 @@ export default function CheckoutPage({
         if (appliedVoucherObj) {
             return `${appliedVoucher} • ${appliedVoucherObj.formatted_discount}`;
         }
-        if (appliedVoucher === 'AROMA40') return 'AROMA40 • 40%';
-        if (appliedVoucher === 'DUBAI25') return 'DUBAI25 • 25%';
-        if (appliedVoucher === 'ROYALE10') return 'ROYALE10 • 10%';
         return appliedVoucher;
     }, [appliedVoucher, appliedVoucherObj]);
 
     const handleOpenConfirm = (e: React.FormEvent) => {
         e.preventDefault();
+        if (deliveryType === 'delivery') {
+            if (!data.shipping_address?.trim() || !data.recipient_phone?.trim()) {
+                setIsEditingAddress(true);
+                alert(isEn
+                    ? 'Please fill in your delivery address and phone number before placing your order.'
+                    : 'Silahkan isi alamat pengiriman dan nomor telepon terlebih dahulu sebelum melanjutkan pesanan.');
+                return;
+            }
+        }
         setShowConfirmModal(true);
     };
 
@@ -599,32 +602,51 @@ export default function CheckoutPage({
                                         </div>
 
                                         {!isEditingAddress ? (
-                                            /* Address Preview (Matches Reference Structure) */
-                                            <div className="flex items-start gap-2.5">
-                                                <div className="text-[#4A070B] dark:text-[#E8D0BA] mt-0.5 shrink-0">
-                                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                                                    </svg>
+                                            /* Address Preview or Empty Prompt */
+                                            (!data.shipping_address?.trim() || !data.recipient_phone?.trim()) ? (
+                                                <div className="p-3.5 rounded-lg border border-dashed border-amber-500/40 bg-amber-500/5 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                                                    <div className="flex items-center gap-2.5 text-amber-800 dark:text-amber-200 font-medium">
+                                                        <MapPin className="w-4 h-4 text-amber-600 shrink-0" />
+                                                        <span>
+                                                            {isEn ? 'No delivery address or phone number saved yet.' : 'Alamat pengiriman dan nomor telepon belum diisi.'}
+                                                        </span>
+                                                    </div>
+                                                    <Button
+                                                        type="button"
+                                                        size="sm"
+                                                        onClick={() => setIsEditingAddress(true)}
+                                                        className="h-7 px-3 text-xs bg-[#4A070B] hover:bg-[#360407] text-white shrink-0 cursor-pointer shadow-none"
+                                                    >
+                                                        {isEn ? '+ Add Address' : '+ Isi Alamat Sekarang'}
+                                                    </Button>
                                                 </div>
+                                            ) : (
+                                                <div className="flex items-start gap-2.5">
+                                                    <div className="text-[#4A070B] dark:text-[#E8D0BA] mt-0.5 shrink-0">
+                                                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                                                        </svg>
+                                                    </div>
 
-                                                <div className="space-y-1 text-xs">
-                                                    <span className="font-bold text-foreground capitalize text-xs">
-                                                        {addressLabel}
-                                                    </span>
+                                                    <div className="space-y-1 text-xs">
+                                                        <span className="font-bold text-foreground capitalize text-xs">
+                                                            {addressLabel}
+                                                        </span>
 
-                                                    <div className="pt-0.5 space-y-0.5">
-                                                        <p className="font-bold text-foreground text-xs sm:text-sm">
-                                                            {data.recipient_name} • {data.recipient_phone}
-                                                        </p>
-                                                        <p className="text-muted-foreground leading-relaxed">
-                                                            {data.shipping_address}
-                                                        </p>
-                                                        <p className="text-muted-foreground">
-                                                            {data.city}{data.postal_code ? `, ${data.postal_code}` : ''}
-                                                        </p>
+                                                        <div className="pt-0.5 space-y-0.5">
+                                                            <p className="font-bold text-foreground text-xs sm:text-sm">
+                                                                {data.recipient_name} • {data.recipient_phone}
+                                                            </p>
+                                                            <p className="text-muted-foreground leading-relaxed">
+                                                                {data.shipping_address}
+                                                            </p>
+                                                            <p className="text-muted-foreground">
+                                                                {data.city}{data.postal_code ? `, ${data.postal_code}` : ''}
+                                                            </p>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            )
                                         ) : (
                                             /* Address Edit Form Inline */
                                             <div className="space-y-3 pt-1">
@@ -1260,22 +1282,26 @@ export default function CheckoutPage({
                                 type="submit"
                                 disabled={processing}
                                 size="default"
-                                className="h-10.5 px-5 sm:px-6 bg-[#4A070B] hover:bg-[#360407] text-white font-semibold rounded-md text-xs sm:text-sm shadow-none transition active:scale-[0.98] cursor-pointer flex items-center gap-2 shrink-0"
+                                className="h-10.5 px-5 sm:px-6 bg-[#4A070B] hover:bg-[#360407] text-white font-semibold rounded-md text-xs sm:text-sm shadow-none transition active:scale-[0.98] cursor-pointer flex items-center gap-2 shrink-0 disabled:opacity-80"
                             >
-                                <svg
-                                    className="w-3.5 h-3.5 text-[#E5A844]"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                                    />
-                                </svg>
-                                <span>{processing ? 'Memproses...' : `Bayar (${totalItemsCount})`}</span>
+                                {processing ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin text-[#E5A844]" />
+                                ) : (
+                                    <svg
+                                        className="w-3.5 h-3.5 text-[#E5A844]"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth="2"
+                                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                                        />
+                                    </svg>
+                                )}
+                                <span>{processing ? (isEn ? 'Processing...' : 'Memproses...') : (isEn ? `Pay (${totalItemsCount})` : `Bayar (${totalItemsCount})`)}</span>
                             </Button>
                         </div>
                     </div>

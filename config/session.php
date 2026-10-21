@@ -156,7 +156,15 @@ return [
     |
     */
 
-    'domain' => env('SESSION_DOMAIN'),
+    'domain' => env('SESSION_DOMAIN', (function () {
+        $appUrl = (string) env('APP_URL', '');
+        $host = parse_url($appUrl, PHP_URL_HOST);
+        if ($host && str_contains($host, '.') && ! in_array($host, ['localhost', '127.0.0.1']) && ! filter_var($host, FILTER_VALIDATE_IP)) {
+            return '.'.ltrim($host, '.');
+        }
+
+        return null;
+    })()),
 
     /*
     |--------------------------------------------------------------------------
