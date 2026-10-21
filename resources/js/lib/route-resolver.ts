@@ -12,7 +12,6 @@ export function resolveComponentForUrl(pathname: string): string | null {
         pathname.startsWith('/api') ||
         pathname.includes('/download') ||
         pathname.startsWith('/storage') ||
-        pathname.startsWith('/payment') ||
         pathname.startsWith('/webhook')
     ) {
         return null;
@@ -25,7 +24,8 @@ export function resolveComponentForUrl(pathname: string): string | null {
     if (clean.startsWith('/products/')) return 'product-detail';
     if (clean === '/cart') return 'cart';
     if (clean === '/checkout') return 'checkout';
-    if (clean === '/orders' || (clean.startsWith('/orders/') && !clean.includes('/download'))) return 'orders';
+    if (clean === '/orders' || clean === '/account/orders' || (clean.startsWith('/orders/') && !clean.includes('/download'))) return 'orders';
+    if (clean.startsWith('/payment/')) return 'payment';
     if (clean === '/account') return 'account';
     if (clean === '/wishlist') return 'wishlist';
     if (clean === '/membership') return 'membership';

@@ -19,7 +19,7 @@ interface PaymentProps {
     };
 }
 
-export default function PaymentPage({ order }: PaymentProps) {
+function PaymentContent({ order }: PaymentProps) {
     const isPaid = order.payment_status === 'paid' || order.status === 'menunggu_konfirmasi' || order.status === 'diproses';
     const isQris = order.payment_method === 'qris';
     const isPaymentLink = order.payment_method === 'payment_link' || order.payment_code?.startsWith('http');
@@ -479,6 +479,19 @@ export default function PaymentPage({ order }: PaymentProps) {
                             </Link>
                         </div>
 
+                        {/* Direct Navigation to Orders */}
+                        <div className="pt-1 text-center">
+                            <Link
+                                href="/account/orders"
+                                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition underline underline-offset-4 py-1"
+                            >
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                                <span>Lihat Semua Transaksi &amp; Pesanan Saya</span>
+                            </Link>
+                        </div>
+
                         {/* Cara Pembayaran Section */}
                         <div className="pt-2 space-y-1">
                             <h3 className="font-bold text-xs sm:text-sm text-foreground mb-2">
@@ -636,4 +649,23 @@ export default function PaymentPage({ order }: PaymentProps) {
             </div>
         </Layout>
     );
+}
+
+export default function PaymentPage({ order }: { order?: PaymentProps['order'] }) {
+    if (!order) {
+        return (
+            <Layout>
+                <Head title="Menyiapkan Pembayaran • Aroma Palace" />
+                <div className="min-h-[60vh] flex flex-col items-center justify-center p-6 text-center">
+                    <div className="w-12 h-12 rounded-full border-3 border-[#4A070B]/20 border-t-[#4A070B] dark:border-[#E8D0BA]/20 dark:border-t-[#E8D0BA] animate-spin mb-4" />
+                    <h2 className="text-lg font-bold text-foreground">Menyiapkan Transaksi Pembayaran...</h2>
+                    <p className="text-xs text-muted-foreground mt-1 max-w-xs">
+                        Sedang menghubungkan ke server pembayaran aman Aroma Palace.
+                    </p>
+                </div>
+            </Layout>
+        );
+    }
+
+    return <PaymentContent order={order} />;
 }

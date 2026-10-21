@@ -1365,32 +1365,40 @@ export default function CheckoutPage({
                         </div>
 
                         {/* Actions */}
-                        <div className="grid grid-cols-2 gap-3 pt-1">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setShowConfirmModal(false)}
-                                disabled={processing}
-                                className="h-10 rounded-md text-xs font-semibold border-border/80 hover:bg-muted cursor-pointer shadow-none"
-                            >
-                                Batal
-                            </Button>
-                            <Button
-                                type="button"
-                                onClick={handleConfirmAndPay}
-                                disabled={processing}
-                                className="h-10 rounded-md text-xs font-bold bg-[#4A070B] hover:bg-[#360407] text-white cursor-pointer shadow-none flex items-center justify-center gap-1.5"
-                            >
-                                {processing ? (
-                                    <span>Memproses...</span>
-                                ) : (
-                                    <>
-                                        <span>Ya, Bayar Sekarang</span>
-                                        <span>→</span>
-                                    </>
-                                )}
-                            </Button>
-                        </div>
+                        {processing ? (
+                            <div className="py-3 px-3 rounded-xl bg-muted/40 border border-[#4A070B]/20 dark:border-[#E8D0BA]/20 flex flex-col items-center justify-center space-y-2 text-center">
+                                <div className="w-7 h-7 rounded-full border-2 border-[#4A070B]/20 border-t-[#4A070B] dark:border-[#E8D0BA]/20 dark:border-t-[#E8D0BA] animate-spin" />
+                                <div className="space-y-0.5">
+                                    <p className="text-xs font-bold text-[#4A070B] dark:text-[#E8D0BA]">
+                                        Menyiapkan Transaksi Pembayaran...
+                                    </p>
+                                    <p className="text-[11px] text-muted-foreground">
+                                        Mohon jangan tutup halaman, Anda akan segera dialihkan ke halaman transaksi.
+                                    </p>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 gap-3 pt-1">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setShowConfirmModal(false)}
+                                    disabled={processing}
+                                    className="h-10 rounded-md text-xs font-semibold border-border/80 hover:bg-muted cursor-pointer shadow-none"
+                                >
+                                    Batal
+                                </Button>
+                                <Button
+                                    type="button"
+                                    onClick={handleConfirmAndPay}
+                                    disabled={processing}
+                                    className="h-10 rounded-md text-xs font-bold bg-[#4A070B] hover:bg-[#360407] text-white cursor-pointer shadow-none flex items-center justify-center gap-1.5"
+                                >
+                                    <span>Ya, Bayar Sekarang</span>
+                                    <span>→</span>
+                                </Button>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

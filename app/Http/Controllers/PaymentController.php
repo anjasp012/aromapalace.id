@@ -37,22 +37,6 @@ class PaymentController extends Controller
             return redirect()->route('home')->with('error', 'Pesanan tidak ditemukan.');
         }
 
-        // Auto-check status with Pakasir if pending
-        if ($orderModel->payment_status === 'pending') {
-            $txnRes = $this->pakasirService->createTransaction($orderModel->order_number, $orderModel->total_amount, $orderModel->payment_method);
-            if ($txnRes['success'] && ! empty($txnRes['data']['txn_id'])) {
-                $statusRes = $this->pakasirService->checkTransactionStatus($txnRes['data']['txn_id']);
-                if ($statusRes['success'] && ($statusRes['data']['status'] ?? '') === 'completed') {
-                    $orderModel->update([
-                        'payment_status' => 'paid',
-                        'status' => 'diproses',
-                    ]);
-                    app(FirebaseNotificationService::class)->notifyPaymentSuccess($orderModel);
-                    app(MembershipService::class)->awardOrderPoints($orderModel);
-                }
-            }
-        }
-
         return Inertia::render('payment', [
             'order' => [
                 'id' => $orderModel->id,

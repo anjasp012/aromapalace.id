@@ -496,8 +496,8 @@ export default function AccountPage({
                         </div>
                     </div>
 
-                    {/* Tombol Keluar dari Akun & Hapus Akun */}
-                    <div className="pt-2 space-y-2">
+                    {/* Tombol Keluar dari Akun */}
+                    <div className="pt-2">
                         <Button
                             variant="outline"
                             onClick={() => setLogoutConfirmOpen(true)}
@@ -505,15 +505,6 @@ export default function AccountPage({
                         >
                             <LogOut className="w-4 h-4" />
                             <span>{t('account.logout')}</span>
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            onClick={() => setDeleteAccountOpen(true)}
-                            className="w-full text-xs font-medium py-3 rounded-xl text-destructive/80 hover:text-destructive hover:bg-destructive/10 cursor-pointer flex items-center justify-center gap-1.5"
-                        >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            <span>{t('account.delete_account')}</span>
                         </Button>
                     </div>
                 </div>

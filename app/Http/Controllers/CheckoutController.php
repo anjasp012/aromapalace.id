@@ -393,8 +393,14 @@ class CheckoutController extends Controller
                 );
             }
 
-            // Trigger push notification to Admins (pesanan masuk) & Customer (order dibuat)
-            $this->notificationService->notifyNewOrder($order);
+            // Trigger push notification to Admins & Customer asynchronously after response
+            defer(function () use ($order) {
+                try {
+                    $this->notificationService->notifyNewOrder($order);
+                } catch (\Throwable $e) {
+                    Log::warning('Deferred notifyNewOrder failed: '.$e->getMessage());
+                }
+            });
 
             if ($order->payment_status === 'paid') {
                 app(MembershipService::class)->awardOrderPoints($order);
