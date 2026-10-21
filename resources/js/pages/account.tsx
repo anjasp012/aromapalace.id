@@ -62,11 +62,27 @@ interface AccountPageProps {
 }
 
 export default function AccountPage({
-    user,
+    user: propUser,
     membership,
-    order_counts,
+    order_counts: propOrderCounts,
     wishlist_count = 0,
-}: AccountPageProps) {
+}: Partial<AccountPageProps>) {
+    const { props } = usePage<any>();
+    const user: UserData = propUser || props?.auth?.user || {
+        id: 0,
+        name: '',
+        email: '',
+        role: 'customer',
+        joined_at: '',
+    };
+    const order_counts: OrderCounts = propOrderCounts || {
+        all: 0,
+        menunggu_pembayaran: 0,
+        diproses: 0,
+        dikirim: 0,
+        selesai: 0,
+    };
+
     const { t, isEn } = useTranslation();
     const [pointsInfoOpen, setPointsInfoOpen] = useState(false);
     const [editProfileOpen, setEditProfileOpen] = useState(false);
@@ -96,7 +112,7 @@ export default function AccountPage({
               .split(' ')
               .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
               .join(' ')
-        : user.email.split('@')[0];
+        : (user.email ? user.email.split('@')[0] : 'User');
 
     const initial = displayName.charAt(0).toUpperCase();
 

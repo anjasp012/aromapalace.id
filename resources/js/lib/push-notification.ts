@@ -1,9 +1,21 @@
 /**
- * Web Push Notification Manager for Aroma Palace
- * Integrates with Firebase Cloud Messaging (FCM) & Browser Notification API
+ * Push Notification Manager for Aroma Palace
+ * Supports both:
+ * 1. Native Mobile App (Capacitor on Android with FCM & iOS with APNs)
+ * 2. Web Push (Firebase Cloud Messaging with Service Worker)
  */
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getMessaging, getToken, onMessage, isSupported as isMessagingSupported } from 'firebase/messaging';
+import { Capacitor } from '@capacitor/core';
+import {
+    PushNotifications,
+    type Token,
+    type PushNotificationSchema,
+    type ActionPerformed,
+} from '@capacitor/push-notifications';
+import { router } from '@inertiajs/react';
+
+export const isNative = typeof window !== 'undefined' && Capacitor.isNativePlatform();
 
 const firebaseConfig = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyD0dKjEP6f_nn-VixqdUx6oav0KeX26n5c",
@@ -22,19 +34,29 @@ function getFirebaseApp() {
 }
 
 export function isPushNotificationSupported(): boolean {
-    return typeof window !== 'undefined' && 'Notification' in window && 'serviceWorker' in navigator;
+    if (typeof window === 'undefined') return false;
+    if (isNative) return true;
+    return 'Notification' in window && 'serviceWorker' in navigator;
 }
 
-export function getNotificationPermission(): NotificationPermission {
+export async function getNotificationPermission(): Promise<string> {
     if (!isPushNotificationSupported()) return 'denied';
+    if (isNative) {
+        try {
+            const check = await PushNotifications.checkPermissions();
+            return check.receive;
+        } catch {
+            return 'denied';
+        }
+    }
     return Notification.permission;
 }
 
 /**
- * Register the Service Worker in the browser
+ * Register Service Worker in web browser
  */
 export async function registerNotificationServiceWorker(): Promise<ServiceWorkerRegistration | null> {
-    if (!isPushNotificationSupported()) return null;
+    if (isNative || !isPushNotificationSupported()) return null;
 
     try {
         const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
@@ -47,15 +69,86 @@ export async function registerNotificationServiceWorker(): Promise<ServiceWorker
     }
 }
 
+let nativeListenersRegistered = false;
+
+function setupNativePushListeners(csrfToken?: string, onNotificationReceived?: (payload: any) => void) {
+    if (!isNative || nativeListenersRegistered) return;
+    nativeListenersRegistered = true;
+
+    // 1. Success getting device FCM / APNs token
+    PushNotifications.addListener('registration', async (token: Token) => {
+        console.log('[Native Push] Registered with token:', token.value);
+        localStorage.setItem('aromapalace_fcm_token', token.value);
+
+        try {
+            const platform = Capacitor.getPlatform(); // 'android' or 'ios'
+            const csrf = csrfToken || (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '';
+
+            await fetch('/api/device-tokens', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': csrf,
+                },
+                body: JSON.stringify({
+                    token: token.value,
+                    device_type: platform,
+                    browser: `Aroma Palace Mobile App (${platform.toUpperCase()})`,
+                }),
+            });
+            localStorage.setItem('aromapalace_notifications_enabled', 'true');
+        } catch (e) {
+            console.warn('[Native Push] Failed to register token on backend:', e);
+        }
+    });
+
+    // 2. Registration error
+    PushNotifications.addListener('registrationError', (error) => {
+        console.error('[Native Push] Registration error:', error);
+    });
+
+    // 3. Notification received while app is open in foreground
+    PushNotifications.addListener('pushNotificationReceived', (notification: PushNotificationSchema) => {
+        playNotificationChime();
+
+        if (onNotificationReceived) {
+            onNotificationReceived(notification);
+        }
+
+        // Show in-app banner/toast if helper available
+        const title = notification.title || 'Aroma Palace';
+        const body = notification.body || 'Anda memiliki notifikasi baru.';
+        window.showPromoToast?.(`${title}: ${body}`);
+    });
+
+    // 4. User clicked / tapped notification from system tray
+    PushNotifications.addListener('pushNotificationActionPerformed', (action: ActionPerformed) => {
+        const data = action.notification.data;
+        const targetUrl = data?.url || (data?.order_id ? `/account/orders?id=${data.order_id}` : '/');
+        if (targetUrl) {
+            router.visit(targetUrl);
+        }
+    });
+}
+
 /**
- * Listen for Firebase Cloud Messaging push events in the foreground (when tab is active)
- * ZERO polling - 100% Google FCM push-driven.
+ * Listen for push events in foreground
  */
 export async function initFirebaseForegroundListener(
     onNotificationReceived?: (payload: any) => void
 ): Promise<(() => void) | null> {
     if (!isPushNotificationSupported()) return null;
 
+    // Native Mobile App
+    if (isNative) {
+        setupNativePushListeners(undefined, onNotificationReceived);
+        return () => {
+            // Capacitor listeners are persistent per app lifecycle
+        };
+    }
+
+    // Web Browser
     try {
         const hasSupport = await isMessagingSupported();
         if (!hasSupport) return null;
@@ -71,7 +164,7 @@ export async function initFirebaseForegroundListener(
                 ? 'order-' + payload.data.order_number
                 : (payload.data?.order_id ? 'order-id-' + payload.data.order_id : (payload.data?.type || 'notif-msg'));
 
-            // Deduplication across multiple open tabs (suppress duplicate banners in a 4s window)
+            // Deduplication across multiple open tabs
             const dedupKey = 'aromapalace_notif_seen_' + tag;
             const lastShown = Number(sessionStorage.getItem(dedupKey) || localStorage.getItem(dedupKey) || 0);
             if (Date.now() - lastShown < 4000) {
@@ -101,16 +194,48 @@ export async function initFirebaseForegroundListener(
 }
 
 /**
- * Request notification permission from the user, get FCM token and register with backend
+ * Request notification permission, obtain token, and send to Laravel backend
  */
 export async function enablePushNotifications(csrfToken?: string): Promise<{ success: boolean; message: string }> {
     if (!isPushNotificationSupported()) {
         return {
             success: false,
-            message: 'Browser Anda belum mendukung notifikasi web push.',
+            message: 'Perangkat atau browser Anda belum mendukung notifikasi push.',
         };
     }
 
+    // A. Native Mobile App Flow
+    if (isNative) {
+        try {
+            let perm = await PushNotifications.checkPermissions();
+            if (perm.receive === 'prompt' || perm.receive === 'prompt-with-rationale') {
+                perm = await PushNotifications.requestPermissions();
+            }
+
+            if (perm.receive !== 'granted') {
+                return {
+                    success: false,
+                    message: 'Izin notifikasi tidak diberikan di perangkat ini.',
+                };
+            }
+
+            setupNativePushListeners(csrfToken);
+            await PushNotifications.register();
+
+            return {
+                success: true,
+                message: 'Notifikasi aplikasi berhasil diaktifkan.',
+            };
+        } catch (err: any) {
+            console.error('Error enabling native push notifications:', err);
+            return {
+                success: false,
+                message: err?.message || 'Gagal mengaktifkan notifikasi perangkat.',
+            };
+        }
+    }
+
+    // B. Web Browser Flow
     try {
         const permission = await Notification.requestPermission();
 
@@ -131,7 +256,6 @@ export async function enablePushNotifications(csrfToken?: string): Promise<{ suc
 
         let fcmToken: string | null = null;
 
-        // Try getting real Firebase FCM token using VAPID key
         try {
             const hasSupport = await isMessagingSupported();
             if (hasSupport) {
@@ -158,14 +282,12 @@ export async function enablePushNotifications(csrfToken?: string): Promise<{ suc
             }
         }
 
-        // Detect browser name
         const ua = navigator.userAgent;
         let browser = 'Chrome';
         if (ua.includes('Firefox')) browser = 'Firefox';
         else if (ua.includes('Edg/')) browser = 'Edge';
         else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
 
-        // Send token to Laravel backend
         const response = await fetch('/api/device-tokens', {
             method: 'POST',
             headers: {
@@ -249,6 +371,11 @@ export async function showSystemNotification(
     url?: string,
     tag?: string
 ): Promise<boolean> {
+    if (isNative) {
+        playNotificationChime();
+        return true;
+    }
+
     if (!isPushNotificationSupported() || Notification.permission !== 'granted') {
         return false;
     }
@@ -271,7 +398,6 @@ export async function showSystemNotification(
             return true;
         }
 
-        // Fallback to standard Window Notification
         new Notification(title, {
             body,
             icon: '/images/logo.png',
@@ -285,32 +411,33 @@ export async function showSystemNotification(
 }
 
 /**
- * Automatically requests notification permission in new browsers (when permission is 'default'),
- * and registers FCM device token with the backend.
- * If permission is already 'granted', silently refreshes/registers the device token.
+ * Automatically requests notification permission
  */
 export async function autoRequestNotificationPermission(csrfToken?: string): Promise<void> {
     if (!isPushNotificationSupported()) return;
 
-    try {
-        const currentPermission = Notification.permission;
-
-        if (currentPermission === 'default') {
-            const perm = await Notification.requestPermission();
-            if (perm === 'granted') {
+    if (isNative) {
+        try {
+            const perm = await PushNotifications.checkPermissions();
+            if (perm.receive === 'granted' || perm.receive === 'prompt') {
                 await enablePushNotifications(csrfToken);
             }
-        } else if (currentPermission === 'granted') {
+        } catch (err) {
+            console.warn('[Native Push] Auto request error:', err);
+        }
+        return;
+    }
+
+    try {
+        const currentPermission = Notification.permission;
+        if (currentPermission === 'default' || currentPermission === 'granted') {
             await enablePushNotifications(csrfToken);
         }
     } catch (err) {
-        console.warn('Auto notification request error:', err);
+        console.warn('[Web Push] Auto notification request error:', err);
     }
 }
 
-/**
- * Send local test notification (deprecated, test notifications removed)
- */
 export async function sendLocalTestNotification(): Promise<boolean> {
     return false;
 }

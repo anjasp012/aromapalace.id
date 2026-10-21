@@ -148,28 +148,6 @@
             margin-top: 14px;
             font-size: 10.5px;
         }
-        .watermark {
-            position: absolute;
-            left: 20%;
-            top: 55%;
-            transform: rotate(-15deg);
-            padding: 8px 24px;
-            border-radius: 8px;
-            font-size: 26px;
-            font-weight: 900;
-            letter-spacing: 5px;
-            text-transform: uppercase;
-            text-align: center;
-            opacity: 0.22;
-        }
-        .watermark-paid {
-            border: 3px solid #059669;
-            color: #059669;
-        }
-        .watermark-unpaid {
-            border: 3px solid #e11d48;
-            color: #e11d48;
-        }
         .footer-note {
             text-align: center;
             font-size: 9.5px;
@@ -181,12 +159,6 @@
     </style>
 </head>
 <body>
-
-    @if ($order['is_paid'])
-        <div class="watermark watermark-paid">LUNAS</div>
-    @else
-        <div class="watermark watermark-unpaid">BELUM LUNAS</div>
-    @endif
 
     <!-- Header Row -->
     <table class="header-table">
@@ -270,51 +242,79 @@
         </tbody>
     </table>
 
-    <!-- Totals Calculation -->
-    <table style="width: 100%;">
-        <tr>
-            <td style="width: 40%; vertical-align: top;">
-                <div class="meta-heading">Metode Pembayaran</div>
-                <div style="font-weight: 700; font-size: 11px; color: #111827;">
-                    {{ $order['payment_channel'] }}
-                </div>
-            </td>
-            <td style="width: 60%; vertical-align: top;">
-                <table class="totals-table">
-                    <tr>
-                        <td class="totals-label">Total Harga ({{ $order['items_count'] }} produk)</td>
-                        <td class="totals-val">{{ $order['subtotal_formatted'] }}</td>
-                    </tr>
-                    <tr>
-                        <td class="totals-label">Total Ongkos Kirim</td>
-                        <td class="totals-val">{{ $order['shipping_cost_formatted'] }}</td>
-                    </tr>
-                    <tr>
-                        <td class="totals-label">Total Asuransi Pengiriman</td>
-                        <td class="totals-val">Rp 0</td>
-                    </tr>
-                    @if ($order['discount_amount'] > 0)
+    <!-- Totals Calculation with Contained Watermark Stamp -->
+    <div style="position: relative; border-top: 1px solid #e5e7eb; padding-top: 10px; margin-top: 8px;">
+        <!-- Watermark SVG Stamp (Exact placement behind totals) -->
+        <div style="position: absolute; left: 170px; top: 15px; width: 190px; height: 90px; text-align: center;">
+            @if ($order['is_paid'])
+                <svg width="170" height="60" viewBox="0 0 170 60">
+                    <g transform="rotate(-12 85 30)">
+                        <rect x="3" y="3" width="164" height="54" rx="8" ry="8" fill="none" stroke="#059669" stroke-width="2.5" opacity="0.25" />
+                        <text x="85" y="38" font-family="Helvetica, Arial, sans-serif" font-size="22" font-weight="900" fill="#059669" text-anchor="middle" letter-spacing="4" opacity="0.25">
+                            LUNAS
+                        </text>
+                    </g>
+                </svg>
+            @else
+                <svg width="170" height="75" viewBox="0 0 170 75">
+                    <g transform="rotate(-12 85 37)">
+                        <rect x="3" y="3" width="164" height="69" rx="8" ry="8" fill="none" stroke="#e11d48" stroke-width="2.5" opacity="0.25" />
+                        <text x="85" y="32" font-family="Helvetica, Arial, sans-serif" font-size="18" font-weight="900" fill="#e11d48" text-anchor="middle" letter-spacing="3" opacity="0.25">
+                            BELUM
+                        </text>
+                        <text x="85" y="56" font-family="Helvetica, Arial, sans-serif" font-size="18" font-weight="900" fill="#e11d48" text-anchor="middle" letter-spacing="3" opacity="0.25">
+                            LUNAS
+                        </text>
+                    </g>
+                </svg>
+            @endif
+        </div>
+
+        <table style="width: 100%;">
+            <tr>
+                <td style="width: 40%; vertical-align: top;">
+                    <div class="meta-heading">Metode Pembayaran</div>
+                    <div style="font-weight: 700; font-size: 11px; color: #111827;">
+                        {{ $order['payment_channel'] }}
+                    </div>
+                </td>
+                <td style="width: 60%; vertical-align: top;">
+                    <table class="totals-table">
                         <tr>
-                            <td class="totals-label" style="color: #e11d48;">
-                                Voucher Diskon {{ !empty($order['voucher_code']) ? '('.$order['voucher_code'].')' : '' }}
-                            </td>
-                            <td class="totals-val" style="color: #e11d48;">
-                                - {{ $order['discount_amount_formatted'] }}
-                            </td>
+                            <td class="totals-label">Total Harga ({{ $order['items_count'] }} produk)</td>
+                            <td class="totals-val">{{ $order['subtotal_formatted'] }}</td>
                         </tr>
-                    @endif
-                    <tr>
-                        <td class="totals-label">Biaya Layanan & Pajak</td>
-                        <td class="totals-val">Rp 0</td>
-                    </tr>
-                    <tr class="total-highlight">
-                        <td class="totals-label">Total Tagihan</td>
-                        <td class="totals-val">{{ $order['total_amount_formatted'] }}</td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
+                        <tr>
+                            <td class="totals-label">Total Ongkos Kirim</td>
+                            <td class="totals-val">{{ $order['shipping_cost_formatted'] }}</td>
+                        </tr>
+                        <tr>
+                            <td class="totals-label">Total Asuransi Pengiriman</td>
+                            <td class="totals-val">Rp 0</td>
+                        </tr>
+                        @if ($order['discount_amount'] > 0)
+                            <tr>
+                                <td class="totals-label" style="color: #e11d48;">
+                                    Voucher Diskon {{ !empty($order['voucher_code']) ? '('.$order['voucher_code'].')' : '' }}
+                                </td>
+                                <td class="totals-val" style="color: #e11d48;">
+                                    - {{ $order['discount_amount_formatted'] }}
+                                </td>
+                            </tr>
+                        @endif
+                        <tr>
+                            <td class="totals-label">Biaya Layanan & Pajak</td>
+                            <td class="totals-val">Rp 0</td>
+                        </tr>
+                        <tr class="total-highlight">
+                            <td class="totals-label">Total Tagihan</td>
+                            <td class="totals-val">{{ $order['total_amount_formatted'] }}</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </div>
 
     <!-- Shipping Info Box -->
     <div class="shipping-box">

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "761758190951",
+    "project_id": "aromapalace-89175",
+    "storage_bucket": "aromapalace-89175.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:761758190951:android:87450328187cc8bbb573c2",
+        "android_client_info": {
+          "package_name": "com.aromapalace.store"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBbOKOvHXt-ZlaSiO1yCGmnxv3vc75RbOw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

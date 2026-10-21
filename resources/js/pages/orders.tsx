@@ -496,7 +496,27 @@ export default function OrdersPage({
                     </div>
                 </div>
 
-                {orders.length === 0 ? (
+                {tab_counts === undefined && orders.length === 0 ? (
+                    /* SKELETON LOADING STATE FOR INSTANT VISITS */
+                    <div className="space-y-4">
+                        {[1, 2, 3].map((n) => (
+                            <div key={n} className="rounded-xl border border-border/80 bg-card p-5 space-y-4 animate-pulse">
+                                <div className="flex justify-between items-center pb-3 border-b border-border/50">
+                                    <div className="h-4 w-32 bg-muted/80 rounded" />
+                                    <div className="h-5 w-24 bg-muted/80 rounded-full" />
+                                </div>
+                                <div className="flex gap-4 items-center">
+                                    <div className="h-16 w-16 bg-muted/80 rounded-lg shrink-0" />
+                                    <div className="space-y-2 flex-1">
+                                        <div className="h-4 w-48 bg-muted/80 rounded" />
+                                        <div className="h-3 w-28 bg-muted/80 rounded" />
+                                    </div>
+                                    <div className="h-5 w-24 bg-muted/80 rounded" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : orders.length === 0 ? (
                     /* EMPTY STATE */
                     <div className="py-16 px-6 text-center space-y-4 max-w-md mx-auto">
                         <div className="w-16 h-16 rounded-full bg-[#4A070B]/10 dark:bg-[#E8D0BA]/15 text-[#4A070B] dark:text-[#E8D0BA] flex items-center justify-center mx-auto">

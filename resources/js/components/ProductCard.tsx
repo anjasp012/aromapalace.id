@@ -70,8 +70,9 @@ export default function ProductCard({
             <div className="relative aspect-square bg-muted overflow-hidden rounded-lg">
                 <Link
                     href={productUrl}
-                    prefetch="hover"
-                    cacheFor={['30s', '1m']}
+                    component="product-detail"
+                    prefetch={['hover', 'click']}
+                    cacheFor="2m"
                     className="block w-full h-full cursor-pointer"
                 >
                     {product.image && (
@@ -158,8 +159,9 @@ export default function ProductCard({
                 >
                     <Link
                         href={productUrl}
-                        prefetch="hover"
-                        cacheFor={['30s', '1m']}
+                        component="product-detail"
+                        prefetch={['hover', 'click']}
+                        cacheFor="2m"
                         className=""
                     >
                         {product.name}

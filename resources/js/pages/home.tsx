@@ -58,8 +58,6 @@ export default function Home({
                 : 'Jelajahi koleksi wewangian mewah dunia dengan keharuman artisanal eksklusif yang memikat setiap indera.',
             image: 'https://images.unsplash.com/photo-1615397349754-cfa2066a298e?auto=format&fit=crop&w=1200&q=80',
             link: '/products',
-            flareColor: '#D4A373', // warm amber oud
-            secondaryFlare: '#B88E58',
             ambientGradient: 'from-[#FAF6F0] via-[#F4ECE1] to-[#EAE0D0] dark:from-[#21160F] dark:via-[#19110B] dark:to-[#120B07]',
         },
         {
@@ -70,8 +68,6 @@ export default function Home({
                 : 'Gunakan kode promo AROMA20 untuk potongan harga spesial di pesanan pertama wewangian ekstrak & niche terpilih.',
             image: 'https://images.unsplash.com/photo-1547887537-6158d64c35b3?auto=format&fit=crop&w=1200&q=80',
             link: '/products?discount=1',
-            flareColor: '#80141C', // deep velvet burgundy
-            secondaryFlare: '#A4161A',
             ambientGradient: 'from-[#FDF2F3] via-[#F8E9EB] to-[#F1DEE1] dark:from-[#24080B] dark:via-[#1B0508] dark:to-[#120305]',
         },
         {
@@ -82,8 +78,6 @@ export default function Home({
                 : 'Pesan langsung secara online, ambil di gerai flagship Grand Indonesia, Senayan City, & TP5 Surabaya.',
             image: 'https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?auto=format&fit=crop&w=1200&q=80',
             link: '/products',
-            flareColor: '#B88E58', // boutique champagne gold
-            secondaryFlare: '#C5A059',
             ambientGradient: 'from-[#FBF8F2] via-[#F6F0E4] to-[#EDE3D0] dark:from-[#1E1810] dark:via-[#16120B] dark:to-[#0F0D07]',
         },
     ];
@@ -196,7 +190,7 @@ export default function Home({
                         <Card
                             className="relative overflow-hidden border-0 sm:border sm:border-border/70 py-0 gap-0 shadow-none sm:shadow-lg rounded-none sm:rounded-2xl group transition-all duration-700 bg-transparent sm:bg-card"
                         >
-                            {/* Dynamic Ambient Background Canvas (YouTube Ambient Mode) */}
+                            {/* Dynamic Ambient Background Canvas (Hardware-accelerated Image Ambient Glow, no heavy color code divs) */}
                             <div className="absolute inset-0 pointer-events-none overflow-hidden -z-20">
                                 {banners.map((b, idx) => (
                                     <div
@@ -208,27 +202,17 @@ export default function Home({
                                         {/* Base Ambient Tint Gradient */}
                                         <div className={`absolute inset-0 bg-gradient-to-br ${b.ambientGradient}`} />
 
-                                        {/* YouTube Ambient Glow: Super-blurred version of the actual image radiating into background */}
-                                        <div className="absolute -right-20 -top-24 w-3/4 sm:w-2/3 h-[130%] opacity-35 sm:opacity-45 blur-[80px] sm:blur-[110px] scale-125 saturate-150 transform-gpu pointer-events-none">
+                                        {/* Image-based Ambient Flare: gentle blurred banner image radiating into card background */}
+                                        <div className="absolute -inset-10 opacity-30 sm:opacity-40 blur-2xl sm:blur-3xl saturate-150 transform-gpu pointer-events-none overflow-hidden">
                                             <img
                                                 src={b.image}
                                                 alt=""
-                                                className="w-full h-full object-cover"
+                                                className="w-full h-full object-cover scale-110"
                                             />
                                         </div>
 
-                                        {/* Radiant Circular Flares */}
-                                        <div
-                                            className="absolute right-1/4 top-1/2 -translate-y-1/2 w-[380px] sm:w-[520px] h-[380px] sm:h-[520px] rounded-full blur-[90px] sm:blur-[120px] opacity-40 transform-gpu pointer-events-none"
-                                            style={{ backgroundColor: b.flareColor }}
-                                        />
-                                        <div
-                                            className="absolute -left-16 -top-16 w-[320px] h-[320px] rounded-full blur-[80px] sm:blur-[100px] opacity-25 sm:opacity-30 transform-gpu pointer-events-none"
-                                            style={{ backgroundColor: b.secondaryFlare }}
-                                        />
-
                                         {/* Soft Vignette Overlay to ensure crisp contrast on text */}
-                                        <div className="absolute inset-0 bg-gradient-to-r from-background/30 via-background/10 to-transparent pointer-events-none" />
+                                        <div className="absolute inset-0 bg-gradient-to-r from-background/40 via-background/20 to-transparent pointer-events-none" />
                                     </div>
                                 ))}
                             </div>

@@ -1,10 +1,11 @@
 import { Head, Link, usePage, router } from '@inertiajs/react';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import Layout from '@/components/Layout';
-import ProductCard, { type ProductItem } from '@/components/ProductCard';
+import ProductCard, { type ProductItem, ProductCardSkeleton } from '@/components/ProductCard';
 import ProductQuickViewModal from '@/components/ProductQuickViewModal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import {
     Sheet,
@@ -100,7 +101,7 @@ interface ParsedFilters {
 
 function parseFiltersFromUrl(
     searchString: string,
-    categories: string[],
+    categories: string[] = [],
     brands: string[] = [],
     defaultCategory = 'All',
     defaultBrand = 'All'
@@ -116,8 +117,9 @@ function parseFiltersFromUrl(
     // 2. Brand
     let activeBrand = defaultBrand;
     const rawBrand = searchParams.get('brand');
+    const safeBrands = brands || [];
     if (rawBrand) {
-        const matched = brands.find(
+        const matched = safeBrands.find(
             (b) => b.toLowerCase() === rawBrand.toLowerCase() || b.toLowerCase().replace(/\s+/g, '-') === rawBrand.toLowerCase()
         );
         activeBrand = matched || rawBrand;
@@ -126,8 +128,9 @@ function parseFiltersFromUrl(
     // 3. Category
     let activeCategory = defaultCategory;
     const rawCategory = searchParams.get('category') || searchParams.get('family') || searchParams.get('scent') || searchParams.get('collection');
+    const safeCats = categories || [];
     if (rawCategory) {
-        const matched = categories.find(
+        const matched = safeCats.find(
             (c) => c.toLowerCase() === rawCategory.toLowerCase() || c.toLowerCase().replace(/\s+/g, '-') === rawCategory.toLowerCase()
         );
         if (matched) {
@@ -232,14 +235,14 @@ function buildQueryString(filters: {
 }
 
 export default function Products({
-    fragrances,
-    categories,
-    brands: serverBrands,
+    fragrances = [],
+    categories = [],
+    brands: serverBrands = [],
     selectedCategory = 'All',
     selectedBrand = 'All',
     filters: serverFilters,
     totalCount,
-}: ProductsProps) {
+}: Partial<ProductsProps>) {
     const { t, isEn, pickText } = useTranslation();
     const { url, props } = usePage<any>();
     const user = props?.auth?.user;
@@ -247,7 +250,8 @@ export default function Products({
 
     const availableBrands = useMemo(() => {
         if (serverBrands && serverBrands.length > 0) return serverBrands;
-        const unique = Array.from(new Set(fragrances.map((f) => f.brand).filter(Boolean) as string[])).sort();
+        const safeFragrances = fragrances || [];
+        const unique = Array.from(new Set(safeFragrances.map((f) => f.brand).filter(Boolean) as string[])).sort();
         return ['All', ...unique];
     }, [serverBrands, fragrances]);
 
@@ -1037,9 +1041,15 @@ export default function Products({
                         )}
 
                         {/* ======================================================== */}
-                        {/* PRODUCT GRID OR EMPTY STATE */}
+                        {/* PRODUCT GRID OR SKELETON OR EMPTY STATE */}
                         {/* ======================================================== */}
-                        {filteredFragrances.length === 0 ? (
+                        {(!fragrances || (fragrances.length === 0 && totalCount === undefined)) ? (
+                            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6">
+                                {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                                    <ProductCardSkeleton key={n} />
+                                ))}
+                            </div>
+                        ) : filteredFragrances.length === 0 ? (
                             <div className="py-16 px-6 text-center space-y-4">
                                 <div className="w-14 h-14 rounded-full bg-[#4A070B]/10 text-[#4A070B] flex items-center justify-center mx-auto">
                                     <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">

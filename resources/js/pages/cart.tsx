@@ -46,12 +46,12 @@ interface CartPageProps {
 }
 
 export default function CartPage({
-    items = [],
+    items,
     subtotal = 0,
     subtotal_formatted = 'Rp 0',
     total = 0,
     total_formatted = 'Rp 0',
-}: CartPageProps) {
+}: Partial<CartPageProps>) {
     const { t, isEn } = useTranslation();
     const [updatingId, setUpdatingId] = useState<number | null>(null);
     const [removingId, setRemovingId] = useState<number | null>(null);
@@ -119,7 +119,7 @@ export default function CartPage({
     const totalItemsCount = items.length;
 
     return (
-        <Layout showBottomNav={items.length === 0}>
+        <Layout showBottomNav={!items || items.length === 0}>
             <Head title={isEn ? 'My Shopping Cart • Aroma Palace' : 'Keranjang Belanja Saya • Aroma Palace'} />
 
             {/* PAGE HEADER BANNER (Matches products.tsx style) */}
@@ -138,8 +138,22 @@ export default function CartPage({
             </div>
 
             {/* MAIN CONTAINER */}
-            <div className={cn("mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12", items.length > 0 && "pb-36 sm:pb-40 lg:pb-12")}>
-                {items.length === 0 ? (
+            <div className={cn("mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12", items && items.length > 0 && "pb-36 sm:pb-40 lg:pb-12")}>
+                {!items ? (
+                    /* SKELETON LOADING STATE FOR INSTANT VISITS */
+                    <div className="space-y-4 max-w-3xl mx-auto">
+                        {[1, 2].map((n) => (
+                            <div key={n} className="rounded-xl border border-border/80 bg-card p-4 flex gap-4 items-center animate-pulse">
+                                <div className="h-20 w-20 bg-muted/80 rounded-lg shrink-0" />
+                                <div className="space-y-2 flex-1">
+                                    <div className="h-4 w-40 bg-muted/80 rounded" />
+                                    <div className="h-3 w-20 bg-muted/80 rounded" />
+                                    <div className="h-4 w-28 bg-muted/80 rounded" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : items.length === 0 ? (
                     /* EMPTY STATE (Matches products.tsx empty state design) */
                     <div className="py-16 px-6 text-center space-y-4">
                         <h3 className="text-base font-bold text-foreground">

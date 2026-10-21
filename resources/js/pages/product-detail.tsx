@@ -81,7 +81,66 @@ interface ProductDetailPageProps {
     relatedProducts?: FragranceDetail[];
 }
 
-export default function ProductDetail({ product, relatedProducts }: ProductDetailPageProps) {
+function ProductDetailSkeleton() {
+    return (
+        <Layout>
+            <Head title="Detail Wewangian • Aroma Palace" />
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+                <div className="flex items-center gap-2">
+                    <Skeleton className="h-4 w-16" />
+                    <span className="text-muted-foreground/40 text-xs">/</span>
+                    <Skeleton className="h-4 w-24" />
+                    <span className="text-muted-foreground/40 text-xs">/</span>
+                    <Skeleton className="h-4 w-32" />
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+                    <div className="lg:col-span-7 space-y-4">
+                        <Skeleton className="aspect-square w-full rounded-2xl" />
+                        <div className="flex gap-3 overflow-hidden">
+                            {[1, 2, 3, 4].map((i) => (
+                                <Skeleton key={i} className="h-16 w-16 rounded-xl shrink-0" />
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="lg:col-span-5 space-y-6">
+                        <div className="space-y-2.5">
+                            <Skeleton className="h-4 w-28" />
+                            <Skeleton className="h-8 sm:h-10 w-4/5" />
+                            <Skeleton className="h-4 w-36" />
+                        </div>
+
+                        <div className="space-y-2 pt-2 border-t border-border/50">
+                            <Skeleton className="h-8 w-44" />
+                            <Skeleton className="h-3 w-32" />
+                        </div>
+
+                        <div className="space-y-2.5 pt-2">
+                            <Skeleton className="h-3 w-20" />
+                            <div className="flex gap-2">
+                                <Skeleton className="h-10 w-24 rounded-lg" />
+                                <Skeleton className="h-10 w-24 rounded-lg" />
+                                <Skeleton className="h-10 w-24 rounded-lg" />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2 pt-2">
+                            <Skeleton className="h-28 w-full rounded-xl" />
+                        </div>
+
+                        <div className="pt-4 flex gap-3">
+                            <Skeleton className="h-12 w-28 rounded-xl" />
+                            <Skeleton className="h-12 flex-1 rounded-xl" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </Layout>
+    );
+}
+
+function ProductDetailContent({ product, relatedProducts }: ProductDetailPageProps) {
     const { props } = usePage<any>();
     const user = props?.auth?.user;
     const isAdmin = Boolean(props?.auth?.is_admin || user?.role === 'admin');
@@ -1017,3 +1076,11 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
         </Layout>
     );
 }
+
+export default function ProductDetail({ product, relatedProducts }: Partial<ProductDetailPageProps>) {
+    if (!product) {
+        return <ProductDetailSkeleton />;
+    }
+    return <ProductDetailContent product={product} relatedProducts={relatedProducts} />;
+}
+

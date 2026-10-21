@@ -267,18 +267,21 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
         {
             label: isEn ? 'Home' : 'Beranda',
             href: '/',
+            component: 'home',
             active: url === '/',
             icon: <Home className="w-5 h-5" />,
         },
         {
             label: isEn ? 'Articles' : 'Artikel',
             href: '/articles',
+            component: 'articles',
             active: url.startsWith('/articles'),
             icon: <BookOpen className="w-5 h-5" />,
         },
         {
             label: isEn ? 'Wishlist' : 'Favorit',
             href: user ? '/wishlist' : '/login?notice=' + encodeURIComponent(isEn ? 'Please sign in to view your wishlist.' : 'Silakan masuk untuk melihat daftar favorit Anda.'),
+            component: user ? 'wishlist' : 'login',
             active: url.startsWith('/wishlist'),
             badge: wishlistCount,
             icon: <Heart className="w-5 h-5" />,
@@ -286,12 +289,14 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
         {
             label: isEn ? 'Transactions' : 'Transaksi',
             href: user ? '/account/orders' : '/login?notice=' + encodeURIComponent(isEn ? 'Please sign in to view your orders.' : 'Silakan masuk untuk melihat transaksi Anda.'),
+            component: user ? 'orders' : 'login',
             active: url.startsWith('/account/orders') || url.startsWith('/orders') || url.startsWith('/payment'),
             icon: <Package className="w-5 h-5" />,
         },
         {
             label: user ? (isAdmin ? 'Admin' : (isEn ? 'Account' : 'Akun')) : (isEn ? 'Account' : 'Akun'),
             href: user ? (isAdmin ? '/admin/dashboard' : '/account') : '/login',
+            component: user ? (isAdmin ? undefined : 'account') : 'login',
             active: (url === '/account' || url.startsWith('/membership') || url.startsWith('/loyalty') || url.startsWith('/login') || url.startsWith('/register') || (isAdmin && url.startsWith('/admin'))) && !url.startsWith('/account/orders') && !url.startsWith('/orders') && !url.startsWith('/payment'),
             icon: isAdmin ? <LayoutDashboard className="w-5 h-5" /> : <User className="w-5 h-5" />,
         },
@@ -1839,8 +1844,9 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                                 <Link
                                     key={item.label}
                                     href={item.href}
+                                    component={item.component}
                                     prefetch={['mount', 'hover']}
-                                    cacheFor={['30s', '2m']}
+                                    cacheFor="2m"
                                     className={`h-full flex flex-col items-center justify-center gap-0.5 px-1 transition relative select-none active:scale-95 duration-100 ${isActive
                                         ? 'text-[#4A070B] dark:text-[#E8D0BA] font-bold'
                                         : 'text-muted-foreground hover:text-foreground font-medium'

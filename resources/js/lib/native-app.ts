@@ -11,6 +11,8 @@ import { Network } from '@capacitor/network';
 import { SplashScreen } from '@capacitor/splash-screen';
 import { StatusBar, Style } from '@capacitor/status-bar';
 
+import { autoRequestNotificationPermission } from '@/lib/push-notification';
+
 /** Refresh page data when the app comes back after this long in the background. */
 const SOFT_REFRESH_AFTER_MS = 5 * 60 * 1000;
 /** Do a full reload (new assets + session check) after this long in the background. */
@@ -38,6 +40,7 @@ export function initNativeApp(): void {
     hideSplashWhenReady();
     setupLifecycle();
     setupNetworkWatcher();
+    autoRequestNotificationPermission();
 }
 
 function setupStatusBar(): void {
