@@ -3,13 +3,13 @@ importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
 
 const firebaseConfig = {
-    apiKey: "AIzaSyD0dKjEP6f_nn-VixqdUx6oav0KeX26n5c",
-    authDomain: "aromapalace-89175.firebaseapp.com",
-    projectId: "aromapalace-89175",
-    storageBucket: "aromapalace-89175.firebasestorage.app",
-    messagingSenderId: "761758190951",
-    appId: "1:761758190951:web:bd43d75ba74eb176b573c2",
-    measurementId: "G-9S5GD1XYVX"
+    apiKey: "AIzaSyCAH9VrcFa6Cc05lElZuDi6GYG1RmED-5c",
+    authDomain: "aroma-palace-c2aa6.firebaseapp.com",
+    projectId: "aroma-palace-c2aa6",
+    storageBucket: "aroma-palace-c2aa6.firebasestorage.app",
+    messagingSenderId: "561926755536",
+    appId: "1:561926755536:web:dc135d6ef361865b387ad5",
+    measurementId: "G-VL9B9XD3Q8"
 };
 
 firebase.initializeApp(firebaseConfig);

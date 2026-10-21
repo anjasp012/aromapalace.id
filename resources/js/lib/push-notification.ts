@@ -18,16 +18,16 @@ import { router } from '@inertiajs/react';
 export const isNative = typeof window !== 'undefined' && Capacitor.isNativePlatform();
 
 const firebaseConfig = {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyD0dKjEP6f_nn-VixqdUx6oav0KeX26n5c",
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "aromapalace-89175.firebaseapp.com",
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "aromapalace-89175",
-    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "aromapalace-89175.firebasestorage.app",
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "761758190951",
-    appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:761758190951:web:bd43d75ba74eb176b573c2",
-    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-9S5GD1XYVX",
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyCAH9VrcFa6Cc05lElZuDi6GYG1RmED-5c",
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "aroma-palace-c2aa6.firebaseapp.com",
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "aroma-palace-c2aa6",
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "aroma-palace-c2aa6.firebasestorage.app",
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "561926755536",
+    appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:561926755536:web:dc135d6ef361865b387ad5",
+    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-VL9B9XD3Q8",
 };
 
-const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY || "BC8JtPpG6vSyFx1Uyion3i-jKbQZZxou2hwShhFLpvVBwx6k6KSlNCTIT4Qy6YOWKl2IrYGQ2CIf3bu28POedTY";
+const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY || "BL8Wzw00aogGxi94eh5X3ytYlZHzkGKGNSQgxZLq0j1mVVumHxM1qgNv_cLyRgDcfOnTcSqMFZsRPIX0WSmdIow";
 
 function getFirebaseApp() {
     return getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
