@@ -189,20 +189,6 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    const promoFullText = useMemo(() => {
-        if (activeHeaderVoucher) {
-            if (activeHeaderVoucher.type === 'percentage') {
-                return isEn
-                    ? `Special Offer \u2013 Up to ${activeHeaderVoucher.value}% off! Claim Voucher \u2192`
-                    : `Promo Spesial \u2013 Diskon hingga ${activeHeaderVoucher.value}%! Klaim Voucher \u2192`;
-            }
-            return isEn
-                ? `Special Offer \u2013 Rp ${new Intl.NumberFormat('id-ID').format(activeHeaderVoucher.value)} off! Claim Voucher \u2192`
-                : `Promo Spesial \u2013 Potongan Rp ${new Intl.NumberFormat('id-ID').format(activeHeaderVoucher.value)}! Klaim Voucher \u2192`;
-        }
-        return isEn ? 'Special Offer \u2013 Up to 40% off! Claim Voucher \u2192' : 'Promo Spesial \u2013 Diskon hingga 40%! Klaim Voucher \u2192';
-    }, [activeHeaderVoucher, isEn]);
-
     // Random rotating announcement every 4.5 seconds
     useEffect(() => {
         if (headerVouchers.length <= 1) return;
@@ -224,6 +210,20 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
     }, [headerVouchers.length]);
 
     const activeHeaderVoucher = headerVouchers[currentVoucherIndex] || headerVouchers[0];
+
+    const promoFullText = useMemo(() => {
+        if (activeHeaderVoucher) {
+            if (activeHeaderVoucher.type === 'percentage') {
+                return isEn
+                    ? `Special Offer \u2013 Up to ${activeHeaderVoucher.value}% off! Claim Voucher \u2192`
+                    : `Promo Spesial \u2013 Diskon hingga ${activeHeaderVoucher.value}%! Klaim Voucher \u2192`;
+            }
+            return isEn
+                ? `Special Offer \u2013 Rp ${new Intl.NumberFormat('id-ID').format(activeHeaderVoucher.value)} off! Claim Voucher \u2192`
+                : `Promo Spesial \u2013 Potongan Rp ${new Intl.NumberFormat('id-ID').format(activeHeaderVoucher.value)}! Klaim Voucher \u2192`;
+        }
+        return isEn ? 'Special Offer \u2013 Up to 40% off! Claim Voucher \u2192' : 'Promo Spesial \u2013 Diskon hingga 40%! Klaim Voucher \u2192';
+    }, [activeHeaderVoucher, isEn]);
 
     const handleOpenVoucherModal = (voucherToOpen?: HeaderVoucher) => {
         setSelectedHeaderVoucher(voucherToOpen || activeHeaderVoucher);
