@@ -65,6 +65,11 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
             if (params.get('embed') === '1' || window.self !== window.top) {
                 setIsEmbed(true);
             }
+            if (params.get('autoprint') === '1') {
+                setTimeout(() => {
+                    window.print();
+                }, 500);
+            }
         } catch {
             setIsEmbed(true);
         }
@@ -126,7 +131,15 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
             )}
 
             {/* PREVIEW CANVAS WITH SCROLLABLE WHITE PAPER */}
-            <main className={`flex-1 overflow-x-auto ${isEmbed ? 'p-2 sm:p-6' : 'py-4 sm:py-8 px-2 sm:px-6'} flex justify-center items-start print:p-0 print:overflow-visible`}>
+            <main className={`flex-1 overflow-x-auto ${isEmbed ? 'p-2 sm:p-6' : 'py-4 sm:py-8 px-2 sm:px-6'} flex flex-col items-center justify-start print:p-0 print:overflow-visible`}>
+                {!isEmbed && (
+                    <div className="w-full max-w-2xl mb-3 px-3.5 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-200 text-[11px] leading-relaxed print:hidden flex items-start gap-2">
+                        <span className="text-amber-600 font-bold shrink-0">💡</span>
+                        <span>
+                            <strong>Tips Simpan PDF di iPhone:</strong> Tekan tombol <strong>Cetak / PDF</strong> di atas, lalu pada tampilan pratinjau cetak, lakukan gestur <strong>perbesar (pinch-out 2 jari)</strong> pada kertas invoice untuk membuka PDF, lalu pilih ikon Share dan <strong>Simpan ke File</strong>.
+                        </span>
+                    </div>
+                )}
                 {/* Printable Invoice Paper Sheet (Consistent Receipt Structure) */}
                 <div className={`w-full max-w-2xl min-w-[340px] sm:min-w-[560px] bg-white rounded-xl ${isEmbed ? 'border border-gray-200/80 shadow-xs' : 'border border-gray-200/80 shadow-md'} p-5 sm:p-8 text-[11px] sm:text-xs leading-normal print:shadow-none print:border-none print:p-0 print:m-0 print:max-w-none print:w-full print:rounded-none`}>
                     {/* Header Row: Logo & Invoice Title */}

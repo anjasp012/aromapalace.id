@@ -452,8 +452,8 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                             </div>
                         )}
 
-                        {/* Share & Consultation quick row */}
-                        <div className="flex items-center justify-between pt-2 text-xs text-muted-foreground border-t border-border/70">
+                        {/* Share quick row */}
+                        <div className="flex items-center justify-start pt-2 text-xs text-muted-foreground border-t border-border/70">
                             <button
                                 type="button"
                                 onClick={handleShare}
@@ -463,17 +463,6 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                                 </svg>
                                 <span>{copiedShare ? (isEn ? 'Link Copied!' : 'Tautan Disalin!') : (isEn ? 'Share This Fragrance' : 'Bagikan Wewangian Ini')}</span>
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={handleWhatsAppConsultation}
-                                className="inline-flex items-center gap-1.5 hover:text-emerald-600 transition-colors cursor-pointer"
-                            >
-                                <svg className="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.18-2.587-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.007c.106.005.249-.04.39.299.144.347.491 1.2.534 1.288.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.302c-.087.087-.179.182-.077.357.101.174.45 1.077 1.246 1.785.807.717 1.488.94 1.701 1.027.213.087.339.073.465-.072.126-.145.541-.63.685-.847.145-.217.289-.174.484-.101.195.072 1.238.584 1.45.69.213.106.355.158.407.248.052.09.052.523-.092.928z" />
-                                </svg>
-                                <span>{isEn ? 'Ask Fragrance Specialist' : 'Tanya Fragrance Specialist'}</span>
                             </button>
                         </div>
                     </div>

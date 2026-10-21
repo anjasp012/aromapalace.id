@@ -239,8 +239,8 @@ export default function Home({
                                     {banners.map((banner) => (
                                         <div key={banner.id} className="min-w-0 shrink-0 grow-0 basis-full">
                                             <div className="grid grid-cols-1 lg:grid-cols-12 items-center">
-                                                {/* Left Column: Content */}
-                                                <div className="order-2 lg:order-1 lg:col-span-6 p-6 pb-12 sm:p-10 sm:pb-12 lg:p-14 lg:pb-14 flex flex-col justify-center">
+                                                {/* Left Column: Content (Desktop only, hidden on mobile) */}
+                                                <div className="hidden lg:flex lg:col-span-6 p-6 pb-12 sm:p-10 sm:pb-12 lg:p-14 lg:pb-14 flex-col justify-center">
                                                     <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-foreground leading-[1.15]">
                                                         {banner.title}
                                                     </h1>
@@ -288,13 +288,16 @@ export default function Home({
                                                     </div>
                                                 </div>
 
-                                                {/* Right Column: Image with Direct YouTube Video Glow / Ambient Flare */}
-                                                <div className="order-1 lg:order-2 lg:col-span-6 relative h-[240px] sm:h-[360px] lg:h-[480px] p-4 sm:p-8 lg:p-12 flex items-center justify-center">
-                                                    <div className="relative w-full h-full max-w-[500px] flex items-center justify-center">
-                                                        {/* Ambient Flare behind Image */}
+                                                {/* Right Column: Image (Full banner on mobile, featured card on desktop) */}
+                                                <div className="lg:col-span-6 relative w-full aspect-[16/9] sm:aspect-[21/9] lg:aspect-auto lg:h-[480px] p-0 lg:p-12 flex items-center justify-center">
+                                                    <Link
+                                                        href={banner.link}
+                                                        className="relative w-full h-full lg:max-w-[500px] flex items-center justify-center block cursor-pointer"
+                                                    >
+                                                        {/* Ambient Flare behind Image (Desktop) */}
                                                         <div
                                                             aria-hidden="true"
-                                                            className="absolute -inset-3 sm:-inset-6 rounded-2xl overflow-hidden pointer-events-none blur-2xl sm:blur-3xl opacity-65 sm:opacity-80 scale-105 sm:scale-110 saturate-150 transform-gpu transition-all duration-700"
+                                                            className="hidden lg:block absolute -inset-3 sm:-inset-6 rounded-2xl overflow-hidden pointer-events-none blur-2xl sm:blur-3xl opacity-65 sm:opacity-80 scale-105 sm:scale-110 saturate-150 transform-gpu transition-all duration-700"
                                                         >
                                                             <img
                                                                 src={banner.image}
@@ -304,16 +307,16 @@ export default function Home({
                                                         </div>
 
                                                         {/* Crisp Main Image Card */}
-                                                        <div className="relative z-10 w-full h-full rounded-xl sm:rounded-2xl overflow-hidden border border-white/60 dark:border-white/10 bg-background shadow-xl">
+                                                        <div className="relative z-10 w-full h-full rounded-2xl overflow-hidden lg:border lg:border-white/60 dark:lg:border-white/10 bg-background lg:shadow-xl">
                                                             <img
                                                                 src={banner.image}
                                                                 alt={banner.title}
                                                                 className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
                                                             />
                                                             {/* Subtle gradient vignette on image bottom */}
-                                                            <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent pointer-events-none" />
+                                                            <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent pointer-events-none" />
                                                         </div>
-                                                    </div>
+                                                    </Link>
                                                 </div>
                                             </div>
                                         </div>
@@ -344,16 +347,16 @@ export default function Home({
                             </button>
 
                             {/* Slide Indicators: Centered Floating Glass Capsule */}
-                            <div className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20">
+                            <div className="absolute bottom-2.5 sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 sm:gap-2 z-20 px-2 py-0.5 rounded-full bg-black/25 backdrop-blur-xs border border-white/10 lg:bg-transparent lg:border-none lg:backdrop-blur-none">
                                 {banners.map((b, i) => (
                                     <button
                                         key={b.id}
                                         type="button"
                                         onClick={() => heroApi?.scrollTo(i)}
                                         aria-label={`Slide ${i + 1}`}
-                                        className={`h-2 sm:h-2.5 rounded-full transition-all duration-500 cursor-pointer ${activeSlide === i
-                                                ? 'w-7 sm:w-8 bg-[#4A070B] dark:bg-[#D4A373] shadow-xs'
-                                                : 'w-2 sm:w-2.5 bg-foreground/25 hover:bg-foreground/50'
+                                        className={`h-1.5 sm:h-2 rounded-full transition-all duration-500 cursor-pointer ${activeSlide === i
+                                                ? 'w-6 sm:w-8 bg-white lg:bg-[#4A070B] dark:lg:bg-[#D4A373] shadow-xs'
+                                                : 'w-1.5 sm:w-2 bg-white/60 lg:bg-foreground/25 hover:bg-white/80 lg:hover:bg-foreground/50'
                                             }`}
                                     />
                                 ))}

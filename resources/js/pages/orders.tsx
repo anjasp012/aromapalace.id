@@ -1110,6 +1110,12 @@ export default function OrdersPage({
                                 <button
                                     type="button"
                                     onClick={() => {
+                                        const isIOS = typeof navigator !== 'undefined' && (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+                                        if (isIOS) {
+                                            // iOS WebKit memblokir print dari iframe. Buka langsung di tab baru/Safari agar AirPrint & Simpan PDF aktif
+                                            window.open(`/orders/${invoiceModalOrder.order_number}/invoice`, '_blank');
+                                            return;
+                                        }
                                         try {
                                             iframeRef.current?.contentWindow?.focus();
                                             iframeRef.current?.contentWindow?.print();

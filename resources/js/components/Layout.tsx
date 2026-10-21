@@ -613,14 +613,14 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
         <div className="bg-background text-foreground flex flex-col min-h-screen" suppressHydrationWarning>
             {/* Top Announcement Bar (Scrolls normally with page, NOT sticky on mobile) */}
             <div className="bg-[#360407] text-white text-xs pt-[env(safe-area-inset-top,0px)]" suppressHydrationWarning>
-                <div className="max-w-7xl mx-auto pl-0 pr-3 sm:px-6 lg:px-8 flex items-center justify-between py-1.5 sm:py-2 gap-2">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between py-1.5 sm:py-2 gap-2">
                     <button
                         type="button"
                         onClick={() => handleOpenVoucherModal(activeHeaderVoucher)}
-                        className="flex-1 min-w-0 flex items-center justify-start gap-1 sm:gap-1.5 text-xs text-white/95 hover:text-white transition cursor-pointer text-left pl-0 group"
+                        className="flex-1 min-w-0 flex items-center justify-start gap-1.5 sm:gap-2 text-xs text-white/95 hover:text-white transition cursor-pointer text-left group"
                         title={isEn ? "Click to view voucher details" : "Klik untuk melihat detail voucher"}
                     >
-                        <span className="text-[#E5A844] text-xs shrink-0 animate-pulse pl-0">✦</span>
+                        <span className="text-[#E5A844] text-xs shrink-0 animate-pulse">✦</span>
                         <span className={cn(
                             "font-normal text-[11px] sm:text-xs tracking-tight transition-all duration-300 truncate",
                             isVoucherFading ? "opacity-0 -translate-y-0.5" : "opacity-100 translate-y-0"
@@ -731,25 +731,13 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     {/* Upper Row: Search | Centered Logo | User Actions */}
                     <div className="relative flex items-center justify-between py-2 sm:py-4 min-h-[60px] sm:min-h-[84px]">
-                        {/* Left: Search Trigger (Mobile: icon only; Desktop: underlined input) */}
-                        <div className="flex items-center w-auto sm:w-1/3 max-w-[40px] sm:max-w-[240px] md:max-w-[280px] z-10">
-                            {/* Mobile: Just Search Icon Button */}
-                            <button
-                                type="button"
-                                onClick={() => window.openSpotlight?.()}
-                                className="sm:hidden flex items-center justify-center w-9 h-9 text-[#4A070B] hover:text-[#360407] transition cursor-pointer rounded-full hover:bg-[#4A070B]/5 active:scale-95 shrink-0 -ml-1"
-                                aria-label={isEn ? "Search Perfumes" : "Cari Parfum"}
-                            >
-                                <svg className="w-5 h-5 text-[#4A070B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
-                            </button>
-
+                        {/* Left: Search Trigger (Desktop only) */}
+                        <div className="hidden sm:flex items-center w-auto sm:w-1/3 max-w-[240px] md:max-w-[280px] z-10">
                             {/* Desktop (sm+): Underlined Search Bar */}
                             <button
                                 type="button"
                                 onClick={() => window.openSpotlight?.()}
-                                className="hidden sm:flex w-full items-center gap-2 pb-1 border-b border-[#4A070B]/25 hover:border-[#4A070B] text-[#4A070B]/70 hover:text-[#4A070B] text-xs transition cursor-pointer text-left group"
+                                className="flex w-full items-center gap-2 pb-1 border-b border-[#4A070B]/25 hover:border-[#4A070B] text-[#4A070B]/70 hover:text-[#4A070B] text-xs transition cursor-pointer text-left group"
                             >
                                 <svg className="w-[18px] h-[18px] text-[#4A070B] group-hover:text-[#360407] transition shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -973,10 +961,10 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                     </div>
 
                     {/* Lower Row: Navigation Bar */}
-                    <nav className="relative border-t border-[#4A070B]/15 -mb-px">
+                    <nav className="relative border-t border-[#4A070B]/15 -mb-px overflow-hidden">
                         <div
                             ref={navTrackRef}
-                            className="flex items-center justify-start sm:justify-center gap-5 sm:gap-7 md:gap-8 lg:gap-10 overflow-x-auto text-[11px] sm:text-xs font-semibold uppercase tracking-[0.05em] sm:tracking-[0.08em] px-3 sm:px-0 pr-9 lg:pr-0 scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                            className="flex items-center justify-start sm:justify-center gap-5 sm:gap-7 md:gap-8 lg:gap-10 overflow-x-auto overflow-y-hidden touch-pan-x select-none overscroll-x-contain text-[11px] sm:text-xs font-semibold uppercase tracking-[0.05em] sm:tracking-[0.08em] px-3 sm:px-0 pr-9 lg:pr-0 scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                         >
                             <Link
                                 href="/"
@@ -1602,8 +1590,8 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                         )}
                     </div>
 
-                    {/* Dialog Footer with shortcuts */}
-                    <div className="px-4 py-2.5 bg-muted/30 border-t border-border/80 flex items-center justify-between text-[11px] text-muted-foreground">
+                    {/* Dialog Footer with shortcuts (Desktop only, hidden on mobile) */}
+                    <div className="hidden sm:flex px-4 py-2.5 bg-muted/30 border-t border-border/80 items-center justify-between text-[11px] text-muted-foreground">
                         <span>{isEn ? <>Press <kbd className="px-1.5 py-0.5 text-[10px] bg-background border border-border rounded font-mono">↵ Enter</kbd> to search</> : <>Tekan <kbd className="px-1.5 py-0.5 text-[10px] bg-background border border-border rounded font-mono">↵ Enter</kbd> untuk mencari</>}</span>
                         <span>{isEn ? <>Press <kbd className="px-1.5 py-0.5 text-[10px] bg-background border border-border rounded font-mono">Esc</kbd> to close</> : <>Tekan <kbd className="px-1.5 py-0.5 text-[10px] bg-background border border-border rounded font-mono">Esc</kbd> untuk menutup</>}</span>
                     </div>
