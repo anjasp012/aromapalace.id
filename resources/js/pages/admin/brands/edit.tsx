@@ -100,7 +100,7 @@ export default function AdminBrandEdit({ brand }: AdminBrandEditProps) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        router.post(`/brands/${brand.id}`, {
+        router.post(`/manajemen-brand/${brand.id}`, {
             _method: 'put',
             ...data,
         }, {
@@ -119,7 +119,7 @@ export default function AdminBrandEdit({ brand }: AdminBrandEditProps) {
                 {/* Header Actions */}
                 <div className="flex items-center justify-between">
                     <Button variant="ghost" size="sm" asChild className="p-0 hover:bg-transparent">
-                        <Link href="/brands" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
+                        <Link href="/manajemen-brand" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
                             <ArrowLeft className="size-4" />
                             <span>Kembali ke Daftar Brand</span>
                         </Link>
@@ -127,7 +127,7 @@ export default function AdminBrandEdit({ brand }: AdminBrandEditProps) {
 
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
-                            <Link href="/brands">Batal</Link>
+                            <Link href="/manajemen-brand">Batal</Link>
                         </Button>
                         <Button type="submit" size="sm" disabled={processing} className="cursor-pointer">
                             <Save className="size-4 mr-1.5" />
@@ -378,7 +378,7 @@ export default function AdminBrandEdit({ brand }: AdminBrandEditProps) {
                 {/* Footer Save Button */}
                 <div className="flex items-center justify-end gap-3 pt-2">
                     <Button variant="outline" size="sm" asChild>
-                        <Link href="/brands">Batal</Link>
+                        <Link href="/manajemen-brand">Batal</Link>
                     </Button>
                     <Button type="submit" size="sm" disabled={processing} className="cursor-pointer">
                         <Save className="size-4 mr-1.5" />

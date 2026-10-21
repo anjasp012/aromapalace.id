@@ -69,18 +69,18 @@ export default function AdminBrandsIndex({
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        router.get('/brands', { search: search || undefined }, { preserveState: true });
+        router.get('/manajemen-brand', { search: search || undefined }, { preserveState: true });
     };
 
     const handleResetSearch = () => {
         setSearch('');
-        router.get('/brands');
+        router.get('/manajemen-brand');
     };
 
     const handleDeleteSubmit = () => {
         if (!deleteTarget) return;
         setIsDeleting(true);
-        router.delete(`/brands/${deleteTarget.id}`, {
+        router.delete(`/manajemen-brand/${deleteTarget.id}`, {
             onFinish: () => {
                 setIsDeleting(false);
                 setDeleteTarget(null);
@@ -160,7 +160,7 @@ export default function AdminBrandsIndex({
                             )}
 
                             <Button size="sm" asChild className="h-9 cursor-pointer">
-                                <Link href="/brands/create">
+                                <Link href="/manajemen-brand/create">
                                     <Plus className="size-4 mr-1.5" />
                                     <span>Tambah Brand</span>
                                 </Link>
@@ -233,7 +233,7 @@ export default function AdminBrandsIndex({
                                                         className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
                                                         title="Edit Brand"
                                                     >
-                                                        <Link href={`/brands/${b.id}/edit`}>
+                                                        <Link href={`/manajemen-brand/${b.id}/edit`}>
                                                             <Edit3 className="size-3.5" />
                                                         </Link>
                                                     </Button>

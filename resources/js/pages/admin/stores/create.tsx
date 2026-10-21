@@ -95,7 +95,7 @@ export default function AdminStoreCreate() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post('/stores', {
+        post('/manajemen-butik', {
             forceFormData: true,
         });
     };
@@ -111,7 +111,7 @@ export default function AdminStoreCreate() {
                 {/* Header Actions */}
                 <div className="flex items-center justify-between">
                     <Button variant="ghost" size="sm" asChild className="p-0 hover:bg-transparent">
-                        <Link href="/stores" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
+                        <Link href="/manajemen-butik" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
                             <ArrowLeft className="size-4" />
                             <span>Kembali ke Daftar Butik</span>
                         </Link>
@@ -119,7 +119,7 @@ export default function AdminStoreCreate() {
 
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
-                            <Link href="/stores">Batal</Link>
+                            <Link href="/manajemen-butik">Batal</Link>
                         </Button>
                         <Button type="submit" size="sm" disabled={processing} className="cursor-pointer">
                             <Save className="size-4 mr-1.5" />
@@ -406,7 +406,7 @@ export default function AdminStoreCreate() {
                 {/* Footer Save Button */}
                 <div className="flex items-center justify-end gap-3 pt-2">
                     <Button variant="outline" size="sm" asChild>
-                        <Link href="/stores">Batal</Link>
+                        <Link href="/manajemen-butik">Batal</Link>
                     </Button>
                     <Button type="submit" size="sm" disabled={processing} className="cursor-pointer">
                         <Save className="size-4 mr-1.5" />

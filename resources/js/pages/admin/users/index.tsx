@@ -83,7 +83,7 @@ export default function AdminUsersIndex({
 
     const applyFilter = (newVals: { search?: string; role?: string }) => {
         router.get(
-            '/users',
+            '/manajemen-pengguna',
             {
                 search: newVals.search !== undefined ? newVals.search : (search || undefined),
                 role: newVals.role !== undefined ? (newVals.role !== 'all' ? newVals.role : undefined) : (roleFilter !== 'all' ? roleFilter : undefined),
@@ -105,13 +105,13 @@ export default function AdminUsersIndex({
     const handleResetFilter = () => {
         setSearch('');
         setRoleFilter('all');
-        router.get('/users');
+        router.get('/manajemen-pengguna');
     };
 
     const handleDeleteSubmit = () => {
         if (!deleteTarget) return;
         setIsDeleting(true);
-        router.delete(`/users/${deleteTarget.id}`, {
+        router.delete(`/manajemen-pengguna/${deleteTarget.id}`, {
             onFinish: () => {
                 setIsDeleting(false);
                 setDeleteTarget(null);
@@ -239,7 +239,7 @@ export default function AdminUsersIndex({
                             )}
 
                             <Button size="sm" asChild className="h-9 cursor-pointer">
-                                <Link href="/users/create">
+                                <Link href="/manajemen-pengguna/create">
                                     <Plus className="size-4 mr-1.5" />
                                     <span>Tambah Pengguna</span>
                                 </Link>
@@ -321,7 +321,7 @@ export default function AdminUsersIndex({
                                                         className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
                                                         title="Lihat Detail & Mutasi Poin"
                                                     >
-                                                        <Link href={`/users/${user.id}`}>
+                                                        <Link href={`/manajemen-pengguna/${user.id}`}>
                                                             <Eye className="size-3.5" />
                                                         </Link>
                                                     </Button>
@@ -332,7 +332,7 @@ export default function AdminUsersIndex({
                                                         className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
                                                         title="Edit Data Pengguna"
                                                     >
-                                                        <Link href={`/users/${user.id}/edit`}>
+                                                        <Link href={`/manajemen-pengguna/${user.id}/edit`}>
                                                             <Edit3 className="size-3.5" />
                                                         </Link>
                                                     </Button>

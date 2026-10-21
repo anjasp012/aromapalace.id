@@ -70,18 +70,18 @@ export default function AdminCategoriesIndex({
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        router.get('/categories', { search: search || undefined }, { preserveState: true });
+        router.get('/manajemen-kategori', { search: search || undefined }, { preserveState: true });
     };
 
     const handleResetSearch = () => {
         setSearch('');
-        router.get('/categories');
+        router.get('/manajemen-kategori');
     };
 
     const handleDeleteSubmit = () => {
         if (!deleteTarget) return;
         setIsDeleting(true);
-        router.delete(`/categories/${deleteTarget.id}`, {
+        router.delete(`/manajemen-kategori/${deleteTarget.id}`, {
             onFinish: () => {
                 setIsDeleting(false);
                 setDeleteTarget(null);
@@ -161,7 +161,7 @@ export default function AdminCategoriesIndex({
                             )}
 
                             <Button size="sm" asChild className="h-9 cursor-pointer">
-                                <Link href="/categories/create">
+                                <Link href="/manajemen-kategori/create">
                                     <Plus className="size-4 mr-1.5" />
                                     <span>Tambah Kategori</span>
                                 </Link>
@@ -242,7 +242,7 @@ export default function AdminCategoriesIndex({
                                                         className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
                                                         title="Edit Kategori"
                                                     >
-                                                        <Link href={`/categories/${cat.id}/edit`}>
+                                                        <Link href={`/manajemen-kategori/${cat.id}/edit`}>
                                                             <Edit3 className="size-3.5" />
                                                         </Link>
                                                     </Button>

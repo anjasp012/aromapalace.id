@@ -188,7 +188,7 @@ export default function AdminProductCreate({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post('/products', {
+        post('/manajemen-produk', {
             forceFormData: true,
         });
     };
@@ -201,7 +201,7 @@ export default function AdminProductCreate({
             <form onSubmit={handleSubmit} className="w-full space-y-6">
                 <div className="flex items-center justify-between">
                     <Button variant="ghost" size="sm" asChild className="p-0 hover:bg-transparent">
-                        <Link href="/products" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
+                        <Link href="/manajemen-produk" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
                             <ArrowLeft className="size-4" />
                             <span>Kembali ke Katalog</span>
                         </Link>
@@ -209,7 +209,7 @@ export default function AdminProductCreate({
 
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
-                            <Link href="/products">Batal</Link>
+                            <Link href="/manajemen-produk">Batal</Link>
                         </Button>
                         <Button type="submit" size="sm" disabled={processing}>
                             <Save className="size-4 mr-1.5" />
@@ -545,7 +545,7 @@ export default function AdminProductCreate({
 
                 <div className="flex justify-end gap-2 pt-2">
                     <Button variant="outline" size="sm" asChild>
-                        <Link href="/products">Batal</Link>
+                        <Link href="/manajemen-produk">Batal</Link>
                     </Button>
                     <Button type="submit" size="sm" disabled={processing}>
                         <Save className="size-4 mr-1.5" />

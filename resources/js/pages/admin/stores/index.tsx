@@ -81,12 +81,12 @@ export default function AdminStoresIndex({
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        router.get('/stores', { search: search || undefined }, { preserveState: true });
+        router.get('/manajemen-butik', { search: search || undefined }, { preserveState: true });
     };
 
     const handleResetSearch = () => {
         setSearch('');
-        router.get('/stores');
+        router.get('/manajemen-butik');
     };
 
     const handleViewOnMap = (store: StoreItem) => {
@@ -99,7 +99,7 @@ export default function AdminStoresIndex({
     const handleDelete = () => {
         if (!deleteTarget) return;
         setIsDeleting(true);
-        router.delete(`/stores/${deleteTarget.id}`, {
+        router.delete(`/manajemen-butik/${deleteTarget.id}`, {
             onFinish: () => {
                 setIsDeleting(false);
                 setDeleteTarget(null);
@@ -125,7 +125,7 @@ export default function AdminStoresIndex({
                     </div>
 
                     <Button asChild size="sm" className="h-9 cursor-pointer">
-                        <Link href="/stores/create">
+                        <Link href="/manajemen-butik/create">
                             <Plus className="size-4 mr-1.5" />
                             <span>Tambah Butik</span>
                         </Link>
@@ -152,7 +152,7 @@ export default function AdminStoresIndex({
                     <AdminStoresMap
                         ref={mapRef}
                         stores={allStoreList}
-                        onEditStore={(st) => router.visit(`/stores/${st.id}/edit`)}
+                        onEditStore={(st) => router.visit(`/manajemen-butik/${st.id}/edit`)}
                         height="480px"
                     />
                 </div>
@@ -331,7 +331,7 @@ export default function AdminStoresIndex({
                                                                 className="size-8 text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer"
                                                                 title="Edit Butik"
                                                             >
-                                                                <Link href={`/stores/${st.id}/edit`}>
+                                                                <Link href={`/manajemen-butik/${st.id}/edit`}>
                                                                     <Edit3 className="size-4" />
                                                                 </Link>
                                                             </Button>

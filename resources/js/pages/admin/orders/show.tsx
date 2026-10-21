@@ -113,7 +113,7 @@ export default function AdminOrderShow({ order }: OrderShowProps) {
     const handleUpdateStatus = (newStatus: string) => {
         setIsUpdatingStatus(true);
         router.patch(
-            `/orders/${order.order_number}/status`,
+            `/manajemen-pesanan/${order.order_number}/status`,
             {
                 status: newStatus,
             },
@@ -159,7 +159,7 @@ export default function AdminOrderShow({ order }: OrderShowProps) {
                 {/* Back Link & Invoice Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <Button variant="ghost" size="sm" asChild className="w-fit p-0 hover:bg-transparent">
-                        <Link href="/orders" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
+                        <Link href="/manajemen-pesanan" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
                             <ArrowLeft className="size-4" />
                             <span>Kembali ke Daftar Pesanan</span>
                         </Link>

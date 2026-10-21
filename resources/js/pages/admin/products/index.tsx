@@ -130,7 +130,7 @@ export default function AdminProductsIndex({
 
     const applyFilters = (newValues: Record<string, string | number | undefined>) => {
         router.get(
-            '/products',
+            '/manajemen-produk',
             {
                 search: newValues.search !== undefined ? newValues.search : (search || undefined),
                 category_id: newValues.category_id !== undefined ? (newValues.category_id !== 'all' ? newValues.category_id : undefined) : (selectedCategory !== 'all' ? selectedCategory : undefined),
@@ -146,7 +146,7 @@ export default function AdminProductsIndex({
         setSelectedCategory('all');
         setSelectedBrand('all');
         setSelectedStockFilter('all');
-        router.get('/products');
+        router.get('/manajemen-produk');
     };
 
     const handleQuickStockSave = (e: React.FormEvent) => {
@@ -155,7 +155,7 @@ export default function AdminProductsIndex({
 
         setIsSavingStock(true);
         router.patch(
-            `/products/${quickStockTarget.productId}/variants/${quickStockTarget.variant.id}/stock`,
+            `/manajemen-produk/${quickStockTarget.productId}/variants/${quickStockTarget.variant.id}/stock`,
             { stock: newStockValue },
             {
                 onSuccess: () => setQuickStockTarget(null),
@@ -168,7 +168,7 @@ export default function AdminProductsIndex({
         if (!deleteTarget) return;
 
         setIsDeleting(true);
-        router.delete(`/products/${deleteTarget.id}`, {
+        router.delete(`/manajemen-produk/${deleteTarget.id}`, {
             onSuccess: () => setDeleteTarget(null),
             onFinish: () => setIsDeleting(false),
         });
@@ -318,7 +318,7 @@ export default function AdminProductsIndex({
                             )}
 
                             <Button size="sm" asChild className="h-9">
-                                <Link href="/products/create">
+                                <Link href="/manajemen-produk/create">
                                     <Plus className="size-4 mr-1.5" />
                                     <span>Tambah Produk</span>
                                 </Link>
@@ -352,7 +352,7 @@ export default function AdminProductsIndex({
                                                 />
                                                 <div className="min-w-0">
                                                     <Link
-                                                        href={`/products/${product.id}/edit`}
+                                                        href={`/manajemen-produk/${product.id}/edit`}
                                                         className="font-medium text-foreground hover:underline block"
                                                     >
                                                         {product.name}
@@ -438,7 +438,7 @@ export default function AdminProductsIndex({
                                         <td className="p-4 whitespace-nowrap align-middle text-right">
                                             <div className="flex items-center justify-end gap-1">
                                                 <Button variant="outline" size="sm" asChild className="h-8">
-                                                    <Link href={`/products/${product.id}/edit`}>
+                                                    <Link href={`/manajemen-produk/${product.id}/edit`}>
                                                         <Edit3 className="size-3.5 mr-1" />
                                                         <span>Edit</span>
                                                     </Link>

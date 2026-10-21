@@ -97,7 +97,7 @@ export default function AdminVouchersIndex({
 
     const applyFilter = (newVals: { search?: string; status?: string }) => {
         router.get(
-            '/vouchers',
+            '/manajemen-voucher',
             {
                 search: newVals.search !== undefined ? newVals.search : (search || undefined),
                 status: newVals.status !== undefined ? (newVals.status !== 'all' ? newVals.status : undefined) : (statusFilter !== 'all' ? statusFilter : undefined),
@@ -114,11 +114,11 @@ export default function AdminVouchersIndex({
     const handleResetFilter = () => {
         setSearch('');
         setStatusFilter('all');
-        router.get('/vouchers');
+        router.get('/manajemen-voucher');
     };
 
     const handleToggle = (voucher: VoucherItem) => {
-        router.patch(`/vouchers/${voucher.id}/toggle`, {}, {
+        router.patch(`/manajemen-voucher/${voucher.id}/toggle`, {}, {
             preserveScroll: true,
         });
     };
@@ -126,7 +126,7 @@ export default function AdminVouchersIndex({
     const handleDeleteSubmit = () => {
         if (!deleteTarget) return;
         setIsDeleting(true);
-        router.delete(`/vouchers/${deleteTarget.id}`, {
+        router.delete(`/manajemen-voucher/${deleteTarget.id}`, {
             onFinish: () => {
                 setIsDeleting(false);
                 setDeleteTarget(null);
@@ -254,7 +254,7 @@ export default function AdminVouchersIndex({
                             )}
 
                             <Button size="sm" asChild className="h-9 cursor-pointer">
-                                <Link href="/vouchers/create">
+                                <Link href="/manajemen-voucher/create">
                                     <Plus className="size-4 mr-1.5" />
                                     <span>Tambah Voucher</span>
                                 </Link>
@@ -365,7 +365,7 @@ export default function AdminVouchersIndex({
                                                             className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
                                                             title="Edit Voucher"
                                                         >
-                                                            <Link href={`/vouchers/${v.id}/edit`}>
+                                                            <Link href={`/manajemen-voucher/${v.id}/edit`}>
                                                                 <Edit3 className="size-3.5" />
                                                             </Link>
                                                         </Button>

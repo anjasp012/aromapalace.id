@@ -103,7 +103,7 @@ export default function AdminCategoryEdit({ category }: AdminCategoryEditProps) 
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        router.post(`/categories/${category.id}`, {
+        router.post(`/manajemen-kategori/${category.id}`, {
             _method: 'put',
             ...data,
         }, {
@@ -122,7 +122,7 @@ export default function AdminCategoryEdit({ category }: AdminCategoryEditProps) 
                 {/* Header Actions */}
                 <div className="flex items-center justify-between">
                     <Button variant="ghost" size="sm" asChild className="p-0 hover:bg-transparent">
-                        <Link href="/categories" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
+                        <Link href="/manajemen-kategori" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
                             <ArrowLeft className="size-4" />
                             <span>Kembali ke Daftar Kategori</span>
                         </Link>
@@ -130,7 +130,7 @@ export default function AdminCategoryEdit({ category }: AdminCategoryEditProps) 
 
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
-                            <Link href="/categories">Batal</Link>
+                            <Link href="/manajemen-kategori">Batal</Link>
                         </Button>
                         <Button type="submit" size="sm" disabled={processing} className="cursor-pointer">
                             <Save className="size-4 mr-1.5" />
@@ -398,7 +398,7 @@ export default function AdminCategoryEdit({ category }: AdminCategoryEditProps) 
                 {/* Footer Save Button */}
                 <div className="flex items-center justify-end gap-3 pt-2">
                     <Button variant="outline" size="sm" asChild>
-                        <Link href="/categories">Batal</Link>
+                        <Link href="/manajemen-kategori">Batal</Link>
                     </Button>
                     <Button type="submit" size="sm" disabled={processing} className="cursor-pointer">
                         <Save className="size-4 mr-1.5" />

@@ -64,18 +64,18 @@ export default function AdminPaymentMethodsIndex({
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        router.get('/payment-methods', { search: search || undefined }, { preserveState: true });
+        router.get('/manajemen-pembayaran', { search: search || undefined }, { preserveState: true });
     };
 
     const handleResetSearch = () => {
         setSearch('');
-        router.get('/payment-methods');
+        router.get('/manajemen-pembayaran');
     };
 
     const handleDelete = () => {
         if (!deleteTarget) return;
         setIsDeleting(true);
-        router.delete(`/payment-methods/${deleteTarget.id}`, {
+        router.delete(`/manajemen-pembayaran/${deleteTarget.id}`, {
             onFinish: () => {
                 setIsDeleting(false);
                 setDeleteTarget(null);
@@ -132,7 +132,7 @@ export default function AdminPaymentMethodsIndex({
                     </div>
 
                     <Button asChild size="sm" className="h-9 cursor-pointer">
-                        <Link href="/payment-methods/create">
+                        <Link href="/manajemen-pembayaran/create">
                             <Plus className="size-4 mr-1.5" />
                             <span>Tambah Metode</span>
                         </Link>
@@ -234,7 +234,7 @@ export default function AdminPaymentMethodsIndex({
                                                             className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
                                                             title="Edit Metode"
                                                         >
-                                                            <Link href={`/payment-methods/${pm.id}/edit`}>
+                                                            <Link href={`/manajemen-pembayaran/${pm.id}/edit`}>
                                                                 <Edit3 className="size-4" />
                                                             </Link>
                                                         </Button>

@@ -57,15 +57,15 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
     useAdminOrderNotifier(Boolean(user && user.role === 'admin'));
 
     const isDashboard = url === '/' || url === '/dashboard' || url === '/admin' || url.startsWith('/admin/dashboard') || url.startsWith('/dashboard');
-    const isOrders = url.startsWith('/orders') || url.startsWith('/admin/orders');
-    const isUsers = url.startsWith('/users') || url.startsWith('/admin/users');
-    const isProducts = url.startsWith('/products') || url.startsWith('/admin/products');
-    const isCategories = url.startsWith('/categories') || url.startsWith('/admin/categories');
-    const isBrands = url.startsWith('/brands') || url.startsWith('/admin/brands');
-    const isVouchers = url.startsWith('/vouchers') || url.startsWith('/admin/vouchers');
-    const isArticles = url.startsWith('/articles') || url.startsWith('/admin/articles');
-    const isStores = url.startsWith('/stores') || url.startsWith('/admin/stores');
-    const isPaymentMethods = url.startsWith('/payment-methods') || url.startsWith('/admin/payment-methods');
+    const isOrders = url.startsWith('/manajemen-pesanan');
+    const isUsers = url.startsWith('/manajemen-pengguna');
+    const isProducts = url.startsWith('/manajemen-produk');
+    const isCategories = url.startsWith('/manajemen-kategori');
+    const isBrands = url.startsWith('/manajemen-brand');
+    const isVouchers = url.startsWith('/manajemen-voucher');
+    const isArticles = url.startsWith('/manajemen-artikel');
+    const isStores = url.startsWith('/manajemen-butik');
+    const isPaymentMethods = url.startsWith('/manajemen-pembayaran');
 
     const handleLogout = () => {
         router.post('/logout');
@@ -137,7 +137,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                         </Link>
 
                         <Link
-                            href="/orders"
+                            href="/manajemen-pesanan"
                             prefetch="hover"
                             cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
@@ -152,7 +152,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                         </Link>
 
                         <Link
-                            href="/users"
+                            href="/manajemen-pengguna"
                             prefetch="hover"
                             cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
@@ -173,7 +173,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                         </div>
 
                         <Link
-                            href="/products"
+                            href="/manajemen-produk"
                             prefetch="hover"
                             cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
@@ -188,7 +188,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                         </Link>
 
                         <Link
-                            href="/categories"
+                            href="/manajemen-kategori"
                             prefetch="hover"
                             cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
@@ -203,7 +203,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                         </Link>
 
                         <Link
-                            href="/brands"
+                            href="/manajemen-brand"
                             prefetch="hover"
                             cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
@@ -224,7 +224,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                         </div>
 
                         <Link
-                            href="/vouchers"
+                            href="/manajemen-voucher"
                             prefetch="hover"
                             cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
@@ -239,7 +239,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                         </Link>
 
                         <Link
-                            href="/articles"
+                            href="/manajemen-artikel"
                             prefetch="hover"
                             cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
@@ -260,7 +260,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                         </div>
 
                         <Link
-                            href="/stores"
+                            href="/manajemen-butik"
                             prefetch="hover"
                             cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
@@ -275,7 +275,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                         </Link>
 
                         <Link
-                            href="/payment-methods"
+                            href="/manajemen-pembayaran"
                             prefetch="hover"
                             cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}

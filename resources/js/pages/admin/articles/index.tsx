@@ -68,20 +68,20 @@ export default function AdminArticlesIndex({
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        router.get('/articles', { search: search || undefined }, { preserveState: true });
+        router.get('/manajemen-artikel', { search: search || undefined }, { preserveState: true });
     };
 
     const handleResetSearch = () => {
         setSearch('');
-        router.get('/articles');
+        router.get('/manajemen-artikel');
     };
 
     const handleDeleteSubmit = () => {
         if (!deleteTarget) return;
         setIsDeleting(true);
-        router.delete(`/articles/${deleteTarget.id}`, {
+        router.delete(`/manajemen-artikel/${deleteTarget.id}`, {
             onFinish: () => {
-                setIsDeleting(false);
+                setIsDeleting(false),
                 setDeleteTarget(null);
             },
         });
@@ -161,7 +161,7 @@ export default function AdminArticlesIndex({
                             )}
 
                             <Button size="sm" asChild className="h-9">
-                                <Link href="/articles/create">
+                                <Link href="/manajemen-artikel/create">
                                     <Plus className="size-4 mr-1.5" />
                                     <span>Tulis Artikel Baru</span>
                                 </Link>
@@ -260,7 +260,7 @@ export default function AdminArticlesIndex({
                                                         className="size-8 text-muted-foreground hover:text-foreground"
                                                         title="Edit Artikel"
                                                     >
-                                                        <Link href={`/articles/${art.id}/edit`}>
+                                                        <Link href={`/manajemen-artikel/${art.id}/edit`}>
                                                             <Edit3 className="size-3.5" />
                                                         </Link>
                                                     </Button>

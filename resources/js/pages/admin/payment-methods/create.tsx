@@ -87,7 +87,7 @@ export default function AdminPaymentMethodCreate() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post('/payment-methods', {
+        post('/manajemen-pembayaran', {
             forceFormData: true,
         });
     };
@@ -103,7 +103,7 @@ export default function AdminPaymentMethodCreate() {
                 {/* Header Actions */}
                 <div className="flex items-center justify-between">
                     <Button variant="ghost" size="sm" asChild className="p-0 hover:bg-transparent">
-                        <Link href="/payment-methods" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
+                        <Link href="/manajemen-pembayaran" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
                             <ArrowLeft className="size-4" />
                             <span>Kembali ke Daftar Metode</span>
                         </Link>
@@ -111,7 +111,7 @@ export default function AdminPaymentMethodCreate() {
 
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
-                            <Link href="/payment-methods">Batal</Link>
+                            <Link href="/manajemen-pembayaran">Batal</Link>
                         </Button>
                         <Button type="submit" size="sm" disabled={processing} className="cursor-pointer">
                             <Save className="size-4 mr-1.5" />
@@ -288,7 +288,7 @@ export default function AdminPaymentMethodCreate() {
                 {/* Footer Save Button */}
                 <div className="flex items-center justify-end gap-3 pt-2">
                     <Button variant="outline" size="sm" asChild>
-                        <Link href="/payment-methods">Batal</Link>
+                        <Link href="/manajemen-pembayaran">Batal</Link>
                     </Button>
                     <Button type="submit" size="sm" disabled={processing} className="cursor-pointer">
                         <Save className="size-4 mr-1.5" />

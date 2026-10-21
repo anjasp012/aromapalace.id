@@ -54,7 +54,7 @@ export default function AdminUserEdit({ user }: AdminUserEditProps) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        put(`/users/${user.id}`);
+        put(`/manajemen-pengguna/${user.id}`);
     };
 
     return (
@@ -68,7 +68,7 @@ export default function AdminUserEdit({ user }: AdminUserEditProps) {
                 {/* Header Actions */}
                 <div className="flex items-center justify-between">
                     <Button variant="ghost" size="sm" asChild className="p-0 hover:bg-transparent">
-                        <Link href="/users" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
+                        <Link href="/manajemen-pengguna" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
                             <ArrowLeft className="size-4" />
                             <span>Kembali ke Daftar Pengguna</span>
                         </Link>
@@ -76,7 +76,7 @@ export default function AdminUserEdit({ user }: AdminUserEditProps) {
 
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
-                            <Link href="/users">Batal</Link>
+                            <Link href="/manajemen-pengguna">Batal</Link>
                         </Button>
                         <Button type="submit" size="sm" disabled={processing} className="cursor-pointer">
                             <Save className="size-4 mr-1.5" />
@@ -174,7 +174,7 @@ export default function AdminUserEdit({ user }: AdminUserEditProps) {
                 {/* Footer Save Button */}
                 <div className="flex items-center justify-end gap-3 pt-2">
                     <Button variant="outline" size="sm" asChild>
-                        <Link href="/users">Batal</Link>
+                        <Link href="/manajemen-pengguna">Batal</Link>
                     </Button>
                     <Button type="submit" size="sm" disabled={processing} className="cursor-pointer">
                         <Save className="size-4 mr-1.5" />

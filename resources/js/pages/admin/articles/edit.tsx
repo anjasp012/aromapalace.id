@@ -124,14 +124,14 @@ export default function AdminArticleEdit({ article }: ArticleEditProps) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(`/articles/${article.id}`, {
+        post(`/manajemen-artikel/${article.id}`, {
             forceFormData: true,
         });
     };
 
     const handleDeleteArticle = () => {
         setIsDeleting(true);
-        router.delete(`/articles/${article.id}`, {
+        router.delete(`/manajemen-artikel/${article.id}`, {
             onFinish: () => setIsDeleting(false),
         });
     };
@@ -145,7 +145,7 @@ export default function AdminArticleEdit({ article }: ArticleEditProps) {
                 {/* Header Actions */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <Button variant="ghost" size="sm" asChild className="p-0 hover:bg-transparent">
-                        <Link href="/articles" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
+                        <Link href="/manajemen-artikel" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
                             <ArrowLeft className="size-4" />
                             <span>Kembali ke Jurnal</span>
                         </Link>
@@ -458,7 +458,7 @@ export default function AdminArticleEdit({ article }: ArticleEditProps) {
 
                 <div className="flex justify-end gap-2 pt-2">
                     <Button variant="outline" size="sm" asChild>
-                        <Link href="/articles">Batal</Link>
+                        <Link href="/manajemen-artikel">Batal</Link>
                     </Button>
                     <Button type="submit" size="sm" disabled={processing}>
                         <Save className="size-4 mr-1.5" />
