@@ -172,7 +172,7 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
                             ) : (
                                 <Download className="w-3.5 h-3.5" />
                             )}
-                            <span>Download</span>
+
                         </button>
                     </div>
                 </header>
