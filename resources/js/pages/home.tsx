@@ -168,20 +168,80 @@ export default function Home({
         dragFree: true,
     });
 
-    // Products Datasets from Database
-    const popularProducts: ProductItem[] = propPopularProducts;
+    // Offline state & cache persistence for seamless offline experience
+    const [isOnline, setIsOnline] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
+    useEffect(() => {
+        const handleOnline = () => setIsOnline(true);
+        const handleOffline = () => setIsOnline(false);
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, []);
+
+    useEffect(() => {
+        if (propPopularProducts.length > 0) {
+            try {
+                localStorage.setItem('aromapalace_cached_home', JSON.stringify({
+                    popularProducts: propPopularProducts,
+                    discountedProducts: propDiscountedProducts,
+                    recommendedProducts: propRecommendedProducts,
+                    categories: propCategories,
+                    brands: propBrands,
+                    vouchers: propVouchers,
+                    articles: propArticles,
+                    cachedAt: Date.now(),
+                }));
+            } catch (e) {}
+        }
+    }, [propPopularProducts, propDiscountedProducts, propRecommendedProducts, propCategories, propBrands, propVouchers, propArticles]);
+
+    const [cachedHome] = useState<any>(() => {
+        if (typeof window === 'undefined') return null;
+        try {
+            const raw = localStorage.getItem('aromapalace_cached_home');
+            return raw ? JSON.parse(raw) : null;
+        } catch {
+            return null;
+        }
+    });
+
+    // Products Datasets from Database (fallback to cached data if offline / props empty)
+    const popularProducts: ProductItem[] = propPopularProducts.length > 0
+        ? propPopularProducts
+        : (cachedHome?.popularProducts || []);
     const recommendedProducts: ProductItem[] = propRecommendedProducts.length > 0
         ? propRecommendedProducts
-        : propPopularProducts;
-    const discountedProducts: ProductItem[] = propDiscountedProducts;
+        : (cachedHome?.recommendedProducts?.length > 0 ? cachedHome.recommendedProducts : popularProducts);
+    const discountedProducts: ProductItem[] = propDiscountedProducts.length > 0
+        ? propDiscountedProducts
+        : (cachedHome?.discountedProducts || []);
 
-    const categoriesList: CategoryItem[] = propCategories;
-    const brandList: BrandItem[] = propBrands;
-    const articlesList: ArticleItem[] = propArticles;
+    const categoriesList: CategoryItem[] = propCategories.length > 0
+        ? propCategories
+        : (cachedHome?.categories || []);
+    const brandList: BrandItem[] = propBrands.length > 0
+        ? propBrands
+        : (cachedHome?.brands || []);
+    const activeVouchers = propVouchers.length > 0
+        ? propVouchers
+        : (cachedHome?.vouchers || []);
+    const articlesList: ArticleItem[] = propArticles.length > 0
+        ? propArticles
+        : (cachedHome?.articles || []);
 
     return (
         <Layout>
             <Head title="Aroma Palace - Koleksi Parfum Mewah" />
+
+            {!isOnline && (
+                <div className="bg-[#4A070B] text-amber-200 text-xs py-2 px-4 text-center font-medium flex items-center justify-center gap-2 border-b border-amber-500/20">
+                    <span>📶</span>
+                    <span>{isEn ? 'Offline Mode • Displaying saved fragrance catalog' : 'Mode Offline • Menampilkan katalog wewangian tersimpan'}</span>
+                </div>
+            )}
 
             <div className="py-6 sm:py-10 space-y-10 sm:space-y-16">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 sm:space-y-16">

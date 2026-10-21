@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -471,11 +471,33 @@ export default function AccountPage({
                                 </div>
                                 <ExternalLink className="w-4 h-4 text-muted-foreground" />
                             </a>
+
+                            {/* Hapus Akun Permanen (Pengaturan & Keamanan) */}
+                            <button
+                                type="button"
+                                onClick={() => setDeleteAccountOpen(true)}
+                                className="w-full flex items-center justify-between p-3.5 hover:bg-destructive/5 transition cursor-pointer text-left group border-t border-border/80"
+                            >
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <div className="w-7 h-7 rounded-full bg-destructive/10 text-destructive flex items-center justify-center shrink-0">
+                                        <Trash2 className="w-4 h-4" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <span className="block text-xs sm:text-sm font-semibold text-destructive group-hover:underline">
+                                            {t('account.delete_account')}
+                                        </span>
+                                        <span className="block text-[11px] text-muted-foreground truncate">
+                                            {t('account.delete_account_desc')}
+                                        </span>
+                                    </div>
+                                </div>
+                                <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0 ml-2" />
+                            </button>
                         </div>
                     </div>
 
-                    {/* Tombol Keluar dari Akun */}
-                    <div className="pt-1">
+                    {/* Tombol Keluar dari Akun & Hapus Akun */}
+                    <div className="pt-2 space-y-2">
                         <Button
                             variant="outline"
                             onClick={() => setLogoutConfirmOpen(true)}
@@ -484,14 +506,15 @@ export default function AccountPage({
                             <LogOut className="w-4 h-4" />
                             <span>{t('account.logout')}</span>
                         </Button>
-                        <button
+                        <Button
                             type="button"
+                            variant="ghost"
                             onClick={() => setDeleteAccountOpen(true)}
-                            className="w-full mt-3 text-[11px] font-medium text-muted-foreground hover:text-destructive transition cursor-pointer flex items-center justify-center gap-1.5"
+                            className="w-full text-xs font-medium py-3 rounded-xl text-destructive/80 hover:text-destructive hover:bg-destructive/10 cursor-pointer flex items-center justify-center gap-1.5"
                         >
                             <Trash2 className="w-3.5 h-3.5" />
                             <span>{t('account.delete_account')}</span>
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </div>
