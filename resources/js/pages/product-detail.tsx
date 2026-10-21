@@ -16,6 +16,7 @@ import {
     DialogDescription,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { isNativeApp } from '@/lib/native-app';
 import { useTranslation, formatCategoryName } from '@/lib/i18n';
 import { Check, Loader2 } from 'lucide-react';
 
@@ -744,6 +745,8 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                             </p>
                         </div>
 
+                        {/* Reviews written here are not saved to the server yet, so the button is hidden in the iOS/Android app. */}
+                        {!isNativeApp() && (
                         <Button
                             onClick={() => setWriteReviewOpen(true)}
                             variant="outline"
@@ -754,6 +757,7 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                             </svg>
                             {isEn ? 'Write a Review' : 'Tulis Ulasan Anda'}
                         </Button>
+                        )}
                     </div>
 
                     {/* Summary Rating Banner & Reviews List */}
