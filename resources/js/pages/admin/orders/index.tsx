@@ -106,7 +106,7 @@ export default function AdminOrdersIndex({
 
     const handleTabChange = (statusKey: string) => {
         router.get(
-            '/admin/orders',
+            '/orders',
             {
                 status: statusKey,
                 delivery_type: selectedDeliveryType !== 'all' ? selectedDeliveryType : undefined,
@@ -119,7 +119,7 @@ export default function AdminOrdersIndex({
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         router.get(
-            '/admin/orders',
+            '/orders',
             {
                 status: activeTab !== 'all' ? activeTab : undefined,
                 delivery_type: selectedDeliveryType !== 'all' ? selectedDeliveryType : undefined,
@@ -132,7 +132,7 @@ export default function AdminOrdersIndex({
     const handleDeliveryFilterChange = (type: string) => {
         setSelectedDeliveryType(type);
         router.get(
-            '/admin/orders',
+            '/orders',
             {
                 status: activeTab !== 'all' ? activeTab : undefined,
                 delivery_type: type !== 'all' ? type : undefined,
@@ -145,7 +145,7 @@ export default function AdminOrdersIndex({
     const handleResetFilter = () => {
         setSearch('');
         setSelectedDeliveryType('all');
-        router.get('/admin/orders');
+        router.get('/orders');
     };
 
     const handleQuickStatusSubmit = (e: React.FormEvent) => {
@@ -154,7 +154,7 @@ export default function AdminOrdersIndex({
 
         setIsUpdating(true);
         router.patch(
-            `/admin/orders/${quickStatusOrder.order_number}/status`,
+            `/orders/${quickStatusOrder.order_number}/status`,
             {
                 status: targetStatus,
                 notes: statusNotes || undefined,
@@ -303,7 +303,7 @@ export default function AdminOrdersIndex({
                                         <tr key={order.id} className="hover:bg-muted/50 transition-colors">
                                             <td className="p-4 align-middle whitespace-nowrap">
                                                 <Link
-                                                    href={`/admin/orders/${order.order_number}`}
+                                                    href={`/orders/${order.order_number}`}
                                                     className="font-mono font-semibold text-primary hover:underline block"
                                                 >
                                                     #{order.order_number}
@@ -395,7 +395,7 @@ export default function AdminOrdersIndex({
                                                     </Button>
 
                                                     <Button size="sm" variant="default" asChild className="h-8">
-                                                        <Link href={`/admin/orders/${order.order_number}`}>
+                                                        <Link href={`/orders/${order.order_number}`}>
                                                             <Eye className="size-3.5 mr-1" />
                                                             <span>Detail</span>
                                                         </Link>

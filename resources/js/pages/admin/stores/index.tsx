@@ -117,12 +117,12 @@ export default function AdminStoresIndex({
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        router.get('/admin/stores', { search: search || undefined }, { preserveState: true });
+        router.get('/stores', { search: search || undefined }, { preserveState: true });
     };
 
     const handleResetSearch = () => {
         setSearch('');
-        router.get('/admin/stores');
+        router.get('/stores');
     };
 
     const handleOpenCreate = () => {
@@ -169,14 +169,14 @@ export default function AdminStoresIndex({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingStore) {
-            form.post(`/admin/stores/${editingStore.id}`, {
+            form.post(`/stores/${editingStore.id}`, {
                 forceFormData: true,
                 onSuccess: () => {
                     setDialogOpen(false);
                 },
             });
         } else {
-            form.post('/admin/stores', {
+            form.post('/stores', {
                 forceFormData: true,
                 onSuccess: () => {
                     setDialogOpen(false);
@@ -188,7 +188,7 @@ export default function AdminStoresIndex({
     const handleDelete = () => {
         if (!deleteTarget) return;
         setIsDeleting(true);
-        router.delete(`/admin/stores/${deleteTarget.id}`, {
+        router.delete(`/stores/${deleteTarget.id}`, {
             onFinish: () => {
                 setIsDeleting(false);
                 setDeleteTarget(null);

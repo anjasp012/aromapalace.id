@@ -89,12 +89,12 @@ export default function AdminCategoriesIndex({
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        router.get('/admin/categories', { search: search || undefined }, { preserveState: true });
+        router.get('/categories', { search: search || undefined }, { preserveState: true });
     };
 
     const handleResetSearch = () => {
         setSearch('');
-        router.get('/admin/categories');
+        router.get('/categories');
     };
 
     const handleOpenCreate = () => {
@@ -126,14 +126,14 @@ export default function AdminCategoriesIndex({
     const handleFormSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingCategory) {
-            form.put(`/admin/categories/${editingCategory.id}`, {
+            form.put(`/categories/${editingCategory.id}`, {
                 onSuccess: () => {
                     setDialogOpen(false);
                     form.reset();
                 },
             });
         } else {
-            form.post('/admin/categories', {
+            form.post('/categories', {
                 onSuccess: () => {
                     setDialogOpen(false);
                     form.reset();
@@ -145,7 +145,7 @@ export default function AdminCategoriesIndex({
     const handleDeleteSubmit = () => {
         if (!deleteTarget) return;
         setIsDeleting(true);
-        router.delete(`/admin/categories/${deleteTarget.id}`, {
+        router.delete(`/categories/${deleteTarget.id}`, {
             onFinish: () => {
                 setIsDeleting(false);
                 setDeleteTarget(null);

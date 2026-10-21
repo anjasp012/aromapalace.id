@@ -118,7 +118,7 @@ export default function AdminDashboard({
                         <CardContent>
                             <div className="text-2xl font-bold">{metrics.total_orders}</div>
                             <Link
-                                href="/admin/orders"
+                                href="/orders"
                                 className="text-xs text-primary hover:underline inline-flex items-center gap-1 mt-1 font-medium"
                             >
                                 <span>Lihat semua</span>
@@ -165,7 +165,7 @@ export default function AdminDashboard({
                     <CardContent>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
                             <Button variant="outline" asChild className="h-auto py-2.5 flex-col items-start gap-1 justify-start">
-                                <Link href="/admin/orders?status=menunggu_pembayaran">
+                                <Link href="/orders?status=menunggu_pembayaran">
                                     <span className="text-xs text-muted-foreground">Menunggu Bayar</span>
                                     <span className="text-base font-bold">{status_counts.menunggu_pembayaran}</span>
                                 </Link>
@@ -174,35 +174,35 @@ export default function AdminDashboard({
 
 
                             <Button variant="outline" asChild className="h-auto py-2.5 flex-col items-start gap-1 justify-start border-blue-200 dark:border-blue-900 bg-blue-50/30">
-                                <Link href="/admin/orders?status=diproses">
+                                <Link href="/orders?status=diproses">
                                     <span className="text-xs text-blue-700 dark:text-blue-400">Diproses</span>
                                     <span className="text-base font-bold text-blue-700 dark:text-blue-400">{status_counts.diproses}</span>
                                 </Link>
                             </Button>
 
                             <Button variant="outline" asChild className="h-auto py-2.5 flex-col items-start gap-1 justify-start">
-                                <Link href="/admin/orders?status=dikirim">
+                                <Link href="/orders?status=dikirim">
                                     <span className="text-xs text-muted-foreground">Dikirim Kurir</span>
                                     <span className="text-base font-bold">{status_counts.dikirim}</span>
                                 </Link>
                             </Button>
 
                             <Button variant="outline" asChild className="h-auto py-2.5 flex-col items-start gap-1 justify-start">
-                                <Link href="/admin/orders?status=pengambilan">
+                                <Link href="/orders?status=pengambilan">
                                     <span className="text-xs text-muted-foreground">Ambil di Butik</span>
                                     <span className="text-base font-bold">{status_counts.pengambilan}</span>
                                 </Link>
                             </Button>
 
                             <Button variant="outline" asChild className="h-auto py-2.5 flex-col items-start gap-1 justify-start">
-                                <Link href="/admin/orders?status=selesai">
+                                <Link href="/orders?status=selesai">
                                     <span className="text-xs text-muted-foreground">Selesai</span>
                                     <span className="text-base font-bold">{status_counts.selesai}</span>
                                 </Link>
                             </Button>
 
                             <Button variant="outline" asChild className="h-auto py-2.5 flex-col items-start gap-1 justify-start">
-                                <Link href="/admin/orders?status=dibatalkan">
+                                <Link href="/orders?status=dibatalkan">
                                     <span className="text-xs text-muted-foreground">Dibatalkan</span>
                                     <span className="text-base font-bold">{status_counts.dibatalkan}</span>
                                 </Link>
@@ -220,7 +220,7 @@ export default function AdminDashboard({
                                 <CardDescription>Pesanan yang memerlukan verifikasi admin atau persiapan pengiriman.</CardDescription>
                             </div>
                             <Button variant="ghost" size="sm" asChild>
-                                <Link href="/admin/orders?status=diproses">
+                                <Link href="/orders?status=diproses">
                                     <span>Lihat Semua</span>
                                     <ChevronRight className="size-4 ml-1" />
                                 </Link>
@@ -264,7 +264,7 @@ export default function AdminDashboard({
                                             <div className="pt-2 border-t flex items-center justify-between gap-2">
                                                 <span className="font-semibold text-sm">{order.total_amount_formatted}</span>
                                                 <Button size="sm" variant="outline" asChild className="h-8">
-                                                    <Link href={`/admin/orders/${order.order_number}`}>
+                                                    <Link href={`/orders/${order.order_number}`}>
                                                         <span>Kelola</span>
                                                         <ChevronRight className="size-3.5 ml-1" />
                                                     </Link>
@@ -286,7 +286,7 @@ export default function AdminDashboard({
                             <CardDescription>Daftar 8 transaksi pesanan paling baru.</CardDescription>
                         </div>
                         <Button variant="ghost" size="sm" asChild>
-                            <Link href="/admin/orders">
+                            <Link href="/orders">
                                 <span>Semua Pesanan</span>
                                 <ChevronRight className="size-4 ml-1" />
                             </Link>
@@ -332,7 +332,7 @@ export default function AdminDashboard({
                                                 </td>
                                                 <td className="p-4 align-middle whitespace-nowrap text-right">
                                                     <Button variant="ghost" size="sm" asChild className="h-8">
-                                                        <Link href={`/admin/orders/${order.order_number}`}>
+                                                        <Link href={`/orders/${order.order_number}`}>
                                                             <span>Detail</span>
                                                         </Link>
                                                     </Button>

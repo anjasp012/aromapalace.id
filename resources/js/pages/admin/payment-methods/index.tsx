@@ -92,12 +92,12 @@ export default function AdminPaymentMethodsIndex({
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        router.get('/admin/payment-methods', { search: search || undefined }, { preserveState: true });
+        router.get('/payment-methods', { search: search || undefined }, { preserveState: true });
     };
 
     const handleResetSearch = () => {
         setSearch('');
-        router.get('/admin/payment-methods');
+        router.get('/payment-methods');
     };
 
     const handleOpenCreate = () => {
@@ -144,14 +144,14 @@ export default function AdminPaymentMethodsIndex({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingItem) {
-            form.post(`/admin/payment-methods/${editingItem.id}`, {
+            form.post(`/payment-methods/${editingItem.id}`, {
                 forceFormData: true,
                 onSuccess: () => {
                     setDialogOpen(false);
                 },
             });
         } else {
-            form.post('/admin/payment-methods', {
+            form.post('/payment-methods', {
                 forceFormData: true,
                 onSuccess: () => {
                     setDialogOpen(false);
@@ -163,7 +163,7 @@ export default function AdminPaymentMethodsIndex({
     const handleDelete = () => {
         if (!deleteTarget) return;
         setIsDeleting(true);
-        router.delete(`/admin/payment-methods/${deleteTarget.id}`, {
+        router.delete(`/payment-methods/${deleteTarget.id}`, {
             onFinish: () => {
                 setIsDeleting(false);
                 setDeleteTarget(null);

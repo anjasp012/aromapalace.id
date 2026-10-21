@@ -102,7 +102,7 @@ export default function AdminArticleCreate() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post('/admin/articles', {
+        post('/articles', {
             forceFormData: true,
         });
     };
@@ -115,7 +115,7 @@ export default function AdminArticleCreate() {
             <form onSubmit={handleSubmit} className="w-full space-y-6">
                 <div className="flex items-center justify-between">
                     <Button variant="ghost" size="sm" asChild className="p-0 hover:bg-transparent">
-                        <Link href="/admin/articles" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
+                        <Link href="/articles" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
                             <ArrowLeft className="size-4" />
                             <span>Kembali ke Jurnal</span>
                         </Link>
@@ -123,7 +123,7 @@ export default function AdminArticleCreate() {
 
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
-                            <Link href="/admin/articles">Batal</Link>
+                            <Link href="/articles">Batal</Link>
                         </Button>
                         <Button type="submit" size="sm" disabled={processing}>
                             <Save className="size-4 mr-1.5" />
@@ -398,7 +398,7 @@ export default function AdminArticleCreate() {
 
                 <div className="flex justify-end gap-2 pt-2">
                     <Button variant="outline" size="sm" asChild>
-                        <Link href="/admin/articles">Batal</Link>
+                        <Link href="/articles">Batal</Link>
                     </Button>
                     <Button type="submit" size="sm" disabled={processing}>
                         <Save className="size-4 mr-1.5" />

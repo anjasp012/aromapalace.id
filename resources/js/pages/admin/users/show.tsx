@@ -113,7 +113,7 @@ export default function AdminUsersShow({
 
     const handleAddPoints = (e: React.FormEvent) => {
         e.preventDefault();
-        addPointsForm.post(`/admin/users/${user.id}/points/add`, {
+        addPointsForm.post(`/users/${user.id}/points/add`, {
             preserveScroll: true,
             onSuccess: () => {
                 setPointModal(null);
@@ -124,7 +124,7 @@ export default function AdminUsersShow({
 
     const handleDeductPoints = (e: React.FormEvent) => {
         e.preventDefault();
-        deductPointsForm.post(`/admin/users/${user.id}/points/deduct`, {
+        deductPointsForm.post(`/users/${user.id}/points/deduct`, {
             preserveScroll: true,
             onSuccess: () => {
                 setPointModal(null);
@@ -134,7 +134,7 @@ export default function AdminUsersShow({
     };
 
     const handleRoleUpdate = () => {
-        roleForm.patch(`/admin/users/${user.id}/role`, {
+        roleForm.patch(`/users/${user.id}/role`, {
             preserveScroll: true,
             onSuccess: () => setRoleModal(false),
         });
@@ -149,7 +149,7 @@ export default function AdminUsersShow({
                 {/* Back Link */}
                 <div>
                     <Button variant="ghost" size="sm" asChild className="w-fit p-0 hover:bg-transparent">
-                        <Link href="/admin/users" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
+                        <Link href="/users" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
                             <ArrowLeft className="size-4" />
                             <span>Kembali ke Daftar Pengguna</span>
                         </Link>
@@ -401,7 +401,7 @@ export default function AdminUsersShow({
                                                 <tr key={o.id} className="hover:bg-muted/50 transition-colors">
                                                     <td className="p-3 align-middle">
                                                         <Link
-                                                            href={`/admin/orders/${o.id}`}
+                                                            href={`/orders/${o.id}`}
                                                             prefetch="hover"
                                                             cacheFor={['30s', '1m']}
                                                             className="font-mono font-medium text-foreground hover:underline"

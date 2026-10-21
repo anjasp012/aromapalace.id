@@ -19,6 +19,8 @@ export function useAdminOrderNotifier(enabled = true): void {
         initFirebaseForegroundListener((payload) => {
             // If on Admin Orders or Dashboard, refresh list automatically
             if (
+                window.location.pathname.startsWith('/orders') ||
+                window.location.pathname.startsWith('/dashboard') ||
                 window.location.pathname.startsWith('/admin/orders') ||
                 window.location.pathname.startsWith('/admin/dashboard')
             ) {

@@ -99,7 +99,7 @@ export default function AdminUsersIndex({
 
     const applyFilter = (newVals: { search?: string; role?: string }) => {
         router.get(
-            '/admin/users',
+            '/users',
             {
                 search: newVals.search !== undefined ? newVals.search : (search || undefined),
                 role: newVals.role !== undefined ? (newVals.role !== 'all' ? newVals.role : undefined) : (roleFilter !== 'all' ? roleFilter : undefined),
@@ -121,7 +121,7 @@ export default function AdminUsersIndex({
     const handleResetFilter = () => {
         setSearch('');
         setRoleFilter('all');
-        router.get('/admin/users');
+        router.get('/users');
     };
 
     const handleOpenCreate = () => {
@@ -151,14 +151,14 @@ export default function AdminUsersIndex({
     const handleFormSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingUser) {
-            userForm.put(`/admin/users/${editingUser.id}`, {
+            userForm.put(`/users/${editingUser.id}`, {
                 onSuccess: () => {
                     setDialogOpen(false);
                     userForm.reset();
                 },
             });
         } else {
-            userForm.post('/admin/users', {
+            userForm.post('/users', {
                 onSuccess: () => {
                     setDialogOpen(false);
                     userForm.reset();
@@ -170,7 +170,7 @@ export default function AdminUsersIndex({
     const handleDeleteSubmit = () => {
         if (!deleteTarget) return;
         setIsDeleting(true);
-        router.delete(`/admin/users/${deleteTarget.id}`, {
+        router.delete(`/users/${deleteTarget.id}`, {
             onFinish: () => {
                 setIsDeleting(false);
                 setDeleteTarget(null);
@@ -357,7 +357,7 @@ export default function AdminUsersIndex({
                                                         className="size-8 text-muted-foreground hover:text-foreground"
                                                         title="Lihat Detail & Mutasi Poin"
                                                     >
-                                                        <Link href={`/admin/users/${user.id}`}>
+                                                        <Link href={`/users/${user.id}`}>
                                                             <Eye className="size-3.5" />
                                                         </Link>
                                                     </Button>

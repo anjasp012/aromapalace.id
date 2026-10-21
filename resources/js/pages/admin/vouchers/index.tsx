@@ -123,7 +123,7 @@ export default function AdminVouchersIndex({
 
     const applyFilter = (newVals: { search?: string; status?: string }) => {
         router.get(
-            '/admin/vouchers',
+            '/vouchers',
             {
                 search: newVals.search !== undefined ? newVals.search : (search || undefined),
                 status: newVals.status !== undefined ? (newVals.status !== 'all' ? newVals.status : undefined) : (statusFilter !== 'all' ? statusFilter : undefined),
@@ -140,7 +140,7 @@ export default function AdminVouchersIndex({
     const handleResetFilter = () => {
         setSearch('');
         setStatusFilter('all');
-        router.get('/admin/vouchers');
+        router.get('/vouchers');
     };
 
     const handleOpenCreate = () => {
@@ -188,14 +188,14 @@ export default function AdminVouchersIndex({
     const handleFormSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingVoucher) {
-            form.put(`/admin/vouchers/${editingVoucher.id}`, {
+            form.put(`/vouchers/${editingVoucher.id}`, {
                 onSuccess: () => {
                     setDialogOpen(false);
                     form.reset();
                 },
             });
         } else {
-            form.post('/admin/vouchers', {
+            form.post('/vouchers', {
                 onSuccess: () => {
                     setDialogOpen(false);
                     form.reset();
@@ -205,13 +205,13 @@ export default function AdminVouchersIndex({
     };
 
     const handleToggle = (voucher: VoucherItem) => {
-        router.patch(`/admin/vouchers/${voucher.id}/toggle`, {}, { preserveState: true });
+        router.patch(`/vouchers/${voucher.id}/toggle`, {}, { preserveState: true });
     };
 
     const handleDeleteSubmit = () => {
         if (!deleteTarget) return;
         setIsDeleting(true);
-        router.delete(`/admin/vouchers/${deleteTarget.id}`, {
+        router.delete(`/vouchers/${deleteTarget.id}`, {
             onFinish: () => {
                 setIsDeleting(false);
                 setDeleteTarget(null);

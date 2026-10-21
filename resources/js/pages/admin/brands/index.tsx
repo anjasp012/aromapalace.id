@@ -90,12 +90,12 @@ export default function AdminBrandsIndex({
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        router.get('/admin/brands', { search: search || undefined }, { preserveState: true });
+        router.get('/brands', { search: search || undefined }, { preserveState: true });
     };
 
     const handleResetSearch = () => {
         setSearch('');
-        router.get('/admin/brands');
+        router.get('/brands');
     };
 
     const handleOpenCreate = () => {
@@ -127,14 +127,14 @@ export default function AdminBrandsIndex({
     const handleFormSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingBrand) {
-            form.put(`/admin/brands/${editingBrand.id}`, {
+            form.put(`/brands/${editingBrand.id}`, {
                 onSuccess: () => {
                     setDialogOpen(false);
                     form.reset();
                 },
             });
         } else {
-            form.post('/admin/brands', {
+            form.post('/brands', {
                 onSuccess: () => {
                     setDialogOpen(false);
                     form.reset();
@@ -146,7 +146,7 @@ export default function AdminBrandsIndex({
     const handleDeleteSubmit = () => {
         if (!deleteTarget) return;
         setIsDeleting(true);
-        router.delete(`/admin/brands/${deleteTarget.id}`, {
+        router.delete(`/brands/${deleteTarget.id}`, {
             onFinish: () => {
                 setIsDeleting(false);
                 setDeleteTarget(null);

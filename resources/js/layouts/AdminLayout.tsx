@@ -56,16 +56,16 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
     // Real-time Order Notification Poller (plays chime and shows desktop banner)
     useAdminOrderNotifier(Boolean(user && user.role === 'admin'));
 
-    const isDashboard = url === '/admin' || url.startsWith('/admin/dashboard');
-    const isOrders = url.startsWith('/admin/orders');
-    const isUsers = url.startsWith('/admin/users');
-    const isProducts = url.startsWith('/admin/products');
-    const isCategories = url.startsWith('/admin/categories');
-    const isBrands = url.startsWith('/admin/brands');
-    const isVouchers = url.startsWith('/admin/vouchers');
-    const isArticles = url.startsWith('/admin/articles');
-    const isStores = url.startsWith('/admin/stores');
-    const isPaymentMethods = url.startsWith('/admin/payment-methods');
+    const isDashboard = url === '/' || url === '/dashboard' || url === '/admin' || url.startsWith('/admin/dashboard') || url.startsWith('/dashboard');
+    const isOrders = url.startsWith('/orders') || url.startsWith('/admin/orders');
+    const isUsers = url.startsWith('/users') || url.startsWith('/admin/users');
+    const isProducts = url.startsWith('/products') || url.startsWith('/admin/products');
+    const isCategories = url.startsWith('/categories') || url.startsWith('/admin/categories');
+    const isBrands = url.startsWith('/brands') || url.startsWith('/admin/brands');
+    const isVouchers = url.startsWith('/vouchers') || url.startsWith('/admin/vouchers');
+    const isArticles = url.startsWith('/articles') || url.startsWith('/admin/articles');
+    const isStores = url.startsWith('/stores') || url.startsWith('/admin/stores');
+    const isPaymentMethods = url.startsWith('/payment-methods') || url.startsWith('/admin/payment-methods');
 
     const handleLogout = () => {
         router.post('/logout');
@@ -92,7 +92,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
             >
                 {/* Brand Header */}
                 <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6 justify-between pt-[env(safe-area-inset-top,0px)] box-content">
-                    <Link href="/admin/dashboard" className="flex items-center gap-2.5 font-semibold text-foreground">
+                    <Link href="/dashboard" className="flex items-center gap-2.5 font-semibold text-foreground">
                         <img
                             src="/images/logo.png"
                             alt="Aroma Palace"
@@ -122,7 +122,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                         </div>
 
                         <Link
-                            href="/admin/dashboard"
+                            href="/dashboard"
                             prefetch="hover"
                             cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
@@ -137,7 +137,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                         </Link>
 
                         <Link
-                            href="/admin/orders"
+                            href="/orders"
                             prefetch="hover"
                             cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
@@ -152,7 +152,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                         </Link>
 
                         <Link
-                            href="/admin/users"
+                            href="/users"
                             prefetch="hover"
                             cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
@@ -173,7 +173,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                         </div>
 
                         <Link
-                            href="/admin/products"
+                            href="/products"
                             prefetch="hover"
                             cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
@@ -188,7 +188,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                         </Link>
 
                         <Link
-                            href="/admin/categories"
+                            href="/categories"
                             prefetch="hover"
                             cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
@@ -203,7 +203,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                         </Link>
 
                         <Link
-                            href="/admin/brands"
+                            href="/brands"
                             prefetch="hover"
                             cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
@@ -224,7 +224,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                         </div>
 
                         <Link
-                            href="/admin/vouchers"
+                            href="/vouchers"
                             prefetch="hover"
                             cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
@@ -239,7 +239,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                         </Link>
 
                         <Link
-                            href="/admin/articles"
+                            href="/articles"
                             prefetch="hover"
                             cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
@@ -260,7 +260,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                         </div>
 
                         <Link
-                            href="/admin/stores"
+                            href="/stores"
                             prefetch="hover"
                             cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
@@ -275,7 +275,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                         </Link>
 
                         <Link
-                            href="/admin/payment-methods"
+                            href="/payment-methods"
                             prefetch="hover"
                             cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
