@@ -59,10 +59,11 @@ export async function registerNotificationServiceWorker(): Promise<ServiceWorker
     if (isNative || !isPushNotificationSupported()) return null;
 
     try {
-        const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+        await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
             scope: '/',
         });
-        return registration;
+        const readyRegistration = await navigator.serviceWorker.ready;
+        return readyRegistration;
     } catch (error) {
         console.warn('Failed to register service worker for notifications:', error);
         return null;
@@ -261,10 +262,51 @@ export async function enablePushNotifications(csrfToken?: string): Promise<{ suc
             if (hasSupport) {
                 const app = getFirebaseApp();
                 const messaging = getMessaging(app);
-                fcmToken = await getToken(messaging, {
-                    vapidKey: VAPID_KEY,
-                    serviceWorkerRegistration: registration,
-                });
+
+                // Check for stale subscription from previous VAPID key / project and unsubscribe
+                if (registration.pushManager) {
+                    try {
+                        const existingSub = await registration.pushManager.getSubscription();
+                        if (existingSub) {
+                            const lastProject = localStorage.getItem('aromapalace_fcm_project');
+                            if (lastProject !== firebaseConfig.projectId) {
+                                await existingSub.unsubscribe();
+                            }
+                        }
+                    } catch (subErr) {
+                        console.warn('Subscription check error:', subErr);
+                    }
+                }
+
+                try {
+                    fcmToken = await getToken(messaging, {
+                        vapidKey: VAPID_KEY,
+                        serviceWorkerRegistration: registration,
+                    });
+                } catch (firstErr: any) {
+                    // Push service error happens when old VAPID subscription is still registered in browser
+                    if (registration.pushManager) {
+                        try {
+                            const staleSub = await registration.pushManager.getSubscription();
+                            if (staleSub) {
+                                await staleSub.unsubscribe();
+                            }
+                            fcmToken = await getToken(messaging, {
+                                vapidKey: VAPID_KEY,
+                                serviceWorkerRegistration: registration,
+                            });
+                        } catch (retryErr) {
+                            console.warn('FCM getToken retry error:', retryErr);
+                            throw firstErr;
+                        }
+                    } else {
+                        throw firstErr;
+                    }
+                }
+
+                if (fcmToken) {
+                    localStorage.setItem('aromapalace_fcm_project', firebaseConfig.projectId);
+                }
             }
         } catch (fcmError) {
             console.warn('FCM getToken fallback to local token:', fcmError);
