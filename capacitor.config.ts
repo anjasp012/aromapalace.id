@@ -11,7 +11,7 @@ const serverUrl = process.env.CAP_SERVER_URL || 'https://demo-aromapalace.gagasa
 writeFileSync('mobile/www/server-url.js', `window.APP_SERVER_URL = ${JSON.stringify(serverUrl)};\n`);
 
 const config: CapacitorConfig = {
-  // Android package id. The iOS bundle id is id.aromapalace.app (com.aromapalace.app was taken
+  // Android package id. The iOS bundle id is aromapalace.app (com.aromapalace.app was taken
   // on the App Store) and is set in ios/App/App.xcodeproj.
   appId: 'com.aromapalace.app',
   appName: 'Aroma Palace',
