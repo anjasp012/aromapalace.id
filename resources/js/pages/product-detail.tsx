@@ -857,7 +857,7 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                         <div className="mb-6">
                             <Skeleton className="h-7 w-64" />
                         </div>
-                        <div className="flex sm:grid overflow-x-auto sm:overflow-visible gap-3 sm:gap-6 pb-3 sm:pb-0 scrollbar-none sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                        <div className="-mx-4 px-4 sm:mx-0 sm:px-0 scroll-pl-4 sm:scroll-pl-0 flex sm:grid overflow-x-auto sm:overflow-visible gap-3 sm:gap-6 pb-3 sm:pb-0 scrollbar-none sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                             {Array.from({ length: 5 }).map((_, i) => (
                                 <ProductCardSkeleton
                                     key={i}

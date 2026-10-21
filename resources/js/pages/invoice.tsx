@@ -65,11 +65,6 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
             if (params.get('embed') === '1' || window.self !== window.top) {
                 setIsEmbed(true);
             }
-            if (params.get('autoprint') === '1') {
-                setTimeout(() => {
-                    window.print();
-                }, 500);
-            }
         } catch {
             setIsEmbed(true);
         }
@@ -78,6 +73,7 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
     const [isDownloading, setIsDownloading] = React.useState(false);
 
     const handleDownload = async () => {
+        if (isDownloading) return;
         setIsDownloading(true);
         try {
             const downloadUrl = `/orders/${order.order_number}/invoice/download`;
@@ -87,23 +83,36 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
                 const fileName = `Invoice-${order.order_number}.pdf`;
                 const file = new File([blob], fileName, { type: 'application/pdf' });
 
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    await navigator.share({
-                        files: [file],
-                        title: `Invoice #${order.order_number}`,
-                    });
+                const isMobileDevice = typeof navigator !== 'undefined' && (/iPad|iPhone|iPod|Android/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+
+                // Hanya di perangkat mobile (iPhone/iPad/Android) gunakan native share sheet
+                if (isMobileDevice && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    try {
+                        await navigator.share({
+                            files: [file],
+                            title: `Invoice #${order.order_number}`,
+                        });
+                    } catch {
+                        // User menutup/membatalkan share sheet
+                    }
                     setIsDownloading(false);
                     return;
                 }
 
+                // Download murni ke perangkat tanpa navigasi
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
+                a.style.display = 'none';
                 a.href = url;
                 a.download = fileName;
                 document.body.appendChild(a);
                 a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
+                setTimeout(() => {
+                    window.URL.revokeObjectURL(url);
+                    if (document.body.contains(a)) {
+                        document.body.removeChild(a);
+                    }
+                }, 1000);
                 setIsDownloading(false);
                 return;
             }
@@ -111,7 +120,6 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
             console.error('Download failed:', err);
         }
         setIsDownloading(false);
-        window.location.href = `/orders/${order.order_number}/invoice/download`;
     };
 
     const handleClose = () => {

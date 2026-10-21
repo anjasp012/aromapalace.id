@@ -214,6 +214,7 @@ export default function OrdersPage({
     const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false);
 
     const handleDownloadInvoice = async (orderNumber: string) => {
+        if (isDownloadingInvoice) return;
         setIsDownloadingInvoice(true);
         try {
             const downloadUrl = `/orders/${orderNumber}/invoice/download`;
@@ -223,25 +224,36 @@ export default function OrdersPage({
                 const fileName = `Invoice-${orderNumber}.pdf`;
                 const file = new File([blob], fileName, { type: 'application/pdf' });
 
-                // iOS Native Share Sheet bawaan iPhone (UIActivityViewController)
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    await navigator.share({
-                        files: [file],
-                        title: `Invoice #${orderNumber}`,
-                    });
+                const isMobileDevice = typeof navigator !== 'undefined' && (/iPad|iPhone|iPod|Android/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+
+                // Hanya di perangkat mobile (iPhone/iPad/Android) panggil share sheet bawaan
+                if (isMobileDevice && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    try {
+                        await navigator.share({
+                            files: [file],
+                            title: `Invoice #${orderNumber}`,
+                        });
+                    } catch {
+                        // User menutup share sheet
+                    }
                     setIsDownloadingInvoice(false);
                     return;
                 }
 
-                // Fallback download file langsung
+                // Download file murni ke perangkat tanpa navigasi/auto-buka
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
+                a.style.display = 'none';
                 a.href = url;
                 a.download = fileName;
                 document.body.appendChild(a);
                 a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
+                setTimeout(() => {
+                    window.URL.revokeObjectURL(url);
+                    if (document.body.contains(a)) {
+                        document.body.removeChild(a);
+                    }
+                }, 1000);
                 setIsDownloadingInvoice(false);
                 return;
             }
@@ -249,7 +261,6 @@ export default function OrdersPage({
             console.error('Download invoice failed:', err);
         }
         setIsDownloadingInvoice(false);
-        window.location.href = `/orders/${orderNumber}/invoice/download`;
     };
 
     const renderTransactionStatusBadge = (status: string, label: string) => {
