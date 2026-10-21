@@ -153,6 +153,22 @@
     scrollbar-width: none;
 }
 
+/* Sembunyikan indikator scroll di mobile & touch devices (fungsinya tetap normal) */
+@media (max-width: 768px), (pointer: coarse) {
+    html, body, * {
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+    }
+    html::-webkit-scrollbar,
+    body::-webkit-scrollbar,
+    *::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        background: transparent !important;
+    }
+}
+
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button {
     -webkit-appearance: none;
