@@ -167,6 +167,22 @@ Upload ke App Store:
 3. Di jendela Organizer: **Distribute App → App Store Connect → Upload**.
 4. Lengkapi data di App Store Connect (deskripsi, keyword, privacy policy URL, support URL, screenshot, akun demo untuk reviewer), lalu **Submit for Review**.
 
+Upload lewat command line dengan App Store Connect API key (tanpa login Apple ID di Xcode). Simpan key di `~/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8`:
+
+```bash
+cd ios/App
+AUTH="-allowProvisioningUpdates -authenticationKeyPath $HOME/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8 -authenticationKeyID <KEY_ID> -authenticationKeyIssuerID <ISSUER_ID>"
+
+xcodebuild -project App.xcodeproj -scheme App -configuration Release \
+  -destination 'generic/platform=iOS' -archivePath build/AromaPalace.xcarchive \
+  DEVELOPMENT_TEAM=<TEAM_ID> CODE_SIGN_STYLE=Automatic $AUTH archive
+
+xcodebuild -exportArchive -archivePath build/AromaPalace.xcarchive \
+  -exportOptionsPlist ExportOptions.plist -exportPath build/export $AUTH
+```
+
+`ios/App/ExportOptions.plist` memakai `method=app-store-connect` dan `destination=upload`, jadi build langsung terkirim ke App Store Connect. Nomor build dinaikkan otomatis.
+
 Catatan review Apple:
 
 - Fitur **Hapus Akun** sudah tersedia di halaman Akun (wajib menurut guideline 5.1.1(v)).
