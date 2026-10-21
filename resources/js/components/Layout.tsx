@@ -731,13 +731,25 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     {/* Upper Row: Search | Centered Logo | User Actions */}
                     <div className="relative flex items-center justify-between py-2 sm:py-4 min-h-[60px] sm:min-h-[84px]">
-                        {/* Left: Search Trigger (Desktop only) */}
-                        <div className="hidden sm:flex items-center w-auto sm:w-1/3 max-w-[240px] md:max-w-[280px] z-10">
+                        {/* Left: Search Trigger (Mobile: icon button; Desktop: underlined input) */}
+                        <div className="flex items-center w-auto sm:w-1/3 max-w-[40px] sm:max-w-[240px] md:max-w-[280px] z-10">
+                            {/* Mobile: Just Search Icon Button */}
+                            <button
+                                type="button"
+                                onClick={() => window.openSpotlight?.()}
+                                className="sm:hidden flex items-center justify-center w-9 h-9 text-[#4A070B] hover:text-[#360407] transition cursor-pointer rounded-full hover:bg-[#4A070B]/5 active:scale-95 shrink-0 -ml-1"
+                                aria-label={isEn ? "Search Perfumes" : "Cari Parfum"}
+                            >
+                                <svg className="w-5 h-5 text-[#4A070B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </button>
+
                             {/* Desktop (sm+): Underlined Search Bar */}
                             <button
                                 type="button"
                                 onClick={() => window.openSpotlight?.()}
-                                className="flex w-full items-center gap-2 pb-1 border-b border-[#4A070B]/25 hover:border-[#4A070B] text-[#4A070B]/70 hover:text-[#4A070B] text-xs transition cursor-pointer text-left group"
+                                className="hidden sm:flex w-full items-center gap-2 pb-1 border-b border-[#4A070B]/25 hover:border-[#4A070B] text-[#4A070B]/70 hover:text-[#4A070B] text-xs transition cursor-pointer text-left group"
                             >
                                 <svg className="w-[18px] h-[18px] text-[#4A070B] group-hover:text-[#360407] transition shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />

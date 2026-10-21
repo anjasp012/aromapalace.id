@@ -1292,20 +1292,13 @@ export default function CheckoutPage({
                         aria-modal="true"
                     >
                         <div className="flex items-center justify-between pb-3 border-b border-border/80">
-                            <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-full bg-[#4A070B]/10 dark:bg-[#E8D0BA]/15 text-[#4A070B] dark:text-[#E8D0BA] flex items-center justify-center">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-sm sm:text-base text-foreground">
-                                        {t('checkout.confirm_title')}
-                                    </h3>
-                                    <p className="text-[11px] text-muted-foreground">
-                                        {t('checkout.confirm_desc')}
-                                    </p>
-                                </div>
+                            <div>
+                                <h3 className="font-bold text-sm sm:text-base text-foreground">
+                                    {t('checkout.confirm_title')}
+                                </h3>
+                                <p className="text-[11px] text-muted-foreground">
+                                    {t('checkout.confirm_desc')}
+                                </p>
                             </div>
                             <button
                                 type="button"

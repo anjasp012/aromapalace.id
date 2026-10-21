@@ -90,7 +90,7 @@ export default function Home({
 
     const [activeSlide, setActiveSlide] = useState(0);
     const [heroRef, heroApi] = useEmblaCarousel(
-        { loop: true, duration: 25 },
+        { loop: true, align: 'start', duration: 25 },
         [Autoplay({ delay: 5000, stopOnInteraction: false, stopOnMouseEnter: true })]
     );
 
@@ -192,9 +192,9 @@ export default function Home({
             <div className="py-6 sm:py-10 space-y-10 sm:space-y-16">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 sm:space-y-16">
                     {/* 1. HERO CAROUSEL BANNER DENGAN YOUTUBE-STYLE AMBIENT FLARE */}
-                    <section>
+                    <section className="-mx-4 sm:mx-0">
                         <Card
-                            className="relative overflow-hidden border border-border/70 py-0 gap-0 shadow-lg rounded-2xl group transition-all duration-700"
+                            className="relative overflow-hidden border-0 sm:border sm:border-border/70 py-0 gap-0 shadow-none sm:shadow-lg rounded-none sm:rounded-2xl group transition-all duration-700 bg-transparent sm:bg-card"
                         >
                             {/* Dynamic Ambient Background Canvas (YouTube Ambient Mode) */}
                             <div className="absolute inset-0 pointer-events-none overflow-hidden -z-20">
@@ -237,7 +237,7 @@ export default function Home({
                             <div ref={heroRef} className="relative z-10 overflow-hidden cursor-grab active:cursor-grabbing select-none">
                                 <div className="flex">
                                     {banners.map((banner) => (
-                                        <div key={banner.id} className="min-w-0 shrink-0 grow-0 basis-full">
+                                        <div key={banner.id} className="min-w-0 shrink-0 grow-0 basis-[88%] sm:basis-full pl-4 sm:pl-0">
                                             <div className="grid grid-cols-1 lg:grid-cols-12 items-center">
                                                 {/* Left Column: Content (Desktop only, hidden on mobile) */}
                                                 <div className="hidden lg:flex lg:col-span-6 p-6 pb-12 sm:p-10 sm:pb-12 lg:p-14 lg:pb-14 flex-col justify-center">
@@ -307,7 +307,7 @@ export default function Home({
                                                         </div>
 
                                                         {/* Crisp Main Image Card */}
-                                                        <div className="relative z-10 w-full h-full rounded-2xl overflow-hidden lg:border lg:border-white/60 dark:lg:border-white/10 bg-background lg:shadow-xl">
+                                                        <div className="relative z-10 w-full h-full rounded-2xl overflow-hidden border border-border/50 lg:border lg:border-white/60 dark:lg:border-white/10 bg-background shadow-md lg:shadow-xl">
                                                             <img
                                                                 src={banner.image}
                                                                 alt={banner.title}

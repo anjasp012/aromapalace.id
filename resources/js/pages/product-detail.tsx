@@ -417,7 +417,7 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                                     variant="secondary"
                                     size="icon"
                                     onClick={() => setLightboxOpen(true)}
-                                    className="rounded-md h-8 w-8 bg-background/90 backdrop-blur-xs border border-border/80 text-muted-foreground hover:text-foreground shadow-none cursor-pointer"
+                                    className="hidden sm:flex rounded-md h-8 w-8 bg-background/90 backdrop-blur-xs border border-border/80 text-muted-foreground hover:text-foreground shadow-none cursor-pointer"
                                     title={isEn ? 'Zoom Image' : 'Perbesar Tampilan'}
                                 >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
