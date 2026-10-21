@@ -137,10 +137,10 @@ Lifecycle di `native-app.ts`:
 
 ### URL website yang dibuka aplikasi
 
-Default: `https://demo-aromapalace.gagasan.tech`. Untuk mengganti, isi `CAP_SERVER_URL` saat sync:
+Default: `https://aromapalace.id` (production). Untuk server lain, misalnya demo, isi `CAP_SERVER_URL` saat sync:
 
 ```bash
-CAP_SERVER_URL=https://aromapalace.id npx cap sync
+CAP_SERVER_URL=https://demo-aromapalace.gagasan.tech npx cap sync
 ```
 
 Jalankan `npx cap sync` setiap kali mengubah `capacitor.config.ts`, `mobile/www/`, atau plugin Capacitor.

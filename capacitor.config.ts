@@ -5,7 +5,7 @@ import { writeFileSync } from 'node:fs';
  * The app is a native shell (iOS & Android) around the live Laravel website.
  * Change the site URL with: CAP_SERVER_URL=https://aromapalace.id npx cap sync
  */
-const serverUrl = process.env.CAP_SERVER_URL || 'https://demo-aromapalace.gagasan.tech';
+const serverUrl = process.env.CAP_SERVER_URL || 'https://aromapalace.id';
 
 // The offline page reads this to know where "Coba Lagi" should go.
 writeFileSync('mobile/www/server-url.js', `window.APP_SERVER_URL = ${JSON.stringify(serverUrl)};\n`);

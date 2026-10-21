@@ -1,1 +1,1 @@
-window.APP_SERVER_URL = "https://demo-aromapalace.gagasan.tech";
+window.APP_SERVER_URL = "https://aromapalace.id";
