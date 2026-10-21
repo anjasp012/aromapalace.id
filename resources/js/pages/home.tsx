@@ -46,8 +46,6 @@ export default function Home({
     const isAdmin = Boolean(props?.auth?.is_admin || user?.role === 'admin');
     const { t, pickText, isEn } = useTranslation();
 
-    const activeVouchers = propVouchers;
-
     // 1. Hero Carousel State (Embla with touch/swipe & autoplay)
     const banners = [
         {
