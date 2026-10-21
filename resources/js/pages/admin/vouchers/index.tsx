@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Head, Link, useForm, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import AdminLayout from '@/layouts/AdminLayout';
 import {
     Search,
@@ -18,13 +18,6 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import {
     Dialog,
     DialogContent,
@@ -86,27 +79,8 @@ export default function AdminVouchersIndex({
 }: VouchersIndexProps) {
     const [search, setSearch] = useState(filters.search || '');
     const [statusFilter, setStatusFilter] = useState(filters.status || 'all');
-    const [dialogOpen, setDialogOpen] = useState(false);
-    const [editingVoucher, setEditingVoucher] = useState<VoucherItem | null>(null);
-
     const [deleteTarget, setDeleteTarget] = useState<VoucherItem | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
-
-    const form = useForm({
-        code: '',
-        name: '',
-        name_en: '',
-        description: '',
-        description_en: '',
-        type: 'percentage',
-        value: 10,
-        min_order_amount: 0,
-        max_discount_amount: '' as string | number,
-        usage_limit: '' as string | number,
-        starts_at: '',
-        expires_at: '',
-        is_active: true,
-    });
 
     const formatCurrency = (val: number) => {
         return new Intl.NumberFormat('id-ID', {
@@ -143,69 +117,10 @@ export default function AdminVouchersIndex({
         router.get('/vouchers');
     };
 
-    const handleOpenCreate = () => {
-        setEditingVoucher(null);
-        form.setData({
-            code: '',
-            name: '',
-            name_en: '',
-            description: '',
-            description_en: '',
-            type: 'percentage',
-            value: 10,
-            min_order_amount: 0,
-            max_discount_amount: '',
-            usage_limit: '',
-            starts_at: '',
-            expires_at: '',
-            is_active: true,
-        });
-        form.clearErrors();
-        setDialogOpen(true);
-    };
-
-    const handleOpenEdit = (voucher: VoucherItem) => {
-        setEditingVoucher(voucher);
-        form.setData({
-            code: voucher.code,
-            name: voucher.name,
-            name_en: voucher.name_en || '',
-            description: voucher.description || '',
-            description_en: voucher.description_en || '',
-            type: voucher.type,
-            value: voucher.value,
-            min_order_amount: voucher.min_order_amount,
-            max_discount_amount: voucher.max_discount_amount ?? '',
-            usage_limit: voucher.usage_limit ?? '',
-            starts_at: voucher.starts_at ? voucher.starts_at.slice(0, 16) : '',
-            expires_at: voucher.expires_at ? voucher.expires_at.slice(0, 16) : '',
-            is_active: voucher.is_active,
-        });
-        form.clearErrors();
-        setDialogOpen(true);
-    };
-
-    const handleFormSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (editingVoucher) {
-            form.put(`/vouchers/${editingVoucher.id}`, {
-                onSuccess: () => {
-                    setDialogOpen(false);
-                    form.reset();
-                },
-            });
-        } else {
-            form.post('/vouchers', {
-                onSuccess: () => {
-                    setDialogOpen(false);
-                    form.reset();
-                },
-            });
-        }
-    };
-
     const handleToggle = (voucher: VoucherItem) => {
-        router.patch(`/vouchers/${voucher.id}/toggle`, {}, { preserveState: true });
+        router.patch(`/vouchers/${voucher.id}/toggle`, {}, {
+            preserveScroll: true,
+        });
     };
 
     const handleDeleteSubmit = () => {
@@ -221,52 +136,54 @@ export default function AdminVouchersIndex({
 
     return (
         <AdminLayout
-            title="Voucher &amp; Promo"
-            subtitle="Kelola kode voucher diskon belanja, kuota penggunaan, dan batas minimal pembelian."
+            title="Kelola Voucher Promo"
+            subtitle="Manajemen kupon potongan belanja pelanggan, kuota voucher, dan terjemahan dwibahasa."
         >
+            <Head title="Kelola Voucher - Admin Panel" />
+
             <div className="space-y-6">
-                {/* Metric Summary Cards */}
+                {/* Metrics */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Total Voucher</CardTitle>
-                            <Ticket className="size-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{metrics.total_vouchers}</div>
-                            <p className="text-xs text-muted-foreground mt-1">Seluruh kupon diskon</p>
+                    <Card className="py-4">
+                        <CardContent className="p-0 px-6">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-muted-foreground">Total Voucher</span>
+                                <Ticket className="size-4 text-primary" />
+                            </div>
+                            <div className="text-2xl font-bold mt-2 text-foreground">{metrics.total_vouchers}</div>
+                            <p className="text-xs text-muted-foreground mt-1">Semua kode terdaftar</p>
                         </CardContent>
                     </Card>
 
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Voucher Aktif</CardTitle>
-                            <CheckCircle2 className="size-4 text-emerald-600" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{metrics.active_vouchers}</div>
-                            <p className="text-xs text-muted-foreground mt-1">Dapat diklaim pelanggan</p>
+                    <Card className="py-4">
+                        <CardContent className="p-0 px-6">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-muted-foreground">Voucher Aktif</span>
+                                <CheckCircle2 className="size-4 text-emerald-500" />
+                            </div>
+                            <div className="text-2xl font-bold mt-2 text-foreground">{metrics.active_vouchers}</div>
+                            <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">Dapat diklaim pelanggan</p>
                         </CardContent>
                     </Card>
 
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium text-rose-600 dark:text-rose-400">Kadaluarsa</CardTitle>
-                            <Clock className="size-4 text-rose-500" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-rose-600 dark:text-rose-400">{metrics.expired_vouchers}</div>
-                            <p className="text-xs text-muted-foreground mt-1">Melewati batas waktu</p>
+                    <Card className="py-4">
+                        <CardContent className="p-0 px-6">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-muted-foreground">Kadaluarsa</span>
+                                <Clock className="size-4 text-amber-500" />
+                            </div>
+                            <div className="text-2xl font-bold mt-2 text-foreground">{metrics.expired_vouchers}</div>
+                            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">Masa promo berakhir</p>
                         </CardContent>
                     </Card>
 
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Total Digunakan</CardTitle>
-                            <Ticket className="size-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{metrics.total_used}x</div>
+                    <Card className="py-4">
+                        <CardContent className="p-0 px-6">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-muted-foreground">Total Pemakaian</span>
+                                <XCircle className="size-4 text-blue-500" />
+                            </div>
+                            <div className="text-2xl font-bold mt-2 text-foreground">{metrics.total_used}</div>
                             <p className="text-xs text-muted-foreground mt-1">Transaksi checkout berhasil</p>
                         </CardContent>
                     </Card>
@@ -286,7 +203,7 @@ export default function AdminVouchersIndex({
                                     className="pl-9 h-9 text-xs"
                                 />
                             </div>
-                            <Button type="submit" size="sm" className="h-9">
+                            <Button type="submit" size="sm" className="h-9 cursor-pointer">
                                 Cari
                             </Button>
                         </form>
@@ -298,7 +215,7 @@ export default function AdminVouchersIndex({
                                     variant={statusFilter === 'all' ? 'default' : 'ghost'}
                                     size="sm"
                                     onClick={() => handleStatusFilterChange('all')}
-                                    className="h-7 text-xs px-2.5"
+                                    className="h-7 text-xs px-2.5 cursor-pointer"
                                 >
                                     Semua
                                 </Button>
@@ -307,7 +224,7 @@ export default function AdminVouchersIndex({
                                     variant={statusFilter === 'active' ? 'default' : 'ghost'}
                                     size="sm"
                                     onClick={() => handleStatusFilterChange('active')}
-                                    className="h-7 text-xs px-2.5"
+                                    className="h-7 text-xs px-2.5 cursor-pointer"
                                 >
                                     Aktif
                                 </Button>
@@ -316,7 +233,7 @@ export default function AdminVouchersIndex({
                                     variant={statusFilter === 'expired' ? 'default' : 'ghost'}
                                     size="sm"
                                     onClick={() => handleStatusFilterChange('expired')}
-                                    className="h-7 text-xs px-2.5"
+                                    className="h-7 text-xs px-2.5 cursor-pointer"
                                 >
                                     Kadaluarsa
                                 </Button>
@@ -328,7 +245,7 @@ export default function AdminVouchersIndex({
                                     variant="outline"
                                     size="sm"
                                     onClick={handleResetFilter}
-                                    className="h-9"
+                                    className="h-9 cursor-pointer"
                                     title="Reset Pencarian"
                                 >
                                     <RefreshCw className="size-3.5 mr-1" />
@@ -336,9 +253,11 @@ export default function AdminVouchersIndex({
                                 </Button>
                             )}
 
-                            <Button size="sm" onClick={handleOpenCreate} className="h-9">
-                                <Plus className="size-4 mr-1.5" />
-                                <span>Tambah Voucher</span>
+                            <Button size="sm" asChild className="h-9 cursor-pointer">
+                                <Link href="/vouchers/create">
+                                    <Plus className="size-4 mr-1.5" />
+                                    <span>Tambah Voucher</span>
+                                </Link>
                             </Button>
                         </div>
                     </div>
@@ -376,6 +295,11 @@ export default function AdminVouchersIndex({
                                                         <span>{v.code}</span>
                                                     </div>
                                                     <div className="font-medium text-foreground mt-0.5">{v.name}</div>
+                                                    {v.name_en && (
+                                                        <div className="text-[11px] text-muted-foreground italic font-normal">
+                                                            EN: {v.name_en}
+                                                        </div>
+                                                    )}
                                                 </td>
                                                 <td className="p-4 align-middle">
                                                     <span className="font-semibold text-emerald-600 dark:text-emerald-400">
@@ -418,7 +342,7 @@ export default function AdminVouchersIndex({
                                                         variant="ghost"
                                                         size="sm"
                                                         onClick={() => handleToggle(v)}
-                                                        className="h-7 px-2 text-xs flex items-center gap-1.5"
+                                                        className="h-7 px-2 text-xs flex items-center gap-1.5 cursor-pointer"
                                                         title="Klik untuk ubah status aktif"
                                                     >
                                                         {v.is_active && !isExpired ? (
@@ -435,21 +359,22 @@ export default function AdminVouchersIndex({
                                                 <td className="p-4 align-middle text-right">
                                                     <div className="flex items-center justify-end gap-1.5">
                                                         <Button
-                                                            type="button"
                                                             variant="ghost"
                                                             size="icon"
-                                                            onClick={() => handleOpenEdit(v)}
-                                                            className="size-8 text-muted-foreground hover:text-foreground"
+                                                            asChild
+                                                            className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
                                                             title="Edit Voucher"
                                                         >
-                                                            <Edit3 className="size-3.5" />
+                                                            <Link href={`/vouchers/${v.id}/edit`}>
+                                                                <Edit3 className="size-3.5" />
+                                                            </Link>
                                                         </Button>
                                                         <Button
                                                             type="button"
                                                             variant="ghost"
                                                             size="icon"
                                                             onClick={() => setDeleteTarget(v)}
-                                                            className="size-8 text-destructive hover:bg-destructive/10"
+                                                            className="size-8 text-destructive hover:bg-destructive/10 cursor-pointer"
                                                             title="Hapus Voucher"
                                                         >
                                                             <Trash2 className="size-3.5" />
@@ -499,190 +424,6 @@ export default function AdminVouchersIndex({
                     )}
                 </Card>
             </div>
-
-            {/* Create / Edit Dialog */}
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogContent className="sm:max-w-lg">
-                    <DialogHeader>
-                        <DialogTitle>
-                            {editingVoucher ? 'Edit Voucher' : 'Tambah Voucher Baru'}
-                        </DialogTitle>
-                        <DialogDescription>
-                            Atur kode kupon, potongan harga, batas penggunaan, dan masa berlaku.
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <form onSubmit={handleFormSubmit} className="space-y-4 text-xs">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div className="space-y-1.5">
-                                <label className="font-medium text-foreground">Kode Voucher *</label>
-                                <Input
-                                    type="text"
-                                    placeholder="AROMA10"
-                                    value={form.data.code}
-                                    onChange={(e) => form.setData('code', e.target.value.toUpperCase())}
-                                    className="h-9 font-mono uppercase"
-                                    required
-                                />
-                                {form.errors.code && <p className="text-destructive text-[11px]">{form.errors.code}</p>}
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <div className="flex items-center justify-between">
-                                    <label className="font-medium text-foreground">Nama Voucher *</label>
-                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-semibold">🇮🇩 ID</span>
-                                </div>
-                                <Input
-                                    type="text"
-                                    placeholder="Diskon Pembukaan 10%"
-                                    value={form.data.name}
-                                    onChange={(e) => form.setData('name', e.target.value)}
-                                    className="h-9"
-                                    required
-                                />
-                                {form.errors.name && <p className="text-destructive text-[11px]">{form.errors.name}</p>}
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <div className="flex items-center justify-between">
-                                    <label className="font-medium text-foreground">Nama Voucher (English)</label>
-                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-semibold">🇬🇧 EN</span>
-                                </div>
-                                <Input
-                                    type="text"
-                                    placeholder="Grand Opening 10% Off"
-                                    value={form.data.name_en}
-                                    onChange={(e) => form.setData('name_en', e.target.value)}
-                                    className="h-9"
-                                />
-                                {form.errors.name_en && <p className="text-destructive text-[11px]">{form.errors.name_en}</p>}
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <label className="font-medium text-foreground">Tipe Diskon *</label>
-                                <Select
-                                    value={form.data.type}
-                                    onValueChange={(val) => form.setData('type', val as 'percentage' | 'fixed')}
-                                >
-                                    <SelectTrigger className="h-9 w-full text-xs">
-                                        <SelectValue placeholder="Pilih Tipe Diskon" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="percentage">Persentase (%)</SelectItem>
-                                        <SelectItem value="fixed">Nominal Tetap (Rp)</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <label className="font-medium text-foreground">
-                                    Nilai Potongan {form.data.type === 'percentage' ? '(%)' : '(Rp)'} *
-                                </label>
-                                <Input
-                                    type="number"
-                                    min={1}
-                                    value={form.data.value}
-                                    onChange={(e) => form.setData('value', parseInt(e.target.value) || 0)}
-                                    className="h-9 font-semibold"
-                                    required
-                                />
-                                {form.errors.value && <p className="text-destructive text-[11px]">{form.errors.value}</p>}
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <label className="font-medium text-foreground">Min. Belanja (Rp)</label>
-                                <Input
-                                    type="number"
-                                    min={0}
-                                    value={form.data.min_order_amount}
-                                    onChange={(e) => form.setData('min_order_amount', parseInt(e.target.value) || 0)}
-                                    className="h-9"
-                                />
-                                {form.errors.min_order_amount && <p className="text-destructive text-[11px]">{form.errors.min_order_amount}</p>}
-                            </div>
-
-                            {form.data.type === 'percentage' && (
-                                <div className="space-y-1.5">
-                                    <label className="font-medium text-foreground">Maks. Potongan (Rp)</label>
-                                    <Input
-                                        type="number"
-                                        min={0}
-                                        placeholder="Tanpa batas"
-                                        value={form.data.max_discount_amount}
-                                        onChange={(e) => form.setData('max_discount_amount', e.target.value ? parseInt(e.target.value) : '')}
-                                        className="h-9"
-                                    />
-                                </div>
-                            )}
-
-                            <div className="space-y-1.5">
-                                <label className="font-medium text-foreground">Batas Kuota Penggunaan</label>
-                                <Input
-                                    type="number"
-                                    min={1}
-                                    placeholder="Tidak terbatas"
-                                    value={form.data.usage_limit}
-                                    onChange={(e) => form.setData('usage_limit', e.target.value ? parseInt(e.target.value) : '')}
-                                    className="h-9"
-                                />
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <label className="font-medium text-foreground">Berlaku Sampai (Tanggal)</label>
-                                <Input
-                                    type="datetime-local"
-                                    value={form.data.expires_at}
-                                    onChange={(e) => form.setData('expires_at', e.target.value)}
-                                    className="h-9"
-                                />
-                                {form.errors.expires_at && <p className="text-destructive text-[11px]">{form.errors.expires_at}</p>}
-                            </div>
-
-                            <div className="space-y-1.5 sm:col-span-2">
-                                <div className="flex items-center justify-between">
-                                    <label className="font-medium text-foreground">Deskripsi &amp; Syarat (Indonesia)</label>
-                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-semibold">🇮🇩 ID</span>
-                                </div>
-                                <textarea
-                                    rows={2}
-                                    placeholder="Keterangan voucher atau ketentuan promosi..."
-                                    value={form.data.description}
-                                    onChange={(e) => form.setData('description', e.target.value)}
-                                    className="w-full rounded-md border border-input bg-transparent p-2.5 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                />
-                            </div>
-
-                            <div className="space-y-1.5 sm:col-span-2">
-                                <div className="flex items-center justify-between">
-                                    <label className="font-medium text-foreground">Deskripsi &amp; Syarat (English)</label>
-                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-semibold">🇬🇧 EN</span>
-                                </div>
-                                <textarea
-                                    rows={2}
-                                    placeholder="Voucher terms, eligibility or promotional notes in English..."
-                                    value={form.data.description_en}
-                                    onChange={(e) => form.setData('description_en', e.target.value)}
-                                    className="w-full rounded-md border border-input bg-transparent p-2.5 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                />
-                            </div>
-                        </div>
-
-                        <DialogFooter className="pt-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setDialogOpen(false)}
-                            >
-                                Batal
-                            </Button>
-                            <Button type="submit" size="sm" disabled={form.processing}>
-                                {form.processing ? 'Menyimpan...' : (editingVoucher ? 'Simpan Perubahan' : 'Tambah Voucher')}
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
 
             {/* Delete Confirmation Dialog */}
             <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>

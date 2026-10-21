@@ -18,6 +18,10 @@ class AuthController extends Controller
     public function login(Request $request): Response|RedirectResponse
     {
         if (Auth::check()) {
+            if ($request->user()?->isAdmin()) {
+                return redirect()->route('admin.dashboard');
+            }
+
             return redirect()->intended(route('products.index'));
         }
 
@@ -33,6 +37,10 @@ class AuthController extends Controller
     public function registerView(Request $request): Response|RedirectResponse
     {
         if (Auth::check()) {
+            if ($request->user()?->isAdmin()) {
+                return redirect()->route('admin.dashboard');
+            }
+
             return redirect()->intended(route('products.index'));
         }
 
@@ -53,6 +61,7 @@ class AuthController extends Controller
                 [
                     'name' => 'Bangsawan Wangi',
                     'password' => Hash::make('secret123'),
+                    'role' => 'customer',
                 ]
             );
 
@@ -70,6 +79,21 @@ class AuthController extends Controller
         $remember = $request->has('remember') ? $request->boolean('remember') : true;
 
         if (Auth::attempt($credentials, $remember)) {
+            $user = Auth::user();
+
+            // Strict boundary: Administrator accounts must use the dedicated Admin Portal
+            if ($user && $user->isAdmin()) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                $adminLoginUrl = (config('app.admin_url') ?: 'https://'.config('app.admin_domain', 'admin.aromapalace.id')).'/login';
+
+                return back()->withErrors([
+                    'email' => "Akun ini adalah akun Administrator. Silakan login melalui portal khusus Admin di {$adminLoginUrl}",
+                ])->onlyInput('email');
+            }
+
             $request->session()->regenerate();
 
             return redirect()->intended(route('products.index'));
@@ -95,6 +119,7 @@ class AuthController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
+            'role' => 'customer',
         ]);
 
         Auth::login($user, true);

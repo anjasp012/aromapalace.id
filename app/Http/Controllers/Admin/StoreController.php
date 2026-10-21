@@ -50,6 +50,11 @@ class StoreController extends Controller
         ]);
     }
 
+    public function create(): Response
+    {
+        return Inertia::render('admin/stores/create');
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -92,6 +97,13 @@ class StoreController extends Controller
 
         return redirect()->route('admin.stores.index')
             ->with('success', "Lokasi butik '{$validated['name']}' berhasil ditambahkan.");
+    }
+
+    public function edit(Store $store): Response
+    {
+        return Inertia::render('admin/stores/edit', [
+            'store' => $store,
+        ]);
     }
 
     public function update(Request $request, Store $store): RedirectResponse

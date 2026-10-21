@@ -76,6 +76,14 @@ class UserController extends Controller
     }
 
     /**
+     * Show the form for creating a new user.
+     */
+    public function create(): Response
+    {
+        return Inertia::render('admin/users/create');
+    }
+
+    /**
      * Store a newly created user in storage.
      */
     public function store(Request $request): RedirectResponse
@@ -100,6 +108,25 @@ class UserController extends Controller
 
         return redirect()->route('admin.users.index')
             ->with('success', "Pengguna {$user->name} berhasil ditambahkan.");
+    }
+
+    /**
+     * Show the form for editing an existing user.
+     */
+    public function edit(User $user): Response
+    {
+        return Inertia::render('admin/users/edit', [
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+                'phone' => $user->phone,
+                'address' => $user->address,
+                'city' => $user->city,
+                'postal_code' => $user->postal_code,
+            ],
+        ]);
     }
 
     /**

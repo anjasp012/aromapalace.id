@@ -22,6 +22,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 interface CategoryOption {
     id: number;
@@ -290,34 +291,44 @@ export default function AdminProductCreate({
                                 {errors.brand_id && <p className="text-destructive text-[11px]">{errors.brand_id}</p>}
                             </div>
 
-                            <div className="space-y-1.5 lg:col-span-2">
-                                <div className="flex items-center justify-between">
-                                    <label className="font-medium text-foreground">Deskripsi Parfum (Indonesia)</label>
-                                    <Badge variant="outline" className="text-[10px] py-0">🇮🇩 ID</Badge>
-                                </div>
-                                <Textarea
-                                    rows={4}
-                                    value={data.description}
-                                    onChange={(e) => setData('description', e.target.value)}
-                                    placeholder="Penjelasan aroma, piramida notes wewangian, dan karakter parfum dalam Bahasa Indonesia..."
-                                    className="min-h-24 text-xs"
-                                />
-                                {errors.description && <p className="text-destructive text-[11px]">{errors.description}</p>}
-                            </div>
+                            <div className="lg:col-span-4 pt-2 border-t border-border">
+                                <Tabs defaultValue="id" className="w-full">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <label className="font-medium text-foreground">Deskripsi Parfum</label>
+                                        <TabsList className="grid grid-cols-2 w-56 h-8">
+                                            <TabsTrigger value="id" className="flex items-center gap-1.5 text-xs">
+                                                <span className="text-sm">🇮🇩</span>
+                                                <span>Indonesia</span>
+                                            </TabsTrigger>
+                                            <TabsTrigger value="en" className="flex items-center gap-1.5 text-xs">
+                                                <span className="text-sm">🇬🇧</span>
+                                                <span>English</span>
+                                            </TabsTrigger>
+                                        </TabsList>
+                                    </div>
 
-                            <div className="space-y-1.5 lg:col-span-2">
-                                <div className="flex items-center justify-between">
-                                    <label className="font-medium text-foreground">Deskripsi Parfum (English)</label>
-                                    <Badge variant="outline" className="text-[10px] py-0">🇬🇧 EN</Badge>
-                                </div>
-                                <Textarea
-                                    rows={4}
-                                    value={data.description_en}
-                                    onChange={(e) => setData('description_en', e.target.value)}
-                                    placeholder="Fragrance notes pyramid, olfactory character, and inspiration in English..."
-                                    className="min-h-24 text-xs"
-                                />
-                                {errors.description_en && <p className="text-destructive text-[11px]">{errors.description_en}</p>}
+                                    <TabsContent value="id" className="space-y-1.5 mt-0">
+                                        <Textarea
+                                            rows={4}
+                                            value={data.description}
+                                            onChange={(e) => setData('description', e.target.value)}
+                                            placeholder="Penjelasan aroma, piramida notes wewangian, dan karakter parfum dalam Bahasa Indonesia..."
+                                            className="min-h-28 text-xs"
+                                        />
+                                        {errors.description && <p className="text-destructive text-[11px]">{errors.description}</p>}
+                                    </TabsContent>
+
+                                    <TabsContent value="en" className="space-y-1.5 mt-0">
+                                        <Textarea
+                                            rows={4}
+                                            value={data.description_en}
+                                            onChange={(e) => setData('description_en', e.target.value)}
+                                            placeholder="Fragrance notes pyramid, olfactory character, and inspiration in English..."
+                                            className="min-h-28 text-xs"
+                                        />
+                                        {errors.description_en && <p className="text-destructive text-[11px]">{errors.description_en}</p>}
+                                    </TabsContent>
+                                </Tabs>
                             </div>
                         </div>
                     </CardContent>

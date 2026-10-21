@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { Head, Link, useForm, router } from '@inertiajs/react';
+import React, { useState } from 'react';
+import { Head, Link, router } from '@inertiajs/react';
 import AdminLayout from '@/layouts/AdminLayout';
 import {
     Search,
@@ -8,8 +8,6 @@ import {
     Edit3,
     Trash2,
     RefreshCw,
-    Upload,
-    Image,
     Check,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
@@ -61,34 +59,8 @@ export default function AdminPaymentMethodsIndex({
     metrics,
 }: PaymentMethodsIndexProps) {
     const [search, setSearch] = useState(filters.search || '');
-    const [dialogOpen, setDialogOpen] = useState(false);
-    const [editingItem, setEditingItem] = useState<PaymentMethodItem | null>(null);
-
     const [deleteTarget, setDeleteTarget] = useState<PaymentMethodItem | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
-
-    const fileInputRef = useRef<HTMLInputElement | null>(null);
-    const [iconPreview, setIconPreview] = useState<string | null>(null);
-
-    const form = useForm<{
-        _method?: string;
-        name: string;
-        code: string;
-        icon: File | string | null;
-    }>({
-        name: '',
-        code: '',
-        icon: null,
-    });
-
-    const slugify = (text: string) => {
-        return text
-            .toString()
-            .toLowerCase()
-            .trim()
-            .replace(/\s+/g, '_')
-            .replace(/[^\w_]+/g, '');
-    };
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -98,66 +70,6 @@ export default function AdminPaymentMethodsIndex({
     const handleResetSearch = () => {
         setSearch('');
         router.get('/payment-methods');
-    };
-
-    const handleOpenCreate = () => {
-        setEditingItem(null);
-        setIconPreview(null);
-        form.setData({
-            name: '',
-            code: '',
-            icon: null,
-        });
-        form.clearErrors();
-        setDialogOpen(true);
-    };
-
-    const handleOpenEdit = (pm: PaymentMethodItem) => {
-        setEditingItem(pm);
-        setIconPreview(pm.icon || null);
-        form.setData({
-            _method: 'put',
-            name: pm.name,
-            code: pm.code,
-            icon: pm.icon || '',
-        });
-        form.clearErrors();
-        setDialogOpen(true);
-    };
-
-    const handleNameChange = (nameVal: string) => {
-        form.setData((prev) => ({
-            ...prev,
-            name: nameVal,
-            code: editingItem ? prev.code : slugify(nameVal),
-        }));
-    };
-
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            form.setData('icon', file);
-            setIconPreview(URL.createObjectURL(file));
-        }
-    };
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (editingItem) {
-            form.post(`/payment-methods/${editingItem.id}`, {
-                forceFormData: true,
-                onSuccess: () => {
-                    setDialogOpen(false);
-                },
-            });
-        } else {
-            form.post('/payment-methods', {
-                forceFormData: true,
-                onSuccess: () => {
-                    setDialogOpen(false);
-                },
-            });
-        }
     };
 
     const handleDelete = () => {
@@ -171,7 +83,7 @@ export default function AdminPaymentMethodsIndex({
         });
     };
 
-    const renderIconBadge = (iconStr?: string | null, nameStr: string = '') => {
+    const renderIconBadge = (iconStr?: string | null, name?: string) => {
         if (!iconStr) {
             return (
                 <div className="size-9 rounded-md bg-muted border flex items-center justify-center text-muted-foreground shrink-0">
@@ -180,13 +92,12 @@ export default function AdminPaymentMethodsIndex({
             );
         }
 
-        // If it looks like a URL or file path
-        if (iconStr.startsWith('http') || iconStr.startsWith('/') || iconStr.startsWith('blob:')) {
+        if (iconStr.startsWith('http') || iconStr.startsWith('/storage') || iconStr.startsWith('data:')) {
             return (
-                <div className="size-9 rounded-md border bg-muted/30 overflow-hidden flex items-center justify-center p-1 shrink-0">
+                <div className="size-9 rounded-md bg-muted/40 border p-1 flex items-center justify-center shrink-0">
                     <img
                         src={iconStr}
-                        alt={nameStr}
+                        alt={name || 'Logo'}
                         className="w-full h-full object-contain"
                         onError={(e) => {
                             (e.target as HTMLElement).style.display = 'none';
@@ -196,7 +107,6 @@ export default function AdminPaymentMethodsIndex({
             );
         }
 
-        // If it's a short text identifier like "qris", "bca", "bri", "pakasir"
         return (
             <div className="size-9 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-[10px] uppercase shrink-0">
                 {iconStr.slice(0, 4)}
@@ -209,6 +119,8 @@ export default function AdminPaymentMethodsIndex({
             title="Metode Pembayaran"
             subtitle="Kelola kanal pembayaran, virtual account, dan QRIS untuk transaksi pelanggan."
         >
+            <Head title="Metode Pembayaran - Admin Panel" />
+
             <div className="w-full space-y-6">
                 {/* Header Action Bar */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -219,9 +131,11 @@ export default function AdminPaymentMethodsIndex({
                         </p>
                     </div>
 
-                    <Button onClick={handleOpenCreate} size="sm" className="h-9">
-                        <Plus className="size-4 mr-1.5" />
-                        <span>Tambah Metode</span>
+                    <Button asChild size="sm" className="h-9 cursor-pointer">
+                        <Link href="/payment-methods/create">
+                            <Plus className="size-4 mr-1.5" />
+                            <span>Tambah Metode</span>
+                        </Link>
                     </Button>
                 </div>
 
@@ -255,7 +169,7 @@ export default function AdminPaymentMethodsIndex({
                                     className="pl-9 h-9 text-xs"
                                 />
                             </div>
-                            <Button type="submit" size="sm" variant="secondary" className="h-9">
+                            <Button type="submit" size="sm" variant="secondary" className="h-9 cursor-pointer">
                                 Cari
                             </Button>
                             {filters.search && (
@@ -264,7 +178,7 @@ export default function AdminPaymentMethodsIndex({
                                     variant="ghost"
                                     size="sm"
                                     onClick={handleResetSearch}
-                                    className="h-9 text-xs text-muted-foreground"
+                                    className="h-9 text-xs text-muted-foreground cursor-pointer"
                                 >
                                     <RefreshCw className="size-3.5 mr-1" />
                                     Reset
@@ -316,17 +230,20 @@ export default function AdminPaymentMethodsIndex({
                                                         <Button
                                                             variant="ghost"
                                                             size="icon"
-                                                            onClick={() => handleOpenEdit(pm)}
-                                                            className="size-8 text-muted-foreground hover:text-foreground"
+                                                            asChild
+                                                            className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
                                                             title="Edit Metode"
                                                         >
-                                                            <Edit3 className="size-4" />
+                                                            <Link href={`/payment-methods/${pm.id}/edit`}>
+                                                                <Edit3 className="size-4" />
+                                                            </Link>
                                                         </Button>
                                                         <Button
+                                                            type="button"
                                                             variant="ghost"
                                                             size="icon"
                                                             onClick={() => setDeleteTarget(pm)}
-                                                            className="size-8 text-destructive hover:bg-destructive/10"
+                                                            className="size-8 text-destructive hover:bg-destructive/10 cursor-pointer"
                                                             title="Hapus Metode"
                                                         >
                                                             <Trash2 className="size-4" />
@@ -372,140 +289,6 @@ export default function AdminPaymentMethodsIndex({
                         )}
                     </CardContent>
                 </Card>
-
-                {/* Dialog Form Create / Edit */}
-                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                    <DialogContent className="sm:max-w-md">
-                        <DialogHeader>
-                            <DialogTitle>
-                                {editingItem ? 'Edit Metode Pembayaran' : 'Tambah Metode Pembayaran Baru'}
-                            </DialogTitle>
-                            <DialogDescription>
-                                Masukkan nama kanal pembayaran, kode teknis integrasi, dan icon logo.
-                            </DialogDescription>
-                        </DialogHeader>
-
-                        <form onSubmit={handleSubmit} className="space-y-4 py-2 text-xs">
-                            <div className="space-y-1.5">
-                                <label className="font-medium text-foreground">Nama Metode Pembayaran *</label>
-                                <Input
-                                    type="text"
-                                    placeholder="Contoh: BCA Virtual Account"
-                                    value={form.data.name}
-                                    onChange={(e) => handleNameChange(e.target.value)}
-                                    className="h-9"
-                                    required
-                                />
-                                {form.errors.name && (
-                                    <p className="text-destructive text-[11px]">{form.errors.name}</p>
-                                )}
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <label className="font-medium text-foreground">Kode Teknis (Unique Identifier) *</label>
-                                <Input
-                                    type="text"
-                                    placeholder="contoh: bca_va"
-                                    value={form.data.code}
-                                    onChange={(e) => form.setData('code', e.target.value)}
-                                    className="h-9 font-mono"
-                                    required
-                                />
-                                <p className="text-[10px] text-muted-foreground">
-                                    Digunakan saat integrasi gateway & checkout (misal: qris, bca_va, mandiri_va).
-                                </p>
-                                {form.errors.code && (
-                                    <p className="text-destructive text-[11px]">{form.errors.code}</p>
-                                )}
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="font-medium text-foreground">Logo / Icon</label>
-                                <div className="flex items-center gap-3">
-                                    <div className="size-12 rounded-lg border bg-muted/40 overflow-hidden flex items-center justify-center shrink-0 p-1">
-                                        {iconPreview ? (
-                                            <img
-                                                src={iconPreview}
-                                                alt="Preview"
-                                                className="w-full h-full object-contain"
-                                                onError={(e) => {
-                                                    (e.target as HTMLElement).style.display = 'none';
-                                                }}
-                                            />
-                                        ) : (
-                                            <CreditCard className="size-6 text-muted-foreground/60" />
-                                        )}
-                                    </div>
-
-                                    <div className="flex-1 space-y-1.5">
-                                        <input
-                                            ref={fileInputRef}
-                                            type="file"
-                                            accept="image/*"
-                                            className="hidden"
-                                            onChange={handleFileChange}
-                                        />
-                                        <div className="flex items-center gap-2">
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => fileInputRef.current?.click()}
-                                                className="h-8 text-xs"
-                                            >
-                                                <Upload className="size-3.5 mr-1" />
-                                                <span>Pilih File Logo</span>
-                                            </Button>
-
-                                            {iconPreview && (
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => {
-                                                        setIconPreview(null);
-                                                        form.setData('icon', '');
-                                                    }}
-                                                    className="h-8 text-xs text-destructive hover:bg-destructive/10"
-                                                >
-                                                    Hapus
-                                                </Button>
-                                            )}
-                                        </div>
-
-                                        <Input
-                                            type="text"
-                                            placeholder="Atau masukkan URL / teks kode (misal: bca, qris)"
-                                            value={typeof form.data.icon === 'string' ? form.data.icon : ''}
-                                            onChange={(e) => {
-                                                form.setData('icon', e.target.value);
-                                                setIconPreview(e.target.value);
-                                            }}
-                                            className="h-8 text-xs font-mono"
-                                        />
-                                    </div>
-                                </div>
-                                {form.errors.icon && (
-                                    <p className="text-destructive text-[11px]">{form.errors.icon}</p>
-                                )}
-                            </div>
-
-                            <DialogFooter className="pt-3">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setDialogOpen(false)}
-                                >
-                                    Batal
-                                </Button>
-                                <Button type="submit" size="sm" disabled={form.processing}>
-                                    {form.processing ? 'Menyimpan...' : editingItem ? 'Perbarui Metode' : 'Simpan Metode'}
-                                </Button>
-                            </DialogFooter>
-                        </form>
-                    </DialogContent>
-                </Dialog>
 
                 {/* Dialog Delete Confirmation */}
                 <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>

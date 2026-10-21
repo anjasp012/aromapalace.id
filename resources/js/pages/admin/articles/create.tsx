@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { TextEditor } from '@/components/ui/text-editor';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 export default function AdminArticleCreate() {
     const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -269,40 +270,7 @@ export default function AdminArticleCreate() {
                             )}
                         </div>
 
-                        {/* 2. Judul Artikel (ID & EN) */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-1.5">
-                                <div className="flex items-center justify-between">
-                                    <label className="font-medium text-foreground">Judul Artikel (Indonesia) *</label>
-                                    <Badge variant="outline" className="text-[10px] py-0">🇮🇩 ID</Badge>
-                                </div>
-                                <Input
-                                    type="text"
-                                    placeholder="Contoh: Mengenal Piramida Aroma: Top, Heart, dan Base Notes"
-                                    value={data.title}
-                                    onChange={(e) => handleTitleChange(e.target.value)}
-                                    className="h-9"
-                                    required
-                                />
-                                {errors.title && <p className="text-destructive text-[11px]">{errors.title}</p>}
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <div className="flex items-center justify-between">
-                                    <label className="font-medium text-foreground">Judul Artikel (English)</label>
-                                    <Badge variant="outline" className="text-[10px] py-0">🇬🇧 EN</Badge>
-                                </div>
-                                <Input
-                                    type="text"
-                                    placeholder="e.g. Understanding The Fragrance Pyramid: Notes & Sillage"
-                                    value={data.title_en}
-                                    onChange={(e) => setData('title_en', e.target.value)}
-                                    className="h-9"
-                                />
-                                {errors.title_en && <p className="text-destructive text-[11px]">{errors.title_en}</p>}
-                            </div>
-                        </div>
-
+                        {/* 2. Permalink & Waktu Baca */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-1.5">
                                 <label className="font-medium text-foreground">URL Slug</label>
@@ -329,69 +297,116 @@ export default function AdminArticleCreate() {
                             </div>
                         </div>
 
-                        {/* 3. Cuplikan Ringkasan (ID & EN) */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-1.5">
-                                <div className="flex items-center justify-between">
-                                    <label className="font-medium text-foreground">Cuplikan Ringkasan (Indonesia) *</label>
-                                    <Badge variant="outline" className="text-[10px] py-0">🇮🇩 ID</Badge>
-                                </div>
-                                <Textarea
-                                    rows={2}
-                                    placeholder="Ringkasan singkat 1-2 kalimat untuk kartu artikel dalam Bahasa Indonesia..."
-                                    value={data.excerpt}
-                                    onChange={(e) => setData('excerpt', e.target.value)}
-                                    className="text-xs"
-                                    required
-                                />
-                                {errors.excerpt && <p className="text-destructive text-[11px]">{errors.excerpt}</p>}
-                            </div>
+                        {/* 3. Konten Dwibahasa (Tab Indonesia & Tab English) */}
+                        <div className="pt-2 border-t border-border">
+                            <Tabs defaultValue="id" className="w-full">
+                                <TabsList className="grid grid-cols-2 max-w-sm mb-4">
+                                    <TabsTrigger value="id" className="flex items-center gap-2 text-xs">
+                                        <span className="text-base leading-none">🇮🇩</span>
+                                        <span>Bahasa Indonesia</span>
+                                    </TabsTrigger>
+                                    <TabsTrigger value="en" className="flex items-center gap-2 text-xs">
+                                        <span className="text-base leading-none">🇬🇧</span>
+                                        <span>English</span>
+                                    </TabsTrigger>
+                                </TabsList>
 
-                            <div className="space-y-1.5">
-                                <div className="flex items-center justify-between">
-                                    <label className="font-medium text-foreground">Cuplikan Ringkasan (English)</label>
-                                    <Badge variant="outline" className="text-[10px] py-0">🇬🇧 EN</Badge>
-                                </div>
-                                <Textarea
-                                    rows={2}
-                                    placeholder="Short 1-2 sentence preview in English..."
-                                    value={data.excerpt_en}
-                                    onChange={(e) => setData('excerpt_en', e.target.value)}
-                                    className="text-xs"
-                                />
-                                {errors.excerpt_en && <p className="text-destructive text-[11px]">{errors.excerpt_en}</p>}
-                            </div>
-                        </div>
+                                {/* Tab Bahasa Indonesia */}
+                                <TabsContent value="id" className="space-y-4">
+                                    <div className="space-y-1.5">
+                                        <div className="flex items-center justify-between">
+                                            <label className="font-medium text-foreground">Judul Artikel (Indonesia) *</label>
+                                            <Badge variant="outline" className="text-[10px] py-0">🇮🇩 ID</Badge>
+                                        </div>
+                                        <Input
+                                            type="text"
+                                            placeholder="Contoh: Mengenal Piramida Aroma: Top, Heart, dan Base Notes"
+                                            value={data.title}
+                                            onChange={(e) => handleTitleChange(e.target.value)}
+                                            className="h-9"
+                                            required
+                                        />
+                                        {errors.title && <p className="text-destructive text-[11px]">{errors.title}</p>}
+                                    </div>
 
-                        {/* 4. Isi Lengkap Artikel (ID & EN) */}
-                        <div className="space-y-4 pt-2 border-t border-border/60">
-                            <div className="space-y-1.5">
-                                <div className="flex items-center justify-between">
-                                    <label className="font-medium text-foreground">Isi Lengkap Artikel (Indonesia) *</label>
-                                    <Badge variant="outline" className="text-[10px] py-0">🇮🇩 ID</Badge>
-                                </div>
-                                <TextEditor
-                                    value={data.content}
-                                    onChange={(val) => setData('content', val)}
-                                    placeholder="Tulis narasi lengkap jurnal di sini..."
-                                    error={errors.content}
-                                />
-                                {errors.content && <p className="text-destructive text-[11px]">{errors.content}</p>}
-                            </div>
+                                    <div className="space-y-1.5">
+                                        <div className="flex items-center justify-between">
+                                            <label className="font-medium text-foreground">Cuplikan Ringkasan (Indonesia) *</label>
+                                            <Badge variant="outline" className="text-[10px] py-0">🇮🇩 ID</Badge>
+                                        </div>
+                                        <Textarea
+                                            rows={2}
+                                            placeholder="Ringkasan singkat 1-2 kalimat untuk kartu artikel dalam Bahasa Indonesia..."
+                                            value={data.excerpt}
+                                            onChange={(e) => setData('excerpt', e.target.value)}
+                                            className="text-xs"
+                                            required
+                                        />
+                                        {errors.excerpt && <p className="text-destructive text-[11px]">{errors.excerpt}</p>}
+                                    </div>
 
-                            <div className="space-y-1.5 pt-2">
-                                <div className="flex items-center justify-between">
-                                    <label className="font-medium text-foreground">Isi Lengkap Artikel (English)</label>
-                                    <Badge variant="outline" className="text-[10px] py-0">🇬🇧 EN</Badge>
-                                </div>
-                                <TextEditor
-                                    value={data.content_en}
-                                    onChange={(val) => setData('content_en', val)}
-                                    placeholder="Write the full English article story here..."
-                                    error={errors.content_en}
-                                />
-                                {errors.content_en && <p className="text-destructive text-[11px]">{errors.content_en}</p>}
-                            </div>
+                                    <div className="space-y-1.5 pt-2 border-t border-border/60">
+                                        <div className="flex items-center justify-between">
+                                            <label className="font-medium text-foreground">Isi Lengkap Artikel (Indonesia) *</label>
+                                            <Badge variant="outline" className="text-[10px] py-0">🇮🇩 ID</Badge>
+                                        </div>
+                                        <TextEditor
+                                            value={data.content}
+                                            onChange={(val) => setData('content', val)}
+                                            placeholder="Tulis narasi lengkap jurnal di sini..."
+                                            error={errors.content}
+                                        />
+                                        {errors.content && <p className="text-destructive text-[11px]">{errors.content}</p>}
+                                    </div>
+                                </TabsContent>
+
+                                {/* Tab English */}
+                                <TabsContent value="en" className="space-y-4">
+                                    <div className="space-y-1.5">
+                                        <div className="flex items-center justify-between">
+                                            <label className="font-medium text-foreground">Article Title (English)</label>
+                                            <Badge variant="outline" className="text-[10px] py-0">🇬🇧 EN</Badge>
+                                        </div>
+                                        <Input
+                                            type="text"
+                                            placeholder="e.g. Understanding The Fragrance Pyramid: Notes & Sillage"
+                                            value={data.title_en}
+                                            onChange={(e) => setData('title_en', e.target.value)}
+                                            className="h-9"
+                                        />
+                                        {errors.title_en && <p className="text-destructive text-[11px]">{errors.title_en}</p>}
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <div className="flex items-center justify-between">
+                                            <label className="font-medium text-foreground">Preview Excerpt (English)</label>
+                                            <Badge variant="outline" className="text-[10px] py-0">🇬🇧 EN</Badge>
+                                        </div>
+                                        <Textarea
+                                            rows={2}
+                                            placeholder="Short 1-2 sentence preview in English..."
+                                            value={data.excerpt_en}
+                                            onChange={(e) => setData('excerpt_en', e.target.value)}
+                                            className="text-xs"
+                                        />
+                                        {errors.excerpt_en && <p className="text-destructive text-[11px]">{errors.excerpt_en}</p>}
+                                    </div>
+
+                                    <div className="space-y-1.5 pt-2 border-t border-border/60">
+                                        <div className="flex items-center justify-between">
+                                            <label className="font-medium text-foreground">Full Article Content (English)</label>
+                                            <Badge variant="outline" className="text-[10px] py-0">🇬🇧 EN</Badge>
+                                        </div>
+                                        <TextEditor
+                                            value={data.content_en}
+                                            onChange={(val) => setData('content_en', val)}
+                                            placeholder="Write the full English article story here..."
+                                            error={errors.content_en}
+                                        />
+                                        {errors.content_en && <p className="text-destructive text-[11px]">{errors.content_en}</p>}
+                                    </div>
+                                </TabsContent>
+                            </Tabs>
                         </div>
                     </CardContent>
                 </Card>

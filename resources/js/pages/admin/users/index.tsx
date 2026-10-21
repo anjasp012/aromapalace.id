@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, router, useForm } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import AdminLayout from '@/layouts/AdminLayout';
 import {
     Search,
@@ -17,13 +17,6 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import {
     Dialog,
     DialogContent,
@@ -85,17 +78,8 @@ export default function AdminUsersIndex({
 }: UsersIndexProps) {
     const [search, setSearch] = useState(filters.search || '');
     const [roleFilter, setRoleFilter] = useState(filters.role || 'all');
-    const [dialogOpen, setDialogOpen] = useState(false);
-    const [editingUser, setEditingUser] = useState<UserItem | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<UserItem | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
-
-    const userForm = useForm({
-        name: '',
-        email: '',
-        role: 'customer',
-        password: '',
-    });
 
     const applyFilter = (newVals: { search?: string; role?: string }) => {
         router.get(
@@ -124,49 +108,6 @@ export default function AdminUsersIndex({
         router.get('/users');
     };
 
-    const handleOpenCreate = () => {
-        setEditingUser(null);
-        userForm.setData({
-            name: '',
-            email: '',
-            role: 'customer',
-            password: '',
-        });
-        userForm.clearErrors();
-        setDialogOpen(true);
-    };
-
-    const handleOpenEdit = (user: UserItem) => {
-        setEditingUser(user);
-        userForm.setData({
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            password: '',
-        });
-        userForm.clearErrors();
-        setDialogOpen(true);
-    };
-
-    const handleFormSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (editingUser) {
-            userForm.put(`/users/${editingUser.id}`, {
-                onSuccess: () => {
-                    setDialogOpen(false);
-                    userForm.reset();
-                },
-            });
-        } else {
-            userForm.post('/users', {
-                onSuccess: () => {
-                    setDialogOpen(false);
-                    userForm.reset();
-                },
-            });
-        }
-    };
-
     const handleDeleteSubmit = () => {
         if (!deleteTarget) return;
         setIsDeleting(true);
@@ -180,58 +121,60 @@ export default function AdminUsersIndex({
 
     return (
         <AdminLayout
-            title="Manajemen Pengguna"
-            subtitle="Kelola seluruh akun pelanggan, hak akses administrator, dan status keanggotaan poin loyalitas."
+            title="Kelola Pengguna"
+            subtitle="Manajemen data pelanggan, akun administrator, dan keanggotaan loyalty program."
         >
+            <Head title="Kelola Pengguna - Admin Panel" />
+
             <div className="space-y-6">
-                {/* Metric Summary Cards */}
+                {/* Metric Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Total Pengguna</CardTitle>
-                            <Users className="size-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{metrics.total_users}</div>
-                            <p className="text-xs text-muted-foreground mt-1">Akun terdaftar di sistem</p>
+                    <Card className="py-4">
+                        <CardContent className="p-0 px-6">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-muted-foreground">Total Pengguna</span>
+                                <Users className="size-4 text-primary" />
+                            </div>
+                            <div className="text-2xl font-bold mt-2 text-foreground">{metrics.total_users}</div>
+                            <p className="text-xs text-muted-foreground mt-1">Seluruh akun terdaftar</p>
                         </CardContent>
                     </Card>
 
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Pelanggan</CardTitle>
-                            <ShoppingBag className="size-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{metrics.total_customers}</div>
-                            <p className="text-xs text-muted-foreground mt-1">Akun customer aktif</p>
+                    <Card className="py-4">
+                        <CardContent className="p-0 px-6">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-muted-foreground">Pelanggan Aktif</span>
+                                <ShoppingBag className="size-4 text-emerald-500" />
+                            </div>
+                            <div className="text-2xl font-bold mt-2 text-foreground">{metrics.total_customers}</div>
+                            <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">Pengguna storefront</p>
                         </CardContent>
                     </Card>
 
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Administrator</CardTitle>
-                            <Shield className="size-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{metrics.total_admins}</div>
-                            <p className="text-xs text-muted-foreground mt-1">Akses penuh admin panel</p>
+                    <Card className="py-4">
+                        <CardContent className="p-0 px-6">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-muted-foreground">Royale Members</span>
+                                <Crown className="size-4 text-amber-500" />
+                            </div>
+                            <div className="text-2xl font-bold mt-2 text-foreground">{metrics.total_members}</div>
+                            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">Pemegang kartu poin</p>
                         </CardContent>
                     </Card>
 
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Member Royale</CardTitle>
-                            <Crown className="size-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{metrics.total_members}</div>
-                            <p className="text-xs text-muted-foreground mt-1">Memiliki akun poin loyalitas</p>
+                    <Card className="py-4">
+                        <CardContent className="p-0 px-6">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-muted-foreground">Staf Administrator</span>
+                                <Shield className="size-4 text-rose-500" />
+                            </div>
+                            <div className="text-2xl font-bold mt-2 text-foreground">{metrics.total_admins}</div>
+                            <p className="text-xs text-muted-foreground mt-1">Akses penuh panel admin</p>
                         </CardContent>
                     </Card>
                 </div>
 
-                {/* Filter and Actions Bar */}
+                {/* Filter and Action Bar */}
                 <Card className="p-4">
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
                         <form onSubmit={handleSearchSubmit} className="flex-1 w-full sm:max-w-md flex items-center gap-2">
@@ -239,35 +182,55 @@ export default function AdminUsersIndex({
                                 <Search className="size-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                                 <Input
                                     type="text"
-                                    placeholder="Cari nama atau email..."
+                                    placeholder="Cari berdasarkan nama atau email..."
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                     className="pl-9 h-9 text-xs"
                                 />
                             </div>
-                            <Select value={roleFilter} onValueChange={handleRoleFilterChange}>
-                                <SelectTrigger className="w-36 h-9 text-xs">
-                                    <SelectValue placeholder="Semua Role" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Semua Role</SelectItem>
-                                    <SelectItem value="customer">Pelanggan</SelectItem>
-                                    <SelectItem value="admin">Admin</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <Button type="submit" size="sm" className="h-9">
+                            <Button type="submit" size="sm" className="h-9 cursor-pointer">
                                 Cari
                             </Button>
                         </form>
 
                         <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                            <div className="flex rounded-md border p-0.5 bg-muted/40">
+                                <Button
+                                    type="button"
+                                    variant={roleFilter === 'all' ? 'default' : 'ghost'}
+                                    size="sm"
+                                    onClick={() => handleRoleFilterChange('all')}
+                                    className="h-7 text-xs px-2.5 cursor-pointer"
+                                >
+                                    Semua
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant={roleFilter === 'customer' ? 'default' : 'ghost'}
+                                    size="sm"
+                                    onClick={() => handleRoleFilterChange('customer')}
+                                    className="h-7 text-xs px-2.5 cursor-pointer"
+                                >
+                                    Pelanggan
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant={roleFilter === 'admin' ? 'default' : 'ghost'}
+                                    size="sm"
+                                    onClick={() => handleRoleFilterChange('admin')}
+                                    className="h-7 text-xs px-2.5 cursor-pointer"
+                                >
+                                    Admin
+                                </Button>
+                            </div>
+
                             {(search !== '' || roleFilter !== 'all') && (
                                 <Button
                                     type="button"
                                     variant="outline"
                                     size="sm"
                                     onClick={handleResetFilter}
-                                    className="h-9"
+                                    className="h-9 cursor-pointer"
                                     title="Reset Pencarian"
                                 >
                                     <RefreshCw className="size-3.5 mr-1" />
@@ -275,9 +238,11 @@ export default function AdminUsersIndex({
                                 </Button>
                             )}
 
-                            <Button size="sm" onClick={handleOpenCreate} className="h-9">
-                                <Plus className="size-4 mr-1.5" />
-                                <span>Tambah Pengguna</span>
+                            <Button size="sm" asChild className="h-9 cursor-pointer">
+                                <Link href="/users/create">
+                                    <Plus className="size-4 mr-1.5" />
+                                    <span>Tambah Pengguna</span>
+                                </Link>
                             </Button>
                         </div>
                     </div>
@@ -350,11 +315,10 @@ export default function AdminUsersIndex({
                                             <td className="p-4 align-middle text-right">
                                                 <div className="flex items-center justify-end gap-1.5">
                                                     <Button
-                                                        type="button"
                                                         variant="ghost"
                                                         size="icon"
                                                         asChild
-                                                        className="size-8 text-muted-foreground hover:text-foreground"
+                                                        className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
                                                         title="Lihat Detail & Mutasi Poin"
                                                     >
                                                         <Link href={`/users/${user.id}`}>
@@ -362,14 +326,15 @@ export default function AdminUsersIndex({
                                                         </Link>
                                                     </Button>
                                                     <Button
-                                                        type="button"
                                                         variant="ghost"
                                                         size="icon"
-                                                        onClick={() => handleOpenEdit(user)}
-                                                        className="size-8 text-muted-foreground hover:text-foreground"
+                                                        asChild
+                                                        className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
                                                         title="Edit Data Pengguna"
                                                     >
-                                                        <Edit3 className="size-3.5" />
+                                                        <Link href={`/users/${user.id}/edit`}>
+                                                            <Edit3 className="size-3.5" />
+                                                        </Link>
                                                     </Button>
                                                     {user.role !== 'admin' && (
                                                         <Button
@@ -377,7 +342,7 @@ export default function AdminUsersIndex({
                                                             variant="ghost"
                                                             size="icon"
                                                             onClick={() => setDeleteTarget(user)}
-                                                            className="size-8 text-destructive hover:bg-destructive/10"
+                                                            className="size-8 text-destructive hover:bg-destructive/10 cursor-pointer"
                                                             title="Hapus Pengguna"
                                                         >
                                                             <Trash2 className="size-3.5" />
@@ -427,113 +392,6 @@ export default function AdminUsersIndex({
                     )}
                 </Card>
             </div>
-
-            {/* Create/Edit Modal Dialog */}
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>
-                            {editingUser ? 'Edit Data Pengguna' : 'Tambah Pengguna Baru'}
-                        </DialogTitle>
-                        <DialogDescription>
-                            {editingUser
-                                ? 'Perbarui nama, alamat email, role akses, atau kata sandi pengguna.'
-                                : 'Daftarkan akun pelanggan atau admin baru ke dalam sistem Aroma Palace.'}
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <form onSubmit={handleFormSubmit} className="space-y-4 py-2">
-                        <div className="space-y-1.5">
-                            <label htmlFor="name" className="text-xs font-medium text-foreground block">
-                                Nama Lengkap <span className="text-destructive">*</span>
-                            </label>
-                            <Input
-                                id="name"
-                                type="text"
-                                placeholder="Contoh: Budi Santoso"
-                                value={userForm.data.name}
-                                onChange={(e) => userForm.setData('name', e.target.value)}
-                                className="h-9 text-xs"
-                                required
-                            />
-                            {userForm.errors.name && (
-                                <p className="text-xs text-destructive">{userForm.errors.name}</p>
-                            )}
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <label htmlFor="email" className="text-xs font-medium text-foreground block">
-                                Alamat Email <span className="text-destructive">*</span>
-                            </label>
-                            <Input
-                                id="email"
-                                type="email"
-                                placeholder="budi@example.com"
-                                value={userForm.data.email}
-                                onChange={(e) => userForm.setData('email', e.target.value)}
-                                className="h-9 text-xs"
-                                required
-                            />
-                            {userForm.errors.email && (
-                                <p className="text-xs text-destructive">{userForm.errors.email}</p>
-                            )}
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <label htmlFor="role" className="text-xs font-medium text-foreground block">
-                                Role Akses <span className="text-destructive">*</span>
-                            </label>
-                            <Select
-                                value={userForm.data.role}
-                                onValueChange={(val) => userForm.setData('role', val)}
-                            >
-                                <SelectTrigger id="role" className="h-9 text-xs">
-                                    <SelectValue placeholder="Pilih Role" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="customer">Pelanggan (Customer)</SelectItem>
-                                    <SelectItem value="admin">Administrator (Admin CMS)</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            {userForm.errors.role && (
-                                <p className="text-xs text-destructive">{userForm.errors.role}</p>
-                            )}
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <label htmlFor="password" className="text-xs font-medium text-foreground block">
-                                Kata Sandi {editingUser ? '(Opsional)' : <span className="text-destructive">*</span>}
-                            </label>
-                            <Input
-                                id="password"
-                                type="password"
-                                placeholder={editingUser ? 'Kosongkan jika tidak ingin mengubah' : 'Minimal 8 karakter'}
-                                value={userForm.data.password}
-                                onChange={(e) => userForm.setData('password', e.target.value)}
-                                className="h-9 text-xs"
-                                required={!editingUser}
-                            />
-                            {userForm.errors.password && (
-                                <p className="text-xs text-destructive">{userForm.errors.password}</p>
-                            )}
-                        </div>
-
-                        <DialogFooter className="gap-2 sm:gap-0 pt-3">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setDialogOpen(false)}
-                            >
-                                Batal
-                            </Button>
-                            <Button type="submit" size="sm" disabled={userForm.processing}>
-                                {userForm.processing ? 'Menyimpan...' : 'Simpan'}
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
 
             {/* Delete Confirmation Dialog */}
             <Dialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}>

@@ -21,12 +21,30 @@ return Application::configure(basePath: dirname(__DIR__))
 
             // Subdomain routes for admin (e.g. admin.aromapalace.id)
             Route::domain($adminDomain)
-                ->middleware(['web', 'auth', 'admin'])
+                ->middleware(['web'])
                 ->name('admin.')
                 ->group(base_path('routes/admin.php'));
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->redirectGuestsTo(function (Request $request) {
+            $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
+            if ($request->getHost() === $adminDomain) {
+                return route('admin.login');
+            }
+
+            return route('login');
+        });
+
+        $middleware->redirectUsersTo(function (Request $request) {
+            $user = $request->user();
+            if ($user && $user->isAdmin()) {
+                return route('admin.dashboard');
+            }
+
+            return route('products.index');
+        });
+
         $middleware->alias([
             'admin' => AdminMiddleware::class,
             'customer' => PreventAdminMiddleware::class,

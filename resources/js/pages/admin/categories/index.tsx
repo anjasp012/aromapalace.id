@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Head, Link, useForm, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import AdminLayout from '@/layouts/AdminLayout';
 import {
     Search,
@@ -9,6 +9,7 @@ import {
     Edit3,
     Trash2,
     RefreshCw,
+    Image as ImageIcon,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,6 +29,7 @@ interface CategoryItem {
     name: string;
     name_en?: string | null;
     slug: string;
+    thumbnail?: string | null;
     description?: string | null;
     description_en?: string | null;
     products_count: number;
@@ -63,29 +65,8 @@ export default function AdminCategoriesIndex({
     metrics,
 }: CategoriesIndexProps) {
     const [search, setSearch] = useState(filters.search || '');
-    const [dialogOpen, setDialogOpen] = useState(false);
-    const [editingCategory, setEditingCategory] = useState<CategoryItem | null>(null);
-
     const [deleteTarget, setDeleteTarget] = useState<CategoryItem | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
-
-    const form = useForm({
-        name: '',
-        name_en: '',
-        slug: '',
-        description: '',
-        description_en: '',
-    });
-
-    const slugify = (text: string) => {
-        return text
-            .toString()
-            .toLowerCase()
-            .trim()
-            .replace(/\s+/g, '-')
-            .replace(/[^\w\-]+/g, '')
-            .replace(/\-\-+/g, '-');
-    };
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -95,51 +76,6 @@ export default function AdminCategoriesIndex({
     const handleResetSearch = () => {
         setSearch('');
         router.get('/categories');
-    };
-
-    const handleOpenCreate = () => {
-        setEditingCategory(null);
-        form.setData({
-            name: '',
-            name_en: '',
-            slug: '',
-            description: '',
-            description_en: '',
-        });
-        form.clearErrors();
-        setDialogOpen(true);
-    };
-
-    const handleOpenEdit = (category: CategoryItem) => {
-        setEditingCategory(category);
-        form.setData({
-            name: category.name,
-            name_en: category.name_en || '',
-            slug: category.slug,
-            description: category.description || '',
-            description_en: category.description_en || '',
-        });
-        form.clearErrors();
-        setDialogOpen(true);
-    };
-
-    const handleFormSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (editingCategory) {
-            form.put(`/categories/${editingCategory.id}`, {
-                onSuccess: () => {
-                    setDialogOpen(false);
-                    form.reset();
-                },
-            });
-        } else {
-            form.post('/categories', {
-                onSuccess: () => {
-                    setDialogOpen(false);
-                    form.reset();
-                },
-            });
-        }
     };
 
     const handleDeleteSubmit = () => {
@@ -155,50 +91,56 @@ export default function AdminCategoriesIndex({
 
     return (
         <AdminLayout
-            title="Kategori Parfum"
-            subtitle="Kelola klasifikasi aroma parfum (Woody, Oriental, Floral, Fresh, dll)."
+            title="Kelola Kategori"
+            subtitle="Manajemen kategori kelompok aroma parfum, thumbnail foto, dan terjemahan dwibahasa."
         >
+            <Head title="Kelola Kategori - Admin Panel" />
+
             <div className="space-y-6">
-                {/* Metric Summary Cards */}
+                {/* Metrics Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Total Kategori</CardTitle>
-                            <Tags className="size-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{metrics.total_categories}</div>
-                            <p className="text-xs text-muted-foreground mt-1">Klasifikasi aktif di toko</p>
+                    <Card className="py-4">
+                        <CardContent className="flex items-center justify-between p-0 px-6">
+                            <div>
+                                <p className="text-xs font-medium text-muted-foreground">Total Kategori</p>
+                                <h3 className="text-2xl font-bold mt-1 text-foreground">{metrics.total_categories}</h3>
+                                <p className="text-[11px] text-muted-foreground mt-0.5">Klasifikasi aroma parfum</p>
+                            </div>
+                            <div className="size-11 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                                <Tags className="size-5" />
+                            </div>
                         </CardContent>
                     </Card>
 
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Kategori Berisi Produk</CardTitle>
-                            <Boxes className="size-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{metrics.categories_with_products}</div>
-                            <p className="text-xs text-muted-foreground mt-1">Memiliki minimal 1 parfum</p>
+                    <Card className="py-4">
+                        <CardContent className="flex items-center justify-between p-0 px-6">
+                            <div>
+                                <p className="text-xs font-medium text-muted-foreground">Memiliki Produk</p>
+                                <h3 className="text-2xl font-bold mt-1 text-foreground">{metrics.categories_with_products}</h3>
+                                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-0.5">Aktif terhubung ke katalog</p>
+                            </div>
+                            <div className="size-11 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                                <Boxes className="size-5" />
+                            </div>
                         </CardContent>
                     </Card>
                 </div>
 
-                {/* Filter and Actions */}
+                {/* Filter & Action Toolbar */}
                 <Card className="p-4">
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-                        <form onSubmit={handleSearchSubmit} className="flex-1 w-full sm:max-w-md flex items-center gap-2">
-                            <div className="relative flex-1">
-                                <Search className="size-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 w-full sm:w-auto flex-1 max-w-md">
+                            <div className="relative w-full">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                                 <Input
                                     type="text"
-                                    placeholder="Cari nama atau slug kategori..."
+                                    placeholder="Cari nama, slug, atau deskripsi..."
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                     className="pl-9 h-9 text-xs"
                                 />
                             </div>
-                            <Button type="submit" size="sm" className="h-9">
+                            <Button type="submit" size="sm" className="h-9 cursor-pointer">
                                 Cari
                             </Button>
                         </form>
@@ -210,7 +152,7 @@ export default function AdminCategoriesIndex({
                                     variant="outline"
                                     size="sm"
                                     onClick={handleResetSearch}
-                                    className="h-9"
+                                    className="h-9 cursor-pointer"
                                     title="Reset Pencarian"
                                 >
                                     <RefreshCw className="size-3.5 mr-1" />
@@ -218,9 +160,11 @@ export default function AdminCategoriesIndex({
                                 </Button>
                             )}
 
-                            <Button size="sm" onClick={handleOpenCreate} className="h-9">
-                                <Plus className="size-4 mr-1.5" />
-                                <span>Tambah Kategori</span>
+                            <Button size="sm" asChild className="h-9 cursor-pointer">
+                                <Link href="/categories/create">
+                                    <Plus className="size-4 mr-1.5" />
+                                    <span>Tambah Kategori</span>
+                                </Link>
                             </Button>
                         </div>
                     </div>
@@ -232,6 +176,7 @@ export default function AdminCategoriesIndex({
                         <table className="w-full caption-bottom text-sm">
                             <thead className="border-b bg-muted/50 text-muted-foreground">
                                 <tr className="border-b transition-colors text-xs">
+                                    <th className="h-10 px-4 text-left font-medium w-16">Foto</th>
                                     <th className="h-10 px-4 text-left font-medium">Nama Kategori</th>
                                     <th className="h-10 px-4 text-left font-medium">Slug</th>
                                     <th className="h-10 px-4 text-left font-medium">Deskripsi</th>
@@ -242,13 +187,33 @@ export default function AdminCategoriesIndex({
                             <tbody className="divide-y text-xs">
                                 {categories.data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={5} className="p-8 text-center text-muted-foreground">
+                                        <td colSpan={6} className="p-8 text-center text-muted-foreground">
                                             Tidak ada kategori parfum ditemukan.
                                         </td>
                                     </tr>
                                 ) : (
                                     categories.data.map((cat) => (
                                         <tr key={cat.id} className="hover:bg-muted/50 transition-colors">
+                                            {/* Thumbnail Column */}
+                                            <td className="p-4 align-middle">
+                                                {cat.thumbnail ? (
+                                                    <div className="size-11 rounded-lg border overflow-hidden bg-muted/40 shrink-0 shadow-xs">
+                                                        <img
+                                                            src={cat.thumbnail}
+                                                            alt={cat.name}
+                                                            className="size-full object-cover"
+                                                            onError={(e) => {
+                                                                (e.target as HTMLElement).style.display = 'none';
+                                                            }}
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <div className="size-11 rounded-lg border border-dashed flex items-center justify-center bg-muted/30 text-muted-foreground/60 shrink-0">
+                                                        <ImageIcon className="size-4" />
+                                                    </div>
+                                                )}
+                                            </td>
+
                                             <td className="p-4 align-middle font-medium text-foreground">
                                                 <div>{cat.name}</div>
                                                 {cat.name_en && (
@@ -271,21 +236,22 @@ export default function AdminCategoriesIndex({
                                             <td className="p-4 align-middle text-right">
                                                 <div className="flex items-center justify-end gap-1.5">
                                                     <Button
-                                                        type="button"
                                                         variant="ghost"
                                                         size="icon"
-                                                        onClick={() => handleOpenEdit(cat)}
-                                                        className="size-8 text-muted-foreground hover:text-foreground"
+                                                        asChild
+                                                        className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
                                                         title="Edit Kategori"
                                                     >
-                                                        <Edit3 className="size-3.5" />
+                                                        <Link href={`/categories/${cat.id}/edit`}>
+                                                            <Edit3 className="size-3.5" />
+                                                        </Link>
                                                     </Button>
                                                     <Button
                                                         type="button"
                                                         variant="ghost"
                                                         size="icon"
                                                         onClick={() => setDeleteTarget(cat)}
-                                                        className="size-8 text-destructive hover:bg-destructive/10"
+                                                        className="size-8 text-destructive hover:bg-destructive/10 cursor-pointer"
                                                         title="Hapus Kategori"
                                                     >
                                                         <Trash2 className="size-3.5" />
@@ -334,118 +300,6 @@ export default function AdminCategoriesIndex({
                     )}
                 </Card>
             </div>
-
-            {/* Create / Edit Dialog */}
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>
-                            {editingCategory ? 'Edit Kategori' : 'Tambah Kategori Baru'}
-                        </DialogTitle>
-                        <DialogDescription>
-                            Isi detail nama kategori aroma parfum di bawah ini.
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <form onSubmit={handleFormSubmit} className="space-y-4 text-xs">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div className="space-y-1.5">
-                                <div className="flex items-center justify-between">
-                                    <label className="font-medium text-foreground">Nama Kategori *</label>
-                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-semibold">🇮🇩 ID</span>
-                                </div>
-                                <Input
-                                    type="text"
-                                    placeholder="Contoh: Oriental Mewah"
-                                    value={form.data.name}
-                                    onChange={(e) => {
-                                        const val = e.target.value;
-                                        form.setData((prev) => ({
-                                            ...prev,
-                                            name: val,
-                                            slug: prev.slug === '' || prev.slug === slugify(prev.name) ? slugify(val) : prev.slug,
-                                        }));
-                                    }}
-                                    className="h-9"
-                                    required
-                                />
-                                {form.errors.name && <p className="text-destructive text-[11px]">{form.errors.name}</p>}
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <div className="flex items-center justify-between">
-                                    <label className="font-medium text-foreground">Nama Kategori (English)</label>
-                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-semibold">🇬🇧 EN</span>
-                                </div>
-                                <Input
-                                    type="text"
-                                    placeholder="e.g. Luxurious Oriental"
-                                    value={form.data.name_en}
-                                    onChange={(e) => form.setData('name_en', e.target.value)}
-                                    className="h-9"
-                                />
-                                {form.errors.name_en && <p className="text-destructive text-[11px]">{form.errors.name_en}</p>}
-                            </div>
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <label className="font-medium text-foreground">URL Slug</label>
-                            <Input
-                                type="text"
-                                placeholder="oriental-spicy"
-                                value={form.data.slug}
-                                onChange={(e) => form.setData('slug', slugify(e.target.value))}
-                                className="h-9 font-mono"
-                            />
-                            {form.errors.slug && <p className="text-destructive text-[11px]">{form.errors.slug}</p>}
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <div className="flex items-center justify-between">
-                                <label className="font-medium text-foreground">Deskripsi (Indonesia)</label>
-                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-semibold">🇮🇩 ID</span>
-                            </div>
-                            <textarea
-                                rows={2}
-                                placeholder="Karakteristik atau keunikan kelompok aroma ini..."
-                                value={form.data.description}
-                                onChange={(e) => form.setData('description', e.target.value)}
-                                className="w-full rounded-md border border-input bg-transparent p-2.5 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                            />
-                            {form.errors.description && <p className="text-destructive text-[11px]">{form.errors.description}</p>}
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <div className="flex items-center justify-between">
-                                <label className="font-medium text-foreground">Deskripsi (English)</label>
-                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-semibold">🇬🇧 EN</span>
-                            </div>
-                            <textarea
-                                rows={2}
-                                placeholder="Characteristics or distinctive traits of this scent family in English..."
-                                value={form.data.description_en}
-                                onChange={(e) => form.setData('description_en', e.target.value)}
-                                className="w-full rounded-md border border-input bg-transparent p-2.5 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                            />
-                            {form.errors.description_en && <p className="text-destructive text-[11px]">{form.errors.description_en}</p>}
-                        </div>
-
-                        <DialogFooter className="pt-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setDialogOpen(false)}
-                            >
-                                Batal
-                            </Button>
-                            <Button type="submit" size="sm" disabled={form.processing}>
-                                {form.processing ? 'Menyimpan...' : (editingCategory ? 'Simpan Perubahan' : 'Tambah Kategori')}
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
 
             {/* Delete Confirmation Dialog */}
             <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>

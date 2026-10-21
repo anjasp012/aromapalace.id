@@ -18,11 +18,17 @@ class AdminMiddleware
         $user = $request->user();
 
         if (! $user) {
-            return redirect()->guest(route('login'));
+            return redirect()->guest(route('admin.login'));
         }
 
         if (! $user->isAdmin()) {
-            abort(403, 'Akses terbatas untuk administrator Aroma Palace.');
+            if ($request->expectsJson() || $request->is('api/*')) {
+                abort(403, 'Akses terbatas untuk administrator Aroma Palace.');
+            }
+
+            return redirect()->route('admin.login')->withErrors([
+                'email' => 'Akses ditolak. Akun Anda tidak memiliki hak akses administrator Aroma Palace.',
+            ]);
         }
 
         return $next($request);

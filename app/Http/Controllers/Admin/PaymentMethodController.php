@@ -44,6 +44,11 @@ class PaymentMethodController extends Controller
         ]);
     }
 
+    public function create(): Response
+    {
+        return Inertia::render('admin/payment-methods/create');
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -73,6 +78,13 @@ class PaymentMethodController extends Controller
 
         return redirect()->route('admin.payment-methods.index')
             ->with('success', "Metode pembayaran '{$validated['name']}' berhasil ditambahkan.");
+    }
+
+    public function edit(PaymentMethod $paymentMethod): Response
+    {
+        return Inertia::render('admin/payment-methods/edit', [
+            'paymentMethod' => $paymentMethod,
+        ]);
     }
 
     public function update(Request $request, PaymentMethod $paymentMethod): RedirectResponse

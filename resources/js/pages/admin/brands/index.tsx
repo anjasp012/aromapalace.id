@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Head, Link, useForm, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import AdminLayout from '@/layouts/AdminLayout';
 import {
     Search,
@@ -9,7 +9,7 @@ import {
     Edit3,
     Trash2,
     RefreshCw,
-    Image,
+    Image as ImageIcon,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -64,29 +64,8 @@ export default function AdminBrandsIndex({
     metrics,
 }: BrandsIndexProps) {
     const [search, setSearch] = useState(filters.search || '');
-    const [dialogOpen, setDialogOpen] = useState(false);
-    const [editingBrand, setEditingBrand] = useState<BrandItem | null>(null);
-
     const [deleteTarget, setDeleteTarget] = useState<BrandItem | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
-
-    const form = useForm({
-        name: '',
-        slug: '',
-        thumbnail: '',
-        description: '',
-        description_en: '',
-    });
-
-    const slugify = (text: string) => {
-        return text
-            .toString()
-            .toLowerCase()
-            .trim()
-            .replace(/\s+/g, '-')
-            .replace(/[^\w\-]+/g, '')
-            .replace(/\-\-+/g, '-');
-    };
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -96,51 +75,6 @@ export default function AdminBrandsIndex({
     const handleResetSearch = () => {
         setSearch('');
         router.get('/brands');
-    };
-
-    const handleOpenCreate = () => {
-        setEditingBrand(null);
-        form.setData({
-            name: '',
-            slug: '',
-            thumbnail: '',
-            description: '',
-            description_en: '',
-        });
-        form.clearErrors();
-        setDialogOpen(true);
-    };
-
-    const handleOpenEdit = (brand: BrandItem) => {
-        setEditingBrand(brand);
-        form.setData({
-            name: brand.name,
-            slug: brand.slug,
-            thumbnail: brand.thumbnail || '',
-            description: brand.description || '',
-            description_en: brand.description_en || '',
-        });
-        form.clearErrors();
-        setDialogOpen(true);
-    };
-
-    const handleFormSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (editingBrand) {
-            form.put(`/brands/${editingBrand.id}`, {
-                onSuccess: () => {
-                    setDialogOpen(false);
-                    form.reset();
-                },
-            });
-        } else {
-            form.post('/brands', {
-                onSuccess: () => {
-                    setDialogOpen(false);
-                    form.reset();
-                },
-            });
-        }
     };
 
     const handleDeleteSubmit = () => {
@@ -156,50 +90,56 @@ export default function AdminBrandsIndex({
 
     return (
         <AdminLayout
-            title="Brand Parfum"
-            subtitle="Kelola rumah parfum dan produsen wewangian (Creed, Tom Ford, Maison Margiela, dll)."
+            title="Kelola Brand"
+            subtitle="Manajemen rumah parfum (maison de parfum), logo, dan profil cerita dwibahasa."
         >
+            <Head title="Kelola Brand - Admin Panel" />
+
             <div className="space-y-6">
-                {/* Metric Summary Cards */}
+                {/* Metrics Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Total Brand</CardTitle>
-                            <Sparkles className="size-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{metrics.total_brands}</div>
-                            <p className="text-xs text-muted-foreground mt-1">Produsen wewangian terdaftar</p>
+                    <Card className="py-4">
+                        <CardContent className="flex items-center justify-between p-0 px-6">
+                            <div>
+                                <p className="text-xs font-medium text-muted-foreground">Total Brand / Maison</p>
+                                <h3 className="text-2xl font-bold mt-1 text-foreground">{metrics.total_brands}</h3>
+                                <p className="text-[11px] text-muted-foreground mt-0.5">Rumah parfum resmi terdaftar</p>
+                            </div>
+                            <div className="size-11 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500">
+                                <Sparkles className="size-5" />
+                            </div>
                         </CardContent>
                     </Card>
 
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Brand Berisi Produk</CardTitle>
-                            <Boxes className="size-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{metrics.brands_with_products}</div>
-                            <p className="text-xs text-muted-foreground mt-1">Memiliki minimal 1 parfum</p>
+                    <Card className="py-4">
+                        <CardContent className="flex items-center justify-between p-0 px-6">
+                            <div>
+                                <p className="text-xs font-medium text-muted-foreground">Brand Aktif Berproduk</p>
+                                <h3 className="text-2xl font-bold mt-1 text-foreground">{metrics.brands_with_products}</h3>
+                                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-0.5">Koleksi aktif di etalase</p>
+                            </div>
+                            <div className="size-11 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                                <Boxes className="size-5" />
+                            </div>
                         </CardContent>
                     </Card>
                 </div>
 
-                {/* Filter and Actions */}
+                {/* Filter & Action Toolbar */}
                 <Card className="p-4">
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-                        <form onSubmit={handleSearchSubmit} className="flex-1 w-full sm:max-w-md flex items-center gap-2">
-                            <div className="relative flex-1">
-                                <Search className="size-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 w-full sm:w-auto flex-1 max-w-md">
+                            <div className="relative w-full">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                                 <Input
                                     type="text"
-                                    placeholder="Cari nama atau slug brand..."
+                                    placeholder="Cari nama, slug, atau deskripsi..."
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                     className="pl-9 h-9 text-xs"
                                 />
                             </div>
-                            <Button type="submit" size="sm" className="h-9">
+                            <Button type="submit" size="sm" className="h-9 cursor-pointer">
                                 Cari
                             </Button>
                         </form>
@@ -211,7 +151,7 @@ export default function AdminBrandsIndex({
                                     variant="outline"
                                     size="sm"
                                     onClick={handleResetSearch}
-                                    className="h-9"
+                                    className="h-9 cursor-pointer"
                                     title="Reset Pencarian"
                                 >
                                     <RefreshCw className="size-3.5 mr-1" />
@@ -219,9 +159,11 @@ export default function AdminBrandsIndex({
                                 </Button>
                             )}
 
-                            <Button size="sm" onClick={handleOpenCreate} className="h-9">
-                                <Plus className="size-4 mr-1.5" />
-                                <span>Tambah Brand</span>
+                            <Button size="sm" asChild className="h-9 cursor-pointer">
+                                <Link href="/brands/create">
+                                    <Plus className="size-4 mr-1.5" />
+                                    <span>Tambah Brand</span>
+                                </Link>
                             </Button>
                         </div>
                     </div>
@@ -252,7 +194,7 @@ export default function AdminBrandsIndex({
                                         <tr key={b.id} className="hover:bg-muted/50 transition-colors">
                                             <td className="p-4 align-middle font-medium text-foreground">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="size-9 rounded-md border bg-muted flex items-center justify-center overflow-hidden shrink-0">
+                                                    <div className="size-11 rounded-lg border bg-muted/40 flex items-center justify-center overflow-hidden shrink-0 shadow-xs">
                                                         {b.thumbnail ? (
                                                             <img
                                                                 src={b.thumbnail}
@@ -285,21 +227,22 @@ export default function AdminBrandsIndex({
                                             <td className="p-4 align-middle text-right">
                                                 <div className="flex items-center justify-end gap-1.5">
                                                     <Button
-                                                        type="button"
                                                         variant="ghost"
                                                         size="icon"
-                                                        onClick={() => handleOpenEdit(b)}
-                                                        className="size-8 text-muted-foreground hover:text-foreground"
+                                                        asChild
+                                                        className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
                                                         title="Edit Brand"
                                                     >
-                                                        <Edit3 className="size-3.5" />
+                                                        <Link href={`/brands/${b.id}/edit`}>
+                                                            <Edit3 className="size-3.5" />
+                                                        </Link>
                                                     </Button>
                                                     <Button
                                                         type="button"
                                                         variant="ghost"
                                                         size="icon"
                                                         onClick={() => setDeleteTarget(b)}
-                                                        className="size-8 text-destructive hover:bg-destructive/10"
+                                                        className="size-8 text-destructive hover:bg-destructive/10 cursor-pointer"
                                                         title="Hapus Brand"
                                                     >
                                                         <Trash2 className="size-3.5" />
@@ -348,124 +291,6 @@ export default function AdminBrandsIndex({
                     )}
                 </Card>
             </div>
-
-            {/* Create / Edit Dialog */}
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>
-                            {editingBrand ? 'Edit Brand' : 'Tambah Brand Baru'}
-                        </DialogTitle>
-                        <DialogDescription>
-                            Isi detail nama rumah parfum dan logo di bawah ini.
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <form onSubmit={handleFormSubmit} className="space-y-4 text-xs">
-                        <div className="space-y-1.5">
-                            <label className="font-medium text-foreground">Nama Brand *</label>
-                            <Input
-                                type="text"
-                                placeholder="Contoh: Maison Francis Kurkdjian"
-                                value={form.data.name}
-                                onChange={(e) => {
-                                    const val = e.target.value;
-                                    form.setData((prev) => ({
-                                        ...prev,
-                                        name: val,
-                                        slug: prev.slug === '' || prev.slug === slugify(prev.name) ? slugify(val) : prev.slug,
-                                    }));
-                                }}
-                                className="h-9"
-                                required
-                            />
-                            {form.errors.name && <p className="text-destructive text-[11px]">{form.errors.name}</p>}
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <label className="font-medium text-foreground">URL Slug</label>
-                            <Input
-                                type="text"
-                                placeholder="maison-francis-kurkdjian"
-                                value={form.data.slug}
-                                onChange={(e) => form.setData('slug', slugify(e.target.value))}
-                                className="h-9 font-mono"
-                            />
-                            {form.errors.slug && <p className="text-destructive text-[11px]">{form.errors.slug}</p>}
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <label className="font-medium text-foreground">URL Logo / Thumbnail (Opsional)</label>
-                            <div className="flex items-center gap-2">
-                                <Input
-                                    type="url"
-                                    placeholder="https://..."
-                                    value={form.data.thumbnail}
-                                    onChange={(e) => form.setData('thumbnail', e.target.value)}
-                                    className="h-9"
-                                />
-                                {form.data.thumbnail && (
-                                    <div className="size-9 rounded-md border overflow-hidden shrink-0">
-                                        <img
-                                            src={form.data.thumbnail}
-                                            alt="Preview"
-                                            className="size-full object-cover"
-                                            onError={(e) => {
-                                                (e.target as HTMLElement).style.display = 'none';
-                                            }}
-                                        />
-                                    </div>
-                                )}
-                            </div>
-                            {form.errors.thumbnail && <p className="text-destructive text-[11px]">{form.errors.thumbnail}</p>}
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <div className="flex items-center justify-between">
-                                <label className="font-medium text-foreground">Deskripsi (Indonesia)</label>
-                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-semibold">🇮🇩 ID</span>
-                            </div>
-                            <textarea
-                                rows={2}
-                                placeholder="Profil rumah parfum atau sejarah brand..."
-                                value={form.data.description}
-                                onChange={(e) => form.setData('description', e.target.value)}
-                                className="w-full rounded-md border border-input bg-transparent p-2.5 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                            />
-                            {form.errors.description && <p className="text-destructive text-[11px]">{form.errors.description}</p>}
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <div className="flex items-center justify-between">
-                                <label className="font-medium text-foreground">Deskripsi (English)</label>
-                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-semibold">🇬🇧 EN</span>
-                            </div>
-                            <textarea
-                                rows={2}
-                                placeholder="Perfume house profile, heritage or brand story in English..."
-                                value={form.data.description_en}
-                                onChange={(e) => form.setData('description_en', e.target.value)}
-                                className="w-full rounded-md border border-input bg-transparent p-2.5 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                            />
-                            {form.errors.description_en && <p className="text-destructive text-[11px]">{form.errors.description_en}</p>}
-                        </div>
-
-                        <DialogFooter className="pt-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setDialogOpen(false)}
-                            >
-                                Batal
-                            </Button>
-                            <Button type="submit" size="sm" disabled={form.processing}>
-                                {form.processing ? 'Menyimpan...' : (editingBrand ? 'Simpan Perubahan' : 'Tambah Brand')}
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
 
             {/* Delete Confirmation Dialog */}
             <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>

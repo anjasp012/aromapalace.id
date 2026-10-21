@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -44,15 +46,34 @@ class CategoryController extends Controller
         ]);
     }
 
+    public function create(): Response
+    {
+        return Inertia::render('admin/categories/create');
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'name_en' => ['nullable', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', 'unique:categories,slug'],
+            'thumbnail' => ['nullable'],
             'description' => ['nullable', 'string', 'max:1000'],
             'description_en' => ['nullable', 'string', 'max:1000'],
         ]);
+
+        $thumbnail = null;
+        if ($request->hasFile('thumbnail')) {
+            $file = $request->file('thumbnail');
+            if ($file instanceof UploadedFile && $file->isValid()) {
+                $path = $file->store('categories', 'public');
+                $thumbnail = Storage::url($path);
+            }
+        } elseif (! empty($validated['thumbnail']) && is_string($validated['thumbnail'])) {
+            $thumbnail = trim($validated['thumbnail']);
+        }
+
+        $validated['thumbnail'] = $thumbnail;
 
         if (empty($validated['slug'])) {
             $baseSlug = Str::slug($validated['name']);
@@ -73,15 +94,36 @@ class CategoryController extends Controller
             ->with('success', 'Kategori baru berhasil ditambahkan.');
     }
 
+    public function edit(Category $category): Response
+    {
+        return Inertia::render('admin/categories/edit', [
+            'category' => $category,
+        ]);
+    }
+
     public function update(Request $request, Category $category): RedirectResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'name_en' => ['nullable', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', Rule::unique('categories', 'slug')->ignore($category->id)],
+            'thumbnail' => ['nullable'],
             'description' => ['nullable', 'string', 'max:1000'],
             'description_en' => ['nullable', 'string', 'max:1000'],
         ]);
+
+        $thumbnail = $category->thumbnail;
+        if ($request->hasFile('thumbnail')) {
+            $file = $request->file('thumbnail');
+            if ($file instanceof UploadedFile && $file->isValid()) {
+                $path = $file->store('categories', 'public');
+                $thumbnail = Storage::url($path);
+            }
+        } elseif ($request->has('thumbnail')) {
+            $thumbnail = is_string($validated['thumbnail']) ? trim($validated['thumbnail']) : $category->thumbnail;
+        }
+
+        $validated['thumbnail'] = $thumbnail;
 
         if (empty($validated['slug'])) {
             $validated['slug'] = Str::slug($validated['name']);

@@ -65,6 +65,11 @@ class VoucherController extends Controller
         ]);
     }
 
+    public function create(): Response
+    {
+        return Inertia::render('admin/vouchers/create');
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -94,6 +99,13 @@ class VoucherController extends Controller
 
         return redirect()->route('admin.vouchers.index')
             ->with('success', "Voucher '{$validated['code']}' berhasil ditambahkan.");
+    }
+
+    public function edit(Voucher $voucher): Response
+    {
+        return Inertia::render('admin/vouchers/edit', [
+            'voucher' => $voucher,
+        ]);
     }
 
     public function update(Request $request, Voucher $voucher): RedirectResponse
