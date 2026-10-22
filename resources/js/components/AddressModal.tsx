@@ -1,0 +1,629 @@
+import React, { useState, useEffect } from 'react';
+import { router } from '@inertiajs/react';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Loader2, MapPin, Check, Plus, AlertCircle } from 'lucide-react';
+import { useTranslation } from '@/lib/i18n';
+import type {
+    UserAddress,
+    ProvinceOption,
+    CityOption,
+    DistrictOption,
+    SubdistrictOption,
+} from '@/types/address';
+
+interface AddressModalProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    addressToEdit?: UserAddress | null;
+    onSuccess?: (savedAddress: UserAddress) => void;
+}
+
+const QUICK_LABELS = ['Rumah', 'Kantor', 'Apartemen', 'Toko'];
+
+export default function AddressModal({
+    open,
+    onOpenChange,
+    addressToEdit = null,
+    onSuccess,
+}: AddressModalProps) {
+    const { isEn } = useTranslation();
+
+    // Form fields
+    const [label, setLabel] = useState('Rumah');
+    const [customLabel, setCustomLabel] = useState('');
+    const [recipientName, setRecipientName] = useState('');
+    const [recipientPhone, setRecipientPhone] = useState('');
+    const [addressDetail, setAddressDetail] = useState('');
+    const [postalCode, setPostalCode] = useState('');
+    const [isPrimary, setIsPrimary] = useState(false);
+
+    // KiriminAja Coverage Data
+    const [provinces, setProvinces] = useState<ProvinceOption[]>([]);
+    const [cities, setCities] = useState<CityOption[]>([]);
+    const [districts, setDistricts] = useState<DistrictOption[]>([]);
+    const [subdistricts, setSubdistricts] = useState<SubdistrictOption[]>([]);
+
+    // Selected hierarchy
+    const [selectedProvinceId, setSelectedProvinceId] = useState<number | ''>('');
+    const [selectedProvinceName, setSelectedProvinceName] = useState('');
+    const [selectedCityId, setSelectedCityId] = useState<number | ''>('');
+    const [selectedCityName, setSelectedCityName] = useState('');
+    const [selectedDistrictId, setSelectedDistrictId] = useState<number | ''>('');
+    const [selectedDistrictName, setSelectedDistrictName] = useState('');
+    const [selectedSubdistrictId, setSelectedSubdistrictId] = useState<number | ''>('');
+    const [selectedSubdistrictName, setSelectedSubdistrictName] = useState('');
+
+    // Loading states
+    const [loadingProvinces, setLoadingProvinces] = useState(false);
+    const [loadingCities, setLoadingCities] = useState(false);
+    const [loadingDistricts, setLoadingDistricts] = useState(false);
+    const [loadingSubdistricts, setLoadingSubdistricts] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    // Initial load of provinces
+    useEffect(() => {
+        if (!open) return;
+
+        setLoadingProvinces(true);
+        fetch('/api/coverage/provinces')
+            .then((res) => res.json())
+            .then((json) => {
+                if (json.status && Array.isArray(json.data)) {
+                    setProvinces(json.data);
+                }
+            })
+            .catch(() => {})
+            .finally(() => setLoadingProvinces(false));
+    }, [open]);
+
+    // Populate or reset form when modal opens
+    useEffect(() => {
+        if (!open) return;
+
+        setErrorMessage(null);
+
+        if (addressToEdit) {
+            setLabel(addressToEdit.label || 'Rumah');
+            setCustomLabel(QUICK_LABELS.includes(addressToEdit.label) ? '' : addressToEdit.label);
+            setRecipientName(addressToEdit.recipient_name || '');
+            setRecipientPhone(addressToEdit.recipient_phone || '');
+            setAddressDetail(addressToEdit.address || '');
+            setPostalCode(addressToEdit.postal_code || '');
+            setIsPrimary(Boolean(addressToEdit.is_primary));
+
+            setSelectedProvinceId(addressToEdit.province_id || '');
+            setSelectedProvinceName(addressToEdit.province_name || '');
+            setSelectedCityId(addressToEdit.city_id || '');
+            setSelectedCityName(addressToEdit.city_name || '');
+            setSelectedDistrictId(addressToEdit.district_id || '');
+            setSelectedDistrictName(addressToEdit.district_name || '');
+            setSelectedSubdistrictId(addressToEdit.subdistrict_id || '');
+            setSelectedSubdistrictName(addressToEdit.subdistrict_name || '');
+
+            // Pre-fetch dependent dropdowns if editing
+            if (addressToEdit.province_id) {
+                fetch(`/api/coverage/cities?province_id=${addressToEdit.province_id}`)
+                    .then((r) => r.json())
+                    .then((j) => j.status && setCities(j.data));
+            }
+            if (addressToEdit.city_id) {
+                fetch(`/api/coverage/districts?city_id=${addressToEdit.city_id}`)
+                    .then((r) => r.json())
+                    .then((j) => j.status && setDistricts(j.data));
+            }
+            if (addressToEdit.district_id) {
+                fetch(`/api/coverage/subdistricts?district_id=${addressToEdit.district_id}`)
+                    .then((r) => r.json())
+                    .then((j) => j.status && setSubdistricts(j.data));
+            }
+        } else {
+            // New Address defaults
+            setLabel('Rumah');
+            setCustomLabel('');
+            setRecipientName('');
+            setRecipientPhone('');
+            setAddressDetail('');
+            setPostalCode('');
+            setIsPrimary(false);
+
+            setSelectedProvinceId('');
+            setSelectedProvinceName('');
+            setSelectedCityId('');
+            setSelectedCityName('');
+            setSelectedDistrictId('');
+            setSelectedDistrictName('');
+            setSelectedSubdistrictId('');
+            setSelectedSubdistrictName('');
+
+            setCities([]);
+            setDistricts([]);
+            setSubdistricts([]);
+        }
+    }, [open, addressToEdit]);
+
+    // Handle Province change
+    const handleProvinceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const val = e.target.value ? Number(e.target.value) : '';
+        setSelectedProvinceId(val);
+        const found = provinces.find((p) => p.id === val);
+        setSelectedProvinceName(found ? found.name : '');
+
+        // Reset lower cascade
+        setSelectedCityId('');
+        setSelectedCityName('');
+        setSelectedDistrictId('');
+        setSelectedDistrictName('');
+        setSelectedSubdistrictId('');
+        setSelectedSubdistrictName('');
+        setCities([]);
+        setDistricts([]);
+        setSubdistricts([]);
+
+        if (val) {
+            setLoadingCities(true);
+            fetch(`/api/coverage/cities?province_id=${val}`)
+                .then((res) => res.json())
+                .then((json) => {
+                    if (json.status && Array.isArray(json.data)) {
+                        setCities(json.data);
+                    }
+                })
+                .catch(() => {})
+                .finally(() => setLoadingCities(false));
+        }
+    };
+
+    // Handle City change
+    const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const val = e.target.value ? Number(e.target.value) : '';
+        setSelectedCityId(val);
+        const found = cities.find((c) => c.id === val);
+        setSelectedCityName(found ? found.name : '');
+        if (found?.postal_code && !postalCode) {
+            setPostalCode(found.postal_code);
+        }
+
+        // Reset lower cascade
+        setSelectedDistrictId('');
+        setSelectedDistrictName('');
+        setSelectedSubdistrictId('');
+        setSelectedSubdistrictName('');
+        setDistricts([]);
+        setSubdistricts([]);
+
+        if (val) {
+            setLoadingDistricts(true);
+            fetch(`/api/coverage/districts?city_id=${val}`)
+                .then((res) => res.json())
+                .then((json) => {
+                    if (json.status && Array.isArray(json.data)) {
+                        setDistricts(json.data);
+                    }
+                })
+                .catch(() => {})
+                .finally(() => setLoadingDistricts(false));
+        }
+    };
+
+    // Handle District change
+    const handleDistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const val = e.target.value ? Number(e.target.value) : '';
+        setSelectedDistrictId(val);
+        const found = districts.find((d) => d.id === val);
+        setSelectedDistrictName(found ? found.name : '');
+        if (found?.postal_code) {
+            setPostalCode(found.postal_code);
+        }
+
+        // Reset subdistrict
+        setSelectedSubdistrictId('');
+        setSelectedSubdistrictName('');
+        setSubdistricts([]);
+
+        if (val) {
+            setLoadingSubdistricts(true);
+            fetch(`/api/coverage/subdistricts?district_id=${val}`)
+                .then((res) => res.json())
+                .then((json) => {
+                    if (json.status && Array.isArray(json.data)) {
+                        setSubdistricts(json.data);
+                    }
+                })
+                .catch(() => {})
+                .finally(() => setLoadingSubdistricts(false));
+        }
+    };
+
+    // Handle Subdistrict change
+    const handleSubdistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const val = e.target.value ? Number(e.target.value) : '';
+        setSelectedSubdistrictId(val);
+        const found = subdistricts.find((s) => s.id === val);
+        setSelectedSubdistrictName(found ? found.name : '');
+        if (found?.postal_code) {
+            setPostalCode(found.postal_code);
+        }
+    };
+
+    const finalLabel = label === 'Lainnya' ? (customLabel.trim() || 'Alamat') : label;
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        setErrorMessage(null);
+
+        if (!recipientName.trim()) {
+            setErrorMessage(isEn ? 'Recipient name is required.' : 'Nama penerima wajib diisi.');
+            return;
+        }
+        if (!recipientPhone.trim()) {
+            setErrorMessage(isEn ? 'Recipient phone number is required.' : 'Nomor telepon penerima wajib diisi.');
+            return;
+        }
+        if (!selectedCityName.trim()) {
+            setErrorMessage(isEn ? 'Please select a City / Regency.' : 'Silakan pilih Kota / Kabupaten.');
+            return;
+        }
+        if (!selectedDistrictName.trim()) {
+            setErrorMessage(isEn ? 'Please select a District (Kecamatan).' : 'Silakan pilih Kecamatan.');
+            return;
+        }
+        if (!selectedSubdistrictName.trim()) {
+            setErrorMessage(isEn ? 'Please select a Subdistrict (Kelurahan).' : 'Silakan pilih Kelurahan.');
+            return;
+        }
+        if (!postalCode.trim()) {
+            setErrorMessage(isEn ? 'Postal code is required.' : 'Kode pos wajib diisi.');
+            return;
+        }
+        if (!addressDetail.trim()) {
+            setErrorMessage(isEn ? 'Full street address is required.' : 'Alamat lengkap wajib diisi.');
+            return;
+        }
+
+        setIsSubmitting(true);
+
+        const payload = {
+            label: finalLabel,
+            recipient_name: recipientName.trim(),
+            recipient_phone: recipientPhone.trim(),
+            province_id: selectedProvinceId ? Number(selectedProvinceId) : null,
+            province_name: selectedProvinceName || null,
+            city_id: selectedCityId ? Number(selectedCityId) : null,
+            city_name: selectedCityName,
+            district_id: selectedDistrictId ? Number(selectedDistrictId) : null,
+            district_name: selectedDistrictName,
+            subdistrict_id: selectedSubdistrictId ? Number(selectedSubdistrictId) : null,
+            subdistrict_name: selectedSubdistrictName,
+            postal_code: postalCode.trim(),
+            address: addressDetail.trim(),
+            is_primary: isPrimary,
+        };
+
+        const url = addressToEdit ? `/account/addresses/${addressToEdit.id}` : '/account/addresses';
+        const method = addressToEdit ? 'put' : 'post';
+
+        router[method](url, payload, {
+            preserveScroll: true,
+            onSuccess: (page: any) => {
+                setIsSubmitting(false);
+                onOpenChange(false);
+                if (onSuccess) {
+                    const addresses: UserAddress[] = page.props?.addresses || [];
+                    const found = addressToEdit
+                        ? addresses.find((a) => a.id === addressToEdit.id)
+                        : addresses[0];
+                    if (found) {
+                        onSuccess(found);
+                    }
+                }
+            },
+            onError: (errs) => {
+                setIsSubmitting(false);
+                const first = Object.values(errs)[0];
+                setErrorMessage(typeof first === 'string' ? first : (isEn ? 'Failed to save address.' : 'Gagal menyimpan alamat.'));
+            },
+        });
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-5 sm:p-6 bg-background rounded-xl border border-border/80 shadow-2xl">
+                <DialogHeader className="pb-3 border-b border-border/70 space-y-1">
+                    <div className="flex items-center gap-2 text-[#4A070B] dark:text-[#E8D0BA]">
+                        <div className="w-7 h-7 rounded-full bg-[#4A070B]/10 dark:bg-[#E8D0BA]/15 flex items-center justify-center shrink-0">
+                            <MapPin className="w-4 h-4" />
+                        </div>
+                        <DialogTitle className="text-base sm:text-lg font-bold text-foreground">
+                            {addressToEdit
+                                ? (isEn ? 'Edit Delivery Address' : 'Ubah Alamat Pengiriman')
+                                : (isEn ? 'Add New Delivery Address' : 'Tambah Alamat Pengiriman Baru')}
+                        </DialogTitle>
+                    </div>
+                    <DialogDescription className="text-xs text-muted-foreground">
+                        {isEn
+                            ? 'Complete your recipient details and pick destination verified with KiriminAja coverage.'
+                            : 'Lengkapi rincian penerima dan pilih wilayah terverifikasi sistem ekspedisi KiriminAja.'}
+                    </DialogDescription>
+                </DialogHeader>
+
+                {errorMessage && (
+                    <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 shrink-0" />
+                        <span>{errorMessage}</span>
+                    </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="space-y-4 pt-1">
+                    {/* LABEL ALAMAT */}
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-foreground">
+                            {isEn ? 'Address Label' : 'Label Alamat'}
+                        </label>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                            {QUICK_LABELS.map((item) => (
+                                <button
+                                    key={item}
+                                    type="button"
+                                    onClick={() => setLabel(item)}
+                                    className={`px-3 py-1 rounded-md text-xs font-medium transition cursor-pointer ${
+                                        label === item
+                                            ? 'bg-[#4A070B] text-white font-semibold'
+                                            : 'bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground border border-border/80'
+                                    }`}
+                                >
+                                    {item}
+                                </button>
+                            ))}
+                            <button
+                                type="button"
+                                onClick={() => setLabel('Lainnya')}
+                                className={`px-3 py-1 rounded-md text-xs font-medium transition cursor-pointer ${
+                                    label === 'Lainnya'
+                                        ? 'bg-[#4A070B] text-white font-semibold'
+                                        : 'bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground border border-border/80'
+                                    }`}
+                            >
+                                {isEn ? 'Other' : 'Lainnya'}
+                            </button>
+                        </div>
+                        {label === 'Lainnya' && (
+                            <Input
+                                type="text"
+                                placeholder={isEn ? 'e.g. Grandma House, Villa' : 'Contoh: Rumah Nenek, Kos, Butik'}
+                                value={customLabel}
+                                onChange={(e) => setCustomLabel(e.target.value)}
+                                className="h-8.5 text-xs mt-1.5 bg-background border-border/80"
+                            />
+                        )}
+                    </div>
+
+                    {/* NAMA PENERIMA & NOMOR TELEPON */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                            <label className="text-xs font-semibold text-foreground">
+                                {isEn ? 'Recipient Name' : 'Nama Penerima'} <span className="text-destructive">*</span>
+                            </label>
+                            <Input
+                                type="text"
+                                placeholder="Nama lengkap penerima"
+                                value={recipientName}
+                                onChange={(e) => setRecipientName(e.target.value)}
+                                className="h-9 text-xs bg-background border-border/80"
+                                required
+                            />
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="text-xs font-semibold text-foreground">
+                                {isEn ? 'WhatsApp / Phone Number' : 'Nomor WhatsApp / HP'} <span className="text-destructive">*</span>
+                            </label>
+                            <Input
+                                type="tel"
+                                placeholder="08xxxxxxxxxx"
+                                value={recipientPhone}
+                                onChange={(e) => setRecipientPhone(e.target.value)}
+                                className="h-9 text-xs bg-background border-border/80"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    {/* COVERAGE HIERARCHY (KiriminAja): PROVINSI & KOTA/KABUPATEN */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {/* PROVINSI */}
+                        <div className="space-y-1">
+                            <div className="flex items-center justify-between">
+                                <label className="text-xs font-semibold text-foreground">
+                                    {isEn ? 'Province' : 'Provinsi'}
+                                </label>
+                                {loadingProvinces && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />}
+                            </div>
+                            <select
+                                value={selectedProvinceId}
+                                onChange={handleProvinceChange}
+                                className="w-full h-9 px-2.5 rounded-md text-xs bg-background border border-border/80 text-foreground focus:ring-1 focus:ring-[#4A070B] focus:border-[#4A070B] outline-none cursor-pointer"
+                            >
+                                <option value="">-- {isEn ? 'Select Province' : 'Pilih Provinsi'} --</option>
+                                {provinces.map((prov) => (
+                                    <option key={prov.id} value={prov.id}>
+                                        {prov.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* KOTA / KABUPATEN */}
+                        <div className="space-y-1">
+                            <div className="flex items-center justify-between">
+                                <label className="text-xs font-semibold text-foreground">
+                                    {isEn ? 'City / Regency' : 'Kabupaten / Kota'} <span className="text-destructive">*</span>
+                                </label>
+                                {loadingCities && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />}
+                            </div>
+                            <select
+                                value={selectedCityId}
+                                onChange={handleCityChange}
+                                disabled={!selectedProvinceId || loadingCities}
+                                className="w-full h-9 px-2.5 rounded-md text-xs bg-background border border-border/80 text-foreground focus:ring-1 focus:ring-[#4A070B] focus:border-[#4A070B] outline-none cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                                required
+                            >
+                                <option value="">
+                                    {!selectedProvinceId
+                                        ? (isEn ? 'Select Province First' : 'Pilih Provinsi Dahulu')
+                                        : (isEn ? '-- Select City / Regency --' : '-- Pilih Kabupaten/Kota --')}
+                                </option>
+                                {cities.map((c) => (
+                                    <option key={c.id} value={c.id}>
+                                        {c.type ? `${c.type} ` : ''}{c.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* KECAMATAN & KELURAHAN */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {/* KECAMATAN */}
+                        <div className="space-y-1">
+                            <div className="flex items-center justify-between">
+                                <label className="text-xs font-semibold text-foreground">
+                                    {isEn ? 'District' : 'Kecamatan'} <span className="text-destructive">*</span>
+                                </label>
+                                {loadingDistricts && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />}
+                            </div>
+                            <select
+                                value={selectedDistrictId}
+                                onChange={handleDistrictChange}
+                                disabled={!selectedCityId || loadingDistricts}
+                                className="w-full h-9 px-2.5 rounded-md text-xs bg-background border border-border/80 text-foreground focus:ring-1 focus:ring-[#4A070B] focus:border-[#4A070B] outline-none cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                                required
+                            >
+                                <option value="">
+                                    {!selectedCityId
+                                        ? (isEn ? 'Select City First' : 'Pilih Kota Dahulu')
+                                        : (isEn ? '-- Select District --' : '-- Pilih Kecamatan --')}
+                                </option>
+                                {districts.map((d) => (
+                                    <option key={d.id} value={d.id}>
+                                        {d.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* KELURAHAN */}
+                        <div className="space-y-1">
+                            <div className="flex items-center justify-between">
+                                <label className="text-xs font-semibold text-foreground">
+                                    {isEn ? 'Subdistrict' : 'Kelurahan / Desa'} <span className="text-destructive">*</span>
+                                </label>
+                                {loadingSubdistricts && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />}
+                            </div>
+                            <select
+                                value={selectedSubdistrictId}
+                                onChange={handleSubdistrictChange}
+                                disabled={!selectedDistrictId || loadingSubdistricts}
+                                className="w-full h-9 px-2.5 rounded-md text-xs bg-background border border-border/80 text-foreground focus:ring-1 focus:ring-[#4A070B] focus:border-[#4A070B] outline-none cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                                required
+                            >
+                                <option value="">
+                                    {!selectedDistrictId
+                                        ? (isEn ? 'Select District First' : 'Pilih Kecamatan Dahulu')
+                                        : (isEn ? '-- Select Subdistrict --' : '-- Pilih Kelurahan --')}
+                                </option>
+                                {subdistricts.map((s) => (
+                                    <option key={s.id} value={s.id}>
+                                        {s.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* KODE POS */}
+                    <div className="space-y-1">
+                        <label className="text-xs font-semibold text-foreground">
+                            {isEn ? 'Postal Code' : 'Kode Pos'} <span className="text-destructive">*</span>
+                        </label>
+                        <Input
+                            type="text"
+                            placeholder="Contoh: 12190"
+                            value={postalCode}
+                            onChange={(e) => setPostalCode(e.target.value)}
+                            className="h-9 text-xs bg-background border-border/80"
+                            required
+                        />
+                    </div>
+
+                    {/* ALAMAT LENGKAP */}
+                    <div className="space-y-1">
+                        <label className="text-xs font-semibold text-foreground">
+                            {isEn ? 'Full Street Address' : 'Alamat Lengkap (Jalan, No. Rumah, RT/RW, Patokan)'} <span className="text-destructive">*</span>
+                        </label>
+                        <Textarea
+                            rows={3}
+                            placeholder={isEn ? 'Street name, house number, building, floor, landmark' : 'Nama jalan, blok, nomor rumah, RT/RW, atau patokan agar kurir mudah menemukan lokasi'}
+                            value={addressDetail}
+                            onChange={(e) => setAddressDetail(e.target.value)}
+                            className="text-xs bg-background border-border/80 resize-none min-h-[75px]"
+                            required
+                        />
+                    </div>
+
+                    {/* PRIMARY CHECKBOX */}
+                    <label className="flex items-center gap-2.5 pt-1 cursor-pointer select-none">
+                        <input
+                            type="checkbox"
+                            checked={isPrimary}
+                            onChange={(e) => setIsPrimary(e.target.checked)}
+                            className="rounded border-border text-[#4A070B] focus:ring-[#4A070B] w-4 h-4 cursor-pointer"
+                        />
+                        <span className="text-xs font-medium text-foreground">
+                            {isEn ? 'Set as primary delivery address' : 'Jadikan sebagai alamat pengiriman utama'}
+                        </span>
+                    </label>
+
+                    {/* ACTIONS */}
+                    <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-border/70">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => onOpenChange(false)}
+                            disabled={isSubmitting}
+                            className="h-9 px-4 text-xs cursor-pointer border-border/80"
+                        >
+                            {isEn ? 'Cancel' : 'Batal'}
+                        </Button>
+                        <Button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="h-9 px-5 text-xs font-semibold bg-[#4A070B] hover:bg-[#360407] text-white cursor-pointer shadow-none flex items-center gap-1.5"
+                        >
+                            {isSubmitting ? (
+                                <>
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    <span>{isEn ? 'Saving...' : 'Menyimpan...'}</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Check className="w-3.5 h-3.5" />
+                                    <span>{addressToEdit ? (isEn ? 'Update Address' : 'Perbarui Alamat') : (isEn ? 'Save Address' : 'Simpan Alamat')}</span>
+                                </>
+                            )}
+                        </Button>
+                    </div>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+}

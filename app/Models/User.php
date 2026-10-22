@@ -116,4 +116,20 @@ class User extends Authenticatable
     {
         return $this->hasMany(LoyaltyPointHistory::class)->latest();
     }
+
+    /**
+     * @return HasMany<UserAddress, $this>
+     */
+    public function addresses(): HasMany
+    {
+        return $this->hasMany(UserAddress::class)->orderByDesc('is_primary')->latest();
+    }
+
+    /**
+     * @return HasOne<UserAddress, $this>
+     */
+    public function primaryAddress(): HasOne
+    {
+        return $this->hasOne(UserAddress::class)->where('is_primary', true);
+    }
 }

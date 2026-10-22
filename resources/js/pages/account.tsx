@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
@@ -27,8 +27,14 @@ import {
     Store,
     Trash2,
     Loader2,
+    User,
+    MapPin,
+    Plus,
+    Edit2,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
+import type { UserAddress } from '@/types/address';
+import AddressModal from '@/components/AddressModal';
 
 interface UserData {
     id: number;
@@ -63,6 +69,7 @@ interface AccountPageProps {
     membership: MembershipData | null;
     order_counts: OrderCounts;
     wishlist_count: number;
+    addresses?: UserAddress[];
 }
 
 export default function AccountPage({
@@ -70,6 +77,7 @@ export default function AccountPage({
     membership,
     order_counts: propOrderCounts,
     wishlist_count = 0,
+    addresses: propAddresses = [],
 }: Partial<AccountPageProps>) {
     const { props } = usePage<any>();
     const user: UserData = propUser || props?.auth?.user || {
@@ -877,6 +885,4 @@ export default function AccountPage({
                     </form>
                 </DialogContent>
             </Dialog>
-        </Layout>
-    );
-}
+        </Layout

@@ -6,7 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
-import { Truck, Store as StoreIcon, MapPin, ExternalLink, Clock, ShieldCheck, Loader2 } from 'lucide-react';
+import { Truck, Store as StoreIcon, MapPin, ExternalLink, Clock, ShieldCheck, Loader2, Plus, Edit2, Check } from 'lucide-react';
+import type { UserAddress } from '@/types/address';
+import AddressModal from '@/components/AddressModal';
+import AddressSelectorModal from '@/components/AddressSelectorModal';
 
 interface CheckoutItem {
     id: number;
@@ -89,6 +92,8 @@ interface CheckoutProps {
         city?: string;
         postal_code?: string;
     };
+    addresses?: UserAddress[];
+    primary_address?: UserAddress | null;
 }
 
 const getPaymentMeta = (code: string, icon?: string) => {
@@ -293,6 +298,8 @@ export default function CheckoutPage({
     stores = [],
     payment_methods = [],
     user,
+    addresses = [],
+    primary_address = null,
 }: CheckoutProps) {
     const { t, pickText, isEn } = useTranslation();
 
@@ -302,10 +309,28 @@ export default function CheckoutPage({
     // Default store
     const defaultStoreId = stores.length > 0 ? stores[0].id : null;
 
-    // Address Edit Toggle: If user has no existing address and phone, auto open address form
-    const hasSavedAddress = Boolean(user?.address && user?.phone);
-    const [isEditingAddress, setIsEditingAddress] = useState(!hasSavedAddress);
-    const [addressLabel, setAddressLabel] = useState('Rumah');
+    // User Addresses & KiriminAja Coverage Integration
+    const [localAddresses, setLocalAddresses] = useState<UserAddress[]>(addresses || []);
+
+    useEffect(() => {
+        setLocalAddresses(addresses || []);
+    }, [addresses]);
+
+    const initialSelectedAddress = useMemo(() => {
+        return primary_address || localAddresses.find((a) => a.is_primary) || localAddresses[0] || null;
+    }, [primary_address, localAddresses]);
+
+    const [selectedAddress, setSelectedAddress] = useState<UserAddress | null>(initialSelectedAddress);
+    const [addressModalOpen, setAddressModalOpen] = useState(false);
+    const [addressSelectorOpen, setAddressSelectorOpen] = useState(false);
+    const [editingAddress, setEditingAddress] = useState<UserAddress | null>(null);
+
+    // Keep selectedAddress in sync if props or localAddresses update
+    useEffect(() => {
+        if (!selectedAddress && initialSelectedAddress) {
+            setSelectedAddress(initialSelectedAddress);
+        }
+    }, [initialSelectedAddress, selectedAddress]);
 
     // Courier selection
     const [selectedCourierIndex, setSelectedCourierIndex] = useState(0);
@@ -344,17 +369,47 @@ export default function CheckoutPage({
     const { data, setData, post, processing, errors } = useForm({
         delivery_type: 'delivery' as 'delivery' | 'pickup',
         store_id: defaultStoreId as number | null,
-        recipient_name: user?.name || '',
-        recipient_phone: user?.phone || '',
-        shipping_address: user?.address || '',
-        city: user?.city || '',
-        postal_code: user?.postal_code || '',
+        address_id: initialSelectedAddress?.id || null,
+        recipient_name: initialSelectedAddress?.recipient_name || user?.name || '',
+        recipient_phone: initialSelectedAddress?.recipient_phone || user?.phone || '',
+        shipping_address: initialSelectedAddress?.formatted_address || initialSelectedAddress?.address || user?.address || '',
+        city: initialSelectedAddress?.city_name || user?.city || '',
+        postal_code: initialSelectedAddress?.postal_code || user?.postal_code || '',
         courier: selectedCourier.id,
         payment_method: 'qris',
         voucher_code: initial_voucher,
         notes: '',
         device_token: typeof window !== 'undefined' ? (localStorage.getItem('aromapalace_fcm_token') || '') : '',
     });
+
+    const handleSelectAddress = (addr: UserAddress) => {
+        setSelectedAddress(addr);
+        setData((prev) => ({
+            ...prev,
+            address_id: addr.id,
+            recipient_name: addr.recipient_name,
+            recipient_phone: addr.recipient_phone,
+            shipping_address: addr.formatted_address || addr.address,
+            city: addr.city_name,
+            postal_code: addr.postal_code,
+        }));
+    };
+
+    const handleAddressSaved = (savedAddr: UserAddress) => {
+        setLocalAddresses((prev) => {
+            const exists = prev.some((a) => a.id === savedAddr.id);
+            if (exists) {
+                return prev.map((a) => (a.id === savedAddr.id ? savedAddr : (savedAddr.is_primary ? { ...a, is_primary: false } : a)));
+            }
+            const updated = savedAddr.is_primary
+                ? prev.map((a) => ({ ...a, is_primary: false }))
+                : [...prev];
+            return [savedAddr, ...updated];
+        });
+        handleSelectAddress(savedAddr);
+        setAddressModalOpen(false);
+        setEditingAddress(null);
+    };
 
     const handleSwitchDeliveryType = (type: 'delivery' | 'pickup') => {
         setDeliveryType(type);
@@ -466,10 +521,11 @@ export default function CheckoutPage({
         e.preventDefault();
         if (deliveryType === 'delivery') {
             if (!data.shipping_address?.trim() || !data.recipient_phone?.trim()) {
-                setIsEditingAddress(true);
+                setEditingAddress(null);
+                setAddressModalOpen(true);
                 alert(isEn
                     ? 'Please fill in your delivery address and phone number before placing your order.'
-                    : 'Silahkan isi alamat pengiriman dan nomor telepon terlebih dahulu sebelum melanjutkan pesanan.');
+                    : 'Silahkan pilih atau isi alamat pengiriman terlebih dahulu sebelum melanjutkan pesanan.');
                 return;
             }
         }
@@ -616,156 +672,111 @@ export default function CheckoutPage({
 
                                 {deliveryType === 'delivery' ? (
                                     /* TAMPILAN PENGIRIMAN ALAMAT */
-                                    <div className="space-y-4 pt-2 border-t border-border/70">
+                                    <div className="space-y-3 pt-2 border-t border-border/70">
                                         <div className="flex items-center justify-between">
-                                            <h3 className="font-bold text-xs sm:text-sm text-foreground tracking-tight">
+                                            <h3 className="font-bold text-xs sm:text-sm text-foreground tracking-tight flex items-center gap-2">
+                                                <MapPin className="w-4 h-4 text-[#4A070B] dark:text-[#E8D0BA]" />
                                                 {t('checkout.address_detail')}
                                             </h3>
-                                            <button
-                                                type="button"
-                                                onClick={() => setIsEditingAddress(!isEditingAddress)}
-                                                className="text-xs sm:text-sm font-semibold text-[#4A070B] dark:text-[#E8D0BA] hover:underline cursor-pointer"
-                                            >
-                                                {isEditingAddress ? t('checkout.close_edit') : t('checkout.change_address')}
-                                            </button>
+                                            {localAddresses.length > 0 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setAddressSelectorOpen(true)}
+                                                    className="text-xs sm:text-sm font-semibold text-[#4A070B] dark:text-[#E8D0BA] hover:underline cursor-pointer"
+                                                >
+                                                    {t('checkout.change_address')}
+                                                </button>
+                                            )}
                                         </div>
 
-                                        {!isEditingAddress ? (
-                                            /* Address Preview or Empty Prompt */
-                                            (!data.shipping_address?.trim() || !data.recipient_phone?.trim()) ? (
-                                                <div className="p-3.5 rounded-lg border border-dashed border-amber-500/40 bg-amber-500/5 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                                                    <div className="flex items-center gap-2.5 text-amber-800 dark:text-amber-200 font-medium">
-                                                        <MapPin className="w-4 h-4 text-amber-600 shrink-0" />
-                                                        <span>
-                                                            {isEn ? 'No delivery address or phone number saved yet.' : 'Alamat pengiriman dan nomor telepon belum diisi.'}
+                                        {selectedAddress ? (
+                                            /* Selected Address Card */
+                                            <div className="p-3.5 rounded-xl border border-border/80 bg-background/60 hover:border-[#4A070B]/40 transition space-y-2">
+                                                <div className="flex items-center justify-between gap-2 flex-wrap">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-bold text-xs text-foreground">
+                                                            {selectedAddress.recipient_name}
                                                         </span>
-                                                    </div>
-                                                    <Button
-                                                        type="button"
-                                                        size="sm"
-                                                        onClick={() => setIsEditingAddress(true)}
-                                                        className="h-7 px-3 text-xs bg-[#4A070B] hover:bg-[#360407] text-white shrink-0 cursor-pointer shadow-none"
-                                                    >
-                                                        {isEn ? '+ Add Address' : '+ Isi Alamat Sekarang'}
-                                                    </Button>
-                                                </div>
-                                            ) : (
-                                                <div className="flex items-start gap-2.5">
-                                                    <div className="text-[#4A070B] dark:text-[#E8D0BA] mt-0.5 shrink-0">
-                                                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                                                        </svg>
+                                                        <span className="text-xs text-muted-foreground">•</span>
+                                                        <span className="text-xs text-muted-foreground font-medium">
+                                                            {selectedAddress.recipient_phone}
+                                                        </span>
+                                                        <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border/60">
+                                                            {selectedAddress.label || 'Alamat'}
+                                                        </span>
+                                                        {selectedAddress.is_primary && (
+                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#4A070B]/10 text-[#4A070B] dark:bg-[#E8D0BA]/15 dark:text-[#E8D0BA] border border-[#4A070B]/20">
+                                                                Utama
+                                                            </span>
+                                                        )}
                                                     </div>
 
-                                                    <div className="space-y-1 text-xs">
-                                                        <span className="font-bold text-foreground capitalize text-xs">
-                                                            {addressLabel}
-                                                        </span>
-
-                                                        <div className="pt-0.5 space-y-0.5">
-                                                            <p className="font-bold text-foreground text-xs sm:text-sm">
-                                                                {data.recipient_name} • {data.recipient_phone}
-                                                            </p>
-                                                            <p className="text-muted-foreground leading-relaxed">
-                                                                {data.shipping_address}
-                                                            </p>
-                                                            <p className="text-muted-foreground">
-                                                                {data.city}{data.postal_code ? `, ${data.postal_code}` : ''}
-                                                            </p>
-                                                        </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setEditingAddress(selectedAddress);
+                                                                setAddressModalOpen(true);
+                                                            }}
+                                                            className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 px-2 py-1 rounded hover:bg-muted transition cursor-pointer"
+                                                        >
+                                                            <Edit2 className="w-3 h-3" />
+                                                            <span>Ubah</span>
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setAddressSelectorOpen(true)}
+                                                            className="text-xs font-bold text-[#4A070B] dark:text-[#E8D0BA] hover:underline px-2 py-1 cursor-pointer"
+                                                        >
+                                                            Ganti Alamat
+                                                        </button>
                                                     </div>
                                                 </div>
-                                            )
+
+                                                <p className="text-xs text-foreground/90 leading-relaxed">
+                                                    {selectedAddress.address}
+                                                </p>
+
+                                                <p className="text-xs text-muted-foreground">
+                                                    {[
+                                                        selectedAddress.subdistrict_name,
+                                                        selectedAddress.district_name,
+                                                        selectedAddress.city_name,
+                                                        selectedAddress.province_name,
+                                                        selectedAddress.postal_code,
+                                                    ].filter(Boolean).join(', ')}
+                                                </p>
+                                            </div>
                                         ) : (
-                                            /* Address Edit Form Inline */
-                                            <div className="space-y-3 pt-1">
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            /* No Address State */
+                                            <div className="p-4 rounded-xl border border-dashed border-amber-500/40 bg-amber-500/5 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                                                <div className="flex items-start sm:items-center gap-2.5 text-amber-800 dark:text-amber-200">
+                                                    <MapPin className="w-4 h-4 text-amber-600 shrink-0 mt-0.5 sm:mt-0" />
                                                     <div>
-                                                        <label className="text-xs font-semibold text-foreground">
-                                                            Label Alamat
-                                                        </label>
-                                                        <Input
-                                                            type="text"
-                                                            value={addressLabel}
-                                                            onChange={(e) => setAddressLabel(e.target.value)}
-                                                            placeholder="rumah / kantor"
-                                                            className="h-9 text-xs mt-1 rounded-md border-border/80 bg-background/80 focus:border-[#4A070B]"
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="text-xs font-semibold text-foreground">
-                                                            Nama Penerima
-                                                        </label>
-                                                        <Input
-                                                            type="text"
-                                                            value={data.recipient_name}
-                                                            onChange={(e) => setData('recipient_name', e.target.value)}
-                                                            className="h-9 text-xs mt-1 rounded-md border-border/80 bg-background/80 focus:border-[#4A070B]"
-                                                        />
+                                                        <p className="font-semibold text-xs">
+                                                            {isEn ? 'No delivery address saved yet' : 'Belum ada alamat pengiriman tersimpan'}
+                                                        </p>
+                                                        <p className="text-[11px] text-amber-700/80 dark:text-amber-300/80">
+                                                            {isEn ? 'Add your address to calculate accurate shipping and proceed with checkout' : 'Tambahkan alamat pengiriman dengan cakupan wilayah KiriminAja agar pesanan dapat dikirim'}
+                                                        </p>
                                                     </div>
                                                 </div>
-
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                    <div>
-                                                        <label className="text-xs font-semibold text-foreground">
-                                                            Nomor WhatsApp / Telepon
-                                                        </label>
-                                                        <Input
-                                                            type="tel"
-                                                            value={data.recipient_phone}
-                                                            onChange={(e) => setData('recipient_phone', e.target.value)}
-                                                            className="h-9 text-xs mt-1 rounded-md border-border/80 bg-background/80 focus:border-[#4A070B]"
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="text-xs font-semibold text-foreground">
-                                                            Kode Pos
-                                                        </label>
-                                                        <Input
-                                                            type="text"
-                                                            value={data.postal_code}
-                                                            onChange={(e) => setData('postal_code', e.target.value)}
-                                                            className="h-9 text-xs mt-1 rounded-md border-border/80 bg-background/80 focus:border-[#4A070B]"
-                                                        />
-                                                    </div>
-                                                </div>
-
-                                                <div>
-                                                    <label className="text-xs font-semibold text-foreground">
-                                                        Alamat Lengkap (Jalan, RT/RW, Dusun/Kelurahan)
-                                                    </label>
-                                                    <Textarea
-                                                        rows={2}
-                                                        value={data.shipping_address}
-                                                        onChange={(e) => setData('shipping_address', e.target.value)}
-                                                        className="text-xs mt-1 min-h-[60px] rounded-md border-border/80 bg-background/80 resize-none focus:border-[#4A070B]"
-                                                    />
-                                                </div>
-
-                                                <div>
-                                                    <label className="text-xs font-semibold text-foreground">
-                                                        Kecamatan, Kabupaten/Kota, Provinsi
-                                                    </label>
-                                                    <Input
-                                                        type="text"
-                                                        value={data.city}
-                                                        onChange={(e) => setData('city', e.target.value)}
-                                                        className="h-9 text-xs mt-1 rounded-md border-border/80 bg-background/80 focus:border-[#4A070B]"
-                                                    />
-                                                </div>
-
-                                                <div className="pt-1 flex justify-end">
-                                                    <Button
-                                                        type="button"
-                                                        size="sm"
-                                                        onClick={() => setIsEditingAddress(false)}
-                                                        className="bg-[#4A070B] hover:bg-[#360407] text-white text-xs h-8 px-4 rounded-md cursor-pointer"
-                                                    >
-                                                        Simpan Alamat
-                                                    </Button>
-                                                </div>
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        setEditingAddress(null);
+                                                        setAddressModalOpen(true);
+                                                    }}
+                                                    className="h-8 px-3.5 text-xs bg-[#4A070B] hover:bg-[#360407] text-white shrink-0 cursor-pointer shadow-none flex items-center gap-1.5"
+                                                >
+                                                    <Plus className="w-3.5 h-3.5" />
+                                                    <span>{isEn ? '+ Add Address' : '+ Tambah Alamat Sekarang'}</span>
+                                                </Button>
                                             </div>
                                         )}
+                                    </div>
+                                ) : null}
 
                                         {/* Pilih Pengiriman Section (Kurir Pengiriman) */}
                                         <div className="pt-3 border-t border-border/70 space-y-3">
@@ -1479,6 +1490,39 @@ export default function CheckoutPage({
                     </div>
                 </div>
             )}
+
+            {/* ADDRESS SELECTOR MODAL */}
+            <AddressSelectorModal
+                open={addressSelectorOpen}
+                onOpenChange={setAddressSelectorOpen}
+                addresses={localAddresses}
+                selectedAddressId={selectedAddress?.id}
+                onSelectAddress={(addr) => {
+                    handleSelectAddress(addr);
+                    setAddressSelectorOpen(false);
+                }}
+                onAddNewAddress={() => {
+                    setAddressSelectorOpen(false);
+                    setEditingAddress(null);
+                    setAddressModalOpen(true);
+                }}
+                onEditAddress={(addr) => {
+                    setAddressSelectorOpen(false);
+                    setEditingAddress(addr);
+                    setAddressModalOpen(true);
+                }}
+            />
+
+            {/* ADDRESS ADD / EDIT MODAL */}
+            <AddressModal
+                open={addressModalOpen}
+                onOpenChange={(open) => {
+                    setAddressModalOpen(open);
+                    if (!open) setEditingAddress(null);
+                }}
+                addressToEdit={editingAddress}
+                onSuccess={handleAddressSaved}
+            />
         </Layout>
     );
 }

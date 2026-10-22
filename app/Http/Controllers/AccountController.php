@@ -97,6 +97,7 @@ class AccountController extends Controller
             'total_points_out_formatted' => number_format($totalPointsOut, 0, ',', '.'),
             'order_counts' => $orderCounts,
             'wishlist_count' => (int) $user->wishlists()->count(),
+            'addresses' => $user->addresses()->get(),
         ]);
     }
 

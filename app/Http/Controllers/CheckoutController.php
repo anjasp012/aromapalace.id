@@ -145,6 +145,8 @@ class CheckoutController extends Controller
                 'city' => $user->city ?? '',
                 'postal_code' => $user->postal_code ?? '',
             ],
+            'addresses' => $user->addresses()->get(),
+            'primary_address' => $user->primaryAddress,
         ]);
     }
 
@@ -156,6 +158,7 @@ class CheckoutController extends Controller
         $validated = $request->validate([
             'delivery_type' => ['nullable', 'string', 'in:delivery,pickup'],
             'store_id' => ['nullable', 'integer', 'exists:stores,id'],
+            'address_id' => ['nullable', 'integer', 'exists:user_addresses,id'],
             'recipient_name' => ['required', 'string', 'max:120'],
             'recipient_phone' => ['required', 'string', 'max:25'],
             'shipping_address' => ['required_if:delivery_type,delivery', 'nullable', 'string', 'max:500'],

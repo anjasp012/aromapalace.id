@@ -42,4 +42,14 @@ return [
         'base_url' => env('PAKASIR_BASE_URL', 'https://app.pakasir.com'),
     ],
 
+    'kiriminaja' => [
+        'mode' => env('KIRIMINAJA_MODE', 'production'),
+        'api_key' => env('KIRIMINAJA_API_KEY', 'v4.local.4SJhuA3f8eNSoRjtlkJRMcGpjEELOLzSIWl8HaJ7vnYVVHUe8-NHIU-gEE7BiowIF6GYKQP_FBodo0rJw1eNXa9DvDA0xNs-RzVZN8JarOkS3ZROhXYezDbTgRQknMnNyna9E8hXdagBB6gz6MsWj9OAeKaVIzYiARCbfPQs'),
+        'base_url' => env('KIRIMINAJA_BASE_URL', 'https://client.kiriminaja.com'),
+        'pin' => env('KIRIMINAJA_PIN', '123456'),
+        'prefix' => env('KIRIMINAJA_PREFIX', 'ARPL'),
+        'cache_store' => env('KIRIMINAJA_CACHE_STORE', 'laravel'),
+        'cache_prefix' => env('KIRIMINAJA_CACHE_PREFIX', 'kiriminaja:'),
+    ],
+
 ];

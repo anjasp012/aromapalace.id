@@ -6,6 +6,7 @@ use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\CoverageAreaController;
 use App\Http\Controllers\DeviceTokenController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LocaleController;
@@ -17,6 +18,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\StoreController;
+use App\Http\Controllers\UserAddressController;
 use App\Http\Controllers\WishlistController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -47,6 +49,11 @@ Route::get('/search-history', [SearchController::class, 'index'])->name('search.
 Route::post('/search-history', [SearchController::class, 'store'])->name('search.history.store');
 Route::delete('/search-history', [SearchController::class, 'destroy'])->name('search.history.destroy');
 Route::post('/search-history/sync', [SearchController::class, 'sync'])->name('search.history.sync');
+
+Route::get('/api/coverage/provinces', [CoverageAreaController::class, 'provinces'])->name('coverage.provinces');
+Route::get('/api/coverage/cities', [CoverageAreaController::class, 'cities'])->name('coverage.cities');
+Route::get('/api/coverage/districts', [CoverageAreaController::class, 'districts'])->name('coverage.districts');
+Route::get('/api/coverage/subdistricts', [CoverageAreaController::class, 'subdistricts'])->name('coverage.subdistricts');
 
 Route::post('/webhook/pakasir', [PakasirWebhookController::class, 'handle'])->name('webhook.pakasir');
 
@@ -83,6 +90,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/account/orders', [OrderController::class, 'index'])->name('account.orders');
         Route::post('/membership/join', [MembershipController::class, 'join'])->name('membership.join');
         Route::post('/membership/redeem/{reward}', [MembershipController::class, 'redeem'])->name('membership.redeem');
+
+        Route::get('/account/addresses', [UserAddressController::class, 'index'])->name('account.addresses.index');
+        Route::post('/account/addresses', [UserAddressController::class, 'store'])->name('account.addresses.store');
+        Route::put('/account/addresses/{address}', [UserAddressController::class, 'update'])->name('account.addresses.update');
+        Route::delete('/account/addresses/{address}', [UserAddressController::class, 'destroy'])->name('account.addresses.destroy');
+        Route::post('/account/addresses/{address}/primary', [UserAddressController::class, 'setPrimary'])->name('account.addresses.primary');
     });
 
     Route::get('/payment/{order}', [PaymentController::class, 'show'])->name('payment.show');
