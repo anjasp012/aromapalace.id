@@ -12,13 +12,10 @@ import {
     Truck,
     Store,
     Ticket,
-    Filter,
     RefreshCw,
-    Sparkles,
-    AlertCircle,
     Check,
 } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -62,7 +59,7 @@ interface NotificationsIndexProps {
         status: string;
         type: string;
     };
-    metrics: {
+    metrics?: {
         total: number;
         unread: number;
         read: number;
@@ -76,7 +73,6 @@ export default function AdminNotificationsIndex({
 }: NotificationsIndexProps) {
     const [search, setSearch] = useState(filters.search || '');
     const [status, setStatus] = useState(filters.status || 'all');
-    const [type, setType] = useState(filters.type || 'all');
     const [deleteTarget, setDeleteTarget] = useState<NotificationItem | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
@@ -85,7 +81,6 @@ export default function AdminNotificationsIndex({
         router.get('/manajemen-notifikasi', {
             search: search || undefined,
             status: status !== 'all' ? status : undefined,
-            type: type !== 'all' ? type : undefined,
         }, { preserveState: true });
     };
 
@@ -94,23 +89,12 @@ export default function AdminNotificationsIndex({
         router.get('/manajemen-notifikasi', {
             search: search || undefined,
             status: newStatus !== 'all' ? newStatus : undefined,
-            type: type !== 'all' ? type : undefined,
-        }, { preserveState: true });
-    };
-
-    const handleTypeChange = (newType: string) => {
-        setType(newType);
-        router.get('/manajemen-notifikasi', {
-            search: search || undefined,
-            status: status !== 'all' ? status : undefined,
-            type: newType !== 'all' ? newType : undefined,
         }, { preserveState: true });
     };
 
     const handleReset = () => {
         setSearch('');
         setStatus('all');
-        setType('all');
         router.get('/manajemen-notifikasi');
     };
 
@@ -141,306 +125,301 @@ export default function AdminNotificationsIndex({
         });
     };
 
-    const getTypeIcon = (notifType: string) => {
+    const renderTypeIcon = (notifType: string) => {
         switch (notifType) {
             case 'new_order':
                 return (
-                    <div className="size-9 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-                        <ShoppingBag className="size-4" />
+                    <div className="size-10 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20 shadow-xs">
+                        <ShoppingBag className="size-5" />
                     </div>
                 );
             case 'payment_success':
             case 'admin_payment_received':
                 return (
-                    <div className="size-9 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                        <CreditCard className="size-4" />
+                    <div className="size-10 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20 shadow-xs">
+                        <CreditCard className="size-5" />
                     </div>
                 );
             case 'order_shipped':
                 return (
-                    <div className="size-9 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-                        <Truck className="size-4" />
+                    <div className="size-10 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-500/20 shadow-xs">
+                        <Truck className="size-5" />
                     </div>
                 );
             case 'store_pickup_ready':
                 return (
-                    <div className="size-9 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
-                        <Store className="size-4" />
+                    <div className="size-10 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 border border-purple-500/20 shadow-xs">
+                        <Store className="size-5" />
                     </div>
                 );
             case 'voucher_reward':
             case 'promo':
                 return (
-                    <div className="size-9 rounded-full bg-pink-500/10 text-pink-600 dark:text-pink-400 flex items-center justify-center shrink-0">
-                        <Ticket className="size-4" />
+                    <div className="size-10 rounded-md bg-pink-500/10 text-pink-600 dark:text-pink-400 flex items-center justify-center shrink-0 border border-pink-500/20 shadow-xs">
+                        <Ticket className="size-5" />
                     </div>
                 );
             default:
                 return (
-                    <div className="size-9 rounded-full bg-muted text-muted-foreground flex items-center justify-center shrink-0">
-                        <Bell className="size-4" />
+                    <div className="size-10 rounded-md bg-muted text-muted-foreground flex items-center justify-center shrink-0 border shadow-xs">
+                        <Bell className="size-5" />
                     </div>
                 );
         }
     };
 
-    const getTypeLabel = (notifType: string) => {
+    const getTypeBadge = (notifType: string) => {
         switch (notifType) {
             case 'new_order':
-                return 'Pesanan Baru';
+                return <Badge variant="secondary" className="text-[10px] bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20">Pesanan Baru</Badge>;
             case 'payment_success':
             case 'admin_payment_received':
-                return 'Pembayaran';
+                return <Badge variant="secondary" className="text-[10px] bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20">Pembayaran</Badge>;
             case 'order_shipped':
-                return 'Pengiriman';
+                return <Badge variant="secondary" className="text-[10px] bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20">Pengiriman</Badge>;
             case 'store_pickup_ready':
-                return 'Ambil di Toko';
+                return <Badge variant="secondary" className="text-[10px] bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20">Ambil di Butik</Badge>;
             case 'voucher_reward':
             case 'promo':
-                return 'Promo & Voucher';
+                return <Badge variant="secondary" className="text-[10px] bg-pink-500/10 text-pink-700 dark:text-pink-400 border-pink-500/20">Promo & Voucher</Badge>;
             default:
-                return 'Sistem';
+                return <Badge variant="outline" className="text-[10px]">Sistem</Badge>;
         }
     };
+
+    const unreadCount = metrics?.unread ?? 0;
 
     return (
         <AdminLayout
-            title="Pusat Notifikasi"
-            subtitle="Riwayat pemberitahuan transaksi, pesanan baru, dan aktivitas sistem toko."
+            title="Kelola Notifikasi"
+            subtitle="Riwayat seluruh pemberitahuan transaksi, pesanan baru, dan aktivitas sistem toko."
         >
-            <Head title="Pusat Notifikasi - Admin Panel" />
+            <Head title="Kelola Notifikasi - Admin Panel" />
 
             <div className="space-y-6">
-                {/* Metric Summary Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <Card className="shadow-xs">
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                                Total Notifikasi
-                            </CardTitle>
-                            <Bell className="size-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{metrics.total}</div>
-                            <p className="text-xs text-muted-foreground mt-1">
-                                Keseluruhan pemberitahuan tercatat
-                            </p>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="shadow-xs border-amber-500/20 bg-amber-500/5">
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-xs font-medium uppercase tracking-wider text-amber-700 dark:text-amber-400">
-                                Belum Dibaca
-                            </CardTitle>
-                            <AlertCircle className="size-4 text-amber-600 dark:text-amber-400" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-amber-700 dark:text-amber-400">
-                                {metrics.unread}
-                            </div>
-                            <p className="text-xs text-amber-600/80 dark:text-amber-400/80 mt-1">
-                                Membutuhkan perhatian admin
-                            </p>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="shadow-xs border-emerald-500/20 bg-emerald-500/5">
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-xs font-medium uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-                                Sudah Dibaca
-                            </CardTitle>
-                            <CheckCheck className="size-4 text-emerald-600 dark:text-emerald-400" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">
-                                {metrics.read}
-                            </div>
-                            <p className="text-xs text-emerald-600/80 dark:text-emerald-400/80 mt-1">
-                                Telah diperiksa sebelumnya
-                            </p>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                {/* Filter and Action Toolbar */}
-                <Card className="shadow-xs">
-                    <CardContent className="p-4 space-y-3">
-                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                            {/* Search Form */}
-                            <form onSubmit={handleSearchSubmit} className="relative flex-1 max-w-md">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                {/* Filter and Actions Toolbar */}
+                <Card className="p-4">
+                    <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+                        {/* Search Input */}
+                        <form onSubmit={handleSearchSubmit} className="flex-1 w-full lg:max-w-md flex items-center gap-2">
+                            <div className="relative flex-1">
+                                <Search className="size-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                                 <Input
                                     type="text"
                                     placeholder="Cari judul atau isi notifikasi..."
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
-                                    className="pl-9 pr-4 text-sm"
+                                    className="pl-9 h-9 text-xs"
                                 />
-                            </form>
-
-                            <div className="flex items-center gap-2 flex-wrap">
-                                {metrics.unread > 0 && (
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={handleMarkAllAsRead}
-                                        className="cursor-pointer"
-                                    >
-                                        <CheckCheck className="size-4 mr-1.5 text-primary" />
-                                        <span>Tandai Semua Dibaca</span>
-                                    </Button>
-                                )}
-
-                                {(search || status !== 'all' || type !== 'all') && (
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={handleReset}
-                                        className="cursor-pointer"
-                                    >
-                                        <RefreshCw className="size-3.5 mr-1.5" />
-                                        <span>Reset Filter</span>
-                                    </Button>
-                                )}
                             </div>
-                        </div>
+                            <Button type="submit" size="sm" className="h-9 cursor-pointer">
+                                Cari
+                            </Button>
+                        </form>
 
-                        {/* Filter Tabs / Selectors */}
-                        <div className="flex flex-wrap items-center gap-2 pt-2 border-t">
-                            <span className="text-xs text-muted-foreground font-medium flex items-center gap-1 mr-1">
-                                <Filter className="size-3.5" /> Status:
-                            </span>
-                            <Button
-                                type="button"
-                                size="sm"
-                                variant={status === 'all' ? 'default' : 'outline'}
-                                className="h-7 text-xs rounded-full px-3"
-                                onClick={() => handleStatusChange('all')}
-                            >
-                                Semua ({metrics.total})
-                            </Button>
-                            <Button
-                                type="button"
-                                size="sm"
-                                variant={status === 'unread' ? 'default' : 'outline'}
-                                className="h-7 text-xs rounded-full px-3"
-                                onClick={() => handleStatusChange('unread')}
-                            >
-                                Belum Dibaca ({metrics.unread})
-                            </Button>
-                            <Button
-                                type="button"
-                                size="sm"
-                                variant={status === 'read' ? 'default' : 'outline'}
-                                className="h-7 text-xs rounded-full px-3"
-                                onClick={() => handleStatusChange('read')}
-                            >
-                                Sudah Dibaca ({metrics.read})
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Notification List Table / Cards */}
-                <Card className="shadow-xs overflow-hidden">
-                    {notifications.data.length === 0 ? (
-                        <div className="p-12 text-center text-muted-foreground space-y-2">
-                            <Bell className="size-10 mx-auto opacity-30" />
-                            <p className="text-sm font-semibold text-foreground">Tidak ada notifikasi ditemukan</p>
-                            <p className="text-xs">
-                                {search || status !== 'all' || type !== 'all'
-                                    ? 'Coba sesuaikan kata kunci pencarian atau filter status yang dipilih.'
-                                    : 'Belum ada riwayat pemberitahuan sistem.'}
-                            </p>
-                        </div>
-                    ) : (
-                        <div className="divide-y divide-border">
-                            {notifications.data.map((notif) => (
-                                <div
-                                    key={notif.id}
-                                    className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-4 transition-colors hover:bg-muted/40 ${
-                                        !notif.is_read ? 'bg-primary/5' : ''
+                        {/* Filter Status Buttons & Actions */}
+                        <div className="flex items-center gap-2 flex-wrap justify-between lg:justify-end">
+                            <div className="inline-flex rounded-lg border bg-muted/40 p-0.5 text-xs">
+                                <button
+                                    type="button"
+                                    onClick={() => handleStatusChange('all')}
+                                    className={`px-3 py-1 rounded-md font-medium transition-all cursor-pointer ${
+                                        status === 'all'
+                                            ? 'bg-background text-foreground shadow-xs'
+                                            : 'text-muted-foreground hover:text-foreground'
                                     }`}
                                 >
-                                    <div className="flex items-start gap-3.5 flex-1 min-w-0">
-                                        {getTypeIcon(notif.type)}
+                                    Semua {metrics?.total !== undefined && `(${metrics.total})`}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleStatusChange('unread')}
+                                    className={`px-3 py-1 rounded-md font-medium transition-all cursor-pointer ${
+                                        status === 'unread'
+                                            ? 'bg-background text-foreground shadow-xs'
+                                            : 'text-muted-foreground hover:text-foreground'
+                                    }`}
+                                >
+                                    Belum Dibaca {metrics?.unread !== undefined && `(${metrics.unread})`}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleStatusChange('read')}
+                                    className={`px-3 py-1 rounded-md font-medium transition-all cursor-pointer ${
+                                        status === 'read'
+                                            ? 'bg-background text-foreground shadow-xs'
+                                            : 'text-muted-foreground hover:text-foreground'
+                                    }`}
+                                >
+                                    Sudah Dibaca {metrics?.read !== undefined && `(${metrics.read})`}
+                                </button>
+                            </div>
 
-                                        <div className="flex-1 min-w-0 space-y-1">
-                                            <div className="flex items-center gap-2 flex-wrap">
-                                                <Badge variant="outline" className="text-[10px] py-0 px-2 h-4 font-normal">
-                                                    {getTypeLabel(notif.type)}
-                                                </Badge>
-                                                {!notif.is_read && (
-                                                    <Badge variant="default" className="text-[10px] py-0 px-1.5 h-4 bg-primary text-primary-foreground font-semibold">
-                                                        Baru
+                            {unreadCount > 0 && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleMarkAllAsRead}
+                                    className="h-9 cursor-pointer text-xs"
+                                >
+                                    <CheckCheck className="size-3.5 mr-1.5 text-primary" />
+                                    <span>Tandai Semua Dibaca</span>
+                                </Button>
+                            )}
+
+                            {(search !== '' || status !== 'all') && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleReset}
+                                    className="h-9 cursor-pointer text-xs"
+                                    title="Reset Filter"
+                                >
+                                    <RefreshCw className="size-3.5 mr-1" />
+                                    <span>Reset</span>
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                </Card>
+
+                {/* Notifications Table Card */}
+                <Card className="py-0 overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full caption-bottom text-sm">
+                            <thead className="border-b bg-muted/50 text-muted-foreground">
+                                <tr className="border-b transition-colors text-xs">
+                                    <th className="h-10 px-4 text-left font-medium w-12">No</th>
+                                    <th className="h-10 px-4 text-left font-medium w-16">Ikon</th>
+                                    <th className="h-10 px-4 text-left font-medium">Informasi Notifikasi</th>
+                                    <th className="h-10 px-4 text-left font-medium w-36">Status</th>
+                                    <th className="h-10 px-4 text-left font-medium w-40">Waktu</th>
+                                    <th className="h-10 px-4 text-right font-medium w-48">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y text-xs">
+                                {notifications.data.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={6} className="p-12 text-center text-muted-foreground">
+                                            <Bell className="size-9 mx-auto mb-2 opacity-30" />
+                                            <p className="font-semibold text-foreground text-sm">Tidak ada notifikasi ditemukan.</p>
+                                            <p className="text-xs mt-1">
+                                                {search || status !== 'all'
+                                                    ? 'Coba sesuaikan kata kunci pencarian atau tab filter status.'
+                                                    : 'Belum ada riwayat pemberitahuan sistem.'}
+                                            </p>
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    notifications.data.map((notif, index) => (
+                                        <tr
+                                            key={notif.id}
+                                            className={`transition-colors hover:bg-muted/50 ${
+                                                !notif.is_read ? 'bg-primary/5' : ''
+                                            }`}
+                                        >
+                                            {/* Number */}
+                                            <td className="p-4 align-middle text-muted-foreground font-mono">
+                                                {(notifications.current_page - 1) * 15 + index + 1}
+                                            </td>
+
+                                            {/* Icon */}
+                                            <td className="p-4 align-middle">
+                                                {renderTypeIcon(notif.type)}
+                                            </td>
+
+                                            {/* Details */}
+                                            <td className="p-4 align-middle space-y-1">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    {getTypeBadge(notif.type)}
+                                                    <span className={`text-sm ${!notif.is_read ? 'font-bold text-foreground' : 'font-semibold text-foreground/85'}`}>
+                                                        {notif.title}
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+                                                    {notif.body}
+                                                </p>
+                                            </td>
+
+                                            {/* Status */}
+                                            <td className="p-4 align-middle">
+                                                {!notif.is_read ? (
+                                                    <Badge variant="default" className="text-[10px] py-0 px-2 h-5 bg-primary text-primary-foreground font-semibold">
+                                                        Belum Dibaca
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge variant="outline" className="text-[10px] py-0 px-2 h-5 text-muted-foreground">
+                                                        Sudah Dibaca
                                                     </Badge>
                                                 )}
-                                                <span className="text-[11px] text-muted-foreground font-mono">
+                                            </td>
+
+                                            {/* Time */}
+                                            <td className="p-4 align-middle text-muted-foreground whitespace-nowrap">
+                                                <div className="font-medium text-foreground text-xs">
                                                     {notif.time_ago || notif.created_at}
-                                                </span>
-                                            </div>
+                                                </div>
+                                                {notif.time_ago && notif.created_at && (
+                                                    <div className="text-[11px] text-muted-foreground/80 font-mono mt-0.5">
+                                                        {notif.created_at}
+                                                    </div>
+                                                )}
+                                            </td>
 
-                                            <h4 className={`text-sm ${!notif.is_read ? 'font-bold text-foreground' : 'font-medium text-foreground/80'}`}>
-                                                {notif.title}
-                                            </h4>
+                                            {/* Actions */}
+                                            <td className="p-4 align-middle text-right">
+                                                <div className="flex items-center justify-end gap-1.5">
+                                                    {!notif.is_read && (
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={(e) => handleMarkAsRead(notif, e)}
+                                                            className="h-8 text-xs cursor-pointer hover:bg-muted"
+                                                            title="Tandai Sudah Dibaca"
+                                                        >
+                                                            <Check className="size-3.5 text-emerald-600 mr-1" />
+                                                            <span className="hidden sm:inline">Dibaca</span>
+                                                        </Button>
+                                                    )}
 
-                                            <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">
-                                                {notif.body}
-                                            </p>
-                                        </div>
-                                    </div>
+                                                    {notif.url && (
+                                                        <Button
+                                                            asChild
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="h-8 text-xs cursor-pointer"
+                                                        >
+                                                            <Link href={`/manajemen-notifikasi/${notif.id}/go`}>
+                                                                <span className="hidden sm:inline">Buka</span>
+                                                                <ExternalLink className="size-3.5 sm:ml-1 text-primary" />
+                                                            </Link>
+                                                        </Button>
+                                                    )}
 
-                                    <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-                                        {!notif.is_read && (
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={(e) => handleMarkAsRead(notif, e)}
-                                                className="h-8 text-xs cursor-pointer"
-                                                title="Tandai Sudah Dibaca"
-                                            >
-                                                <Check className="size-3.5 mr-1 text-emerald-600" />
-                                                <span>Tandai Dibaca</span>
-                                            </Button>
-                                        )}
-
-                                        {notif.url && (
-                                            <Button
-                                                asChild
-                                                variant="default"
-                                                size="sm"
-                                                className="h-8 text-xs cursor-pointer"
-                                            >
-                                                <Link href={`/manajemen-notifikasi/${notif.id}/go`}>
-                                                    <span>Buka Tautan</span>
-                                                    <ExternalLink className="size-3.5 ml-1" />
-                                                </Link>
-                                            </Button>
-                                        )}
-
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => setDeleteTarget(notif)}
-                                            className="size-8 text-destructive hover:bg-destructive/10 cursor-pointer"
-                                            title="Hapus Notifikasi"
-                                        >
-                                            <Trash2 className="size-3.5" />
-                                        </Button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => setDeleteTarget(notif)}
+                                                        className="size-8 text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer"
+                                                        title="Hapus Notifikasi"
+                                                    >
+                                                        <Trash2 className="size-4" />
+                                                    </Button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
 
                     {/* Pagination */}
                     {notifications.total > 0 && notifications.links && notifications.links.length > 3 && (
-                        <div className="flex items-center justify-between p-4 border-t bg-muted/20 text-xs text-muted-foreground">
+                        <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t bg-muted/20 text-xs text-muted-foreground gap-3">
                             <div>
                                 Menampilkan <span className="font-semibold text-foreground">{notifications.data.length}</span> dari{' '}
                                 <span className="font-semibold text-foreground">{notifications.total}</span> notifikasi
