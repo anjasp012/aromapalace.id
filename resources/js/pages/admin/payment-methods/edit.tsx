@@ -6,6 +6,7 @@ import {
     Save,
     CreditCard,
     Upload,
+    Trash2,
     Image as ImageIcon,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -135,63 +136,107 @@ export default function AdminPaymentMethodEdit({ paymentMethod }: AdminPaymentMe
                 {/* 1. Logo / Icon Card */}
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-base flex items-center gap-2">
-                            <ImageIcon className="size-4 text-primary" />
-                            <span>Logo Kanal / Bank (Icon)</span>
-                        </CardTitle>
-                        <CardDescription>
-                            Upload file logo (PNG transparan, SVG, WEBP, atau JPG, maks. 2MB).
-                        </CardDescription>
+                        <CardTitle className="text-base font-semibold">Logo Kanal / Bank (Icon)</CardTitle>
+                        <CardDescription>Ganti atau perbarui logo kanal pembayaran (PNG transparan, SVG, WEBP, atau JPG, maks. 2MB).</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div
-                            onDragOver={handleDragOver}
-                            onDragLeave={handleDragLeave}
-                            onDrop={handleDrop}
-                            onClick={() => fileInputRef.current?.click()}
-                            className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
-                                isDragging
-                                    ? 'border-primary bg-primary/5 scale-[0.99]'
-                                    : 'border-border hover:border-primary/60 hover:bg-muted/40'
-                            }`}
-                        >
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                                className="hidden"
-                                onChange={handleFileChange}
-                            />
-                            <div className="flex flex-col items-center justify-center gap-2">
-                                <div className="size-12 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-                                    <Upload className="size-6" />
-                                </div>
-                                <div className="text-sm font-semibold text-foreground">
-                                    Klik untuk mengganti logo atau seret file ke sini
-                                </div>
-                                <p className="text-xs text-muted-foreground">
-                                    Mendukung PNG transparan, SVG, JPG, WEBP
-                                </p>
-                            </div>
-                        </div>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleFileChange}
+                        />
 
-                        {errors.icon && (
-                            <p className="text-xs text-destructive font-medium">{errors.icon}</p>
-                        )}
-
-                        {/* Logo Preview Box */}
-                        {previewUrl && (
-                            <div className="mt-4 rounded-xl overflow-hidden border bg-muted/30 max-w-xs mx-auto p-4 flex flex-col items-center justify-center gap-2 shadow-xs">
-                                <span className="text-[11px] font-medium text-muted-foreground">Pratinjau Logo</span>
+                        {previewUrl ? (
+                            <div
+                                onDragOver={handleDragOver}
+                                onDragLeave={handleDragLeave}
+                                onDrop={handleDrop}
+                                className={`group relative w-full h-56 rounded-xl border-2 overflow-hidden bg-muted/40 transition-all flex items-center justify-center ${
+                                    isDragging ? 'border-primary ring-4 ring-primary/20 scale-[1.01]' : 'border-border/80'
+                                }`}
+                            >
                                 <img
                                     src={previewUrl}
-                                    alt="Pratinjau Logo"
-                                    className="max-h-20 max-w-full object-contain"
+                                    alt="Logo Pembayaran"
+                                    className="max-h-36 max-w-full object-contain p-4"
                                     onError={(e) => {
                                         (e.target as HTMLElement).style.display = 'none';
                                     }}
                                 />
+                                {isDragging && (
+                                    <div className="absolute inset-0 bg-primary/20 backdrop-blur-xs flex flex-col items-center justify-center text-primary-foreground font-semibold text-sm z-20">
+                                        <Upload className="size-10 mb-2 animate-bounce" />
+                                        <span>Lepaskan file untuk mengganti logo</span>
+                                    </div>
+                                )}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-between p-4">
+                                    <span className="text-xs font-medium text-white truncate drop-shadow-sm">
+                                        Logo Pembayaran Aktif
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            type="button"
+                                            variant="secondary"
+                                            size="sm"
+                                            onClick={() => fileInputRef.current?.click()}
+                                            className="h-8 text-xs bg-white/90 hover:bg-white text-black cursor-pointer shadow-sm"
+                                        >
+                                            <Upload className="size-3.5 mr-1.5" />
+                                            <span>Ganti Foto</span>
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="destructive"
+                                            size="sm"
+                                            onClick={() => {
+                                                setPreviewUrl(null);
+                                                setData((prev) => ({
+                                                    ...prev,
+                                                    icon: null,
+                                                    remove_icon: true,
+                                                }));
+                                                if (fileInputRef.current) {
+                                                    fileInputRef.current.value = '';
+                                                }
+                                            }}
+                                            className="h-8 text-xs cursor-pointer shadow-sm"
+                                        >
+                                            <Trash2 className="size-3.5 mr-1" />
+                                            <span>Hapus</span>
+                                        </Button>
+                                    </div>
+                                </div>
                             </div>
+                        ) : (
+                            <div
+                                onDragOver={handleDragOver}
+                                onDragLeave={handleDragLeave}
+                                onDrop={handleDrop}
+                                onClick={() => fileInputRef.current?.click()}
+                                className={`w-full h-44 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2.5 cursor-pointer transition-colors ${
+                                    isDragging
+                                        ? 'border-primary bg-primary/5 text-primary'
+                                        : 'border-muted-foreground/25 hover:border-muted-foreground/50 hover:bg-muted/30 text-muted-foreground'
+                                }`}
+                            >
+                                <div className="p-3 rounded-full bg-muted/60 border border-border/60">
+                                    <ImageIcon className="size-6 text-muted-foreground" />
+                                </div>
+                                <div className="text-center">
+                                    <p className="text-xs font-medium text-foreground">
+                                        Klik untuk upload atau tarik &amp; lepas gambar di sini
+                                    </p>
+                                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                                        Mendukung format PNG, JPG, WEBP, atau SVG (Maks. 2MB)
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        {errors.icon && (
+                            <p className="text-xs text-destructive font-medium">{errors.icon}</p>
                         )}
                     </CardContent>
                 </Card>
