@@ -17,12 +17,11 @@ export default function AdminPaymentMethodCreate() {
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useState(false);
-    const [showUrlInput, setShowUrlInput] = useState(false);
 
     const { data, setData, post, processing, errors } = useForm<{
         name: string;
         code: string;
-        icon: File | string | null;
+        icon: File | null;
     }>({
         name: '',
         code: '',
@@ -53,7 +52,6 @@ export default function AdminPaymentMethodCreate() {
         }
         setData('icon', file);
         setPreviewUrl(URL.createObjectURL(file));
-        setShowUrlInput(false);
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -134,78 +132,45 @@ export default function AdminPaymentMethodCreate() {
                 {/* 1. Logo / Icon Card */}
                 <Card>
                     <CardHeader>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <CardTitle className="text-base flex items-center gap-2">
-                                    <ImageIcon className="size-4 text-primary" />
-                                    <span>Logo Kanal / Bank (Icon)</span>
-                                </CardTitle>
-                                <CardDescription>
-                                    Format PNG, SVG, atau JPG transparan disarankan (maks. 2MB).
-                                </CardDescription>
-                            </div>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setShowUrlInput(!showUrlInput)}
-                                className="text-xs cursor-pointer"
-                            >
-                                {showUrlInput ? 'Unggah dari Perangkat' : 'Gunakan URL Gambar'}
-                            </Button>
-                        </div>
+                        <CardTitle className="text-base flex items-center gap-2">
+                            <ImageIcon className="size-4 text-primary" />
+                            <span>Logo Kanal / Bank (Icon)</span>
+                        </CardTitle>
+                        <CardDescription>
+                            Upload file logo (PNG transparan, SVG, WEBP, atau JPG, maks. 2MB).
+                        </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        {showUrlInput ? (
-                            <div className="space-y-2">
-                                <label className="text-xs font-medium text-foreground">URL Gambar Logo</label>
-                                <Input
-                                    type="url"
-                                    placeholder="https://... atau /images/payment/bca.png"
-                                    value={typeof data.icon === 'string' ? data.icon : ''}
-                                    onChange={(e) => {
-                                        const val = e.target.value;
-                                        setData('icon', val);
-                                        setPreviewUrl(val || null);
-                                    }}
-                                    className="text-xs font-mono"
-                                />
-                                <p className="text-[11px] text-muted-foreground">
-                                    Cantumkan URL tautan langsung ke logo pembayaran.
+                        <div
+                            onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
+                            onDrop={handleDrop}
+                            onClick={() => fileInputRef.current?.click()}
+                            className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
+                                isDragging
+                                    ? 'border-primary bg-primary/5 scale-[0.99]'
+                                    : 'border-border hover:border-primary/60 hover:bg-muted/40'
+                            }`}
+                        >
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                                className="hidden"
+                                onChange={handleFileChange}
+                            />
+                            <div className="flex flex-col items-center justify-center gap-2">
+                                <div className="size-12 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                                    <Upload className="size-6" />
+                                </div>
+                                <div className="text-sm font-semibold text-foreground">
+                                    Klik untuk memilih atau seret logo ke sini
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    Mendukung PNG transparan, SVG, JPG, WEBP
                                 </p>
                             </div>
-                        ) : (
-                            <div
-                                onDragOver={handleDragOver}
-                                onDragLeave={handleDragLeave}
-                                onDrop={handleDrop}
-                                onClick={() => fileInputRef.current?.click()}
-                                className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
-                                    isDragging
-                                        ? 'border-primary bg-primary/5 scale-[0.99]'
-                                        : 'border-border hover:border-primary/60 hover:bg-muted/40'
-                                }`}
-                            >
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                                    className="hidden"
-                                    onChange={handleFileChange}
-                                />
-                                <div className="flex flex-col items-center justify-center gap-2">
-                                    <div className="size-12 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-                                        <Upload className="size-6" />
-                                    </div>
-                                    <div className="text-sm font-semibold text-foreground">
-                                        Klik untuk memilih atau seret logo ke sini
-                                    </div>
-                                    <p className="text-xs text-muted-foreground">
-                                        Mendukung PNG transparan, SVG, JPG, WEBP
-                                    </p>
-                                </div>
-                            </div>
-                        )}
+                        </div>
 
                         {errors.icon && (
                             <p className="text-xs text-destructive font-medium">{errors.icon}</p>

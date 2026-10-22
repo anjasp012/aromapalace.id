@@ -28,16 +28,17 @@ export default function AdminPaymentMethodEdit({ paymentMethod }: AdminPaymentMe
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(paymentMethod.icon || null);
     const [isDragging, setIsDragging] = useState(false);
-    const [showUrlInput, setShowUrlInput] = useState(false);
 
     const { data, setData, processing, errors } = useForm<{
         name: string;
         code: string;
-        icon: File | string | null;
+        icon: File | null;
+        remove_icon: boolean;
     }>({
         name: paymentMethod.name || '',
         code: paymentMethod.code || '',
-        icon: paymentMethod.icon || null,
+        icon: null,
+        remove_icon: false,
     });
 
     const slugifyCode = (text: string) => {
@@ -54,9 +55,12 @@ export default function AdminPaymentMethodEdit({ paymentMethod }: AdminPaymentMe
             alert('Silakan pilih file gambar logo (JPG, PNG, WEBP, SVG).');
             return;
         }
-        setData('icon', file);
+        setData((prev) => ({
+            ...prev,
+            icon: file,
+            remove_icon: false,
+        }));
         setPreviewUrl(URL.createObjectURL(file));
-        setShowUrlInput(false);
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,8 +92,24 @@ export default function AdminPaymentMethodEdit({ paymentMethod }: AdminPaymentMe
         }
     };
 
+    const handleRemoveImage = () => {
+        setData((prev) => ({
+            ...prev,
+            icon: null,
+            remove_icon: true,
+        }));
+        setPreviewUrl(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
     const handleResetImage = () => {
-        setData('icon', paymentMethod.icon);
+        setData((prev) => ({
+            ...prev,
+            icon: null,
+            remove_icon: false,
+        }));
         setPreviewUrl(paymentMethod.icon || null);
         if (fileInputRef.current) {
             fileInputRef.current.value = '';

@@ -54,7 +54,7 @@ class PaymentMethodController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'code' => ['required', 'string', 'max:255', 'unique:payment_methods,code'],
-            'icon' => ['nullable'],
+            'icon' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp,svg', 'max:2048'],
         ]);
 
         $code = Str::slug($validated['code'], '_');
@@ -66,8 +66,6 @@ class PaymentMethodController extends Controller
                 $path = $file->store('payment-methods', 'public');
                 $icon = Storage::url($path);
             }
-        } elseif (! empty($validated['icon']) && is_string($validated['icon'])) {
-            $icon = trim($validated['icon']);
         }
 
         PaymentMethod::create([
@@ -92,20 +90,21 @@ class PaymentMethodController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'code' => ['required', 'string', 'max:255', Rule::unique('payment_methods', 'code')->ignore($paymentMethod->id)],
-            'icon' => ['nullable'],
+            'icon' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp,svg', 'max:2048'],
+            'remove_icon' => ['nullable', 'boolean'],
         ]);
 
         $code = Str::slug($validated['code'], '_');
         $icon = $paymentMethod->icon;
 
-        if ($request->hasFile('icon')) {
+        if ($request->boolean('remove_icon')) {
+            $icon = null;
+        } elseif ($request->hasFile('icon')) {
             $file = $request->file('icon');
             if ($file instanceof UploadedFile && $file->isValid()) {
                 $path = $file->store('payment-methods', 'public');
                 $icon = Storage::url($path);
             }
-        } elseif ($request->has('icon')) {
-            $icon = is_string($validated['icon']) ? trim($validated['icon']) : null;
         }
 
         $paymentMethod->update([
