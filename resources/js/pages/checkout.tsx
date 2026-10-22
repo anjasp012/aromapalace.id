@@ -76,6 +76,16 @@ export interface CourierOption {
     type: string;
 }
 
+interface ShippingRate {
+    code: string;
+    courier_code: string;
+    name: string;
+    service: string;
+    price: number;
+    price_formatted: string;
+    etd: string;
+}
+
 interface CheckoutProps {
     items: CheckoutItem[];
     subtotal: number;
@@ -302,7 +312,11 @@ export default function CheckoutPage({
 }: CheckoutProps) {
     const { t, pickText, isEn } = useTranslation();
 
-    // Build courier options from server (KiriminAja SDK) - memoized
+    // Shipping rates fetched from KiriminAja API
+    const [shippingRates, setShippingRates] = useState<ShippingRate[]>([]);
+    const [loadingRates, setLoadingRates] = useState(false);
+
+    // Build courier options from server (KiriminAja SDK) - merged with live rates
     const courierOptions = useMemo(() => {
         const list = propCouriers.length > 0 ? propCouriers : [
             { code: 'jne', name: 'JNE Express', region: 'DOMESTIC', type: 'Express' },
@@ -311,18 +325,33 @@ export default function CheckoutPage({
             { code: 'lion', name: 'Lion Parcel', region: 'DOMESTIC', type: 'Express' },
             { code: 'anteraja', name: 'AnterAja', region: 'DOMESTIC', type: 'Express' },
         ];
+
+        if (shippingRates.length > 0) {
+            // Expand per-service rates from API into individual options
+            return shippingRates.map((r) => ({
+                id: r.code,
+                code: r.code,
+                name: r.name,
+                courierBrand: r.name.split(' ')[0],
+                type: r.service || 'Regular',
+                price: r.price,
+                priceFormatted: r.price_formatted,
+                etd: r.etd,
+            }));
+        }
+
+        // Fallback: show courier names without prices until address is selected
         return list.map((c) => ({
             id: c.code,
             code: c.code,
             name: c.name,
             courierBrand: c.name.split(' ')[0],
             type: c.type,
-            // Harga dihitung KiriminAja saat checkout; tampilkan "Cek ongkir" untuk kurir berbayar
             price: 0,
-            priceFormatted: 'Cek Ongkir',
+            priceFormatted: selectedAddress ? 'Memuat...' : 'Pilih Alamat Dulu',
             etd: `Layanan ${c.type}`,
         }));
-    }, [propCouriers]);
+    }, [propCouriers, shippingRates, selectedAddress]);
 
 
     // Delivery Type: delivery vs pickup
@@ -374,6 +403,43 @@ export default function CheckoutPage({
     const [selectedCourierIndex, setSelectedCourierIndex] = useState(0);
     const [showCourierModal, setShowCourierModal] = useState(false);
     const [showStoreModal, setShowStoreModal] = useState(false);
+
+    // Fetch live shipping rates whenever selected address changes
+    useEffect(() => {
+        const subdistrictId = selectedAddress?.subdistrict_id ?? (selectedAddress as any)?.kecamatan_id ?? null;
+        if (!subdistrictId || deliveryType !== 'delivery') {
+            setShippingRates([]);
+            return;
+        }
+
+        let cancelled = false;
+        setLoadingRates(true);
+
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        const csrfToken = csrfMeta ? (csrfMeta as HTMLMetaElement).content : '';
+
+        fetch('/checkout/shipping-rates', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ destination_subdistrict_id: subdistrictId, weight: 500 }),
+        })
+            .then((res) => res.json())
+            .then((json) => {
+                if (!cancelled && json?.status && Array.isArray(json.rates) && json.rates.length > 0) {
+                    setShippingRates(json.rates);
+                    setSelectedCourierIndex(0);
+                }
+            })
+            .catch(() => { /* silently fallback */ })
+            .finally(() => { if (!cancelled) setLoadingRates(false); });
+
+        return () => { cancelled = true; };
+    }, [selectedAddress, deliveryType]);
 
     // Payment methods view toggle
     const [showAllPayments, setShowAllPayments] = useState(false);
@@ -596,11 +662,14 @@ export default function CheckoutPage({
 
     const handleSelectCourier = (index: number) => {
         setSelectedCourierIndex(index);
-        setData('courier', courierOptions[index]?.id || '');
+        const chosen = courierOptions[index];
+        if (chosen) {
+            setData('courier', chosen.id || chosen.code || '');
+        }
         setShowCourierModal(false);
     };
 
-    const currentShippingCost = deliveryType === 'pickup' ? 0 : selectedCourier.price;
+    const currentShippingCost = deliveryType === 'pickup' ? 0 : (selectedCourier?.price ?? 0);
     const finalTotal = Math.max(0, subtotal - voucherDiscount + currentShippingCost);
     const finalTotalFormatted = 'Rp ' + finalTotal.toLocaleString('id-ID');
 
@@ -807,7 +876,7 @@ export default function CheckoutPage({
                                                 <button
                                                     type="button"
                                                     onClick={() => setAddressSelectorOpen(true)}
-                                                    className="text-xs sm:text-sm font-semibold text-[#4A070B] dark:text-[#E8D0BA] hover:underline cursor-pointer transition-colors"
+                                                    className="text-xs font-semibold text-[#4A070B] dark:text-[#E8D0BA] hover:opacity-75 cursor-pointer transition-opacity"
                                                 >
                                                     Ganti Alamat
                                                 </button>
@@ -882,9 +951,17 @@ export default function CheckoutPage({
 
                                         {/* Pilih Pengiriman Section (Kurir Pengiriman) */}
                                         <div className="pt-3 border-t border-border/70 space-y-3">
-                                            <h3 className="font-bold text-xs sm:text-sm text-foreground tracking-tight">
-                                                {t('checkout.shipping_option')}
-                                            </h3>
+                                            <div className="flex items-center justify-between">
+                                                <h3 className="font-bold text-xs sm:text-sm text-foreground tracking-tight">
+                                                    {t('checkout.shipping_option')}
+                                                </h3>
+                                                {loadingRates && (
+                                                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                                        <Loader2 className="w-3 h-3 animate-spin" />
+                                                        Menghitung ongkir...
+                                                    </span>
+                                                )}
+                                            </div>
 
                                             {/* Clickable Courier Selector Box */}
                                             <div
@@ -893,31 +970,40 @@ export default function CheckoutPage({
                                             >
                                                 <div className="flex items-center gap-2.5 flex-wrap min-w-0 text-xs">
                                                     <span className="font-bold uppercase text-[10px] text-[#4A070B] dark:text-[#E8D0BA] bg-[#4A070B]/10 dark:bg-[#E8D0BA]/10 px-1.5 py-0.5 rounded">
-                                                        {selectedCourier?.courierBrand || 'KiriminAja'}
+                                                        {selectedCourier?.courierBrand || 'Kurir'}
                                                     </span>
                                                     <span className="font-bold text-foreground">
                                                         {selectedCourier?.name || 'Pilih Kurir'}
                                                     </span>
-                                                    <span className="text-muted-foreground">•</span>
-                                                    <span className="text-muted-foreground">
-                                                        {selectedCourier?.type || 'Express'}
-                                                    </span>
-                                                    <span className="text-[11px] italic text-muted-foreground hidden sm:inline">
-                                                        via KiriminAja
-                                                    </span>
+                                                    {selectedCourier?.type && (
+                                                        <>
+                                                            <span className="text-muted-foreground">•</span>
+                                                            <span className="text-muted-foreground">{selectedCourier.type}</span>
+                                                        </>
+                                                    )}
+                                                    {selectedCourier?.etd && (
+                                                        <span className="text-[11px] text-muted-foreground hidden sm:inline">{selectedCourier.etd}</span>
+                                                    )}
                                                 </div>
-
-                                                <div className="text-muted-foreground shrink-0">
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    <span className="text-xs font-bold text-[#4A070B] dark:text-[#E8D0BA]">
+                                                        {selectedCourier?.priceFormatted || 'Pilih Alamat Dulu'}
+                                                    </span>
+                                                    <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                                                     </svg>
                                                 </div>
                                             </div>
 
-                                            {/* Dropdown Options for Couriers (from KiriminAja SDK) */}
+                                            {/* Dropdown Options for Couriers (from KiriminAja SDK + live rates) */}
                                             {showCourierModal && (
-                                                <div className="rounded-md border border-border/80 p-2 space-y-1 bg-background/80 max-h-56 overflow-y-auto">
-                                                    {courierOptions.map((c, idx) => (
+                                                <div className="rounded-md border border-border/80 p-2 space-y-1 bg-background/80 max-h-64 overflow-y-auto">
+                                                    {loadingRates ? (
+                                                        <div className="p-3 text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
+                                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                            Memuat ongkos kirim...
+                                                        </div>
+                                                    ) : courierOptions.map((c, idx) => (
                                                         <div
                                                             key={c.id}
                                                             onClick={() => handleSelectCourier(idx)}
@@ -926,14 +1012,17 @@ export default function CheckoutPage({
                                                                 : 'hover:bg-muted text-muted-foreground'
                                                                 }`}
                                                         >
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="font-bold text-[#4A070B] dark:text-[#E8D0BA] uppercase text-[10px] bg-[#4A070B]/10 dark:bg-[#E8D0BA]/10 px-1.5 py-0.5 rounded">{c.courierBrand}</span>
-                                                                <span>{c.name}</span>
-                                                                <span className="text-muted-foreground text-[11px]">• {c.type}</span>
+                                                            <div className="flex items-center gap-2 min-w-0">
+                                                                <span className="font-bold text-[#4A070B] dark:text-[#E8D0BA] uppercase text-[10px] bg-[#4A070B]/10 dark:bg-[#E8D0BA]/10 px-1.5 py-0.5 rounded shrink-0">{c.courierBrand}</span>
+                                                                <span className="truncate">{c.name}</span>
+                                                                {c.type && <span className="text-muted-foreground text-[11px] shrink-0">• {c.type}</span>}
                                                             </div>
-                                                            <span className="text-[11px] text-muted-foreground italic">
-                                                                via KiriminAja
-                                                            </span>
+                                                            <div className="flex flex-col items-end shrink-0 ml-2">
+                                                                <span className={`text-[11px] font-bold ${c.price > 0 ? 'text-foreground' : 'text-muted-foreground'}`}>
+                                                                    {c.priceFormatted}
+                                                                </span>
+                                                                {c.etd && <span className="text-[10px] text-muted-foreground">{c.etd}</span>}
+                                                            </div>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -951,10 +1040,10 @@ export default function CheckoutPage({
                                                 <Link
                                                     href="/stores"
                                                     target="_blank"
-                                                    className="text-xs sm:text-sm font-semibold text-[#4A070B] dark:text-[#E8D0BA] hover:underline flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer"
+                                                    className="text-xs font-semibold text-[#4A070B] dark:text-[#E8D0BA] hover:opacity-75 flex items-center gap-1 shrink-0 transition-opacity cursor-pointer"
                                                 >
                                                     <span>{isEn ? 'Boutique Map' : 'Peta Gerai'}</span>
-                                                    <ExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                                    <ExternalLink className="w-3 h-3" />
                                                 </Link>
                                             </div>
 

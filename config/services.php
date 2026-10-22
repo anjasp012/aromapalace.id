@@ -50,6 +50,8 @@ return [
         'prefix' => env('KIRIMINAJA_PREFIX', 'ARPL'),
         'cache_store' => env('KIRIMINAJA_CACHE_STORE', 'file'),
         'cache_prefix' => env('KIRIMINAJA_CACHE_PREFIX', 'kiriminaja:'),
+        // Subdistrict ID (kecamatan) of the warehouse / origin. Set via KIRIMINAJA_ORIGIN_DISTRICT_ID.
+        'origin_district_id' => env('KIRIMINAJA_ORIGIN_DISTRICT_ID', 4712),
     ],
 
 ];

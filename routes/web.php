@@ -84,6 +84,7 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
         Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+        Route::post('/checkout/shipping-rates', [CheckoutController::class, 'shippingRates'])->name('checkout.shipping-rates');
 
         Route::get('/account', [AccountController::class, 'index'])->name('account.index');
         Route::patch('/account/profile', [AccountController::class, 'updateProfile'])->name('account.profile.update');

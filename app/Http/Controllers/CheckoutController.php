@@ -13,6 +13,7 @@ use App\Services\FirebaseNotificationService;
 use App\Services\KiriminAjaService;
 use App\Services\MembershipService;
 use App\Services\PakasirService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -166,6 +167,31 @@ class CheckoutController extends Controller
             ],
             'addresses' => $user->addresses()->get(),
             'primary_address' => $primaryAddress,
+        ]);
+    }
+
+    /**
+     * Return live shipping rates from KiriminAja for a given destination subdistrict.
+     * Called via AJAX from the checkout page when the user selects an address.
+     */
+    public function shippingRates(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'destination_subdistrict_id' => ['required', 'integer', 'min:1'],
+            'weight' => ['nullable', 'integer', 'min:100', 'max:50000'],
+        ]);
+
+        $destinationId = (int) $validated['destination_subdistrict_id'];
+        $weight = (int) ($validated['weight'] ?? 500);
+
+        // Origin district ID from config, default to 4712 (Jakarta Selatan area)
+        $originId = (int) config('services.kiriminaja.origin_district_id', 4712);
+
+        $rates = $this->kiriminAjaService->getShippingRates($originId, $destinationId, $weight);
+
+        return response()->json([
+            'status' => true,
+            'rates' => $rates,
         ]);
     }
 
