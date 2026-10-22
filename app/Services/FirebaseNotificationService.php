@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\AdminNotificationCreated;
 use App\Models\DeviceToken;
 use App\Models\Notification;
 use App\Models\Order;
@@ -212,7 +213,7 @@ class FirebaseNotificationService
     public function sendToAdmins(string $title, string $body, ?string $url = null, array $data = []): int
     {
         try {
-            Notification::create([
+            $notification = Notification::create([
                 'for_admin' => true,
                 'type' => $data['type'] ?? 'admin',
                 'title' => $title,
@@ -221,6 +222,9 @@ class FirebaseNotificationService
                 'data' => $data,
                 'is_read' => false,
             ]);
+
+            // Broadcast via WebSocket (Reverb) so admin topbar updates instantly
+            event(new AdminNotificationCreated($notification));
         } catch (\Throwable $e) {
             Log::warning('Failed to persist admin notification: '.$e->getMessage());
         }

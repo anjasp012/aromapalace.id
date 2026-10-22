@@ -3,6 +3,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
+import { useEcho } from '@laravel/echo-react';
 
 interface PaymentProps {
     order: {
@@ -41,6 +42,18 @@ function PaymentContent({ order }: PaymentProps) {
     const [isChecking, setIsChecking] = useState(false);
     const [checkMessage, setCheckMessage] = useState<string | null>(null);
 
+    // Real-time WebSocket: listen for OrderPaid event via Laravel Reverb
+    useEcho(
+        isPaid ? '' : `orders.${order.order_number}`,
+        '.OrderPaid',
+        () => {
+            // Payment confirmed via WebSocket — reload order data instantly
+            router.reload({ only: ['order'] });
+        },
+        [order.order_number, isPaid],
+        'private',
+    );
+
     // Countdown tick
     useEffect(() => {
         if (isPaid) return;
@@ -50,18 +63,7 @@ function PaymentContent({ order }: PaymentProps) {
         return () => clearInterval(timer);
     }, [isPaid]);
 
-    // Auto-polling status check every 15 seconds while pending
-    useEffect(() => {
-        if (isPaid) return;
 
-        const pollTimer = setInterval(() => {
-            router.reload({
-                only: ['order'],
-            });
-        }, 15000);
-
-        return () => clearInterval(pollTimer);
-    }, [order.order_number, isPaid]);
 
     const hours = String(Math.floor(timeLeft / 3600)).padStart(2, '0');
     const minutes = String(Math.floor((timeLeft % 3600) / 60)).padStart(2, '0');

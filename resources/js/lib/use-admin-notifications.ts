@@ -1,15 +1,17 @@
 import { useEffect, useRef } from 'react';
 import { router, usePage } from '@inertiajs/react';
-import {
-    initFirebaseForegroundListener,
-    autoRequestNotificationPermission,
-    playNotificationChime,
-} from '@/lib/push-notification';
+import { useEcho } from '@laravel/echo-react';
+import { playNotificationChime } from '@/lib/push-notification';
 
 /**
- * Real-time Order & Notification Notifier for Admin CMS
- * Combines Firebase FCM instant push notifications + robust 10s smart polling fallback.
- * Automatically refreshes unread count & topbar dropdown in real-time, and plays chime on new events.
+ * Real-time Admin Notification via Laravel Reverb WebSocket.
+ *
+ * Listens to the private `admin` channel for `AdminNotificationCreated` events
+ * broadcast from the server whenever a new admin notification is persisted.
+ * On event received: plays a chime and reloads the notification data.
+ *
+ * FCM is intentionally NOT used here — FCM is reserved for web/browser push
+ * and Android Capacitor native push notifications only.
  */
 export function useAdminOrderNotifier(enabled = true): void {
     const { props } = usePage<{
@@ -24,7 +26,7 @@ export function useAdminOrderNotifier(enabled = true): void {
     const prevLatestIdRef = useRef<number>(latestNotifId);
     const isFirstMountRef = useRef<boolean>(true);
 
-    // Watch for new notifications to play chime sound
+    // Play chime when unread count increases (driven by Inertia prop reload)
     useEffect(() => {
         if (!enabled || typeof window === 'undefined') return;
 
@@ -35,7 +37,6 @@ export function useAdminOrderNotifier(enabled = true): void {
             return;
         }
 
-        // If unread count increased or a new notification ID appeared
         if (
             unreadCount > prevUnreadRef.current ||
             (latestNotifId > prevLatestIdRef.current && unreadCount > 0)
@@ -47,27 +48,12 @@ export function useAdminOrderNotifier(enabled = true): void {
         prevLatestIdRef.current = latestNotifId;
     }, [enabled, unreadCount, latestNotifId]);
 
+    // Re-sync when admin tab becomes visible again after being backgrounded
     useEffect(() => {
         if (!enabled || typeof window === 'undefined') return;
 
-        // Auto request permission for Firebase web push
-        autoRequestNotificationPermission().catch(() => {});
-
-        const isOrderOrDashboardPage = () => {
-            const p = window.location.pathname;
-            return (
-                p.startsWith('/manajemen-pesanan') ||
-                p === '/dashboard' ||
-                p.startsWith('/dashboard') ||
-                p.startsWith('/orders') ||
-                p.startsWith('/admin/orders')
-            );
-        };
-
-        const reloadData = (fullReload = false) => {
-            if (fullReload || isOrderOrDashboardPage()) {
-                router.reload({ preserveScroll: true, preserveState: true });
-            } else {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
                 router.reload({
                     only: ['admin_notifications', 'admin_unread_notifications_count'],
                     preserveScroll: true,
@@ -76,42 +62,26 @@ export function useAdminOrderNotifier(enabled = true): void {
             }
         };
 
-        // 1. Firebase FCM foreground listener for instantaneous (0ms) push notifications
-        let cleanupFcm: (() => void) | null = null;
-        initFirebaseForegroundListener(() => {
-            playNotificationChime();
-            reloadData(true);
-        }).then((unsubscribe) => {
-            if (unsubscribe) {
-                cleanupFcm = unsubscribe;
-            }
-        });
-
-        // 2. Service Worker push event receiver (triggers when SW receives push from FCM)
-        const handleSwMessage = (event: MessageEvent) => {
-            if (event.data?.type === 'FCM_PUSH_RECEIVED') {
-                playNotificationChime();
-                reloadData(true);
-            }
-        };
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.addEventListener('message', handleSwMessage);
-        }
-
-        // 3. Re-sync when admin tab is focused/visible again after being backgrounded
-        const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible') {
-                reloadData(false);
-            }
-        };
         document.addEventListener('visibilitychange', handleVisibilityChange);
 
         return () => {
-            if (cleanupFcm) cleanupFcm();
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.removeEventListener('message', handleSwMessage);
-            }
             document.removeEventListener('visibilitychange', handleVisibilityChange);
         };
     }, [enabled]);
+
+    // WebSocket: listen for new admin notifications via Reverb private channel
+    useEcho(
+        enabled ? 'admin' : '',
+        '.AdminNotificationCreated',
+        () => {
+            // New notification broadcast received — reload topbar data instantly
+            router.reload({
+                only: ['admin_notifications', 'admin_unread_notifications_count'],
+                preserveScroll: true,
+                preserveState: true,
+            });
+        },
+        [enabled],
+        'private',
+    );
 }

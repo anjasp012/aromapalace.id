@@ -1,6 +1,11 @@
 import { createInertiaApp, router } from '@inertiajs/react';
 import { initNativeApp } from '@/lib/native-app';
 import { resolveComponentForUrl } from '@/lib/route-resolver';
+import { configureEcho } from '@laravel/echo-react';
+
+configureEcho({
+    broadcaster: 'reverb',
+});
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
