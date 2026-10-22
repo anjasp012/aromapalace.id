@@ -775,8 +775,6 @@ export default function CheckoutPage({
                                                 </Button>
                                             </div>
                                         )}
-                                    </div>
-                                ) : null}
 
                                         {/* Pilih Pengiriman Section (Kurir Pengiriman) */}
                                         <div className="pt-3 border-t border-border/70 space-y-3">
