@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CartItem;
 use App\Models\ProductVariant;
+use App\Models\Voucher;
 use App\Services\CatalogService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -59,12 +60,38 @@ class CartController extends Controller
 
         $formattedSubtotal = 'Rp '.number_format($subtotal, 0, ',', '.');
 
+        $availableVouchers = Voucher::query()
+            ->where('is_active', true)
+            ->where(function ($q) {
+                $q->whereNull('starts_at')->orWhere('starts_at', '<=', now());
+            })
+            ->where(function ($q) {
+                $q->whereNull('expires_at')->orWhere('expires_at', '>=', now());
+            })
+            ->where(function ($q) {
+                $q->whereNull('usage_limit')->orWhereColumn('used_count', '<', 'usage_limit');
+            })
+            ->get()
+            ->map(fn (Voucher $v) => [
+                'id' => $v->id,
+                'code' => $v->code,
+                'name' => $v->name,
+                'type' => $v->type,
+                'value' => (int) $v->value,
+                'min_order_amount' => (int) $v->min_order_amount,
+                'min_order_amount_formatted' => 'Rp '.number_format($v->min_order_amount, 0, ',', '.'),
+                'max_discount_amount' => $v->max_discount_amount,
+            ])
+            ->values()
+            ->all();
+
         return Inertia::render('cart', [
             'items' => $items,
             'subtotal' => $subtotal,
             'subtotal_formatted' => $formattedSubtotal,
             'total' => $subtotal,
             'total_formatted' => $formattedSubtotal,
+            'available_vouchers' => $availableVouchers,
         ]);
     }
 

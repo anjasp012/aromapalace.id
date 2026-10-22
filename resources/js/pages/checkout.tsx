@@ -318,6 +318,8 @@ export default function CheckoutPage({
     // Voucher handling
     const [voucherCodeInput, setVoucherCodeInput] = useState(initial_voucher);
     const [appliedVoucher, setAppliedVoucher] = useState(initial_voucher);
+    const [voucherError, setVoucherError] = useState<string | null>(null);
+    const [voucherSuccess, setVoucherSuccess] = useState<string | null>(null);
 
     const [voucherDiscount, setVoucherDiscount] = useState(() => {
         const v = initial_voucher.toUpperCase().trim();
@@ -372,18 +374,28 @@ export default function CheckoutPage({
         if (e) {
             e.preventDefault();
         }
+        setVoucherError(null);
+        setVoucherSuccess(null);
+
         const code = (explicitCode || voucherCodeInput).toUpperCase().trim();
         if (!code) {
             setAppliedVoucher('');
             setVoucherDiscount(0);
             setData('voucher_code', '');
+            setVoucherError(isEn ? 'Please enter a voucher code.' : 'Silakan masukkan kode voucher.');
             return;
         }
 
         const found = available_vouchers.find((v) => v.code.toUpperCase() === code);
         if (found) {
             if (subtotal < found.min_order_amount) {
-                alert(`Minimal transaksi untuk voucher ${found.code} adalah ${found.min_order_amount_formatted}.`);
+                setAppliedVoucher('');
+                setVoucherDiscount(0);
+                setData('voucher_code', '');
+                const errMsg = isEn
+                    ? `Minimum spend for voucher ${found.code} is ${found.min_order_amount_formatted}.`
+                    : `Minimal transaksi untuk voucher ${found.code} adalah ${found.min_order_amount_formatted}.`;
+                setVoucherError(errMsg);
                 return;
             }
 
@@ -401,13 +413,30 @@ export default function CheckoutPage({
             setAppliedVoucher(code);
             setVoucherDiscount(disc);
             setData('voucher_code', code);
+            const succMsg = isEn
+                ? `Voucher ${found.code} applied! You save Rp ${disc.toLocaleString('id-ID')}.`
+                : `Voucher ${found.code} berhasil dipasang! Anda hemat Rp ${disc.toLocaleString('id-ID')}.`;
+            setVoucherSuccess(succMsg);
             return;
         }
 
-        // Invalid or unlisted code: clear applied voucher silently without disruptive alert
+        // Invalid code
         setAppliedVoucher('');
         setVoucherDiscount(0);
         setData('voucher_code', '');
+        const errMsg = isEn
+            ? `Voucher code "${code}" is invalid or expired.`
+            : `Kode voucher "${code}" tidak valid atau telah kedaluwarsa.`;
+        setVoucherError(errMsg);
+    };
+
+    const handleRemoveVoucher = () => {
+        setAppliedVoucher('');
+        setVoucherDiscount(0);
+        setVoucherCodeInput('');
+        setData('voucher_code', '');
+        setVoucherError(null);
+        setVoucherSuccess(null);
     };
 
     const handleSelectCourier = (index: number) => {
@@ -1094,16 +1123,11 @@ export default function CheckoutPage({
                                                 </span>
                                                 <button
                                                     type="button"
-                                                    onClick={() => {
-                                                        setAppliedVoucher('');
-                                                        setVoucherDiscount(0);
-                                                        setVoucherCodeInput('');
-                                                        setData('voucher_code', '');
-                                                    }}
+                                                    onClick={handleRemoveVoucher}
                                                     className="text-[11px] text-destructive hover:underline cursor-pointer font-medium"
-                                                    title="Hapus voucher"
+                                                    title={isEn ? 'Remove voucher' : 'Hapus voucher'}
                                                 >
-                                                    (Hapus)
+                                                    ({isEn ? 'Remove' : 'Hapus'})
                                                 </button>
                                             </div>
                                             <span className="font-bold text-emerald-800 dark:text-emerald-300">
@@ -1115,13 +1139,16 @@ export default function CheckoutPage({
 
                                 {/* Desktop only: Voucher input form */}
                                 {(!appliedVoucher || voucherDiscount <= 0) && (
-                                    <div className="hidden lg:block pt-3 border-t border-border/70">
+                                    <div className="hidden lg:block pt-3 border-t border-border/70 space-y-1.5">
                                         <div className="flex gap-2">
                                             <Input
                                                 type="text"
-                                                placeholder="Kode Voucher Promo"
+                                                placeholder={isEn ? 'Promo Voucher Code' : 'Kode Voucher Promo'}
                                                 value={voucherCodeInput}
-                                                onChange={(e) => setVoucherCodeInput(e.target.value)}
+                                                onChange={(e) => {
+                                                    setVoucherCodeInput(e.target.value);
+                                                    if (voucherError) setVoucherError(null);
+                                                }}
                                                 onKeyDown={(e) => {
                                                     if (e.key === 'Enter') {
                                                         e.preventDefault();
@@ -1136,9 +1163,19 @@ export default function CheckoutPage({
                                                 variant="outline"
                                                 className="h-9 px-3 rounded-md border border-[#4A070B] text-[#4A070B] hover:bg-[#4A070B] hover:text-white text-xs font-semibold shadow-none cursor-pointer shrink-0 transition-colors"
                                             >
-                                                Terapkan
+                                                {isEn ? 'Apply' : 'Terapkan'}
                                             </Button>
                                         </div>
+                                        {voucherError && (
+                                            <p className="text-[11px] text-destructive font-medium flex items-center gap-1 animate-in fade-in duration-150">
+                                                <span>⚠</span> {voucherError}
+                                            </p>
+                                        )}
+                                        {voucherSuccess && (
+                                            <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1 animate-in fade-in duration-150">
+                                                <span>✓</span> {voucherSuccess}
+                                            </p>
+                                        )}
                                     </div>
                                 )}
 
@@ -1166,22 +1203,26 @@ export default function CheckoutPage({
                                         type="submit"
                                         size="lg"
                                         disabled={processing}
-                                        className="w-full bg-[#4A070B] hover:bg-[#360407] text-white font-semibold rounded-md h-11 text-xs sm:text-sm shadow-none transition active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
+                                        className="w-full bg-[#4A070B] hover:bg-[#360407] text-white font-semibold rounded-md h-11 text-xs sm:text-sm shadow-none transition active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 disabled:opacity-80"
                                     >
-                                        <svg
-                                            className="w-4 h-4 text-[#E5A844]"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth="2"
-                                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                                            />
-                                        </svg>
-                                        <span>{processing ? 'Memproses Pesanan...' : `Beli (${totalItemsCount}) dan Bayar`}</span>
+                                        {processing ? (
+                                            <Loader2 className="w-4 h-4 animate-spin text-[#E5A844]" />
+                                        ) : (
+                                            <svg
+                                                className="w-4 h-4 text-[#E5A844]"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth="2"
+                                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                                                />
+                                            </svg>
+                                        )}
+                                        <span>{processing ? (isEn ? 'Processing Order...' : 'Memproses Pesanan...') : (isEn ? `Buy (${totalItemsCount}) and Pay` : `Beli (${totalItemsCount}) dan Bayar`)}</span>
                                     </Button>
                                 </div>
                             </div>
@@ -1214,51 +1255,61 @@ export default function CheckoutPage({
                                     </div>
                                     <button
                                         type="button"
-                                        onClick={() => {
-                                            setAppliedVoucher('');
-                                            setVoucherDiscount(0);
-                                            setVoucherCodeInput('');
-                                            setData('voucher_code', '');
-                                        }}
+                                        onClick={handleRemoveVoucher}
                                         className="text-[11px] text-destructive hover:underline font-semibold cursor-pointer shrink-0 ml-2"
                                     >
-                                        Hapus
+                                        {isEn ? 'Remove' : 'Hapus'}
                                     </button>
                                 </div>
                             ) : (
-                                <div className="flex items-center gap-2">
-                                    <div className="relative flex-1">
-                                        <svg
-                                            className="w-3.5 h-3.5 text-[#E5A844] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                        <div className="relative flex-1">
+                                            <svg
+                                                className="w-3.5 h-3.5 text-[#E5A844] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                            </svg>
+                                            <Input
+                                                type="text"
+                                                placeholder={isEn ? 'Have a Promo Voucher?' : 'Punya Kode Voucher Promo?'}
+                                                value={voucherCodeInput}
+                                                onChange={(e) => {
+                                                    setVoucherCodeInput(e.target.value);
+                                                    if (voucherError) setVoucherError(null);
+                                                }}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault();
+                                                        handleApplyVoucher(e);
+                                                    }
+                                                }}
+                                                className="h-8.5 pl-8 pr-2.5 rounded-md border border-border/80 bg-background text-xs uppercase tracking-wider focus:border-[#4A070B] focus:ring-1 focus:ring-[#4A070B]/25 shadow-none"
+                                            />
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            onClick={handleApplyVoucher}
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-8.5 px-3 rounded-md border border-[#4A070B] text-[#4A070B] hover:bg-[#4A070B] hover:text-white text-xs font-semibold shadow-none cursor-pointer shrink-0 transition-colors"
                                         >
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                                        </svg>
-                                        <Input
-                                            type="text"
-                                            placeholder="Punya Kode Voucher Promo?"
-                                            value={voucherCodeInput}
-                                            onChange={(e) => setVoucherCodeInput(e.target.value)}
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter') {
-                                                    e.preventDefault();
-                                                    handleApplyVoucher(e);
-                                                }
-                                            }}
-                                            className="h-8.5 pl-8 pr-2.5 rounded-md border border-border/80 bg-background text-xs uppercase tracking-wider focus:border-[#4A070B] focus:ring-1 focus:ring-[#4A070B]/25 shadow-none"
-                                        />
+                                            {isEn ? 'Apply' : 'Terapkan'}
+                                        </Button>
                                     </div>
-                                    <Button
-                                        type="button"
-                                        onClick={handleApplyVoucher}
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-8.5 px-3 rounded-md border border-[#4A070B] text-[#4A070B] hover:bg-[#4A070B] hover:text-white text-xs font-semibold shadow-none cursor-pointer shrink-0 transition-colors"
-                                    >
-                                        Terapkan
-                                    </Button>
+                                    {voucherError && (
+                                        <p className="text-[10.5px] text-destructive font-medium flex items-center gap-1 animate-in fade-in duration-150">
+                                            <span>⚠</span> {voucherError}
+                                        </p>
+                                    )}
+                                    {voucherSuccess && (
+                                        <p className="text-[10.5px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1 animate-in fade-in duration-150">
+                                            <span>✓</span> {voucherSuccess}
+                                        </p>
+                                    )}
                                 </div>
                             )}
                         </div>
