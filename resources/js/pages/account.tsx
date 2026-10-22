@@ -31,6 +31,7 @@ import {
     MapPin,
     Plus,
     Edit2,
+    Camera,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 import type { UserAddress } from '@/types/address';
@@ -41,6 +42,7 @@ interface UserData {
     name: string;
     email: string;
     phone?: string;
+    avatar?: string | null;
     address?: string;
     city?: string;
     postal_code?: string;
@@ -141,11 +143,25 @@ export default function AccountPage({
     // Profile form state
     const [editName, setEditName] = useState(user.name || '');
     const [editPhone, setEditPhone] = useState(user.phone || '');
+    const [avatarFile, setAvatarFile] = useState<File | null>(null);
+    const [avatarPreview, setAvatarPreview] = useState<string | null>(user.avatar || null);
+    const [removeAvatar, setRemoveAvatar] = useState(false);
     const [editAddress, setEditAddress] = useState(user.address || '');
     const [editCity, setEditCity] = useState(user.city || '');
     const [editPostalCode, setEditPostalCode] = useState(user.postal_code || '');
     const [profileError, setProfileError] = useState<string | null>(null);
     const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+
+    useEffect(() => {
+        if (editProfileOpen) {
+            setEditName(user.name || '');
+            setEditPhone(user.phone || '');
+            setAvatarFile(null);
+            setAvatarPreview(user.avatar || null);
+            setRemoveAvatar(false);
+            setProfileError(null);
+        }
+    }, [editProfileOpen, user]);
 
     // Password form state
     const [currentPassword, setCurrentPassword] = useState('');
@@ -192,16 +208,27 @@ export default function AccountPage({
         }
 
         setIsUpdatingProfile(true);
-        router.patch(
+
+        const formData = new FormData();
+        formData.append('_method', 'PATCH');
+        formData.append('name', editName.trim());
+        formData.append('phone', editPhone.trim());
+        if (avatarFile) {
+            formData.append('avatar', avatarFile);
+        }
+        if (removeAvatar) {
+            formData.append('remove_avatar', '1');
+        }
+
+        router.post(
             '/account/profile',
-            {
-                name: editName.trim(),
-                phone: editPhone.trim(),
-            },
+            formData,
             {
                 preserveScroll: true,
                 onSuccess: () => {
                     setEditProfileOpen(false);
+                    setAvatarFile(null);
+                    setRemoveAvatar(false);
                 },
                 onError: (errors) => {
                     setProfileError(Object.values(errors)[0] || (isEn ? 'Failed to update profile.' : 'Gagal memperbarui profil.'));
@@ -262,10 +289,18 @@ export default function AccountPage({
                         <div className="flex items-center gap-3.5 sm:gap-4 pb-3.5">
                             {/* Avatar with Verified Ring */}
                             <div className="relative shrink-0">
-                                <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full bg-gradient-to-br from-[#E5A844] via-[#F3CE7A] to-[#8C1D24] p-0.5 shadow-md">
-                                    <div className="w-full h-full rounded-full bg-[#4A070B] flex items-center justify-center text-white text-2xl font-serif font-bold uppercase select-none">
-                                        {initial}
-                                    </div>
+                                <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full bg-gradient-to-br from-[#E5A844] via-[#F3CE7A] to-[#8C1D24] p-0.5 shadow-md overflow-hidden">
+                                    {user.avatar ? (
+                                        <img
+                                            src={user.avatar}
+                                            alt={displayName}
+                                            className="w-full h-full rounded-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full rounded-full bg-[#4A070B] flex items-center justify-center text-white text-2xl font-serif font-bold uppercase select-none">
+                                            {initial}
+                                        </div>
+                                    )}
                                 </div>
                                 <div
                                     className="absolute bottom-0 right-0 w-5 h-5 rounded-full bg-[#E5A844] text-[#4A070B] flex items-center justify-center ring-2 ring-card shadow-xs"
@@ -605,7 +640,63 @@ export default function AccountPage({
                             </div>
                         )}
 
-                        <div className="space-y-3.5 my-4">
+                        <div className="space-y-4 my-4">
+                            {/* Avatar Picker & Preview */}
+                            <div className="flex items-center gap-4 pb-3 border-b border-border/60">
+                                <div className="relative shrink-0">
+                                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#E5A844] via-[#F3CE7A] to-[#8C1D24] p-0.5 shadow-xs overflow-hidden">
+                                        {avatarPreview ? (
+                                            <img src={avatarPreview} alt="Preview" className="w-full h-full rounded-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full rounded-full bg-[#4A070B] flex items-center justify-center text-white text-xl font-serif font-bold uppercase select-none">
+                                                {initial}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="space-y-1.5 flex-1 min-w-0">
+                                    <label className="text-xs font-semibold text-foreground block">
+                                        {isEn ? 'Profile Photo' : 'Foto Profil'}
+                                    </label>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <label className="cursor-pointer">
+                                            <input
+                                                type="file"
+                                                accept="image/jpeg,image/png,image/jpg,image/webp"
+                                                className="hidden"
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (file) {
+                                                        setAvatarFile(file);
+                                                        setAvatarPreview(URL.createObjectURL(file));
+                                                        setRemoveAvatar(false);
+                                                    }
+                                                }}
+                                            />
+                                            <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-border/80 bg-background hover:bg-muted text-foreground transition shadow-2xs">
+                                                <Camera className="w-3.5 h-3.5 text-[#E5A844]" />
+                                                {avatarPreview ? (isEn ? 'Change Photo' : 'Ganti Foto') : (isEn ? 'Upload Photo' : 'Pilih Foto')}
+                                            </span>
+                                        </label>
+                                        {avatarPreview && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setAvatarFile(null);
+                                                    setAvatarPreview(null);
+                                                    setRemoveAvatar(true);
+                                                }}
+                                                className="text-xs text-destructive hover:underline font-medium cursor-pointer"
+                                            >
+                                                {isEn ? 'Remove' : 'Hapus Foto'}
+                                            </button>
+                                        )}
+                                    </div>
+                                    <p className="text-[10.5px] text-muted-foreground">
+                                        {isEn ? 'JPG, PNG or WEBP, max 3MB.' : 'Format JPG, PNG atau WEBP, maks 3MB.'}
+                                    </p>
+                                </div>
+                            </div>
                             <div className="space-y-1">
                                 <label className="text-xs font-semibold text-foreground">{t('auth.full_name')}</label>
                                 <Input

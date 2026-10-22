@@ -57,6 +57,13 @@ class UserAddress extends Model
     protected $table = 'user_addresses';
 
     /**
+     * @var array<int, string>
+     */
+    protected $appends = [
+        'formatted_address',
+    ];
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array

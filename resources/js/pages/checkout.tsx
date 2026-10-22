@@ -96,6 +96,23 @@ interface CheckoutProps {
     primary_address?: UserAddress | null;
 }
 
+const isPaymentIconImage = (icon?: string | null): boolean => {
+    if (!icon) return false;
+    const trimmed = icon.trim();
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/') || trimmed.startsWith('data:image/')) {
+        return true;
+    }
+    return /\.(png|jpe?g|webp|svg|gif)$/i.test(trimmed);
+};
+
+const formatPaymentImageUrl = (icon: string): string => {
+    const trimmed = icon.trim();
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/') || trimmed.startsWith('data:image/')) {
+        return trimmed;
+    }
+    return `/storage/${trimmed}`;
+};
+
 const getPaymentMeta = (code: string, icon?: string) => {
     switch (code) {
         case 'qris':
@@ -325,10 +342,22 @@ export default function CheckoutPage({
     const [addressSelectorOpen, setAddressSelectorOpen] = useState(false);
     const [editingAddress, setEditingAddress] = useState<UserAddress | null>(null);
 
-    // Keep selectedAddress in sync if props or localAddresses update
+    // Keep selectedAddress and useForm data strictly synchronized with default/primary address
     useEffect(() => {
-        if (!selectedAddress && initialSelectedAddress) {
-            setSelectedAddress(initialSelectedAddress);
+        const activeAddr = selectedAddress || initialSelectedAddress;
+        if (activeAddr) {
+            if (!selectedAddress) {
+                setSelectedAddress(activeAddr);
+            }
+            setData((prev) => ({
+                ...prev,
+                address_id: activeAddr.id,
+                recipient_name: prev.recipient_name || activeAddr.recipient_name || user?.name || '',
+                recipient_phone: activeAddr.recipient_phone || prev.recipient_phone || user?.phone || '',
+                shipping_address: activeAddr.formatted_address || activeAddr.address || prev.shipping_address,
+                city: activeAddr.city_name || prev.city,
+                postal_code: activeAddr.postal_code || prev.postal_code,
+            }));
         }
     }, [initialSelectedAddress, selectedAddress]);
 
@@ -574,13 +603,29 @@ export default function CheckoutPage({
     const handleOpenConfirm = (e: React.FormEvent) => {
         e.preventDefault();
         if (deliveryType === 'delivery') {
-            if (!data.shipping_address?.trim() || !data.recipient_phone?.trim()) {
+            const activeAddress = selectedAddress || initialSelectedAddress;
+            const shippingAddr = activeAddress?.formatted_address || activeAddress?.address || data.shipping_address;
+            const recipientPhone = activeAddress?.recipient_phone || data.recipient_phone;
+
+            if (!shippingAddr?.trim() || !recipientPhone?.trim()) {
                 setEditingAddress(null);
                 setAddressModalOpen(true);
                 alert(isEn
                     ? 'Please fill in your delivery address and phone number before placing your order.'
                     : 'Silahkan pilih atau isi alamat pengiriman terlebih dahulu sebelum melanjutkan pesanan.');
                 return;
+            }
+
+            if (activeAddress) {
+                setData((prev) => ({
+                    ...prev,
+                    address_id: activeAddress.id,
+                    recipient_name: activeAddress.recipient_name || prev.recipient_name,
+                    recipient_phone: recipientPhone,
+                    shipping_address: shippingAddr,
+                    city: activeAddress.city_name || prev.city,
+                    postal_code: activeAddress.postal_code || prev.postal_code,
+                }));
             }
         }
         setShowConfirmModal(true);
@@ -607,11 +652,12 @@ export default function CheckoutPage({
     const activePaymentMethods = useMemo(() => {
         if (payment_methods && payment_methods.length > 0) {
             return payment_methods.map((pm) => {
-                const meta = getPaymentMeta(pm.code, pm.icon);
+                const meta = getPaymentMeta(pm.code, pm.icon || undefined);
                 return {
                     id: pm.code,
                     code: pm.code,
                     name: pm.name,
+                    icon: pm.icon || null,
                     type: pm.type === 'qris' ? 'QRIS Instant' : pm.type === 'payment_link' ? 'Multi-Payment Portal' : 'Virtual Account',
                     min_amount: pm.min_amount,
                     max_amount: pm.max_amount,
@@ -737,15 +783,6 @@ export default function CheckoutPage({
                                                 <MapPin className="w-4 h-4 text-[#4A070B] dark:text-[#E8D0BA]" />
                                                 {t('checkout.address_detail')}
                                             </h3>
-                                            {localAddresses.length > 0 && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setAddressSelectorOpen(true)}
-                                                    className="text-xs sm:text-sm font-semibold text-[#4A070B] dark:text-[#E8D0BA] hover:underline cursor-pointer"
-                                                >
-                                                    {t('checkout.change_address')}
-                                                </button>
-                                            )}
                                         </div>
 
                                         {selectedAddress ? (
@@ -770,26 +807,13 @@ export default function CheckoutPage({
                                                         )}
                                                     </div>
 
-                                                    <div className="flex items-center gap-2">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setEditingAddress(selectedAddress);
-                                                                setAddressModalOpen(true);
-                                                            }}
-                                                            className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 px-2 py-1 rounded hover:bg-muted transition cursor-pointer"
-                                                        >
-                                                            <Edit2 className="w-3 h-3" />
-                                                            <span>Ubah</span>
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setAddressSelectorOpen(true)}
-                                                            className="text-xs font-bold text-[#4A070B] dark:text-[#E8D0BA] hover:underline px-2 py-1 cursor-pointer"
-                                                        >
-                                                            Ganti Alamat
-                                                        </button>
-                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setAddressSelectorOpen(true)}
+                                                        className="text-xs font-semibold text-[#4A070B] dark:text-[#E8D0BA] hover:underline px-2 py-1 rounded hover:bg-muted transition cursor-pointer"
+                                                    >
+                                                        Ganti Alamat
+                                                    </button>
                                                 </div>
 
                                                 <p className="text-xs text-foreground/90 leading-relaxed">
@@ -1119,7 +1143,27 @@ export default function CheckoutPage({
                                                     }`}
                                             >
                                                 <div className="flex items-center gap-2.5 min-w-0">
-                                                    <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-sm shrink-0 tracking-tight ${pm.logoStyle}`}>
+                                                    {isPaymentIconImage(pm.icon) ? (
+                                                        <div className="w-12 h-7 rounded border border-border/60 bg-white dark:bg-muted p-0.5 flex items-center justify-center shrink-0 overflow-hidden">
+                                                            <img
+                                                                src={formatPaymentImageUrl(pm.icon!)}
+                                                                alt={pm.name}
+                                                                className="max-h-full max-w-full object-contain"
+                                                                onError={(e) => {
+                                                                    const target = e.currentTarget;
+                                                                    if (target.parentElement) {
+                                                                        target.parentElement.style.display = 'none';
+                                                                        const fallback = target.parentElement.nextElementSibling;
+                                                                        if (fallback) (fallback as HTMLElement).style.display = 'inline-flex';
+                                                                    }
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    ) : null}
+                                                    <span
+                                                        style={{ display: isPaymentIconImage(pm.icon) ? 'none' : 'inline-flex' }}
+                                                        className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-sm shrink-0 tracking-tight ${pm.logoStyle}`}
+                                                    >
                                                         {pm.logo}
                                                     </span>
                                                     <div className="min-w-0">

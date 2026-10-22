@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -83,6 +84,7 @@ class AccountController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'phone' => $user->phone ?? '',
+                'avatar' => $user->avatar,
                 'address' => $user->primaryAddress?->address ?? '',
                 'city' => $user->primaryAddress?->city_name ?? '',
                 'postal_code' => $user->primaryAddress?->postal_code ?? '',
@@ -110,12 +112,30 @@ class AccountController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:25'],
+            'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:3072'],
+            'remove_avatar' => ['nullable', 'boolean'],
         ]);
 
-        $user->update([
-            'name' => $validated['name'],
-            'phone' => $validated['phone'] ?? $user->phone,
-        ]);
+        if ($request->boolean('remove_avatar')) {
+            if (! empty($user->avatar) && str_contains($user->avatar, '/storage/avatars/')) {
+                $storagePath = str_replace('/storage/', '', $user->avatar);
+                Storage::disk('public')->delete($storagePath);
+            }
+            $user->avatar = null;
+        } elseif ($request->hasFile('avatar')) {
+            if (! empty($user->avatar) && str_contains($user->avatar, '/storage/avatars/')) {
+                $storagePath = str_replace('/storage/', '', $user->avatar);
+                Storage::disk('public')->delete($storagePath);
+            }
+            $path = $request->file('avatar')->store('avatars', 'public');
+            $user->avatar = Storage::url($path);
+        }
+
+        $user->name = $validated['name'];
+        if (array_key_exists('phone', $validated)) {
+            $user->phone = $validated['phone'];
+        }
+        $user->save();
 
         return back()->with('success', 'Profil Anda berhasil diperbarui.');
     }

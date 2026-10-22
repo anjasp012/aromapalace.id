@@ -18,7 +18,7 @@ class NotificationSeeder extends Seeder
         $orderId = $latestOrder ? $latestOrder->id : 1;
 
         Notification::firstOrCreate(
-            ['title' => "🛍️ Pesanan Baru Masuk! #{$orderNumber}"],
+            ['title' => "Pesanan Baru Masuk! #{$orderNumber}"],
             [
                 'for_admin' => true,
                 'type' => 'new_order',
@@ -31,7 +31,7 @@ class NotificationSeeder extends Seeder
         );
 
         Notification::firstOrCreate(
-            ['title' => "💰 Pembayaran Diterima! #{$orderNumber}"],
+            ['title' => "Pembayaran Diterima! #{$orderNumber}"],
             [
                 'for_admin' => true,
                 'type' => 'payment_success',
@@ -44,7 +44,7 @@ class NotificationSeeder extends Seeder
         );
 
         Notification::firstOrCreate(
-            ['title' => '🎁 Voucher Promo Diaktifkan'],
+            ['title' => 'Voucher Promo Diaktifkan'],
             [
                 'for_admin' => true,
                 'type' => 'voucher_reward',

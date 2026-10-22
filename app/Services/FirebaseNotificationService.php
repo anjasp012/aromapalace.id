@@ -299,7 +299,7 @@ class FirebaseNotificationService
 
         // Notifikasi ke Admin
         $this->sendToAdmins(
-            title: '🛍️ Pesanan Baru Masuk! #'.$order->order_number,
+            title: 'Pesanan Baru Masuk! #'.$order->order_number,
             body: "Pesanan baru dari {$order->recipient_name} senilai {$formattedTotal}.",
             url: '/manajemen-pesanan/'.$order->id,
             data: ['order_id' => (string) $order->id, 'type' => 'new_order']
@@ -309,7 +309,7 @@ class FirebaseNotificationService
         if ($order->user_id) {
             $this->sendToUser(
                 user: $order->user_id,
-                title: '✨ Pesanan Berhasil Dibuat!',
+                title: 'Pesanan Berhasil Dibuat!',
                 body: "Pesanan #{$order->order_number} sedang menunggu pembayaran {$formattedTotal}.",
                 url: url('/payment/'.$order->order_number),
                 data: ['order_id' => (string) $order->id, 'type' => 'order_created']
@@ -338,7 +338,7 @@ class FirebaseNotificationService
         if ($order->user_id) {
             $this->sendToUser(
                 user: $order->user_id,
-                title: '💳 Pembayaran Berhasil! #'.$order->order_number,
+                title: 'Pembayaran Berhasil! #'.$order->order_number,
                 body: "Pembayaran {$formattedTotal} telah lunas. Pesanan Anda sedang disiapkan dan dikemas.",
                 url: url('/account/orders'),
                 data: [
@@ -351,7 +351,7 @@ class FirebaseNotificationService
 
         // Ke Admin
         $this->sendToAdmins(
-            title: '💰 Pembayaran Diterima! #'.$order->order_number,
+            title: 'Pembayaran Diterima! #'.$order->order_number,
             body: "Pembayaran {$formattedTotal} dari {$order->recipient_name} telah lunas.",
             url: '/manajemen-pesanan/'.$order->id,
             data: [
@@ -376,7 +376,7 @@ class FirebaseNotificationService
 
         $this->sendToUser(
             user: $order->user_id,
-            title: '🚚 Pesanan Anda Sedang Dikirim!',
+            title: 'Pesanan Anda Sedang Dikirim!',
             body: "Pesanan #{$order->order_number} telah diserahkan kepada {$courierName}. Nantikan aroma mewah Anda segera tiba.",
             url: url('/account/orders'),
             data: ['order_id' => (string) $order->id, 'type' => 'order_shipped']
@@ -397,7 +397,7 @@ class FirebaseNotificationService
 
         $this->sendToUser(
             user: $order->user_id,
-            title: '🏬 Pesanan Siap Diambil di Butik!',
+            title: 'Pesanan Siap Diambil di Butik!',
             body: "Wewangian mewah pesanan Anda #{$order->order_number} sudah siap diambil di {$storeName}.",
             url: url('/account/orders'),
             data: ['order_id' => (string) $order->id, 'type' => 'store_pickup_ready']
@@ -410,7 +410,7 @@ class FirebaseNotificationService
     public function notifyPromo(string $title, string $body, ?string $url = null): int
     {
         return $this->sendBroadcast(
-            title: '🔥 '.$title,
+            title: $title,
             body: $body,
             url: $url ?: url('/products?discount=1'),
             data: ['type' => 'promo']
@@ -425,7 +425,7 @@ class FirebaseNotificationService
         $discountInfo = $voucher->type === 'percentage' ? "Diskon {$voucher->value}%" : 'Potongan Rp '.number_format($voucher->value, 0, ',', '.');
 
         return $this->sendBroadcast(
-            title: '🎁 Voucher Spesial Baru: '.$voucher->code,
+            title: 'Voucher Spesial Baru: '.$voucher->code,
             body: "Gunakan kode {$voucher->code} untuk {$discountInfo} di Aroma Palace. Jangan lewatkan!",
             url: url('/products'),
             data: ['voucher_code' => $voucher->code, 'type' => 'voucher_reward']

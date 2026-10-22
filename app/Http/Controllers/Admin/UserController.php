@@ -10,6 +10,7 @@ use App\Services\MembershipService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -58,6 +59,7 @@ class UserController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'role' => $user->role,
+                'avatar' => $user->avatar,
                 'orders_count' => $user->orders_count,
                 'membership' => $user->membership ? [
                     'points' => $user->membership->points,
@@ -93,13 +95,21 @@ class UserController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'role' => ['required', 'in:admin,customer'],
             'password' => ['required', 'string', 'min:8'],
+            'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:3072'],
         ]);
+
+        $avatarUrl = null;
+        if ($request->hasFile('avatar')) {
+            $path = $request->file('avatar')->store('avatars', 'public');
+            $avatarUrl = Storage::url($path);
+        }
 
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'role' => $validated['role'],
             'password' => Hash::make($validated['password']),
+            'avatar' => $avatarUrl,
         ]);
 
         if ($user->role === 'customer') {
@@ -122,6 +132,7 @@ class UserController extends Controller
                 'email' => $user->email,
                 'role' => $user->role,
                 'phone' => $user->phone,
+                'avatar' => $user->avatar,
                 'address' => $user->primaryAddress?->address,
                 'city' => $user->primaryAddress?->city_name,
                 'postal_code' => $user->primaryAddress?->postal_code,
@@ -139,11 +150,28 @@ class UserController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'role' => ['required', 'in:admin,customer'],
             'password' => ['nullable', 'string', 'min:8'],
+            'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:3072'],
+            'remove_avatar' => ['nullable', 'boolean'],
         ]);
 
         // Prevent self role demotion
         if ($user->id === $request->user()->id && $validated['role'] !== 'admin') {
             return back()->with('error', 'Anda tidak dapat mengubah role akun Anda sendiri menjadi bukan admin.');
+        }
+
+        if ($request->boolean('remove_avatar')) {
+            if (! empty($user->avatar) && str_contains($user->avatar, '/storage/avatars/')) {
+                $storagePath = str_replace('/storage/', '', $user->avatar);
+                Storage::disk('public')->delete($storagePath);
+            }
+            $user->avatar = null;
+        } elseif ($request->hasFile('avatar')) {
+            if (! empty($user->avatar) && str_contains($user->avatar, '/storage/avatars/')) {
+                $storagePath = str_replace('/storage/', '', $user->avatar);
+                Storage::disk('public')->delete($storagePath);
+            }
+            $path = $request->file('avatar')->store('avatars', 'public');
+            $user->avatar = Storage::url($path);
         }
 
         $user->name = $validated['name'];
@@ -182,6 +210,7 @@ class UserController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'role' => $user->role,
+                'avatar' => $user->avatar,
                 'created_at' => $user->created_at?->format('d M Y, H:i').' WIB',
                 'orders_count' => $user->orders()->count(),
             ],

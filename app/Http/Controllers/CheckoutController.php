@@ -130,6 +130,11 @@ class CheckoutController extends Controller
             ->values()
             ->all();
 
+        $primaryAddress = $user->primaryAddress ?: $user->addresses()->where('is_primary', true)->first() ?: $user->addresses()->first();
+        if ($primaryAddress && ! $primaryAddress->is_primary && ! $user->addresses()->where('is_primary', true)->exists()) {
+            $primaryAddress->update(['is_primary' => true]);
+        }
+
         return Inertia::render('checkout', [
             'items' => $items,
             'subtotal' => $subtotal,
@@ -148,13 +153,13 @@ class CheckoutController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'phone' => $user->phone ?? '',
-                'address' => $user->primaryAddress?->address ?? '',
-                'city' => $user->primaryAddress?->city_name ?? '',
-                'postal_code' => $user->primaryAddress?->postal_code ?? '',
+                'phone' => $user->phone ?: ($primaryAddress?->recipient_phone ?? ''),
+                'address' => $primaryAddress?->formatted_address ?: ($primaryAddress?->address ?? ''),
+                'city' => $primaryAddress?->city_name ?? '',
+                'postal_code' => $primaryAddress?->postal_code ?? '',
             ],
             'addresses' => $user->addresses()->get(),
-            'primary_address' => $user->primaryAddress,
+            'primary_address' => $primaryAddress,
         ]);
     }
 
