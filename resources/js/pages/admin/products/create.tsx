@@ -60,6 +60,7 @@ export default function AdminProductCreate({
 }: ProductCreateProps) {
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [imagePreviews, setImagePreviews] = useState<UploadedPreview[]>([]);
+    const [isDragging, setIsDragging] = useState(false);
 
     const { data, setData, post, processing, errors } = useForm<{
         name: string;
@@ -123,6 +124,27 @@ export default function AdminProductCreate({
         }
         setImagePreviews(updated);
         setData('images', updated.map((item) => item.file));
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            handleFilesSelected(e.dataTransfer.files);
+        }
     };
 
     const handleAddVariant = () => {
