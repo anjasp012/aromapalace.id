@@ -7,7 +7,6 @@ use App\Models\Notification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -48,7 +47,7 @@ class NotificationController extends Controller
                 'type' => $n->type,
                 'title' => $n->title,
                 'body' => $n->body,
-                'url' => $n->url,
+                'url' => $n->admin_url ?: $n->url,
                 'data' => $n->data,
                 'is_read' => $n->is_read,
                 'created_at' => $n->created_at ? $n->created_at->format('d M Y H:i') : null,
@@ -87,7 +86,7 @@ class NotificationController extends Controller
                 'type' => $n->type,
                 'title' => $n->title,
                 'body' => $n->body,
-                'url' => $n->url,
+                'url' => $n->admin_url ?: $n->url,
                 'is_read' => $n->is_read,
                 'created_at' => $n->created_at ? $n->created_at->diffForHumans() : null,
             ]);
@@ -152,8 +151,10 @@ class NotificationController extends Controller
             ]);
         }
 
-        if (! empty($notification->url)) {
-            return redirect($notification->url);
+        $targetUrl = $notification->admin_url ?: $notification->url;
+
+        if (! empty($targetUrl)) {
+            return redirect($targetUrl);
         }
 
         return redirect()->route('admin.notifications.page');

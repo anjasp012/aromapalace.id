@@ -64,4 +64,28 @@ class Notification extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    /**
+     * Get normalized relative URL safe for Admin panel navigation.
+     */
+    public function getAdminUrlAttribute(): ?string
+    {
+        if (! $this->url) {
+            return null;
+        }
+
+        $target = $this->url;
+        $target = preg_replace('#^https?://[^/]+/admin/orders(/|$)#i', '/manajemen-pesanan$1', $target);
+        $target = preg_replace('#^/admin/orders(/|$)#i', '/manajemen-pesanan$1', $target);
+
+        $parsed = parse_url($target);
+        if (isset($parsed['path']) && (
+            str_starts_with($parsed['path'], '/manajemen-') ||
+            str_starts_with($parsed['path'], '/dashboard')
+        )) {
+            $target = $parsed['path'].(isset($parsed['query']) ? '?'.$parsed['query'] : '');
+        }
+
+        return $target;
+    }
 }

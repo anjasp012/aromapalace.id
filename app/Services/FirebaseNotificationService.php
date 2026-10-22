@@ -301,7 +301,7 @@ class FirebaseNotificationService
         $this->sendToAdmins(
             title: '🛍️ Pesanan Baru Masuk! #'.$order->order_number,
             body: "Pesanan baru dari {$order->recipient_name} senilai {$formattedTotal}.",
-            url: url('/admin/orders/'.$order->id),
+            url: '/manajemen-pesanan/'.$order->id,
             data: ['order_id' => (string) $order->id, 'type' => 'new_order']
         );
 
@@ -353,7 +353,7 @@ class FirebaseNotificationService
         $this->sendToAdmins(
             title: '💰 Pembayaran Diterima! #'.$order->order_number,
             body: "Pembayaran {$formattedTotal} dari {$order->recipient_name} telah lunas.",
-            url: url('/admin/orders/'.$order->id),
+            url: '/manajemen-pesanan/'.$order->id,
             data: [
                 'order_id' => (string) $order->id,
                 'order_number' => (string) $order->order_number,

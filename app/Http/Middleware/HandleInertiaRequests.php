@@ -84,7 +84,7 @@ class HandleInertiaRequests extends Middleware
                         'type' => $n->type,
                         'title' => $n->title,
                         'body' => $n->body,
-                        'url' => $n->url,
+                        'url' => $n->admin_url ?: $n->url,
                         'is_read' => $n->is_read,
                         'created_at' => $n->created_at ? $n->created_at->diffForHumans() : null,
                     ])
