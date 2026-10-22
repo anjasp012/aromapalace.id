@@ -312,7 +312,30 @@ export default function CheckoutPage({
 }: CheckoutProps) {
     const { t, pickText, isEn } = useTranslation();
 
-    // Shipping rates fetched from KiriminAja API
+
+    // Delivery Type: delivery vs pickup
+    const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
+
+    // Default store
+    const defaultStoreId = stores.length > 0 ? stores[0].id : null;
+
+    // User Addresses & KiriminAja Coverage Integration
+    const [localAddresses, setLocalAddresses] = useState<UserAddress[]>(addresses || []);
+
+    useEffect(() => {
+        setLocalAddresses(addresses || []);
+    }, [addresses]);
+
+    const initialSelectedAddress = useMemo(() => {
+        return primary_address || localAddresses.find((a) => a.is_primary) || localAddresses[0] || null;
+    }, [primary_address, localAddresses]);
+
+    const [selectedAddress, setSelectedAddress] = useState<UserAddress | null>(initialSelectedAddress);
+    const [addressModalOpen, setAddressModalOpen] = useState(false);
+    const [addressSelectorOpen, setAddressSelectorOpen] = useState(false);
+    const [editingAddress, setEditingAddress] = useState<UserAddress | null>(null);
+
+    // Shipping rates fetched from KiriminAja API (declared after selectedAddress to avoid TDZ)
     const [shippingRates, setShippingRates] = useState<ShippingRate[]>([]);
     const [loadingRates, setLoadingRates] = useState(false);
 
@@ -327,7 +350,6 @@ export default function CheckoutPage({
         ];
 
         if (shippingRates.length > 0) {
-            // Expand per-service rates from API into individual options
             return shippingRates.map((r) => ({
                 id: r.code,
                 code: r.code,
@@ -352,29 +374,6 @@ export default function CheckoutPage({
             etd: `Layanan ${c.type}`,
         }));
     }, [propCouriers, shippingRates, selectedAddress]);
-
-
-    // Delivery Type: delivery vs pickup
-    const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
-
-    // Default store
-    const defaultStoreId = stores.length > 0 ? stores[0].id : null;
-
-    // User Addresses & KiriminAja Coverage Integration
-    const [localAddresses, setLocalAddresses] = useState<UserAddress[]>(addresses || []);
-
-    useEffect(() => {
-        setLocalAddresses(addresses || []);
-    }, [addresses]);
-
-    const initialSelectedAddress = useMemo(() => {
-        return primary_address || localAddresses.find((a) => a.is_primary) || localAddresses[0] || null;
-    }, [primary_address, localAddresses]);
-
-    const [selectedAddress, setSelectedAddress] = useState<UserAddress | null>(initialSelectedAddress);
-    const [addressModalOpen, setAddressModalOpen] = useState(false);
-    const [addressSelectorOpen, setAddressSelectorOpen] = useState(false);
-    const [editingAddress, setEditingAddress] = useState<UserAddress | null>(null);
 
     // Keep selectedAddress and useForm data strictly synchronized with default/primary address
     useEffect(() => {
