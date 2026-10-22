@@ -85,12 +85,19 @@ class CartController extends Controller
             ->values()
             ->all();
 
+        $appliedVoucher = session('applied_voucher', '');
+        if ($request->query('voucher')) {
+            $appliedVoucher = strtoupper(trim((string) $request->query('voucher')));
+            session(['applied_voucher' => $appliedVoucher]);
+        }
+
         return Inertia::render('cart', [
             'items' => $items,
             'subtotal' => $subtotal,
             'subtotal_formatted' => $formattedSubtotal,
             'total' => $subtotal,
             'total_formatted' => $formattedSubtotal,
+            'initial_voucher' => $appliedVoucher,
             'available_vouchers' => $availableVouchers,
         ]);
     }
@@ -186,5 +193,33 @@ class CartController extends Controller
         $request->user()->cartItems()->delete();
 
         return back()->with('success', 'Seluruh isi keranjang belanja Anda telah dikosongkan.');
+    }
+
+    /**
+     * Store applied voucher into user session.
+     */
+    public function applyVoucher(Request $request): RedirectResponse
+    {
+        $code = strtoupper(trim((string) $request->input('code', '')));
+        if ($code !== '') {
+            $voucher = Voucher::where('code', $code)->where('is_active', true)->first();
+            if ($voucher) {
+                session(['applied_voucher' => $voucher->code]);
+
+                return back()->with('success', "Voucher {$voucher->code} berhasil dipasang.");
+            }
+        }
+
+        return back()->with('error', 'Kode voucher tidak valid atau sudah tidak berlaku.');
+    }
+
+    /**
+     * Remove the applied voucher from user session.
+     */
+    public function removeVoucher(Request $request): RedirectResponse
+    {
+        $request->session()->forget('applied_voucher');
+
+        return back()->with('success', 'Voucher berhasil dilepas.');
     }
 }

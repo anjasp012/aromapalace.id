@@ -77,7 +77,15 @@ class CheckoutController extends Controller
         }
 
         // Voucher handling from query or session
-        $initialVoucher = (string) $request->query('voucher', '');
+        if ($request->has('remove_voucher')) {
+            session()->forget('applied_voucher');
+            $initialVoucher = '';
+        } else {
+            $initialVoucher = strtoupper(trim((string) ($request->query('voucher') ?: session('applied_voucher', ''))));
+            if ($initialVoucher !== '') {
+                session(['applied_voucher' => $initialVoucher]);
+            }
+        }
         $discountAmount = $this->calculateDiscount($initialVoucher, $subtotal);
         $total = max(0, $subtotal - $discountAmount);
 
@@ -94,10 +102,10 @@ class CheckoutController extends Controller
                     'description' => $v->description,
                     'terms' => $v->terms ?? [],
                     'type' => $v->type,
-                    'value' => $v->value,
-                    'min_order_amount' => $v->min_order_amount,
+                    'value' => (int) $v->value,
+                    'min_order_amount' => (int) $v->min_order_amount,
                     'min_order_amount_formatted' => 'Rp '.number_format($v->min_order_amount, 0, ',', '.'),
-                    'max_discount_amount' => $v->max_discount_amount,
+                    'max_discount_amount' => $v->max_discount_amount ? (int) $v->max_discount_amount : null,
                     'formatted_discount' => $v->type === 'percentage' ? $v->value.'%' : 'Rp '.number_format($v->value, 0, ',', '.'),
                 ];
             });
@@ -387,8 +395,9 @@ class CheckoutController extends Controller
                     $user->update(['phone' => $validated['recipient_phone']]);
                 }
 
-                // Clear the user's cart
+                // Clear the user's cart & applied voucher
                 $user->cartItems()->delete();
+                session()->forget('applied_voucher');
 
                 return $order;
             });

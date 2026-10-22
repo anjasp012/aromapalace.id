@@ -23,6 +23,19 @@ self.addEventListener('activate', (event) => {
     event.waitUntil(clients.claim());
 });
 
+function notifyOpenWindows(payload) {
+    if (self.clients && self.clients.matchAll) {
+        self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+            for (const client of clientList) {
+                client.postMessage({
+                    type: 'FCM_PUSH_RECEIVED',
+                    payload: payload,
+                });
+            }
+        });
+    }
+}
+
 // Handle Background Message from Firebase
 messaging.onBackgroundMessage((payload) => {
     const notificationTitle = payload.notification?.title || payload.data?.title || 'Aroma Palace';
@@ -38,6 +51,7 @@ messaging.onBackgroundMessage((payload) => {
         renotify: true,
     };
 
+    notifyOpenWindows(payload);
     self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
@@ -70,6 +84,7 @@ self.addEventListener('push', (event) => {
         renotify: true,
     };
 
+    notifyOpenWindows(payload);
     event.waitUntil(
         self.registration.showNotification(notificationTitle, notificationOptions)
     );

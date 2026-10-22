@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -55,6 +55,7 @@ interface CartPageProps {
     shipping_fee_formatted?: string;
     total: number;
     total_formatted: string;
+    initial_voucher?: string;
     available_vouchers?: AvailableVoucherCart[];
 }
 
@@ -64,6 +65,7 @@ export default function CartPage({
     subtotal_formatted = 'Rp 0',
     total = 0,
     total_formatted = 'Rp 0',
+    initial_voucher = '',
     available_vouchers = [],
 }: Partial<CartPageProps>) {
     const { t, isEn } = useTranslation();
@@ -72,11 +74,47 @@ export default function CartPage({
     const [isClearing, setIsClearing] = useState(false);
 
     // Voucher code state
-    const [voucherCode, setVoucherCode] = useState('');
+    const [voucherCode, setVoucherCode] = useState(() => {
+        if (initial_voucher) return initial_voucher;
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('aromapalace_applied_voucher') || '';
+        }
+        return '';
+    });
     const [voucherApplied, setVoucherApplied] = useState(false);
     const [voucherDiscount, setVoucherDiscount] = useState(0);
     const [voucherError, setVoucherError] = useState<string | null>(null);
     const [voucherSuccess, setVoucherSuccess] = useState<string | null>(null);
+
+    // Auto apply saved voucher on initial load or prop change
+    useEffect(() => {
+        const codeToApply = (
+            initial_voucher ||
+            voucherCode ||
+            (typeof window !== 'undefined' ? localStorage.getItem('aromapalace_applied_voucher') || '' : '')
+        ).toUpperCase().trim();
+
+        if (codeToApply && available_vouchers && available_vouchers.length > 0) {
+            const found = available_vouchers.find((v) => v.code.toUpperCase() === codeToApply);
+            if (found && subtotal >= found.min_order_amount) {
+                let disc = 0;
+                if (found.type === 'fixed') {
+                    disc = Math.min(subtotal, found.value);
+                } else {
+                    disc = Math.round(subtotal * (found.value / 100));
+                    if (found.max_discount_amount && found.max_discount_amount > 0) {
+                        disc = Math.min(disc, found.max_discount_amount);
+                    }
+                }
+                setVoucherCode(found.code);
+                setVoucherApplied(true);
+                setVoucherDiscount(disc);
+                if (typeof window !== 'undefined') {
+                    localStorage.setItem('aromapalace_applied_voucher', found.code);
+                }
+            }
+        }
+    }, [initial_voucher, available_vouchers, subtotal]);
 
     const handleUpdateQuantity = (item: CartItemData, newQty: number) => {
         if (newQty < 1 || newQty > 20) return;
@@ -115,12 +153,12 @@ export default function CartPage({
 
     const [isNavigatingCheckout, setIsNavigatingCheckout] = useState(false);
 
-    const handleApplyVoucher = (e?: React.FormEvent) => {
+    const handleApplyVoucher = (e?: React.FormEvent, explicitCode?: string) => {
         if (e) e.preventDefault();
         setVoucherError(null);
         setVoucherSuccess(null);
 
-        const code = voucherCode.trim().toUpperCase();
+        const code = (explicitCode || voucherCode).trim().toUpperCase();
         if (!code) {
             setVoucherDiscount(0);
             setVoucherApplied(false);
@@ -162,8 +200,20 @@ export default function CartPage({
             }
         }
 
+        setVoucherCode(found.code);
         setVoucherApplied(true);
         setVoucherDiscount(disc);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('aromapalace_applied_voucher', found.code);
+        }
+
+        // Also sync to backend session asynchronously
+        router.post('/cart/voucher', { code: found.code }, {
+            preserveScroll: true,
+            preserveState: true,
+            only: ['initial_voucher'],
+        });
+
         const successMsg = isEn
             ? `Voucher ${found.code} applied! You save Rp ${disc.toLocaleString('id-ID')}.`
             : `Voucher ${found.code} berhasil dipasang! Anda hemat Rp ${disc.toLocaleString('id-ID')}.`;
@@ -176,6 +226,30 @@ export default function CartPage({
         setVoucherCode('');
         setVoucherError(null);
         setVoucherSuccess(null);
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('aromapalace_applied_voucher');
+        }
+        router.delete('/cart/voucher', {
+            preserveScroll: true,
+            preserveState: true,
+            only: ['initial_voucher'],
+        });
+    };
+
+    const handleProceedToCheckout = () => {
+        setIsNavigatingCheckout(true);
+        const code = (
+            (voucherApplied && voucherCode ? voucherCode : '') ||
+            (typeof window !== 'undefined' ? localStorage.getItem('aromapalace_applied_voucher') || '' : '')
+        ).trim().toUpperCase();
+
+        if (code && typeof window !== 'undefined') {
+            localStorage.setItem('aromapalace_applied_voucher', code);
+        }
+        const targetUrl = code
+            ? `/checkout?voucher=${encodeURIComponent(code)}`
+            : '/checkout';
+        router.visit(targetUrl);
     };
 
     const finalTotal = Math.max(0, total - voucherDiscount);
@@ -488,13 +562,7 @@ export default function CartPage({
                                 <Button
                                     size="lg"
                                     disabled={isNavigatingCheckout}
-                                    onClick={() => {
-                                        setIsNavigatingCheckout(true);
-                                        const targetUrl = voucherApplied && voucherCode
-                                            ? `/checkout?voucher=${encodeURIComponent(voucherCode)}`
-                                            : '/checkout';
-                                        router.visit(targetUrl);
-                                    }}
+                                    onClick={handleProceedToCheckout}
                                     className="w-full bg-[#4A070B] hover:bg-[#360407] text-white font-semibold rounded-md h-11 text-xs sm:text-sm shadow-none transition active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 disabled:opacity-85"
                                 >
                                     {isNavigatingCheckout ? (
@@ -612,13 +680,7 @@ export default function CartPage({
                             <Button
                                 size="default"
                                 disabled={isNavigatingCheckout}
-                                onClick={() => {
-                                    setIsNavigatingCheckout(true);
-                                    const targetUrl = voucherApplied && voucherCode
-                                        ? `/checkout?voucher=${encodeURIComponent(voucherCode)}`
-                                        : '/checkout';
-                                    router.visit(targetUrl);
-                                }}
+                                onClick={handleProceedToCheckout}
                                 className="h-10.5 px-5 sm:px-6 bg-[#4A070B] hover:bg-[#360407] text-white font-semibold rounded-md text-xs sm:text-sm shadow-none transition active:scale-[0.98] cursor-pointer flex items-center gap-2 shrink-0 disabled:opacity-80"
                             >
                                 {isNavigatingCheckout ? (

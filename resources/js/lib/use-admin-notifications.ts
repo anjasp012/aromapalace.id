@@ -76,7 +76,7 @@ export function useAdminOrderNotifier(enabled = true): void {
             }
         };
 
-        // 1. Firebase FCM listener for instantaneous (0ms) push notifications
+        // 1. Firebase FCM foreground listener for instantaneous (0ms) push notifications
         let cleanupFcm: (() => void) | null = null;
         initFirebaseForegroundListener(() => {
             playNotificationChime();
@@ -87,14 +87,18 @@ export function useAdminOrderNotifier(enabled = true): void {
             }
         });
 
-        // 2. Smart Polling fallback (every 10 seconds when tab is active)
-        const pollInterval = setInterval(() => {
-            if (document.visibilityState === 'visible') {
-                reloadData(false);
+        // 2. Service Worker push event receiver (triggers when SW receives push from FCM)
+        const handleSwMessage = (event: MessageEvent) => {
+            if (event.data?.type === 'FCM_PUSH_RECEIVED') {
+                playNotificationChime();
+                reloadData(true);
             }
-        }, 10000);
+        };
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('message', handleSwMessage);
+        }
 
-        // 3. Re-check immediately when tab becomes visible again
+        // 3. Re-sync when admin tab is focused/visible again after being backgrounded
         const handleVisibilityChange = () => {
             if (document.visibilityState === 'visible') {
                 reloadData(false);
@@ -104,7 +108,9 @@ export function useAdminOrderNotifier(enabled = true): void {
 
         return () => {
             if (cleanupFcm) cleanupFcm();
-            clearInterval(pollInterval);
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.removeEventListener('message', handleSwMessage);
+            }
             document.removeEventListener('visibilitychange', handleVisibilityChange);
         };
     }, [enabled]);

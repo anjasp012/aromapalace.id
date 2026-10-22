@@ -21,6 +21,7 @@ pest()->extend(TestCase::class)
     ->beforeEach(function () {
         $this->seed(ProductSeeder::class);
         $this->seed(PaymentMethodSeeder::class);
+        $this->seed(\Database\Seeders\VoucherSeeder::class);
     })
     ->in('Feature');
 

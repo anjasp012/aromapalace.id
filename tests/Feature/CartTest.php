@@ -177,3 +177,52 @@ test('cart_count is calculated as unique product_id and variant_id count rather 
             ->has('items', 2)
         );
 });
+
+test('user can apply and remove a voucher in cart and have it persist to checkout', function () {
+    $user = User::factory()->create();
+    $variant = ProductVariant::where('product_id', 1)->firstOrFail();
+
+    CartItem::create([
+        'user_id' => $user->id,
+        'product_id' => 1,
+        'variant_id' => $variant->id,
+        'quantity' => 2,
+    ]);
+
+    // 1. Apply voucher via cart route
+    $response = $this->actingAs($user)->post(route('cart.voucher.apply'), [
+        'code' => 'AROMA40',
+    ]);
+    $response->assertSessionHas('applied_voucher', 'AROMA40');
+
+    // 2. View cart page - initial_voucher should be present
+    $cartResponse = $this->actingAs($user)->get(route('cart.index'));
+    $cartResponse->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('cart')
+            ->where('initial_voucher', 'AROMA40')
+        );
+
+    // 3. Move to checkout - initial_voucher and discount should carry over automatically
+    $checkoutResponse = $this->actingAs($user)->get(route('checkout.index'));
+    $checkoutResponse->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('checkout')
+            ->where('initial_voucher', 'AROMA40')
+            ->has('discount_amount')
+        );
+
+    // 4. Remove voucher
+    $removeResponse = $this->actingAs($user)->delete(route('cart.voucher.remove'));
+    $removeResponse->assertSessionMissing('applied_voucher');
+
+    // 5. Checkout should now have no voucher
+    $checkoutResponse2 = $this->actingAs($user)->get(route('checkout.index', ['remove_voucher' => 1]));
+    $checkoutResponse2->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('checkout')
+            ->where('initial_voucher', '')
+            ->where('discount_amount', 0)
+        );
+});
+

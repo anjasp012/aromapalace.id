@@ -76,8 +76,10 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
         Route::post('/cart', [CartController::class, 'store'])->name('cart.store');
-        Route::patch('/cart/{id}', [CartController::class, 'update'])->name('cart.update');
-        Route::delete('/cart/{id}', [CartController::class, 'destroy'])->name('cart.destroy');
+        Route::post('/cart/voucher', [CartController::class, 'applyVoucher'])->name('cart.voucher.apply');
+        Route::delete('/cart/voucher', [CartController::class, 'removeVoucher'])->name('cart.voucher.remove');
+        Route::patch('/cart/{id}', [CartController::class, 'update'])->name('cart.update')->whereNumber('id');
+        Route::delete('/cart/{id}', [CartController::class, 'destroy'])->name('cart.destroy')->whereNumber('id');
         Route::delete('/cart', [CartController::class, 'clear'])->name('cart.clear');
 
         Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');

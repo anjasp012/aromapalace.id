@@ -341,13 +341,20 @@ export default function CheckoutPage({
     const [showAllPayments, setShowAllPayments] = useState(false);
 
     // Voucher handling
-    const [voucherCodeInput, setVoucherCodeInput] = useState(initial_voucher);
-    const [appliedVoucher, setAppliedVoucher] = useState(initial_voucher);
+    const initialVoucherEffective = useMemo(() => {
+        return (
+            initial_voucher ||
+            (typeof window !== 'undefined' ? localStorage.getItem('aromapalace_applied_voucher') || '' : '')
+        ).toUpperCase().trim();
+    }, [initial_voucher]);
+
+    const [voucherCodeInput, setVoucherCodeInput] = useState(initialVoucherEffective);
+    const [appliedVoucher, setAppliedVoucher] = useState(initialVoucherEffective);
     const [voucherError, setVoucherError] = useState<string | null>(null);
     const [voucherSuccess, setVoucherSuccess] = useState<string | null>(null);
 
     const [voucherDiscount, setVoucherDiscount] = useState(() => {
-        const v = initial_voucher.toUpperCase().trim();
+        const v = initialVoucherEffective;
         const found = available_vouchers.find((item) => item.code.toUpperCase() === v);
         if (found) {
             if (subtotal < found.min_order_amount) return 0;
@@ -360,6 +367,36 @@ export default function CheckoutPage({
         }
         return 0;
     });
+
+    // Automatically sync applied voucher from props or localStorage when mounted / updated
+    useEffect(() => {
+        const codeToApply = (
+            initial_voucher ||
+            (typeof window !== 'undefined' ? localStorage.getItem('aromapalace_applied_voucher') || '' : '')
+        ).toUpperCase().trim();
+
+        if (codeToApply && available_vouchers && available_vouchers.length > 0) {
+            const found = available_vouchers.find((v) => v.code.toUpperCase() === codeToApply);
+            if (found && subtotal >= found.min_order_amount) {
+                let disc = 0;
+                if (found.type === 'fixed') {
+                    disc = Math.min(subtotal, found.value);
+                } else {
+                    disc = Math.round(subtotal * (found.value / 100));
+                    if (found.max_discount_amount && found.max_discount_amount > 0) {
+                        disc = Math.min(disc, found.max_discount_amount);
+                    }
+                }
+                setVoucherCodeInput(found.code);
+                setAppliedVoucher(found.code);
+                setVoucherDiscount(disc);
+                setData('voucher_code', found.code);
+                if (typeof window !== 'undefined') {
+                    localStorage.setItem('aromapalace_applied_voucher', found.code);
+                }
+            }
+        }
+    }, [initial_voucher, available_vouchers, subtotal]);
 
     // Confirmation Modal
     const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -468,6 +505,13 @@ export default function CheckoutPage({
             setAppliedVoucher(code);
             setVoucherDiscount(disc);
             setData('voucher_code', code);
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('aromapalace_applied_voucher', code);
+            }
+            router.post('/cart/voucher', { code: code }, {
+                preserveScroll: true,
+                preserveState: true,
+            });
             const succMsg = isEn
                 ? `Voucher ${found.code} applied! You save Rp ${disc.toLocaleString('id-ID')}.`
                 : `Voucher ${found.code} berhasil dipasang! Anda hemat Rp ${disc.toLocaleString('id-ID')}.`;
@@ -479,6 +523,9 @@ export default function CheckoutPage({
         setAppliedVoucher('');
         setVoucherDiscount(0);
         setData('voucher_code', '');
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('aromapalace_applied_voucher');
+        }
         const errMsg = isEn
             ? `Voucher code "${code}" is invalid or expired.`
             : `Kode voucher "${code}" tidak valid atau telah kedaluwarsa.`;
@@ -492,6 +539,13 @@ export default function CheckoutPage({
         setData('voucher_code', '');
         setVoucherError(null);
         setVoucherSuccess(null);
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('aromapalace_applied_voucher');
+        }
+        router.delete('/cart/voucher', {
+            preserveScroll: true,
+            preserveState: true,
+        });
     };
 
     const handleSelectCourier = (index: number) => {
@@ -541,6 +595,11 @@ export default function CheckoutPage({
         }
         post('/checkout', {
             preserveScroll: true,
+            onSuccess: () => {
+                if (typeof window !== 'undefined') {
+                    localStorage.removeItem('aromapalace_applied_voucher');
+                }
+            },
             onFinish: () => setShowConfirmModal(false),
         });
     };
