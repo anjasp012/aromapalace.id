@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import Layout from '@/components/Layout';
 import { useTranslation } from '@/lib/i18n';
