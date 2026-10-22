@@ -6,6 +6,7 @@ use App\Models\Article;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\SliderPromo;
 use App\Models\Voucher;
 use App\Services\CatalogService;
 use App\Support\CatalogCache;
@@ -182,6 +183,22 @@ class HomeController extends Controller
             ->values()
             ->all();
 
+        // 8. Slider Promos from DB
+        $sliderPromos = SliderPromo::query()
+            ->latest('id')
+            ->get()
+            ->map(fn (SliderPromo $slider) => [
+                'id' => $slider->id,
+                'title' => $slider->title,
+                'title_en' => $slider->title_en,
+                'description' => $slider->description,
+                'description_en' => $slider->description_en,
+                'link' => $slider->link ?? '/products',
+                'thumbnail' => $slider->thumbnail,
+            ])
+            ->values()
+            ->all();
+
         return [
             'popularProducts' => $popularProducts,
             'discountedProducts' => $discountedProducts,
@@ -190,6 +207,7 @@ class HomeController extends Controller
             'brands' => $brands,
             'vouchers' => $vouchers,
             'articles' => $articles,
+            'sliderPromos' => $sliderPromos,
             'stats' => [
                 'creations' => '24+',
                 'sourcing_countries' => '18',

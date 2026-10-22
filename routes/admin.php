@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PaymentMethodController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\SliderPromoController;
 use App\Http\Controllers\Admin\StoreController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VoucherController;
@@ -73,6 +74,14 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/manajemen-artikel/{article}/edit', [ArticleController::class, 'edit'])->name('articles.edit');
     Route::match(['put', 'patch', 'post'], '/manajemen-artikel/{article}', [ArticleController::class, 'update'])->name('articles.update');
     Route::delete('/manajemen-artikel/{article}', [ArticleController::class, 'destroy'])->name('articles.destroy');
+
+    // Slider Promo Management
+    Route::get('/manajemen-slider-promo', [SliderPromoController::class, 'index'])->name('slider-promos.index');
+    Route::get('/manajemen-slider-promo/create', [SliderPromoController::class, 'create'])->name('slider-promos.create');
+    Route::post('/manajemen-slider-promo', [SliderPromoController::class, 'store'])->name('slider-promos.store');
+    Route::get('/manajemen-slider-promo/{slider_promo}/edit', [SliderPromoController::class, 'edit'])->name('slider-promos.edit');
+    Route::match(['put', 'patch', 'post'], '/manajemen-slider-promo/{slider_promo}', [SliderPromoController::class, 'update'])->name('slider-promos.update');
+    Route::delete('/manajemen-slider-promo/{slider_promo}', [SliderPromoController::class, 'destroy'])->name('slider-promos.destroy');
 
     // Payment Method Management
     Route::get('/manajemen-pembayaran', [PaymentMethodController::class, 'index'])->name('payment-methods.index');

@@ -22,6 +22,16 @@ import ArticleCard, { type ArticleItem } from '@/components/ArticleCard';
 import BrandCard, { type BrandItem } from '@/components/BrandCard';
 import { useTranslation } from '@/lib/i18n';
 
+export interface SliderPromoItem {
+    id: number;
+    title: string;
+    title_en?: string | null;
+    description?: string | null;
+    description_en?: string | null;
+    link?: string | null;
+    thumbnail: string;
+}
+
 interface HomeProps {
     popularProducts?: ProductItem[];
     discountedProducts?: ProductItem[];
@@ -30,6 +40,7 @@ interface HomeProps {
     brands?: BrandItem[];
     vouchers?: VoucherItem[];
     articles?: ArticleItem[];
+    sliderPromos?: SliderPromoItem[];
 }
 
 export default function Home({
@@ -40,14 +51,20 @@ export default function Home({
     brands: propBrands = [],
     vouchers: propVouchers = [],
     articles: propArticles = [],
+    sliderPromos: propSliderPromos = [],
 }: HomeProps) {
     const { props } = usePage<any>();
     const user = props?.auth?.user;
     const isAdmin = Boolean(props?.auth?.is_admin || user?.role === 'admin');
     const { t, pickText, isEn } = useTranslation();
 
-    // 1. Hero Carousel State (Embla with touch/swipe & autoplay)
-    const banners = [
+    const heroGradients = [
+        'from-[#FAF6F0] via-[#F4ECE1] to-[#EAE0D0] dark:from-[#21160F] dark:via-[#19110B] dark:to-[#120B07]',
+        'from-[#FDF2F3] via-[#F8E9EB] to-[#F1DEE1] dark:from-[#24080B] dark:via-[#1B0508] dark:to-[#120305]',
+        'from-[#FBF8F2] via-[#F6F0E4] to-[#EDE3D0] dark:from-[#1E1810] dark:via-[#16120B] dark:to-[#0F0D07]',
+    ];
+
+    const defaultBanners = [
         {
             id: 1,
             title: isEn ? 'The Art of Fragrance' : 'Seni Wewangian Mahakarya',
@@ -56,7 +73,7 @@ export default function Home({
                 : 'Jelajahi koleksi wewangian mewah dunia dengan keharuman artisanal eksklusif yang memikat setiap indera.',
             image: 'https://images.unsplash.com/photo-1615397349754-cfa2066a298e?auto=format&fit=crop&w=1200&q=80',
             link: '/products',
-            ambientGradient: 'from-[#FAF6F0] via-[#F4ECE1] to-[#EAE0D0] dark:from-[#21160F] dark:via-[#19110B] dark:to-[#120B07]',
+            ambientGradient: heroGradients[0],
         },
         {
             id: 2,
@@ -66,7 +83,7 @@ export default function Home({
                 : 'Gunakan kode promo AROMA20 untuk potongan harga spesial di pesanan pertama wewangian ekstrak & niche terpilih.',
             image: 'https://images.unsplash.com/photo-1547887537-6158d64c35b3?auto=format&fit=crop&w=1200&q=80',
             link: '/products?discount=1',
-            ambientGradient: 'from-[#FDF2F3] via-[#F8E9EB] to-[#F1DEE1] dark:from-[#24080B] dark:via-[#1B0508] dark:to-[#120305]',
+            ambientGradient: heroGradients[1],
         },
         {
             id: 3,
@@ -76,9 +93,34 @@ export default function Home({
                 : 'Pesan langsung secara online, ambil di gerai flagship Grand Indonesia, Senayan City, & TP5 Surabaya.',
             image: 'https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?auto=format&fit=crop&w=1200&q=80',
             link: '/products',
-            ambientGradient: 'from-[#FBF8F2] via-[#F6F0E4] to-[#EDE3D0] dark:from-[#1E1810] dark:via-[#16120B] dark:to-[#0F0D07]',
+            ambientGradient: heroGradients[2],
         },
     ];
+
+    const [cachedHome] = useState<any>(() => {
+        if (typeof window === 'undefined') return null;
+        try {
+            const raw = localStorage.getItem('aromapalace_cached_home');
+            return raw ? JSON.parse(raw) : null;
+        } catch {
+            return null;
+        }
+    });
+
+    const sliderPromosList: SliderPromoItem[] = propSliderPromos.length > 0
+        ? propSliderPromos
+        : (cachedHome?.sliderPromos || []);
+
+    const banners = sliderPromosList.length > 0
+        ? sliderPromosList.map((item, idx) => ({
+            id: item.id,
+            title: pickText(item.title, item.title_en),
+            subtitle: pickText(item.description || '', item.description_en),
+            image: item.thumbnail,
+            link: item.link || '/products',
+            ambientGradient: heroGradients[idx % heroGradients.length],
+        }))
+        : defaultBanners;
 
     const [activeSlide, setActiveSlide] = useState(0);
     const [heroRef, heroApi] = useEmblaCarousel(
@@ -180,7 +222,7 @@ export default function Home({
     }, []);
 
     useEffect(() => {
-        if (propPopularProducts.length > 0) {
+        if (propPopularProducts.length > 0 || propSliderPromos.length > 0) {
             try {
                 localStorage.setItem('aromapalace_cached_home', JSON.stringify({
                     popularProducts: propPopularProducts,
@@ -190,21 +232,12 @@ export default function Home({
                     brands: propBrands,
                     vouchers: propVouchers,
                     articles: propArticles,
+                    sliderPromos: propSliderPromos,
                     cachedAt: Date.now(),
                 }));
             } catch (e) {}
         }
-    }, [propPopularProducts, propDiscountedProducts, propRecommendedProducts, propCategories, propBrands, propVouchers, propArticles]);
-
-    const [cachedHome] = useState<any>(() => {
-        if (typeof window === 'undefined') return null;
-        try {
-            const raw = localStorage.getItem('aromapalace_cached_home');
-            return raw ? JSON.parse(raw) : null;
-        } catch {
-            return null;
-        }
-    });
+    }, [propPopularProducts, propDiscountedProducts, propRecommendedProducts, propCategories, propBrands, propVouchers, propArticles, propSliderPromos]);
 
     // Products Datasets from Database (fallback to cached data if offline / props empty)
     const popularProducts: ProductItem[] = propPopularProducts.length > 0

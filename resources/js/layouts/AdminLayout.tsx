@@ -19,6 +19,7 @@ import {
     CreditCard,
     MapPin,
     Users,
+    SlidersHorizontal,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -64,6 +65,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
     const isBrands = url.startsWith('/manajemen-brand');
     const isVouchers = url.startsWith('/manajemen-voucher');
     const isArticles = url.startsWith('/manajemen-artikel');
+    const isSliderPromos = url.startsWith('/manajemen-slider-promo');
     const isStores = url.startsWith('/manajemen-butik');
     const isPaymentMethods = url.startsWith('/manajemen-pembayaran');
 
@@ -251,6 +253,21 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                         >
                             <FileText className="size-4" />
                             <span>Artikel</span>
+                        </Link>
+
+                        <Link
+                            href="/manajemen-slider-promo"
+                            prefetch="hover"
+                            cacheFor={['30s', '1m']}
+                            onClick={() => setSidebarOpen(false)}
+                            className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
+                                isSliderPromos
+                                    ? 'bg-muted text-primary font-semibold'
+                                    : 'text-muted-foreground hover:text-primary hover:bg-muted'
+                            }`}
+                        >
+                            <SlidersHorizontal className="size-4" />
+                            <span>Slider Promo</span>
                         </Link>
 
                         <Separator className="my-2" />
