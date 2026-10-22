@@ -363,16 +363,16 @@ export default function CheckoutPage({
         }
 
         // Determine fallback label based on actual state
-        const hasSubdistrict = !!(selectedAddress?.subdistrict_id);
+        const hasCoverage = !!(selectedAddress?.district_id || selectedAddress?.subdistrict_id);
         let fallbackLabel: string;
         if (!selectedAddress) {
             fallbackLabel = 'Pilih Alamat Dulu';
-        } else if (!hasSubdistrict) {
+        } else if (!hasCoverage) {
             fallbackLabel = 'Alamat Tidak Lengkap';
         } else if (loadingRates) {
             fallbackLabel = 'Menghitung...';
         } else {
-            fallbackLabel = 'Cek Ongkir';
+            fallbackLabel = 'Pilih Pengiriman';
         }
 
         return list.map((c) => ({
@@ -417,8 +417,9 @@ export default function CheckoutPage({
 
     // Fetch live shipping rates whenever selected address changes
     useEffect(() => {
-        const subdistrictId = selectedAddress?.subdistrict_id ?? (selectedAddress as any)?.kecamatan_id ?? null;
-        if (!subdistrictId || deliveryType !== 'delivery') {
+        const districtId = selectedAddress?.district_id ?? (selectedAddress as any)?.kecamatan_id ?? null;
+        const subdistrictId = selectedAddress?.subdistrict_id ?? null;
+        if ((!districtId && !subdistrictId) || deliveryType !== 'delivery') {
             setShippingRates([]);
             setLoadingRates(false);
             return;
@@ -438,13 +439,24 @@ export default function CheckoutPage({
                 'X-Requested-With': 'XMLHttpRequest',
                 'Accept': 'application/json',
             },
-            body: JSON.stringify({ destination_subdistrict_id: subdistrictId, weight: 500 }),
+            body: JSON.stringify({
+                destination_district_id: districtId,
+                destination_subdistrict_id: subdistrictId,
+                address_id: selectedAddress?.id ?? null,
+                weight: 500,
+            }),
         })
             .then((res) => res.json())
             .then((json) => {
                 if (!cancelled && json?.status && Array.isArray(json.rates) && json.rates.length > 0) {
                     setShippingRates(json.rates);
                     setSelectedCourierIndex(0);
+                    const firstCourier = json.rates[0];
+                    setData((prev) => ({
+                        ...prev,
+                        courier: firstCourier.name || firstCourier.code || 'JNE Express Reguler',
+                        shipping_cost: firstCourier.price || 0,
+                    }));
                 }
             })
             .catch(() => { /* silently fallback */ })
@@ -532,7 +544,8 @@ export default function CheckoutPage({
         subdistrict_name: initialSelectedAddress?.subdistrict_name || '',
         city: initialSelectedAddress?.city_name || user?.city || '',
         postal_code: initialSelectedAddress?.postal_code || user?.postal_code || '',
-        courier: courierOptions[0]?.id || 'jne',
+        courier: courierOptions[0]?.name || courierOptions[0]?.id || 'JNE Express Reguler',
+        shipping_cost: courierOptions[0]?.price || 0,
         payment_method: 'qris',
         voucher_code: initial_voucher,
         notes: '',
@@ -578,6 +591,7 @@ export default function CheckoutPage({
             ...prev,
             delivery_type: type,
             store_id: type === 'pickup' ? (prev.store_id || defaultStoreId) : prev.store_id,
+            shipping_cost: type === 'pickup' ? 0 : (selectedCourier?.price || 0),
         }));
     };
 
@@ -676,7 +690,11 @@ export default function CheckoutPage({
         setSelectedCourierIndex(index);
         const chosen = courierOptions[index];
         if (chosen) {
-            setData('courier', chosen.id || chosen.code || '');
+            setData((prev) => ({
+                ...prev,
+                courier: chosen.name || chosen.id || chosen.code || '',
+                shipping_cost: chosen.price || 0,
+            }));
         }
         setShowCourierModal(false);
     };
@@ -727,8 +745,15 @@ export default function CheckoutPage({
                     subdistrict_name: activeAddress.subdistrict_name || '',
                     city: activeAddress.city_name || prev.city,
                     postal_code: activeAddress.postal_code || prev.postal_code,
+                    courier: selectedCourier?.name || prev.courier || 'JNE Express Reguler',
+                    shipping_cost: currentShippingCost,
                 }));
             }
+        } else {
+            setData((prev) => ({
+                ...prev,
+                shipping_cost: 0,
+            }));
         }
         setShowConfirmModal(true);
     };

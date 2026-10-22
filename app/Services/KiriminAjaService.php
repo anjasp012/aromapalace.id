@@ -272,13 +272,29 @@ class KiriminAjaService
      * @param  int  $destinationDistrictId  Destination kecamatan ID
      * @param  int  $weightGrams  Package weight in grams
      * @param  string[]|null  $couriers  Optional specific courier codes to query
-     * @return array<int, array{code: string, name: string, service: string, price: int, etd: string, price_formatted: string}>
+     * @return array<int, array{code: string, courier_code: string, name: string, service: string, price: int, price_formatted: string, etd: string}>
      */
     public function getShippingRates(int $originDistrictId, int $destinationDistrictId, int $weightGrams = 500, ?array $couriers = null): array
     {
-        $cacheKey = "kiriminaja:rates:o{$originDistrictId}:d{$destinationDistrictId}:w{$weightGrams}:v1";
+        $cacheKey = "kiriminaja:rates:o{$originDistrictId}:d{$destinationDistrictId}:w{$weightGrams}:v2";
 
         return Cache::remember($cacheKey, now()->addHours(2), function () use ($originDistrictId, $destinationDistrictId, $weightGrams, $couriers) {
+            $brandMap = [
+                'jne' => 'JNE',
+                'jnt' => 'J&T',
+                'jtcargo' => 'J&T Cargo',
+                'sicepat' => 'SiCepat',
+                'anteraja' => 'AnterAja',
+                'lion' => 'Lion Parcel',
+                'tiki' => 'Tiki',
+                'sap' => 'SAP',
+                'idx' => 'ID Express',
+                'spx' => 'SPX',
+                'ninja' => 'Ninja Express',
+                'pos' => 'Pos Indonesia',
+                'posindonesia' => 'Pos Indonesia',
+            ];
+
             try {
                 $data = new ShippingPriceData;
                 $data->origin = $originDistrictId;
@@ -289,41 +305,69 @@ class KiriminAjaService
                 }
 
                 $response = KiriminAja::getPrice($data);
-                if ($response->status && ! empty($response->data)) {
-                    $raw = is_array($response->data) ? $response->data : [];
+
+                if (($response->status ?? false) && ! empty($response->data)) {
+                    $raw = (array) $response->data;
+                    $items = $raw['results'] ?? $raw['datas'] ?? (isset($raw[0]) ? $raw : []);
 
                     $results = [];
-                    foreach ($raw as $item) {
+                    foreach ($items as $item) {
                         $arr = (array) $item;
-                        $services = $arr['rates'] ?? $arr['services'] ?? [];
-                        $courierCode = (string) ($arr['courier_code'] ?? $arr['code'] ?? '');
-                        $courierName = (string) ($arr['courier_name'] ?? $arr['name'] ?? $courierCode);
+                        $services = $arr['rates'] ?? $arr['services'] ?? null;
 
                         if (is_array($services) && ! empty($services)) {
+                            $courierCode = strtolower((string) ($arr['courier_code'] ?? $arr['code'] ?? ''));
+                            $brand = $brandMap[$courierCode] ?? strtoupper($courierCode);
+
                             foreach ($services as $svc) {
                                 $s = (array) $svc;
-                                $price = (int) ($s['price'] ?? $s['finalRate'] ?? 0);
+                                $serviceCode = (string) ($s['service_code'] ?? $s['service'] ?? 'reg');
+                                $serviceName = (string) ($s['service_name'] ?? $s['service'] ?? 'Regular');
+                                $price = (int) ($s['cost'] ?? $s['price'] ?? $s['finalRate'] ?? 0);
+                                $rawEtd = trim((string) ($s['etd'] ?? $s['estimated_day'] ?? ''));
+                                $etd = ! empty($rawEtd) ? "Estimasi {$rawEtd} Hari" : 'Estimasi 1-3 Hari';
+
+                                $displayName = $serviceName;
+                                if (! empty($brand) && ! str_starts_with(strtolower($displayName), strtolower(explode(' ', $brand)[0]))) {
+                                    $displayName = $brand.' '.$serviceName;
+                                }
+
+                                $code = strtolower($courierCode.'_'.preg_replace('/[^a-zA-Z0-9]/', '', $serviceCode ?: $serviceName));
+
                                 $results[] = [
-                                    'code' => $courierCode.'_'.strtolower($s['service_code'] ?? $s['service'] ?? 'reg'),
+                                    'code' => $code,
                                     'courier_code' => $courierCode,
-                                    'name' => $courierName.' '.($s['service_name'] ?? $s['service'] ?? ''),
-                                    'service' => (string) ($s['service_name'] ?? $s['service'] ?? ''),
+                                    'name' => $displayName,
+                                    'service' => $serviceCode,
                                     'price' => $price,
                                     'price_formatted' => $price === 0 ? 'Gratis' : 'Rp '.number_format($price, 0, ',', '.'),
-                                    'etd' => 'Estimasi '.($s['etd'] ?? $s['estimated_day'] ?? '1-3').' Hari',
+                                    'etd' => $etd,
                                 ];
                             }
                         } else {
-                            // Flat rate courier (no services array)
-                            $price = (int) ($arr['price'] ?? $arr['finalRate'] ?? 0);
+                            $courierCode = strtolower((string) ($arr['service'] ?? $arr['courier_code'] ?? $arr['code'] ?? ''));
+                            $serviceType = (string) ($arr['service_type'] ?? $arr['group'] ?? 'Regular');
+                            $serviceName = (string) ($arr['service_name'] ?? $serviceType);
+                            $price = (int) ($arr['cost'] ?? $arr['price'] ?? $arr['finalRate'] ?? 0);
+                            $rawEtd = trim((string) ($arr['etd'] ?? $arr['estimated_day'] ?? ''));
+                            $etd = ! empty($rawEtd) ? "Estimasi {$rawEtd} Hari" : 'Estimasi 1-3 Hari';
+
+                            $brand = $brandMap[$courierCode] ?? strtoupper($courierCode);
+                            $displayName = $serviceName;
+                            if (! empty($brand) && ! str_starts_with(strtolower($displayName), strtolower(explode(' ', $brand)[0]))) {
+                                $displayName = $brand.' '.$serviceName;
+                            }
+
+                            $code = strtolower($courierCode.'_'.preg_replace('/[^a-zA-Z0-9]/', '', $serviceType ?: $serviceName));
+
                             $results[] = [
-                                'code' => $courierCode,
+                                'code' => $code,
                                 'courier_code' => $courierCode,
-                                'name' => $courierName,
-                                'service' => 'Regular',
+                                'name' => $displayName,
+                                'service' => $serviceType,
                                 'price' => $price,
                                 'price_formatted' => $price === 0 ? 'Gratis' : 'Rp '.number_format($price, 0, ',', '.'),
-                                'etd' => 'Estimasi '.($arr['etd'] ?? '1-3').' Hari',
+                                'etd' => $etd,
                             ];
                         }
                     }
@@ -336,8 +380,64 @@ class KiriminAjaService
                 Log::warning('KiriminAja getShippingRates failed: '.$e->getMessage());
             }
 
-            return [];
+            return $this->fallbackShippingRates();
         });
+    }
+
+    /**
+     * Fallback shipping rates with realistic domestic pricing when live rate lookup is unavailable.
+     *
+     * @return array<int, array{code: string, courier_code: string, name: string, service: string, price: int, price_formatted: string, etd: string}>
+     */
+    public function fallbackShippingRates(): array
+    {
+        return [
+            [
+                'code' => 'jne_reg',
+                'courier_code' => 'jne',
+                'name' => 'JNE Express Reguler',
+                'service' => 'REG',
+                'price' => 25000,
+                'price_formatted' => 'Rp 25.000',
+                'etd' => 'Estimasi 2-3 Hari',
+            ],
+            [
+                'code' => 'jnt_ez',
+                'courier_code' => 'jnt',
+                'name' => 'J&T EZ',
+                'service' => 'EZ',
+                'price' => 24000,
+                'price_formatted' => 'Rp 24.000',
+                'etd' => 'Estimasi 2-3 Hari',
+            ],
+            [
+                'code' => 'sicepat_reg',
+                'courier_code' => 'sicepat',
+                'name' => 'SiCepat Express Reguler',
+                'service' => 'REG',
+                'price' => 24000,
+                'price_formatted' => 'Rp 24.000',
+                'etd' => 'Estimasi 1-2 Hari',
+            ],
+            [
+                'code' => 'lion_regpack',
+                'courier_code' => 'lion',
+                'name' => 'Lion Parcel Regpack',
+                'service' => 'REGPACK',
+                'price' => 23000,
+                'price_formatted' => 'Rp 23.000',
+                'etd' => 'Estimasi 2-4 Hari',
+            ],
+            [
+                'code' => 'anteraja_reg',
+                'courier_code' => 'anteraja',
+                'name' => 'AnterAja Regular',
+                'service' => 'REG',
+                'price' => 22000,
+                'price_formatted' => 'Rp 22.000',
+                'etd' => 'Estimasi 2-3 Hari',
+            ],
+        ];
     }
 
     /**

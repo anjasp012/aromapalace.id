@@ -2,6 +2,7 @@
 
 use Database\Seeders\PaymentMethodSeeder;
 use Database\Seeders\ProductSeeder;
+use Database\Seeders\VoucherSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -21,7 +22,7 @@ pest()->extend(TestCase::class)
     ->beforeEach(function () {
         $this->seed(ProductSeeder::class);
         $this->seed(PaymentMethodSeeder::class);
-        $this->seed(\Database\Seeders\VoucherSeeder::class);
+        $this->seed(VoucherSeeder::class);
     })
     ->in('Feature');
 

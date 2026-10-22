@@ -225,4 +225,3 @@ test('user can apply and remove a voucher in cart and have it persist to checkou
             ->where('discount_amount', 0)
         );
 });
-

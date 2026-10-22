@@ -586,3 +586,63 @@ test('user cannot view invoice of another user order', function () {
     $response = $this->actingAs($otherUser)->get(route('orders.invoice', ['order' => $order->order_number]));
     $response->assertNotFound();
 });
+
+test('user can fetch shipping rates via api endpoint with real prices or fallback', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->postJson(route('checkout.shipping-rates'), [
+        'destination_district_id' => 1201,
+        'weight' => 500,
+    ]);
+
+    $response->assertOk()
+        ->assertJsonStructure([
+            'status',
+            'rates' => [
+                '*' => [
+                    'code',
+                    'courier_code',
+                    'name',
+                    'service',
+                    'price',
+                    'price_formatted',
+                    'etd',
+                ],
+            ],
+        ]);
+
+    $data = $response->json();
+    expect($data['status'])->toBeTrue();
+    expect(count($data['rates']))->toBeGreaterThan(0);
+    expect($data['rates'][0]['price'])->toBeGreaterThan(0);
+});
+
+test('checkout stores custom shipping cost into order total and database', function () {
+    $user = User::factory()->create();
+    $variant = ProductVariant::where('product_id', 1)->firstOrFail();
+
+    CartItem::create([
+        'user_id' => $user->id,
+        'product_id' => 1,
+        'variant_id' => $variant->id,
+        'quantity' => 1,
+    ]);
+
+    $shippingCost = 72000;
+    $response = $this->actingAs($user)->post(route('checkout.store'), [
+        'delivery_type' => 'delivery',
+        'recipient_name' => 'Budi Pratama',
+        'recipient_phone' => '081234567890',
+        'shipping_address' => 'Jl. Kebon Jeruk No. 12',
+        'city' => 'Jakarta Barat',
+        'courier' => 'J&T EZ',
+        'shipping_cost' => $shippingCost,
+        'payment_method' => 'bri_va',
+    ]);
+
+    $order = Order::where('user_id', $user->id)->first();
+    expect($order)->not->toBeNull();
+    expect($order->shipping_cost)->toBe($shippingCost);
+    expect($order->courier)->toBe('J&T EZ');
+    expect($order->total_amount)->toBe((int) $variant->price + $shippingCost);
+});

@@ -171,23 +171,44 @@ class CheckoutController extends Controller
     }
 
     /**
-     * Return live shipping rates from KiriminAja for a given destination subdistrict.
+     * Return live shipping rates from KiriminAja for a given destination subdistrict or district.
      * Called via AJAX from the checkout page when the user selects an address.
      */
     public function shippingRates(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'destination_subdistrict_id' => ['required', 'integer', 'min:1'],
+            'destination_district_id' => ['nullable', 'integer', 'min:1'],
+            'destination_subdistrict_id' => ['nullable', 'integer', 'min:1'],
+            'address_id' => ['nullable', 'integer', 'min:1'],
             'weight' => ['nullable', 'integer', 'min:100', 'max:50000'],
         ]);
 
-        $destinationId = (int) $validated['destination_subdistrict_id'];
+        $destinationId = (int) ($validated['destination_district_id'] ?? 0);
+
+        if ($destinationId <= 0 && ! empty($validated['address_id'])) {
+            $address = $request->user()?->addresses()->find($validated['address_id']);
+            if ($address?->district_id) {
+                $destinationId = (int) $address->district_id;
+            }
+        }
+
+        if ($destinationId <= 0 && ! empty($validated['destination_subdistrict_id'])) {
+            $address = $request->user()?->addresses()->where('subdistrict_id', $validated['destination_subdistrict_id'])->first();
+            if ($address?->district_id) {
+                $destinationId = (int) $address->district_id;
+            } else {
+                $destinationId = (int) $validated['destination_subdistrict_id'];
+            }
+        }
+
         $weight = (int) ($validated['weight'] ?? 500);
 
         // Origin district ID from config, default to 4712 (Jakarta Selatan area)
         $originId = (int) config('services.kiriminaja.origin_district_id', 4712);
 
-        $rates = $this->kiriminAjaService->getShippingRates($originId, $destinationId, $weight);
+        $rates = $destinationId > 0
+            ? $this->kiriminAjaService->getShippingRates($originId, $destinationId, $weight)
+            : $this->kiriminAjaService->fallbackShippingRates();
 
         return response()->json([
             'status' => true,
@@ -213,7 +234,8 @@ class CheckoutController extends Controller
             'subdistrict_name' => ['nullable', 'string', 'max:100'],
             'city' => ['required_if:delivery_type,delivery', 'nullable', 'string', 'max:100'],
             'postal_code' => ['nullable', 'string', 'max:15'],
-            'courier' => ['nullable', 'string', 'max:100'],
+            'courier' => ['nullable', 'string', 'max:150'],
+            'shipping_cost' => ['nullable', 'integer', 'min:0'],
             'payment_method' => [
                 'required',
                 'string',
@@ -274,8 +296,10 @@ class CheckoutController extends Controller
             $voucher = $voucherCode !== '' ? Voucher::where('code', $voucherCode)->first() : null;
             $discountAmount = $voucher ? $voucher->calculateDiscount($subtotal) : $this->calculateDiscount($voucherCode, $subtotal);
             $voucherId = ($voucher && $discountAmount > 0) ? $voucher->id : null;
+            $deliveryType = $validated['delivery_type'] ?? 'delivery';
+            $shippingCost = $deliveryType === 'delivery' ? max(0, (int) ($validated['shipping_cost'] ?? 0)) : 0;
             $insuranceCost = $request->boolean('insurance') ? 9000 : 0;
-            $totalAmount = max(0, $subtotal - $discountAmount + $insuranceCost);
+            $totalAmount = max(0, $subtotal - $discountAmount + $shippingCost + $insuranceCost);
 
             $paymentMethod = $validated['payment_method'];
             $pm = PaymentMethod::where('code', $paymentMethod)->first();
@@ -340,7 +364,7 @@ class CheckoutController extends Controller
                 $storeName = $store ? $store->name : 'Butik Resmi Aroma Palace';
                 $shippingAddress = 'Ambil di butik: '.($store ? $store->name.' - '.$store->description : 'Butik Resmi Aroma Palace');
                 $provinceName = null;
-                $cityName = null;
+                $cityName = 'Ambil di Butik';
                 $districtName = null;
                 $subdistrictName = null;
                 $courier = 'Ambil Mandiri di Butik ('.$storeName.')';
@@ -351,8 +375,7 @@ class CheckoutController extends Controller
                 $cityName = $validated['city_name'] ?? ($address?->city_name ?? ($validated['city'] ?? null));
                 $districtName = $validated['district_name'] ?? ($address?->district_name ?? null);
                 $subdistrictName = $validated['subdistrict_name'] ?? ($address?->subdistrict_name ?? null);
-                $courier = $validated['courier'] ?? 'JNE Express VIP (Bebas Ongkir)';
-                $shippingCost = 0;
+                $courier = $validated['courier'] ?? 'JNE Express Reguler';
             }
 
             $order = DB::transaction(function () use (
@@ -430,6 +453,7 @@ class CheckoutController extends Controller
                     'shipping_address' => $shippingAddress,
                     'province_name' => $provinceName,
                     'city_name' => $cityName,
+                    'city' => $cityName ?? ($validated['city'] ?? '-'),
                     'district_name' => $districtName,
                     'subdistrict_name' => $subdistrictName,
                     'postal_code' => $validated['postal_code'] ?? ($address?->postal_code ?? null),
