@@ -76,6 +76,7 @@ export default function AdminProductEdit({
 }: ProductEditProps) {
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [newImagePreviews, setNewImagePreviews] = useState<UploadedPreview[]>([]);
+    const [isDragging, setIsDragging] = useState(false);
 
     const { data, setData, post, processing, errors } = useForm<{
         _method: string;
@@ -145,6 +146,27 @@ export default function AdminProductEdit({
         const updatedFiles = [...data.images];
         updatedFiles.splice(index, 1);
         setData('images', updatedFiles);
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            handleFilesSelected(e.dataTransfer.files);
+        }
     };
 
     const handleAddVariant = () => {
@@ -387,43 +409,40 @@ export default function AdminProductEdit({
 
                 {/* Card 2: Galeri Foto */}
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between pb-3">
-                        <div>
-                            <CardTitle className="text-base font-semibold">2. Galeri Foto Produk</CardTitle>
-                            <CardDescription>Upload file foto botol parfum (JPG, PNG, WEBP). Foto pertama akan menjadi foto utama produk.</CardDescription>
-                        </div>
-                        <div>
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                multiple
-                                accept="image/*"
-                                className="hidden"
-                                onChange={(e) => handleFilesSelected(e.target.files)}
-                            />
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => fileInputRef.current?.click()}
-                                className="h-8"
-                            >
-                                <Upload className="size-3.5 mr-1" />
-                                <span>Pilih File Foto</span>
-                            </Button>
-                        </div>
+                    <CardHeader className="pb-3">
+                        <CardTitle className="text-base font-semibold">2. Galeri Foto Produk</CardTitle>
+                        <CardDescription>Upload file foto botol parfum (JPG, PNG, WEBP). Foto pertama akan menjadi foto utama produk.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            multiple
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => handleFilesSelected(e.target.files)}
+                        />
                         {totalImagesCount === 0 ? (
                             <div
+                                onDragOver={handleDragOver}
+                                onDragLeave={handleDragLeave}
+                                onDrop={handleDrop}
                                 onClick={() => fileInputRef.current?.click()}
-                                className="border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors rounded-xl p-8 text-center flex flex-col items-center justify-center cursor-pointer bg-muted/10 hover:bg-muted/20"
+                                className={`border-2 border-dashed rounded-xl p-8 text-center flex flex-col items-center justify-center cursor-pointer transition-all ${
+                                    isDragging
+                                        ? 'border-primary bg-primary/5 scale-[0.99]'
+                                        : 'border-muted-foreground/25 hover:border-primary/50 bg-muted/10 hover:bg-muted/20'
+                                }`}
                             >
-                                <div className="size-12 rounded-full bg-muted flex items-center justify-center mb-3 text-muted-foreground">
+                                <div className="size-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-3">
                                     <Upload className="size-6" />
                                 </div>
-                                <div className="text-sm font-semibold text-foreground">Klik di sini untuk upload foto parfum</div>
-                                <div className="text-xs text-muted-foreground mt-1">Bisa memilih beberapa file foto sekaligus (JPG, PNG, WEBP)</div>
+                                <div className="text-sm font-semibold text-foreground">
+                                    Klik atau seret foto ke sini untuk upload
+                                </div>
+                                <div className="text-xs text-muted-foreground mt-1">
+                                    Bisa memilih atau seret beberapa file foto sekaligus (JPG, PNG, WEBP)
+                                </div>
                             </div>
                         ) : (
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
@@ -493,8 +512,15 @@ export default function AdminProductEdit({
 
                                 <button
                                     type="button"
+                                    onDragOver={handleDragOver}
+                                    onDragLeave={handleDragLeave}
+                                    onDrop={handleDrop}
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors rounded-lg flex flex-col items-center justify-center aspect-square text-muted-foreground hover:text-foreground bg-muted/10 hover:bg-muted/20 cursor-pointer"
+                                    className={`border-2 border-dashed rounded-lg flex flex-col items-center justify-center aspect-square transition-all cursor-pointer ${
+                                        isDragging
+                                            ? 'border-primary bg-primary/10 text-primary scale-95'
+                                            : 'border-muted-foreground/25 hover:border-primary/50 text-muted-foreground hover:text-foreground bg-muted/10 hover:bg-muted/20'
+                                    }`}
                                 >
                                     <Plus className="size-6 mb-1" />
                                     <span className="text-xs font-medium">Tambah Foto</span>

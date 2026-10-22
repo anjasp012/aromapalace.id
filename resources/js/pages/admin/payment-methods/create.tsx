@@ -6,7 +6,6 @@ import {
     Save,
     CreditCard,
     Upload,
-    Trash2,
     Image as ImageIcon,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -80,14 +79,6 @@ export default function AdminPaymentMethodCreate() {
         const file = e.dataTransfer.files?.[0];
         if (file) {
             handleFile(file);
-        }
-    };
-
-    const handleRemoveImage = () => {
-        setData('icon', null);
-        setPreviewUrl(null);
-        if (fileInputRef.current) {
-            fileInputRef.current.value = '';
         }
     };
 
@@ -178,7 +169,8 @@ export default function AdminPaymentMethodCreate() {
 
                         {/* Logo Preview Box */}
                         {previewUrl && (
-                            <div className="relative mt-4 rounded-xl overflow-hidden border bg-muted/30 group max-w-xs mx-auto p-4 flex items-center justify-center shadow-xs">
+                            <div className="mt-4 rounded-xl overflow-hidden border bg-muted/30 max-w-xs mx-auto p-4 flex flex-col items-center justify-center gap-2 shadow-xs">
+                                <span className="text-[11px] font-medium text-muted-foreground">Pratinjau Logo</span>
                                 <img
                                     src={previewUrl}
                                     alt="Pratinjau Logo"
@@ -187,21 +179,6 @@ export default function AdminPaymentMethodCreate() {
                                         (e.target as HTMLElement).style.display = 'none';
                                     }}
                                 />
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                                    <Button
-                                        type="button"
-                                        variant="destructive"
-                                        size="sm"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleRemoveImage();
-                                        }}
-                                        className="cursor-pointer"
-                                    >
-                                        <Trash2 className="size-4 mr-1.5" />
-                                        <span>Hapus Logo</span>
-                                    </Button>
-                                </div>
                             </div>
                         )}
                     </CardContent>
