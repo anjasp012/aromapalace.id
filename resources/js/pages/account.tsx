@@ -105,6 +105,39 @@ export default function AccountPage({
     const [deleteError, setDeleteError] = useState<string | null>(null);
     const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
+    // Address management state
+    const [localAddresses, setLocalAddresses] = useState<UserAddress[]>(propAddresses);
+    const [addressManagerOpen, setAddressManagerOpen] = useState(false);
+    const [addressModalOpen, setAddressModalOpen] = useState(false);
+    const [editingAddress, setEditingAddress] = useState<UserAddress | null>(null);
+
+    useEffect(() => {
+        setLocalAddresses(propAddresses || []);
+    }, [propAddresses]);
+
+    const handleSetPrimary = (id: number) => {
+        router.post(`/account/addresses/${id}/primary`, {}, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setLocalAddresses((prev) =>
+                    prev.map((a) => ({ ...a, is_primary: a.id === id }))
+                );
+            },
+        });
+    };
+
+    const handleDeleteAddress = (id: number) => {
+        if (!confirm(isEn ? 'Are you sure you want to delete this address?' : 'Apakah Anda yakin ingin menghapus alamat ini?')) {
+            return;
+        }
+        router.delete(`/account/addresses/${id}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setLocalAddresses((prev) => prev.filter((a) => a.id !== id));
+            },
+        });
+    };
+
     // Profile form state
     const [editName, setEditName] = useState(user.name || '');
     const [editPhone, setEditPhone] = useState(user.phone || '');
@@ -395,6 +428,30 @@ export default function AccountPage({
                                     </span>
                                 </div>
                                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                            </button>
+
+                            {/* Alamat Pengiriman */}
+                            <button
+                                type="button"
+                                onClick={() => setAddressManagerOpen(true)}
+                                className="w-full flex items-center justify-between p-3.5 hover:bg-muted/40 transition cursor-pointer text-left"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="w-7 h-7 rounded-full bg-[#4A070B]/10 dark:bg-[#E8D0BA]/15 text-[#4A070B] dark:text-[#E8D0BA] flex items-center justify-center shrink-0">
+                                        <MapPin className="w-4 h-4" />
+                                    </div>
+                                    <span className="text-xs sm:text-sm font-semibold text-foreground">
+                                        {isEn ? 'Delivery Addresses' : 'Alamat Pengiriman'}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    {localAddresses.length > 0 && (
+                                        <Badge variant="secondary" className="text-[10px] px-2 py-0.5">
+                                            {localAddresses.length} {isEn ? 'Addresses' : 'Alamat'}
+                                        </Badge>
+                                    )}
+                                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                                </div>
                             </button>
 
                             {/* Favorit Saya */}
@@ -885,4 +942,169 @@ export default function AccountPage({
                     </form>
                 </DialogContent>
             </Dialog>
-        </Layout
+
+            {/* MODAL: DAFTAR ALAMAT PENGIRIMAN */}
+            <Dialog open={addressManagerOpen} onOpenChange={setAddressManagerOpen}>
+                <DialogContent className="w-[calc(100vw-32px)] max-w-lg max-h-[85vh] overflow-y-auto p-5 sm:p-6 rounded-2xl bg-card border border-border/80 shadow-2xl space-y-4">
+                    <DialogHeader className="pb-3 border-b border-border/70 space-y-1 text-left">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-[#4A070B] dark:text-[#E8D0BA]">
+                                <div className="w-8 h-8 rounded-full bg-[#4A070B]/10 dark:bg-[#E8D0BA]/15 flex items-center justify-center shrink-0">
+                                    <MapPin className="w-4 h-4" />
+                                </div>
+                                <DialogTitle className="text-base sm:text-lg font-bold text-foreground">
+                                    {isEn ? 'Saved Delivery Addresses' : 'Daftar Alamat Pengiriman'}
+                                </DialogTitle>
+                            </div>
+                        </div>
+                        <DialogDescription className="text-xs text-muted-foreground">
+                            {isEn
+                                ? 'Manage your delivery destinations integrated with KiriminAja courier coverage.'
+                                : 'Kelola alamat pengiriman terintegrasi cakupan kurir KiriminAja untuk kelancaran checkout.'}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {/* Button Tambah Alamat Baru */}
+                    <div className="pt-1">
+                        <Button
+                            type="button"
+                            onClick={() => {
+                                setEditingAddress(null);
+                                setAddressModalOpen(true);
+                            }}
+                            className="w-full h-10 rounded-xl bg-[#4A070B] hover:bg-[#360407] text-white text-xs font-semibold cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
+                        >
+                            <Plus className="w-4 h-4" />
+                            <span>{isEn ? 'Add New Address' : 'Tambah Alamat Baru'}</span>
+                        </Button>
+                    </div>
+
+                    {/* Address List */}
+                    {localAddresses.length === 0 ? (
+                        <div className="text-center py-10 px-4 rounded-xl border border-dashed border-border/80 bg-muted/20 space-y-2">
+                            <MapPin className="w-8 h-8 mx-auto text-muted-foreground/60" />
+                            <p className="text-xs font-semibold text-foreground">
+                                {isEn ? 'No saved addresses yet' : 'Belum ada alamat tersimpan'}
+                            </p>
+                            <p className="text-[11px] text-muted-foreground max-w-xs mx-auto">
+                                {isEn
+                                    ? 'Add your home or office address to make ordering faster and easier.'
+                                    : 'Tambahkan alamat rumah atau kantor Anda agar proses belanja lebih praktis.'}
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="space-y-3 pt-1">
+                            {localAddresses.map((addr) => (
+                                <div
+                                    key={addr.id}
+                                    className={`p-3.5 sm:p-4 rounded-xl border transition space-y-2.5 ${
+                                        addr.is_primary
+                                            ? 'border-[#4A070B]/50 dark:border-[#E8D0BA]/50 bg-[#4A070B]/5 dark:bg-[#E8D0BA]/5'
+                                            : 'border-border/80 bg-background/50 hover:border-border'
+                                    }`}
+                                >
+                                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <span className="font-bold text-xs text-foreground">
+                                                {addr.recipient_name}
+                                            </span>
+                                            <span className="text-xs text-muted-foreground">•</span>
+                                            <span className="text-xs text-muted-foreground">
+                                                {addr.recipient_phone}
+                                            </span>
+                                            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border/60">
+                                                {addr.label || 'Alamat'}
+                                            </span>
+                                            {addr.is_primary && (
+                                                <Badge className="bg-[#4A070B] text-white dark:bg-[#E8D0BA] dark:text-[#4A070B] text-[10px] px-2 py-0.5 border-none shadow-none font-bold">
+                                                    Utama
+                                                </Badge>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <p className="text-xs text-foreground/90 leading-relaxed">
+                                        {addr.address}
+                                    </p>
+
+                                    <p className="text-[11px] text-muted-foreground">
+                                        {[
+                                            addr.subdistrict_name,
+                                            addr.district_name,
+                                            addr.city_name,
+                                            addr.province_name,
+                                            addr.postal_code,
+                                        ].filter(Boolean).join(', ')}
+                                    </p>
+
+                                    {/* Action Buttons */}
+                                    <div className="pt-2 border-t border-border/60 flex items-center justify-between gap-2 flex-wrap text-xs">
+                                        <div>
+                                            {!addr.is_primary && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSetPrimary(addr.id)}
+                                                    className="text-xs font-semibold text-[#4A070B] dark:text-[#E8D0BA] hover:underline cursor-pointer"
+                                                >
+                                                    {isEn ? 'Set as Primary' : 'Jadikan Alamat Utama'}
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        <div className="flex items-center gap-2 ml-auto">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setEditingAddress(addr);
+                                                    setAddressModalOpen(true);
+                                                }}
+                                                className="text-xs font-medium text-foreground hover:text-[#4A070B] dark:hover:text-[#E8D0BA] flex items-center gap-1 px-2.5 py-1 rounded-md hover:bg-muted transition cursor-pointer"
+                                            >
+                                                <Edit2 className="w-3 h-3" />
+                                                <span>{isEn ? 'Edit' : 'Ubah'}</span>
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                onClick={() => handleDeleteAddress(addr.id)}
+                                                className="text-xs font-medium text-destructive hover:bg-destructive/10 flex items-center gap-1 px-2.5 py-1 rounded-md transition cursor-pointer"
+                                            >
+                                                <Trash2 className="w-3 h-3" />
+                                                <span>{isEn ? 'Delete' : 'Hapus'}</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            {/* MODAL: INPUT / EDIT ALAMAT */}
+            <AddressModal
+                open={addressModalOpen}
+                onOpenChange={(open) => {
+                    setAddressModalOpen(open);
+                    if (!open) setEditingAddress(null);
+                }}
+                addressToEdit={editingAddress}
+                onSuccess={(saved) => {
+                    setLocalAddresses((prev) => {
+                        const exists = prev.some((a) => a.id === saved.id);
+                        if (exists) {
+                            return prev.map((a) => (a.id === saved.id ? saved : (saved.is_primary ? { ...a, is_primary: false } : a)));
+                        }
+                        const updated = saved.is_primary
+                            ? prev.map((a) => ({ ...a, is_primary: false }))
+                            : [...prev];
+                        return [saved, ...updated];
+                    });
+                    setAddressModalOpen(false);
+                    setEditingAddress(null);
+                    router.reload({ only: ['addresses'] });
+                }}
+            />
+        </Layout>
+    );
+}
