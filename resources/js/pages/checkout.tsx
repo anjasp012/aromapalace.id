@@ -1002,29 +1002,53 @@ export default function CheckoutPage({
 
                                             {/* Clickable Courier Selector Box */}
                                             <div
-                                                onClick={() => setShowCourierModal(!showCourierModal)}
-                                                className="rounded-md border border-border/80 p-3 hover:border-border transition cursor-pointer flex items-center justify-between gap-3 bg-background/50"
+                                                onClick={() => {
+                                                    if (!selectedAddress) {
+                                                        if (localAddresses.length > 0) {
+                                                            setAddressSelectorOpen(true);
+                                                        } else {
+                                                            setEditingAddress(null);
+                                                            setAddressModalOpen(true);
+                                                        }
+                                                        return;
+                                                    }
+                                                    setShowCourierModal(!showCourierModal);
+                                                }}
+                                                className={`rounded-md border p-3 transition flex items-center justify-between gap-3 ${
+                                                    !selectedAddress
+                                                        ? 'border-dashed border-amber-500/40 bg-amber-500/5 cursor-pointer hover:border-amber-500'
+                                                        : 'border-border/80 hover:border-border cursor-pointer bg-background/50'
+                                                }`}
                                             >
-                                                <div className="flex items-center gap-2.5 flex-wrap min-w-0 text-xs">
-                                                    <span className="font-bold uppercase text-[10px] text-[#4A070B] dark:text-[#E8D0BA] bg-[#4A070B]/10 dark:bg-[#E8D0BA]/10 px-1.5 py-0.5 rounded">
-                                                        {selectedCourier?.courierBrand || 'Kurir'}
-                                                    </span>
-                                                    <span className="font-bold text-foreground">
-                                                        {selectedCourier?.name || 'Pilih Kurir'}
-                                                    </span>
-                                                    {selectedCourier?.type && (
-                                                        <>
-                                                            <span className="text-muted-foreground">•</span>
-                                                            <span className="text-muted-foreground">{selectedCourier.type}</span>
-                                                        </>
-                                                    )}
-                                                    {selectedCourier?.etd && (
-                                                        <span className="text-[11px] text-muted-foreground hidden sm:inline">{selectedCourier.etd}</span>
-                                                    )}
-                                                </div>
+                                                {!selectedAddress ? (
+                                                    <div className="flex items-center gap-2 text-xs text-amber-800 dark:text-amber-200">
+                                                        <MapPin className="w-4 h-4 text-amber-600 shrink-0" />
+                                                        <span className="font-medium">
+                                                            {isEn ? 'Select or add a delivery address first to calculate shipping' : 'Tentukan alamat pengiriman terlebih dahulu untuk melihat opsi kurir & ongkir'}
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center gap-2.5 flex-wrap min-w-0 text-xs">
+                                                        <span className="font-bold uppercase text-[10px] text-[#4A070B] dark:text-[#E8D0BA] bg-[#4A070B]/10 dark:bg-[#E8D0BA]/10 px-1.5 py-0.5 rounded">
+                                                            {selectedCourier?.courierBrand || 'Kurir'}
+                                                        </span>
+                                                        <span className="font-bold text-foreground">
+                                                            {selectedCourier?.name || 'Pilih Kurir'}
+                                                        </span>
+                                                        {selectedCourier?.type && (
+                                                            <>
+                                                                <span className="text-muted-foreground">•</span>
+                                                                <span className="text-muted-foreground">{selectedCourier.type}</span>
+                                                            </>
+                                                        )}
+                                                        {selectedCourier?.etd && (
+                                                            <span className="text-[11px] text-muted-foreground hidden sm:inline">{selectedCourier.etd}</span>
+                                                        )}
+                                                    </div>
+                                                )}
                                                 <div className="flex items-center gap-2 shrink-0">
-                                                    <span className="text-xs font-bold text-[#4A070B] dark:text-[#E8D0BA]">
-                                                        {selectedCourier?.priceFormatted || 'Pilih Alamat Dulu'}
+                                                    <span className={`text-xs font-bold ${selectedCourier?.price > 0 ? 'text-[#4A070B] dark:text-[#E8D0BA]' : 'text-amber-700 dark:text-amber-300'}`}>
+                                                        {!selectedAddress ? (isEn ? '+ Choose Address' : '+ Pilih Alamat') : (selectedCourier?.priceFormatted || 'Pilih Kurir')}
                                                     </span>
                                                     <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
