@@ -175,6 +175,10 @@ class CheckoutController extends Controller
             'recipient_name' => ['required', 'string', 'max:120'],
             'recipient_phone' => ['required', 'string', 'max:25'],
             'shipping_address' => ['required_if:delivery_type,delivery', 'nullable', 'string', 'max:500'],
+            'province_name' => ['nullable', 'string', 'max:100'],
+            'city_name' => ['nullable', 'string', 'max:100'],
+            'district_name' => ['nullable', 'string', 'max:100'],
+            'subdistrict_name' => ['nullable', 'string', 'max:100'],
             'city' => ['required_if:delivery_type,delivery', 'nullable', 'string', 'max:100'],
             'postal_code' => ['nullable', 'string', 'max:15'],
             'courier' => ['nullable', 'string', 'max:100'],
@@ -290,17 +294,31 @@ class CheckoutController extends Controller
             $deliveryType = $validated['delivery_type'] ?? 'delivery';
             $storeId = null;
 
+            $address = null;
+            if (! empty($validated['address_id'])) {
+                $address = $user->addresses()->find($validated['address_id']);
+            }
+            if (! $address && $deliveryType === 'delivery') {
+                $address = $user->primaryAddress ?: $user->addresses()->first();
+            }
+
             if ($deliveryType === 'pickup') {
                 $store = ! empty($validated['store_id']) ? Store::find($validated['store_id']) : Store::first();
                 $storeId = $store?->id;
                 $storeName = $store ? $store->name : 'Butik Resmi Aroma Palace';
                 $shippingAddress = 'Ambil di butik: '.($store ? $store->name.' - '.$store->description : 'Butik Resmi Aroma Palace');
-                $city = 'Ambil di Butik';
+                $provinceName = null;
+                $cityName = null;
+                $districtName = null;
+                $subdistrictName = null;
                 $courier = 'Ambil Mandiri di Butik ('.$storeName.')';
                 $shippingCost = 0;
             } else {
-                $shippingAddress = $validated['shipping_address'] ?? '-';
-                $city = $validated['city'] ?? '-';
+                $shippingAddress = $validated['shipping_address'] ?? ($address?->formatted_address ?: ($address?->address ?? '-'));
+                $provinceName = $validated['province_name'] ?? ($address?->province_name ?? null);
+                $cityName = $validated['city_name'] ?? ($address?->city_name ?? ($validated['city'] ?? null));
+                $districtName = $validated['district_name'] ?? ($address?->district_name ?? null);
+                $subdistrictName = $validated['subdistrict_name'] ?? ($address?->subdistrict_name ?? null);
                 $courier = $validated['courier'] ?? 'JNE Express VIP (Bebas Ongkir)';
                 $shippingCost = 0;
             }
@@ -312,7 +330,11 @@ class CheckoutController extends Controller
                 $storeId,
                 $validated,
                 $shippingAddress,
-                $city,
+                $provinceName,
+                $cityName,
+                $districtName,
+                $subdistrictName,
+                $address,
                 $courier,
                 $shippingCost,
                 $paymentMethod,
@@ -374,8 +396,11 @@ class CheckoutController extends Controller
                     'recipient_name' => $validated['recipient_name'],
                     'recipient_phone' => $validated['recipient_phone'],
                     'shipping_address' => $shippingAddress,
-                    'city' => $city,
-                    'postal_code' => $validated['postal_code'] ?? null,
+                    'province_name' => $provinceName,
+                    'city_name' => $cityName,
+                    'district_name' => $districtName,
+                    'subdistrict_name' => $subdistrictName,
+                    'postal_code' => $validated['postal_code'] ?? ($address?->postal_code ?? null),
                     'courier' => $courier,
                     'shipping_cost' => $shippingCost,
                     'payment_method' => $paymentMethod,

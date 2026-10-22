@@ -17,6 +17,10 @@ use Illuminate\Support\Carbon;
  * @property string $recipient_name
  * @property string $recipient_phone
  * @property string $shipping_address
+ * @property string|null $province_name
+ * @property string|null $city_name
+ * @property string|null $district_name
+ * @property string|null $subdistrict_name
  * @property string $city
  * @property string|null $postal_code
  * @property string $courier
@@ -49,7 +53,10 @@ use Illuminate\Support\Carbon;
     'recipient_name',
     'recipient_phone',
     'shipping_address',
-    'city',
+    'province_name',
+    'city_name',
+    'district_name',
+    'subdistrict_name',
     'postal_code',
     'courier',
     'shipping_cost',
@@ -68,6 +75,14 @@ use Illuminate\Support\Carbon;
 class Order extends Model
 {
     use HasFactory;
+
+    /**
+     * Backward-compatible accessor for city -> city_name.
+     */
+    public function getCityAttribute(): ?string
+    {
+        return $this->city_name;
+    }
 
     /**
      * @return array<string, string>

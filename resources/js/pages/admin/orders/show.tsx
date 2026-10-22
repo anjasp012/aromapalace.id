@@ -65,6 +65,10 @@ interface OrderDetail {
     recipient_name?: string;
     recipient_phone?: string;
     shipping_address?: string;
+    province_name?: string | null;
+    city_name?: string | null;
+    district_name?: string | null;
+    subdistrict_name?: string | null;
     city?: string;
     postal_code?: string;
     courier?: string;
@@ -378,9 +382,17 @@ export default function AdminOrderShow({ order }: OrderShowProps) {
                                 ) : (
                                     <div className="space-y-1 text-xs">
                                         <div className="text-muted-foreground font-medium">Alamat Tujuan:</div>
-                                        <div className="rounded-lg border p-3 bg-muted/30">
-                                            <div>{order.shipping_address || '-'}</div>
-                                            <div className="font-medium mt-1">{order.city} {order.postal_code}</div>
+                                        <div className="rounded-lg border p-3 bg-muted/30 space-y-1">
+                                            <div className="text-foreground">{order.shipping_address || '-'}</div>
+                                            <div className="font-medium text-foreground">
+                                                {[
+                                                    order.subdistrict_name ? `Kel. ${order.subdistrict_name}` : null,
+                                                    order.district_name ? `Kec. ${order.district_name}` : null,
+                                                    order.city_name || order.city,
+                                                    order.province_name,
+                                                    order.postal_code,
+                                                ].filter(Boolean).join(', ') || '-'}
+                                            </div>
                                         </div>
                                     </div>
                                 )}

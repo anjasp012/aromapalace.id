@@ -355,6 +355,10 @@ export default function CheckoutPage({
                 recipient_name: prev.recipient_name || activeAddr.recipient_name || user?.name || '',
                 recipient_phone: activeAddr.recipient_phone || prev.recipient_phone || user?.phone || '',
                 shipping_address: activeAddr.formatted_address || activeAddr.address || prev.shipping_address,
+                province_name: activeAddr.province_name || '',
+                city_name: activeAddr.city_name || '',
+                district_name: activeAddr.district_name || '',
+                subdistrict_name: activeAddr.subdistrict_name || '',
                 city: activeAddr.city_name || prev.city,
                 postal_code: activeAddr.postal_code || prev.postal_code,
             }));
@@ -439,6 +443,10 @@ export default function CheckoutPage({
         recipient_name: initialSelectedAddress?.recipient_name || user?.name || '',
         recipient_phone: initialSelectedAddress?.recipient_phone || user?.phone || '',
         shipping_address: initialSelectedAddress?.formatted_address || initialSelectedAddress?.address || user?.address || '',
+        province_name: initialSelectedAddress?.province_name || '',
+        city_name: initialSelectedAddress?.city_name || '',
+        district_name: initialSelectedAddress?.district_name || '',
+        subdistrict_name: initialSelectedAddress?.subdistrict_name || '',
         city: initialSelectedAddress?.city_name || user?.city || '',
         postal_code: initialSelectedAddress?.postal_code || user?.postal_code || '',
         courier: selectedCourier.id,
@@ -456,6 +464,10 @@ export default function CheckoutPage({
             recipient_name: addr.recipient_name,
             recipient_phone: addr.recipient_phone,
             shipping_address: addr.formatted_address || addr.address,
+            province_name: addr.province_name || '',
+            city_name: addr.city_name || '',
+            district_name: addr.district_name || '',
+            subdistrict_name: addr.subdistrict_name || '',
             city: addr.city_name,
             postal_code: addr.postal_code,
         }));
@@ -623,6 +635,10 @@ export default function CheckoutPage({
                     recipient_name: activeAddress.recipient_name || prev.recipient_name,
                     recipient_phone: recipientPhone,
                     shipping_address: shippingAddr,
+                    province_name: activeAddress.province_name || '',
+                    city_name: activeAddress.city_name || '',
+                    district_name: activeAddress.district_name || '',
+                    subdistrict_name: activeAddress.subdistrict_name || '',
                     city: activeAddress.city_name || prev.city,
                     postal_code: activeAddress.postal_code || prev.postal_code,
                 }));
@@ -779,10 +795,18 @@ export default function CheckoutPage({
                                     /* TAMPILAN PENGIRIMAN ALAMAT */
                                     <div className="space-y-3 pt-2 border-t border-border/70">
                                         <div className="flex items-center justify-between">
-                                            <h3 className="font-bold text-xs sm:text-sm text-foreground tracking-tight flex items-center gap-2">
-                                                <MapPin className="w-4 h-4 text-[#4A070B] dark:text-[#E8D0BA]" />
+                                            <h3 className="font-bold text-xs sm:text-sm text-foreground tracking-tight">
                                                 {t('checkout.address_detail')}
                                             </h3>
+                                            {selectedAddress && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setAddressSelectorOpen(true)}
+                                                    className="text-xs sm:text-sm font-semibold text-[#4A070B] dark:text-[#E8D0BA] hover:underline cursor-pointer transition-colors"
+                                                >
+                                                    Ganti Alamat
+                                                </button>
+                                            )}
                                         </div>
 
                                         {selectedAddress ? (
@@ -806,14 +830,6 @@ export default function CheckoutPage({
                                                             </span>
                                                         )}
                                                     </div>
-
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setAddressSelectorOpen(true)}
-                                                        className="text-xs font-semibold text-[#4A070B] dark:text-[#E8D0BA] hover:underline px-2 py-1 rounded hover:bg-muted transition cursor-pointer"
-                                                    >
-                                                        Ganti Alamat
-                                                    </button>
                                                 </div>
 
                                                 <p className="text-xs text-foreground/90 leading-relaxed">
