@@ -10,6 +10,7 @@ use App\Models\Store;
 use App\Models\Voucher;
 use App\Services\CatalogService;
 use App\Services\FirebaseNotificationService;
+use App\Services\KiriminAjaService;
 use App\Services\MembershipService;
 use App\Services\PakasirService;
 use Illuminate\Http\RedirectResponse;
@@ -26,7 +27,8 @@ class CheckoutController extends Controller
 {
     public function __construct(
         protected PakasirService $pakasirService,
-        protected FirebaseNotificationService $notificationService
+        protected FirebaseNotificationService $notificationService,
+        protected KiriminAjaService $kiriminAjaService,
     ) {}
 
     /**
@@ -135,12 +137,15 @@ class CheckoutController extends Controller
             $primaryAddress->update(['is_primary' => true]);
         }
 
+        // Load couriers from KiriminAja SDK (cached 1 day)
+        $couriers = $this->kiriminAjaService->getCouriers();
+
         return Inertia::render('checkout', [
             'items' => $items,
             'subtotal' => $subtotal,
             'subtotal_formatted' => 'Rp '.number_format($subtotal, 0, ',', '.'),
             'shipping_fee' => 0,
-            'shipping_fee_formatted' => 'Gratis (VIP Courier)',
+            'shipping_fee_formatted' => 'Ongkos kirim dihitung saat pemilihan kurir',
             'discount_amount' => $discountAmount,
             'discount_amount_formatted' => 'Rp '.number_format($discountAmount, 0, ',', '.'),
             'total' => $total,
@@ -149,6 +154,7 @@ class CheckoutController extends Controller
             'available_vouchers' => $availableVouchers,
             'stores' => $stores,
             'payment_methods' => $paymentMethods,
+            'couriers' => $couriers,
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,

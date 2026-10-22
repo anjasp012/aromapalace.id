@@ -4,9 +4,11 @@ namespace App\Services;
 
 use Exception;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use KiriminAja\Base\Config\Cache\Mode;
 use KiriminAja\Base\Config\KiriminAjaConfig;
+use KiriminAja\Models\ShippingPriceData;
 use KiriminAja\Services\KiriminAja;
 
 class KiriminAjaService
@@ -225,6 +227,143 @@ class KiriminAjaService
     }
 
     /**
+     * Get list of available couriers from KiriminAja SDK.
+     *
+     * @return array<int, array{code: string, name: string, region: string, type: string}>
+     */
+    public function getCouriers(): array
+    {
+        return Cache::remember('kiriminaja:couriers:v1', now()->addDay(), function () {
+            try {
+                $response = KiriminAja::getCouriers();
+                if ($response->status && ! empty($response->data)) {
+                    $items = is_array($response->data) ? $response->data : [];
+                    $domestic = array_values(array_filter($items, function ($item) {
+                        $arr = (array) $item;
+
+                        return ($arr['region'] ?? '') === 'DOMESTIC';
+                    }));
+
+                    if (! empty($domestic)) {
+                        return array_map(function ($item) {
+                            $arr = (array) $item;
+
+                            return [
+                                'code' => (string) ($arr['code'] ?? ''),
+                                'name' => (string) ($arr['name'] ?? ''),
+                                'region' => (string) ($arr['region'] ?? 'DOMESTIC'),
+                                'type' => (string) ($arr['type'] ?? 'Express'),
+                            ];
+                        }, $domestic);
+                    }
+                }
+            } catch (Exception $e) {
+                Log::warning('KiriminAja getCouriers failed: '.$e->getMessage());
+            }
+
+            return $this->fallbackCouriers();
+        });
+    }
+
+    /**
+     * Get shipping rates for one or more couriers between two districts.
+     *
+     * @param  int  $originDistrictId  Origin kecamatan ID
+     * @param  int  $destinationDistrictId  Destination kecamatan ID
+     * @param  int  $weightGrams  Package weight in grams
+     * @param  string[]|null  $couriers  Optional specific courier codes to query
+     * @return array<int, array{code: string, name: string, service: string, price: int, etd: string, price_formatted: string}>
+     */
+    public function getShippingRates(int $originDistrictId, int $destinationDistrictId, int $weightGrams = 500, ?array $couriers = null): array
+    {
+        $cacheKey = "kiriminaja:rates:o{$originDistrictId}:d{$destinationDistrictId}:w{$weightGrams}:v1";
+
+        return Cache::remember($cacheKey, now()->addHours(2), function () use ($originDistrictId, $destinationDistrictId, $weightGrams, $couriers) {
+            try {
+                $data = new ShippingPriceData;
+                $data->origin = $originDistrictId;
+                $data->destination = $destinationDistrictId;
+                $data->weight = $weightGrams;
+                if ($couriers !== null) {
+                    $data->courier = $couriers;
+                }
+
+                $response = KiriminAja::getPrice($data);
+                if ($response->status && ! empty($response->data)) {
+                    $raw = is_array($response->data) ? $response->data : [];
+
+                    $results = [];
+                    foreach ($raw as $item) {
+                        $arr = (array) $item;
+                        $services = $arr['rates'] ?? $arr['services'] ?? [];
+                        $courierCode = (string) ($arr['courier_code'] ?? $arr['code'] ?? '');
+                        $courierName = (string) ($arr['courier_name'] ?? $arr['name'] ?? $courierCode);
+
+                        if (is_array($services) && ! empty($services)) {
+                            foreach ($services as $svc) {
+                                $s = (array) $svc;
+                                $price = (int) ($s['price'] ?? $s['finalRate'] ?? 0);
+                                $results[] = [
+                                    'code' => $courierCode.'_'.strtolower($s['service_code'] ?? $s['service'] ?? 'reg'),
+                                    'courier_code' => $courierCode,
+                                    'name' => $courierName.' '.($s['service_name'] ?? $s['service'] ?? ''),
+                                    'service' => (string) ($s['service_name'] ?? $s['service'] ?? ''),
+                                    'price' => $price,
+                                    'price_formatted' => $price === 0 ? 'Gratis' : 'Rp '.number_format($price, 0, ',', '.'),
+                                    'etd' => 'Estimasi '.($s['etd'] ?? $s['estimated_day'] ?? '1-3').' Hari',
+                                ];
+                            }
+                        } else {
+                            // Flat rate courier (no services array)
+                            $price = (int) ($arr['price'] ?? $arr['finalRate'] ?? 0);
+                            $results[] = [
+                                'code' => $courierCode,
+                                'courier_code' => $courierCode,
+                                'name' => $courierName,
+                                'service' => 'Regular',
+                                'price' => $price,
+                                'price_formatted' => $price === 0 ? 'Gratis' : 'Rp '.number_format($price, 0, ',', '.'),
+                                'etd' => 'Estimasi '.($arr['etd'] ?? '1-3').' Hari',
+                            ];
+                        }
+                    }
+
+                    if (! empty($results)) {
+                        return $results;
+                    }
+                }
+            } catch (Exception $e) {
+                Log::warning('KiriminAja getShippingRates failed: '.$e->getMessage());
+            }
+
+            return [];
+        });
+    }
+
+    /**
+     * Fallback list of domestic couriers when SDK is unavailable.
+     *
+     * @return array<int, array{code: string, name: string, region: string, type: string}>
+     */
+    protected function fallbackCouriers(): array
+    {
+        return [
+            ['code' => 'jne', 'name' => 'JNE Express', 'region' => 'DOMESTIC', 'type' => 'Express'],
+            ['code' => 'jnt', 'name' => 'J&T Express', 'region' => 'DOMESTIC', 'type' => 'Express'],
+            ['code' => 'sicepat', 'name' => 'SiCepat Express', 'region' => 'DOMESTIC', 'type' => 'Express'],
+            ['code' => 'anteraja', 'name' => 'AnterAja', 'region' => 'DOMESTIC', 'type' => 'Express'],
+            ['code' => 'lion', 'name' => 'Lion Parcel', 'region' => 'DOMESTIC', 'type' => 'Express'],
+            ['code' => 'tiki', 'name' => 'Tiki', 'region' => 'DOMESTIC', 'type' => 'Express'],
+            ['code' => 'sap', 'name' => 'SAP Express', 'region' => 'DOMESTIC', 'type' => 'Express'],
+            ['code' => 'idx', 'name' => 'ID Express', 'region' => 'DOMESTIC', 'type' => 'Express'],
+            ['code' => 'spx', 'name' => 'SPX', 'region' => 'DOMESTIC', 'type' => 'Express'],
+            ['code' => 'ninja', 'name' => 'Ninja Express', 'region' => 'DOMESTIC', 'type' => 'Express'],
+            ['code' => 'posindonesia', 'name' => 'Pos Indonesia', 'region' => 'DOMESTIC', 'type' => 'Express'],
+            ['code' => 'rpx', 'name' => 'RPX Logistics', 'region' => 'DOMESTIC', 'type' => 'Express'],
+        ];
+    }
+
+    /**
      * Direct API call to KiriminAja when SDK call needs IP forwarding in dev environment.
      */
     protected function directApiCall(string $endpoint, array $payload = []): ?array
@@ -246,7 +385,7 @@ class KiriminAjaService
                 'Client-IP' => '153.60.130.156',
             ];
 
-            $response = \Illuminate\Support\Facades\Http::withHeaders($headers)
+            $response = Http::withHeaders($headers)
                 ->timeout(10)
                 ->post($url, empty($payload) ? (object) [] : $payload);
 

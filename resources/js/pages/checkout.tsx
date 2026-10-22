@@ -69,6 +69,13 @@ export interface PaymentMethodItem {
     description?: string;
 }
 
+export interface CourierOption {
+    code: string;
+    name: string;
+    region: string;
+    type: string;
+}
+
 interface CheckoutProps {
     items: CheckoutItem[];
     subtotal: number;
@@ -83,6 +90,7 @@ interface CheckoutProps {
     available_vouchers?: AvailableVoucher[];
     stores?: StoreOption[];
     payment_methods?: PaymentMethodItem[];
+    couriers?: CourierOption[];
     user: {
         id?: number;
         name: string;
@@ -280,33 +288,6 @@ const DEFAULT_PAYMENT_METHODS = [
     },
 ];
 
-const COURIER_OPTIONS = [
-    {
-        id: 'JNE Express VIP',
-        name: 'JNE Express VIP',
-        courierBrand: 'JNE',
-        price: 0,
-        priceFormatted: 'Gratis',
-        etd: 'Estimasi tiba 1 - 2 Hari',
-    },
-    {
-        id: 'Lion Parcel REGPACK',
-        name: 'Lion Parcel REGPACK',
-        courierBrand: 'Lion Parcel',
-        price: 33000,
-        priceFormatted: 'Rp33.000',
-        etd: 'Estimasi tiba 3 - 4 Hari',
-    },
-    {
-        id: 'SiCepat Best Express',
-        name: 'SiCepat BEST',
-        courierBrand: 'SiCepat',
-        price: 25000,
-        priceFormatted: 'Rp25.000',
-        etd: 'Estimasi tiba 1 - 2 Hari',
-    },
-];
-
 export default function CheckoutPage({
     items = [],
     subtotal = 0,
@@ -314,11 +295,35 @@ export default function CheckoutPage({
     available_vouchers = [],
     stores = [],
     payment_methods = [],
+    couriers: propCouriers = [],
     user,
     addresses = [],
     primary_address = null,
 }: CheckoutProps) {
     const { t, pickText, isEn } = useTranslation();
+
+    // Build courier options from server (KiriminAja SDK) - memoized
+    const courierOptions = useMemo(() => {
+        const list = propCouriers.length > 0 ? propCouriers : [
+            { code: 'jne', name: 'JNE Express', region: 'DOMESTIC', type: 'Express' },
+            { code: 'jnt', name: 'J&T Express', region: 'DOMESTIC', type: 'Express' },
+            { code: 'sicepat', name: 'SiCepat Express', region: 'DOMESTIC', type: 'Express' },
+            { code: 'lion', name: 'Lion Parcel', region: 'DOMESTIC', type: 'Express' },
+            { code: 'anteraja', name: 'AnterAja', region: 'DOMESTIC', type: 'Express' },
+        ];
+        return list.map((c) => ({
+            id: c.code,
+            code: c.code,
+            name: c.name,
+            courierBrand: c.name.split(' ')[0],
+            type: c.type,
+            // Harga dihitung KiriminAja saat checkout; tampilkan "Cek ongkir" untuk kurir berbayar
+            price: 0,
+            priceFormatted: 'Cek Ongkir',
+            etd: `Layanan ${c.type}`,
+        }));
+    }, [propCouriers]);
+
 
     // Delivery Type: delivery vs pickup
     const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
@@ -434,7 +439,7 @@ export default function CheckoutPage({
     // Confirmation Modal
     const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-    const selectedCourier = COURIER_OPTIONS[selectedCourierIndex] || COURIER_OPTIONS[0];
+    const selectedCourier = courierOptions[selectedCourierIndex] || courierOptions[0];
 
     const { data, setData, post, processing, errors } = useForm({
         delivery_type: 'delivery' as 'delivery' | 'pickup',
@@ -449,7 +454,7 @@ export default function CheckoutPage({
         subdistrict_name: initialSelectedAddress?.subdistrict_name || '',
         city: initialSelectedAddress?.city_name || user?.city || '',
         postal_code: initialSelectedAddress?.postal_code || user?.postal_code || '',
-        courier: selectedCourier.id,
+        courier: courierOptions[0]?.id || 'jne',
         payment_method: 'qris',
         voucher_code: initial_voucher,
         notes: '',
@@ -591,7 +596,7 @@ export default function CheckoutPage({
 
     const handleSelectCourier = (index: number) => {
         setSelectedCourierIndex(index);
-        setData('courier', COURIER_OPTIONS[index].id);
+        setData('courier', courierOptions[index]?.id || '');
         setShowCourierModal(false);
     };
 
@@ -887,19 +892,18 @@ export default function CheckoutPage({
                                                 className="rounded-md border border-border/80 p-3 hover:border-border transition cursor-pointer flex items-center justify-between gap-3 bg-background/50"
                                             >
                                                 <div className="flex items-center gap-2.5 flex-wrap min-w-0 text-xs">
-                                                    <span className="font-extrabold text-[11px] text-red-600 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/40 px-1.5 py-0.5 rounded italic">
-                                                        {selectedCourier.courierBrand}
+                                                    <span className="font-bold uppercase text-[10px] text-[#4A070B] dark:text-[#E8D0BA] bg-[#4A070B]/10 dark:bg-[#E8D0BA]/10 px-1.5 py-0.5 rounded">
+                                                        {selectedCourier?.courierBrand || 'KiriminAja'}
                                                     </span>
                                                     <span className="font-bold text-foreground">
-                                                        {selectedCourier.priceFormatted}
+                                                        {selectedCourier?.name || 'Pilih Kurir'}
                                                     </span>
                                                     <span className="text-muted-foreground">•</span>
-                                                    <span className="text-foreground font-medium">
-                                                        {selectedCourier.name}
-                                                    </span>
-                                                    <span className="text-muted-foreground hidden sm:inline">|</span>
                                                     <span className="text-muted-foreground">
-                                                        {selectedCourier.etd}
+                                                        {selectedCourier?.type || 'Express'}
+                                                    </span>
+                                                    <span className="text-[11px] italic text-muted-foreground hidden sm:inline">
+                                                        via KiriminAja
                                                     </span>
                                                 </div>
 
@@ -910,10 +914,10 @@ export default function CheckoutPage({
                                                 </div>
                                             </div>
 
-                                            {/* Dropdown Options for Couriers */}
+                                            {/* Dropdown Options for Couriers (from KiriminAja SDK) */}
                                             {showCourierModal && (
-                                                <div className="rounded-md border border-border/80 p-2 space-y-1.5 bg-background/80">
-                                                    {COURIER_OPTIONS.map((c, idx) => (
+                                                <div className="rounded-md border border-border/80 p-2 space-y-1 bg-background/80 max-h-56 overflow-y-auto">
+                                                    {courierOptions.map((c, idx) => (
                                                         <div
                                                             key={c.id}
                                                             onClick={() => handleSelectCourier(idx)}
@@ -923,12 +927,12 @@ export default function CheckoutPage({
                                                                 }`}
                                                         >
                                                             <div className="flex items-center gap-2">
-                                                                <span className="font-bold text-red-600">{c.courierBrand}</span>
+                                                                <span className="font-bold text-[#4A070B] dark:text-[#E8D0BA] uppercase text-[10px] bg-[#4A070B]/10 dark:bg-[#E8D0BA]/10 px-1.5 py-0.5 rounded">{c.courierBrand}</span>
                                                                 <span>{c.name}</span>
-                                                                <span className="text-muted-foreground">({c.etd})</span>
+                                                                <span className="text-muted-foreground text-[11px]">• {c.type}</span>
                                                             </div>
-                                                            <span className="font-bold text-foreground">
-                                                                {c.priceFormatted}
+                                                            <span className="text-[11px] text-muted-foreground italic">
+                                                                via KiriminAja
                                                             </span>
                                                         </div>
                                                     ))}

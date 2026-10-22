@@ -659,6 +659,7 @@ export default function AccountPage({
                                         {isEn ? 'Profile Photo' : 'Foto Profil'}
                                     </label>
                                     <div className="flex items-center gap-2 flex-wrap">
+                                        {/* File picker */}
                                         <label className="cursor-pointer">
                                             <input
                                                 type="file"
@@ -676,6 +677,27 @@ export default function AccountPage({
                                             <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-border/80 bg-background hover:bg-muted text-foreground transition shadow-2xs">
                                                 <Camera className="w-3.5 h-3.5 text-[#E5A844]" />
                                                 {avatarPreview ? (isEn ? 'Change Photo' : 'Ganti Foto') : (isEn ? 'Upload Photo' : 'Pilih Foto')}
+                                            </span>
+                                        </label>
+                                        {/* Camera capture for mobile (front camera) */}
+                                        <label className="cursor-pointer">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                capture="user"
+                                                className="hidden"
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (file) {
+                                                        setAvatarFile(file);
+                                                        setAvatarPreview(URL.createObjectURL(file));
+                                                        setRemoveAvatar(false);
+                                                    }
+                                                }}
+                                            />
+                                            <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-border/80 bg-background hover:bg-muted text-foreground transition shadow-2xs">
+                                                <Camera className="w-3.5 h-3.5 text-sky-500" />
+                                                {isEn ? 'Camera' : 'Kamera'}
                                             </span>
                                         </label>
                                         {avatarPreview && (
