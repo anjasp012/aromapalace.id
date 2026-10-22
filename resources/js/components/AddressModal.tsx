@@ -19,6 +19,7 @@ import type {
     DistrictOption,
     SubdistrictOption,
 } from '@/types/address';
+import SearchableSelect, { SearchableOption } from '@/components/ui/searchable-select';
 
 interface AddressModalProps {
     open: boolean;
@@ -152,8 +153,8 @@ export default function AddressModal({
     }, [open, addressToEdit]);
 
     // Handle Province change
-    const handleProvinceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const val = e.target.value ? Number(e.target.value) : '';
+    const handleProvinceChange = (rawVal: number | string) => {
+        const val = rawVal ? Number(rawVal) : '';
         setSelectedProvinceId(val);
         const found = provinces.find((p) => p.id === val);
         setSelectedProvinceName(found ? found.name : '');
@@ -184,10 +185,10 @@ export default function AddressModal({
     };
 
     // Handle City change
-    const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const val = e.target.value ? Number(e.target.value) : '';
+    const handleCityChange = (rawVal: number | string, opt?: SearchableOption) => {
+        const val = rawVal ? Number(rawVal) : '';
         setSelectedCityId(val);
-        const found = cities.find((c) => c.id === val);
+        const found = opt || cities.find((c) => c.id === val);
         setSelectedCityName(found ? found.name : '');
         if (found?.postal_code && !postalCode) {
             setPostalCode(found.postal_code);
@@ -216,10 +217,10 @@ export default function AddressModal({
     };
 
     // Handle District change
-    const handleDistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const val = e.target.value ? Number(e.target.value) : '';
+    const handleDistrictChange = (rawVal: number | string, opt?: SearchableOption) => {
+        const val = rawVal ? Number(rawVal) : '';
         setSelectedDistrictId(val);
-        const found = districts.find((d) => d.id === val);
+        const found = opt || districts.find((d) => d.id === val);
         setSelectedDistrictName(found ? found.name : '');
         if (found?.postal_code) {
             setPostalCode(found.postal_code);
@@ -245,10 +246,10 @@ export default function AddressModal({
     };
 
     // Handle Subdistrict change
-    const handleSubdistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const val = e.target.value ? Number(e.target.value) : '';
+    const handleSubdistrictChange = (rawVal: number | string, opt?: SearchableOption) => {
+        const val = rawVal ? Number(rawVal) : '';
         setSelectedSubdistrictId(val);
-        const found = subdistricts.find((s) => s.id === val);
+        const found = opt || subdistricts.find((s) => s.id === val);
         setSelectedSubdistrictName(found ? found.name : '');
         if (found?.postal_code) {
             setPostalCode(found.postal_code);
@@ -442,52 +443,39 @@ export default function AddressModal({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {/* PROVINSI */}
                         <div className="space-y-1">
-                            <div className="flex items-center justify-between">
-                                <label className="text-xs font-semibold text-foreground">
-                                    {isEn ? 'Province' : 'Provinsi'}
-                                </label>
-                                {loadingProvinces && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />}
-                            </div>
-                            <select
+                            <label className="text-xs font-semibold text-foreground">
+                                {isEn ? 'Province' : 'Provinsi'} <span className="text-destructive">*</span>
+                            </label>
+                            <SearchableSelect
+                                options={provinces}
                                 value={selectedProvinceId}
                                 onChange={handleProvinceChange}
-                                className="w-full h-9 px-2.5 rounded-md text-xs bg-background border border-border/80 text-foreground focus:ring-1 focus:ring-[#4A070B] focus:border-[#4A070B] outline-none cursor-pointer"
-                            >
-                                <option value="">-- {isEn ? 'Select Province' : 'Pilih Provinsi'} --</option>
-                                {provinces.map((prov) => (
-                                    <option key={prov.id} value={prov.id}>
-                                        {prov.name}
-                                    </option>
-                                ))}
-                            </select>
+                                placeholder={isEn ? 'Select Province' : 'Pilih Provinsi'}
+                                searchPlaceholder={isEn ? 'Search province...' : 'Cari nama provinsi...'}
+                                loading={loadingProvinces}
+                                emptyMessage={isEn ? 'No province found.' : 'Provinsi tidak ditemukan.'}
+                            />
                         </div>
 
                         {/* KOTA / KABUPATEN */}
                         <div className="space-y-1">
-                            <div className="flex items-center justify-between">
-                                <label className="text-xs font-semibold text-foreground">
-                                    {isEn ? 'City / Regency' : 'Kabupaten / Kota'} <span className="text-destructive">*</span>
-                                </label>
-                                {loadingCities && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />}
-                            </div>
-                            <select
+                            <label className="text-xs font-semibold text-foreground">
+                                {isEn ? 'City / Regency' : 'Kabupaten / Kota'} <span className="text-destructive">*</span>
+                            </label>
+                            <SearchableSelect
+                                options={cities}
                                 value={selectedCityId}
                                 onChange={handleCityChange}
                                 disabled={!selectedProvinceId || loadingCities}
-                                className="w-full h-9 px-2.5 rounded-md text-xs bg-background border border-border/80 text-foreground focus:ring-1 focus:ring-[#4A070B] focus:border-[#4A070B] outline-none cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-                                required
-                            >
-                                <option value="">
-                                    {!selectedProvinceId
+                                loading={loadingCities}
+                                placeholder={
+                                    !selectedProvinceId
                                         ? (isEn ? 'Select Province First' : 'Pilih Provinsi Dahulu')
-                                        : (isEn ? '-- Select City / Regency --' : '-- Pilih Kabupaten/Kota --')}
-                                </option>
-                                {cities.map((c) => (
-                                    <option key={c.id} value={c.id}>
-                                        {c.type ? `${c.type} ` : ''}{c.name}
-                                    </option>
-                                ))}
-                            </select>
+                                        : (isEn ? 'Select City / Regency' : 'Pilih Kabupaten/Kota')
+                                }
+                                searchPlaceholder={isEn ? 'Search city/regency...' : 'Cari kota/kabupaten...'}
+                                emptyMessage={isEn ? 'No city found.' : 'Kota/kabupaten tidak ditemukan.'}
+                            />
                         </div>
                     </div>
 
@@ -495,58 +483,44 @@ export default function AddressModal({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {/* KECAMATAN */}
                         <div className="space-y-1">
-                            <div className="flex items-center justify-between">
-                                <label className="text-xs font-semibold text-foreground">
-                                    {isEn ? 'District' : 'Kecamatan'} <span className="text-destructive">*</span>
-                                </label>
-                                {loadingDistricts && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />}
-                            </div>
-                            <select
+                            <label className="text-xs font-semibold text-foreground">
+                                {isEn ? 'District' : 'Kecamatan'} <span className="text-destructive">*</span>
+                            </label>
+                            <SearchableSelect
+                                options={districts}
                                 value={selectedDistrictId}
                                 onChange={handleDistrictChange}
                                 disabled={!selectedCityId || loadingDistricts}
-                                className="w-full h-9 px-2.5 rounded-md text-xs bg-background border border-border/80 text-foreground focus:ring-1 focus:ring-[#4A070B] focus:border-[#4A070B] outline-none cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-                                required
-                            >
-                                <option value="">
-                                    {!selectedCityId
+                                loading={loadingDistricts}
+                                placeholder={
+                                    !selectedCityId
                                         ? (isEn ? 'Select City First' : 'Pilih Kota Dahulu')
-                                        : (isEn ? '-- Select District --' : '-- Pilih Kecamatan --')}
-                                </option>
-                                {districts.map((d) => (
-                                    <option key={d.id} value={d.id}>
-                                        {d.name}
-                                    </option>
-                                ))}
-                            </select>
+                                        : (isEn ? 'Select District' : 'Pilih Kecamatan')
+                                }
+                                searchPlaceholder={isEn ? 'Search district...' : 'Cari kecamatan...'}
+                                emptyMessage={isEn ? 'No district found.' : 'Kecamatan tidak ditemukan.'}
+                            />
                         </div>
 
                         {/* KELURAHAN */}
                         <div className="space-y-1">
-                            <div className="flex items-center justify-between">
-                                <label className="text-xs font-semibold text-foreground">
-                                    {isEn ? 'Subdistrict' : 'Kelurahan / Desa'} <span className="text-destructive">*</span>
-                                </label>
-                                {loadingSubdistricts && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />}
-                            </div>
-                            <select
+                            <label className="text-xs font-semibold text-foreground">
+                                {isEn ? 'Subdistrict' : 'Kelurahan / Desa'} <span className="text-destructive">*</span>
+                            </label>
+                            <SearchableSelect
+                                options={subdistricts}
                                 value={selectedSubdistrictId}
                                 onChange={handleSubdistrictChange}
                                 disabled={!selectedDistrictId || loadingSubdistricts}
-                                className="w-full h-9 px-2.5 rounded-md text-xs bg-background border border-border/80 text-foreground focus:ring-1 focus:ring-[#4A070B] focus:border-[#4A070B] outline-none cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-                                required
-                            >
-                                <option value="">
-                                    {!selectedDistrictId
+                                loading={loadingSubdistricts}
+                                placeholder={
+                                    !selectedDistrictId
                                         ? (isEn ? 'Select District First' : 'Pilih Kecamatan Dahulu')
-                                        : (isEn ? '-- Select Subdistrict --' : '-- Pilih Kelurahan --')}
-                                </option>
-                                {subdistricts.map((s) => (
-                                    <option key={s.id} value={s.id}>
-                                        {s.name}
-                                    </option>
-                                ))}
-                            </select>
+                                        : (isEn ? 'Select Subdistrict' : 'Pilih Kelurahan')
+                                }
+                                searchPlaceholder={isEn ? 'Search subdistrict...' : 'Cari kelurahan/desa...'}
+                                emptyMessage={isEn ? 'No subdistrict found.' : 'Kelurahan tidak ditemukan.'}
+                            />
                         </div>
                     </div>
 

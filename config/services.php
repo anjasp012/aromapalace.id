@@ -48,7 +48,7 @@ return [
         'base_url' => env('KIRIMINAJA_BASE_URL'),
         'pin' => env('KIRIMINAJA_PIN', '123456'),
         'prefix' => env('KIRIMINAJA_PREFIX', 'ARPL'),
-        'cache_store' => env('KIRIMINAJA_CACHE_STORE', 'laravel'),
+        'cache_store' => env('KIRIMINAJA_CACHE_STORE', 'file'),
         'cache_prefix' => env('KIRIMINAJA_CACHE_PREFIX', 'kiriminaja:'),
     ],
 
