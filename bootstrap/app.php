@@ -29,7 +29,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->redirectGuestsTo(function (Request $request) {
             $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
-            if ($request->getHost() === $adminDomain) {
+            $isAdminHost = $request->getHost() === $adminDomain || str_starts_with($request->getHost(), 'admin.');
+
+            if ($isAdminHost) {
                 return route('admin.login');
             }
 
@@ -37,12 +39,14 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $middleware->redirectUsersTo(function (Request $request) {
-            $user = $request->user();
-            if ($user && $user->isAdmin()) {
+            $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
+            $isAdminHost = $request->getHost() === $adminDomain || str_starts_with($request->getHost(), 'admin.');
+
+            if ($isAdminHost) {
                 return route('admin.dashboard');
             }
 
-            return route('products.index');
+            return route('home');
         });
 
         $middleware->alias([

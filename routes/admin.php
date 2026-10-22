@@ -28,7 +28,10 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/', fn () => redirect()->route('admin.dashboard'));
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Admin Real-time Notifications
+    // Admin Real-time Notifications & Management
+    Route::get('/manajemen-notifikasi', [NotificationController::class, 'page'])->name('notifications.page');
+    Route::get('/manajemen-notifikasi/{notification}/go', [NotificationController::class, 'goToNotification'])->name('notifications.go');
+    Route::delete('/manajemen-notifikasi/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
     Route::get('/api/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/api/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/api/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');

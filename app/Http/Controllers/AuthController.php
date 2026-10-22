@@ -18,11 +18,14 @@ class AuthController extends Controller
     public function login(Request $request): Response|RedirectResponse
     {
         if (Auth::check()) {
-            if ($request->user()?->isAdmin()) {
-                return redirect()->route('admin.dashboard');
+            $user = $request->user();
+            if ($user?->isAdmin()) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+            } else {
+                return redirect()->intended(route('home'));
             }
-
-            return redirect()->intended(route('products.index'));
         }
 
         return Inertia::render('login', [
@@ -37,11 +40,14 @@ class AuthController extends Controller
     public function registerView(Request $request): Response|RedirectResponse
     {
         if (Auth::check()) {
-            if ($request->user()?->isAdmin()) {
-                return redirect()->route('admin.dashboard');
+            $user = $request->user();
+            if ($user?->isAdmin()) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+            } else {
+                return redirect()->intended(route('home'));
             }
-
-            return redirect()->intended(route('products.index'));
         }
 
         return Inertia::render('register', [
@@ -68,7 +74,7 @@ class AuthController extends Controller
             Auth::login($user, true);
             $request->session()->regenerate();
 
-            return redirect()->intended(route('products.index'));
+            return redirect()->intended(route('home'));
         }
 
         $credentials = $request->validate([
@@ -81,22 +87,21 @@ class AuthController extends Controller
         if (Auth::attempt($credentials, $remember)) {
             $user = Auth::user();
 
-            // Strict boundary: Administrator accounts must use the dedicated Admin Portal
+            // Strict boundary: Only customer accounts can log in via storefront.
+            // Administrator accounts are forbidden from logging in through the user login page.
             if ($user && $user->isAdmin()) {
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
 
-                $adminLoginUrl = (config('app.admin_url') ?: 'https://'.config('app.admin_domain', 'admin.aromapalace.id')).'/login';
-
                 return back()->withErrors([
-                    'email' => "Akun ini adalah akun Administrator. Silakan login melalui portal khusus Admin di {$adminLoginUrl}",
+                    'email' => 'Halaman login ini khusus pelanggan. Akun Administrator tidak diizinkan masuk dari sini, silakan gunakan portal khusus Admin.',
                 ])->onlyInput('email');
             }
 
             $request->session()->regenerate();
 
-            return redirect()->intended(route('products.index'));
+            return redirect()->intended(route('home'));
         }
 
         return back()->withErrors([

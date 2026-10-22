@@ -87,15 +87,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
     };
 
     const handleNotificationClick = (notif: AdminNotificationItem) => {
-        if (!notif.is_read) {
-            router.post(`/api/notifications/${notif.id}/read`, {}, {
-                preserveScroll: true,
-                preserveState: true,
-            });
-        }
-        if (notif.url) {
-            router.visit(notif.url);
-        }
+        router.visit(`/manajemen-notifikasi/${notif.id}/go`);
     };
 
     const getNotificationIcon = (type: string) => {
@@ -154,6 +146,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
     const isSliderPromos = url.startsWith('/manajemen-slider-promo');
     const isStores = url.startsWith('/manajemen-butik');
     const isPaymentMethods = url.startsWith('/manajemen-pembayaran');
+    const isNotifications = url.startsWith('/manajemen-notifikasi');
 
     const handleLogout = () => {
         router.post('/logout');
@@ -252,6 +245,28 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                         >
                             <Users className="size-4" />
                             <span>Pengguna</span>
+                        </Link>
+
+                        <Link
+                            href="/manajemen-notifikasi"
+                            prefetch="hover"
+                            cacheFor={['30s', '1m']}
+                            onClick={() => setSidebarOpen(false)}
+                            className={`flex items-center justify-between rounded-lg px-3 py-2 transition-all ${
+                                isNotifications
+                                    ? 'bg-muted text-primary font-semibold'
+                                    : 'text-muted-foreground hover:text-primary hover:bg-muted'
+                            }`}
+                        >
+                            <div className="flex items-center gap-3">
+                                <Bell className="size-4" />
+                                <span>Notifikasi</span>
+                            </div>
+                            {unreadCount > 0 && (
+                                <Badge variant="destructive" className="text-[10px] py-0 px-1.5 h-4 font-bold">
+                                    {unreadCount > 9 ? '9+' : unreadCount}
+                                </Badge>
+                            )}
                         </Link>
 
                         <Separator className="my-2" />
@@ -534,10 +549,10 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
 
                                 <div className="border-t p-2 bg-muted/20 text-center">
                                     <Link
-                                        href="/manajemen-pesanan"
+                                        href="/manajemen-notifikasi"
                                         className="text-xs font-medium text-primary hover:underline block py-1"
                                     >
-                                        Lihat Semua Pesanan &rarr;
+                                        Lihat Semua Notifikasi &rarr;
                                     </Link>
                                 </div>
                             </DropdownMenuContent>
