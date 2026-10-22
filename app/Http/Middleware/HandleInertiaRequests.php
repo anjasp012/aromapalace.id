@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Notification;
 use App\Models\Voucher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -72,6 +73,30 @@ class HandleInertiaRequests extends Middleware
                 ] : null,
                 'search_history' => fn () => $user ? $user->searchHistories()->latest('updated_at')->take(10)->pluck('query')->all() : [],
             ],
+            'admin_notifications' => fn () => ($user && $user->isAdmin())
+                ? Notification::query()
+                    ->where('for_admin', true)
+                    ->latest('id')
+                    ->take(15)
+                    ->get()
+                    ->map(fn (Notification $n) => [
+                        'id' => $n->id,
+                        'type' => $n->type,
+                        'title' => $n->title,
+                        'body' => $n->body,
+                        'url' => $n->url,
+                        'is_read' => $n->is_read,
+                        'created_at' => $n->created_at ? $n->created_at->diffForHumans() : null,
+                    ])
+                    ->values()
+                    ->all()
+                : [],
+            'admin_unread_notifications_count' => fn () => ($user && $user->isAdmin())
+                ? (int) Notification::query()
+                    ->where('for_admin', true)
+                    ->where('is_read', false)
+                    ->count()
+                : 0,
         ];
     }
 }

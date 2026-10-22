@@ -20,15 +20,34 @@ import {
     MapPin,
     Users,
     SlidersHorizontal,
+    Bell,
+    CheckCheck,
+    Truck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import {
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+} from '@/components/ui/dropdown-menu';
 import { useAdminOrderNotifier } from '@/lib/use-admin-notifications';
 
 interface AdminLayoutProps {
     title: string;
     children: ReactNode;
     subtitle?: string;
+}
+
+export interface AdminNotificationItem {
+    id: number;
+    type: string;
+    title: string;
+    body: string;
+    url?: string | null;
+    is_read: boolean;
+    created_at?: string | null;
 }
 
 interface SharedPageProps {
@@ -44,6 +63,8 @@ interface SharedPageProps {
         success?: string | null;
         error?: string | null;
     };
+    admin_notifications?: AdminNotificationItem[];
+    admin_unread_notifications_count?: number;
     [key: string]: unknown;
 }
 
@@ -53,6 +74,71 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
     const flash = props.flash;
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [dismissFlash, setDismissFlash] = useState(false);
+
+    const notifications = props.admin_notifications ?? [];
+    const unreadCount = props.admin_unread_notifications_count ?? 0;
+
+    const handleMarkAllAsRead = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        router.post('/api/notifications/mark-all-read', {}, {
+            preserveScroll: true,
+            preserveState: true,
+        });
+    };
+
+    const handleNotificationClick = (notif: AdminNotificationItem) => {
+        if (!notif.is_read) {
+            router.post(`/api/notifications/${notif.id}/read`, {}, {
+                preserveScroll: true,
+                preserveState: true,
+            });
+        }
+        if (notif.url) {
+            router.visit(notif.url);
+        }
+    };
+
+    const getNotificationIcon = (type: string) => {
+        switch (type) {
+            case 'new_order':
+                return (
+                    <div className="size-8 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                        <ShoppingBag className="size-4" />
+                    </div>
+                );
+            case 'payment_success':
+            case 'admin_payment_received':
+                return (
+                    <div className="size-8 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                        <CreditCard className="size-4" />
+                    </div>
+                );
+            case 'order_shipped':
+                return (
+                    <div className="size-8 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                        <Truck className="size-4" />
+                    </div>
+                );
+            case 'store_pickup_ready':
+                return (
+                    <div className="size-8 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                        <Store className="size-4" />
+                    </div>
+                );
+            case 'voucher_reward':
+                return (
+                    <div className="size-8 rounded-full bg-pink-500/10 text-pink-600 dark:text-pink-400 flex items-center justify-center shrink-0">
+                        <Ticket className="size-4" />
+                    </div>
+                );
+            default:
+                return (
+                    <div className="size-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center shrink-0">
+                        <Bell className="size-4" />
+                    </div>
+                );
+        }
+    };
 
     // Real-time Order Notification Poller (plays chime and shows desktop banner)
     useAdminOrderNotifier(Boolean(user && user.role === 'admin'));
@@ -305,25 +391,6 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                             <CreditCard className="size-4" />
                             <span>Metode Pembayaran</span>
                         </Link>
-
-                        <Separator className="my-2" />
-
-                        <div className="px-3 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                            Navigasi
-                        </div>
-
-                        <a
-                            href="/"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center justify-between rounded-lg px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted transition-all"
-                        >
-                            <div className="flex items-center gap-3">
-                                <Store className="size-4" />
-                                <span>Buka Toko</span>
-                            </div>
-                            <ExternalLink className="size-3.5" />
-                        </a>
                     </nav>
                 </div>
 
@@ -383,6 +450,99 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                     </div>
 
                     <div className="flex items-center gap-2">
+                        {/* Notification Bell Dropdown */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="relative size-8 cursor-pointer"
+                                    title="Notifikasi"
+                                    aria-label="Notifikasi"
+                                >
+                                    <Bell className="size-4 text-foreground/80" />
+                                    {unreadCount > 0 && (
+                                        <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground shadow-xs animate-pulse">
+                                            {unreadCount > 9 ? '9+' : unreadCount}
+                                        </span>
+                                    )}
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-80 sm:w-96 p-0 rounded-xl shadow-lg border">
+                                <div className="flex items-center justify-between border-b px-4 py-3 bg-muted/30">
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-semibold text-sm text-foreground">Notifikasi</span>
+                                        {unreadCount > 0 && (
+                                            <Badge variant="secondary" className="text-[10px] py-0 px-1.5 h-4">
+                                                {unreadCount} baru
+                                            </Badge>
+                                        )}
+                                    </div>
+                                    {unreadCount > 0 && (
+                                        <button
+                                            type="button"
+                                            onClick={handleMarkAllAsRead}
+                                            className="text-[11px] text-primary hover:underline font-medium cursor-pointer flex items-center gap-1"
+                                        >
+                                            <CheckCheck className="size-3" />
+                                            <span>Tandai Semua Dibaca</span>
+                                        </button>
+                                    )}
+                                </div>
+
+                                <div className="max-h-[360px] overflow-y-auto divide-y divide-border">
+                                    {notifications.length === 0 ? (
+                                        <div className="p-8 text-center text-muted-foreground space-y-1.5">
+                                            <Bell className="size-8 mx-auto opacity-30" />
+                                            <p className="text-xs font-medium text-foreground">Tidak ada notifikasi</p>
+                                            <p className="text-[11px]">Pemberitahuan transaksi atau pesanan baru akan muncul di sini.</p>
+                                        </div>
+                                    ) : (
+                                        notifications.map((notif) => (
+                                            <div
+                                                key={notif.id}
+                                                onClick={() => handleNotificationClick(notif)}
+                                                className={`flex items-start gap-3 p-3.5 transition-colors cursor-pointer hover:bg-muted/50 ${
+                                                    !notif.is_read ? 'bg-primary/5' : ''
+                                                }`}
+                                            >
+                                                <div className="mt-0.5 shrink-0">
+                                                    {getNotificationIcon(notif.type)}
+                                                </div>
+                                                <div className="flex-1 min-w-0 space-y-0.5">
+                                                    <div className="flex items-center justify-between gap-1">
+                                                        <p className={`text-xs truncate ${!notif.is_read ? 'font-semibold text-foreground' : 'font-medium text-foreground/80'}`}>
+                                                            {notif.title}
+                                                        </p>
+                                                        {!notif.is_read && (
+                                                            <span className="size-2 rounded-full bg-primary shrink-0" />
+                                                        )}
+                                                    </div>
+                                                    <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">
+                                                        {notif.body}
+                                                    </p>
+                                                    {notif.created_at && (
+                                                        <p className="text-[10px] text-muted-foreground/75 font-mono pt-0.5">
+                                                            {notif.created_at}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+
+                                <div className="border-t p-2 bg-muted/20 text-center">
+                                    <Link
+                                        href="/manajemen-pesanan"
+                                        className="text-xs font-medium text-primary hover:underline block py-1"
+                                    >
+                                        Lihat Semua Pesanan &rarr;
+                                    </Link>
+                                </div>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+
                         <Button variant="outline" size="sm" asChild>
                             <a href="/" target="_blank" rel="noopener noreferrer">
                                 <Store className="size-3.5 mr-1.5" />
@@ -391,7 +551,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                         </Button>
 
                         <Button size="sm" asChild>
-                            <Link href="/admin/orders">
+                            <Link href="/manajemen-pesanan">
                                 <ShoppingBag className="size-3.5 mr-1.5" />
                                 <span>Kelola Pesanan</span>
                             </Link>

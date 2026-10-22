@@ -17,6 +17,7 @@ export default function AdminPaymentMethodCreate() {
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useState(false);
+    const [showUrlInput, setShowUrlInput] = useState(false);
 
     const { data, setData, post, processing, errors } = useForm<{
         name: string;
@@ -84,6 +85,14 @@ export default function AdminPaymentMethodCreate() {
         }
     };
 
+    const handleRemoveImage = () => {
+        setData('icon', null);
+        setPreviewUrl(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         post('/manajemen-pembayaran', {
@@ -93,8 +102,8 @@ export default function AdminPaymentMethodCreate() {
 
     return (
         <AdminLayout
-            title="Tambah Metode Pembayaran Baru"
-            subtitle="Tambahkan kanal gateway pembayaran, transfer bank, atau e-wallet baru untuk checkout pelanggan."
+            title="Tambah Metode Pembayaran"
+            subtitle="Tambahkan kanal pembayaran baru, virtual account bank, e-wallet, atau QRIS."
         >
             <Head title="Tambah Metode Pembayaran - Admin Panel" />
 
@@ -102,7 +111,10 @@ export default function AdminPaymentMethodCreate() {
                 {/* Header Actions */}
                 <div className="flex items-center justify-between">
                     <Button variant="ghost" size="sm" asChild className="p-0 hover:bg-transparent">
-                        <Link href="/manajemen-pembayaran" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
+                        <Link
+                            href="/manajemen-pembayaran"
+                            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+                        >
                             <ArrowLeft className="size-4" />
                             <span>Kembali ke Daftar Metode</span>
                         </Link>
@@ -119,74 +131,48 @@ export default function AdminPaymentMethodCreate() {
                     </div>
                 </div>
 
-                {/* 1. Logo Icon Card */}
+                {/* 1. Logo / Icon Card */}
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-base font-semibold">Logo Kanal / Bank (Icon)</CardTitle>
-                        <CardDescription>Upload icon resmi bank, kartu kredit, atau logo dompet digital.</CardDescription>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <CardTitle className="text-base flex items-center gap-2">
+                                    <ImageIcon className="size-4 text-primary" />
+                                    <span>Logo Kanal / Bank (Icon)</span>
+                                </CardTitle>
+                                <CardDescription>
+                                    Format PNG, SVG, atau JPG transparan disarankan (maks. 2MB).
+                                </CardDescription>
+                            </div>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setShowUrlInput(!showUrlInput)}
+                                className="text-xs cursor-pointer"
+                            >
+                                {showUrlInput ? 'Unggah dari Perangkat' : 'Gunakan URL Gambar'}
+                            </Button>
+                        </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={handleFileChange}
-                        />
-
-                        {previewUrl ? (
-                            <div
-                                onDragOver={handleDragOver}
-                                onDragLeave={handleDragLeave}
-                                onDrop={handleDrop}
-                                className={`group relative w-full h-44 rounded-xl border-2 overflow-hidden bg-muted/40 transition-all flex items-center justify-center p-6 ${
-                                    isDragging ? 'border-primary ring-4 ring-primary/20 scale-[1.01]' : 'border-border/80'
-                                }`}
-                            >
-                                <img
-                                    src={previewUrl}
-                                    alt="Preview Logo"
-                                    className="max-h-24 max-w-xs object-contain"
-                                    onError={(e) => {
-                                        (e.target as HTMLElement).style.display = 'none';
+                        {showUrlInput ? (
+                            <div className="space-y-2">
+                                <label className="text-xs font-medium text-foreground">URL Gambar Logo</label>
+                                <Input
+                                    type="url"
+                                    placeholder="https://... atau /images/payment/bca.png"
+                                    value={typeof data.icon === 'string' ? data.icon : ''}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        setData('icon', val);
+                                        setPreviewUrl(val || null);
                                     }}
+                                    className="text-xs font-mono"
                                 />
-                                {isDragging && (
-                                    <div className="absolute inset-0 bg-primary/20 backdrop-blur-xs flex flex-col items-center justify-center text-primary-foreground font-semibold text-sm z-20">
-                                        <Upload className="size-8 mb-1 animate-bounce" />
-                                        <span>Lepaskan file untuk ganti icon</span>
-                                    </div>
-                                )}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-between p-4">
-                                    <span className="text-xs font-medium text-white truncate drop-shadow-sm">
-                                        Icon Pembayaran Aktif
-                                    </span>
-                                    <div className="flex items-center gap-2">
-                                        <Button
-                                            type="button"
-                                            variant="secondary"
-                                            size="sm"
-                                            onClick={() => fileInputRef.current?.click()}
-                                            className="h-8 text-xs bg-white/90 hover:bg-white text-black cursor-pointer shadow-sm"
-                                        >
-                                            <Upload className="size-3.5 mr-1.5" />
-                                            <span>Ganti Icon</span>
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant="destructive"
-                                            size="sm"
-                                            onClick={() => {
-                                                setPreviewUrl(null);
-                                                setData('icon', null);
-                                            }}
-                                            className="h-8 text-xs cursor-pointer shadow-sm"
-                                        >
-                                            <Trash2 className="size-3.5 mr-1" />
-                                            <span>Hapus</span>
-                                        </Button>
-                                    </div>
-                                </div>
+                                <p className="text-[11px] text-muted-foreground">
+                                    Cantumkan URL tautan langsung ke logo pembayaran.
+                                </p>
                             </div>
                         ) : (
                             <div
@@ -194,74 +180,128 @@ export default function AdminPaymentMethodCreate() {
                                 onDragLeave={handleDragLeave}
                                 onDrop={handleDrop}
                                 onClick={() => fileInputRef.current?.click()}
-                                className={`w-full h-36 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors ${
+                                className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
                                     isDragging
-                                        ? 'border-primary bg-primary/5 text-primary'
-                                        : 'border-muted-foreground/25 hover:border-muted-foreground/50 hover:bg-muted/30 text-muted-foreground'
+                                        ? 'border-primary bg-primary/5 scale-[0.99]'
+                                        : 'border-border hover:border-primary/60 hover:bg-muted/40'
                                 }`}
                             >
-                                <div className="p-2.5 rounded-full bg-muted/60 border border-border/60">
-                                    <ImageIcon className="size-5 text-muted-foreground" />
-                                </div>
-                                <div className="text-center">
-                                    <p className="text-xs font-medium text-foreground">
-                                        Klik untuk upload logo pembayaran
-                                    </p>
-                                    <p className="text-[11px] text-muted-foreground">
-                                        Format PNG, SVG, atau JPG transparan direkomendasikan
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                                    className="hidden"
+                                    onChange={handleFileChange}
+                                />
+                                <div className="flex flex-col items-center justify-center gap-2">
+                                    <div className="size-12 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                                        <Upload className="size-6" />
+                                    </div>
+                                    <div className="text-sm font-semibold text-foreground">
+                                        Klik untuk memilih atau seret logo ke sini
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        Mendukung PNG transparan, SVG, JPG, WEBP
                                     </p>
                                 </div>
                             </div>
                         )}
-                        {errors.icon && <p className="text-destructive text-xs">{errors.icon}</p>}
+
+                        {errors.icon && (
+                            <p className="text-xs text-destructive font-medium">{errors.icon}</p>
+                        )}
+
+                        {/* Logo Preview Box */}
+                        {previewUrl && (
+                            <div className="relative mt-4 rounded-xl overflow-hidden border bg-muted/30 group max-w-xs mx-auto p-4 flex items-center justify-center shadow-xs">
+                                <img
+                                    src={previewUrl}
+                                    alt="Pratinjau Logo"
+                                    className="max-h-20 max-w-full object-contain"
+                                    onError={(e) => {
+                                        (e.target as HTMLElement).style.display = 'none';
+                                    }}
+                                />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                    <Button
+                                        type="button"
+                                        variant="destructive"
+                                        size="sm"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleRemoveImage();
+                                        }}
+                                        className="cursor-pointer"
+                                    >
+                                        <Trash2 className="size-4 mr-1.5" />
+                                        <span>Hapus Logo</span>
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 
-                {/* 2. Informasi Nama & Kode */}
+                {/* 2. Detail Metode Pembayaran */}
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-base font-semibold">Detail Metode Pembayaran</CardTitle>
-                        <CardDescription>Nama yang dilihat pembeli dan kode identifikasi kanal pembayaran.</CardDescription>
+                        <CardTitle className="text-base flex items-center gap-2">
+                            <CreditCard className="size-4 text-primary" />
+                            <span>Detail Metode Pembayaran</span>
+                        </CardTitle>
+                        <CardDescription>
+                            Nama tampilan untuk pelanggan dan kode teknis identifikasi saluran pembayaran.
+                        </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-foreground">Nama Metode Pembayaran *</label>
+                        <div className="space-y-2">
+                            <label className="text-xs font-medium text-foreground flex items-center gap-1">
+                                <span>Nama Metode Pembayaran</span>
+                                <span className="text-destructive">*</span>
+                            </label>
                             <Input
                                 type="text"
-                                placeholder="Contoh: BCA Virtual Account, QRIS Mandiri, ShopeePay"
+                                placeholder="cth. BCA Virtual Account, QRIS, Bank Mandiri"
                                 value={data.name}
                                 onChange={(e) => handleNameChange(e.target.value)}
-                                className="h-9 text-xs"
+                                className="text-xs font-semibold"
                                 required
                             />
-                            {errors.name && <p className="text-destructive text-xs">{errors.name}</p>}
+                            {errors.name && (
+                                <p className="text-xs text-destructive font-medium">{errors.name}</p>
+                            )}
                         </div>
 
-                        <div className="space-y-1.5">
+                        <div className="space-y-2">
                             <div className="flex items-center justify-between">
-                                <label className="text-xs font-medium text-foreground">Kode Kanal Pembayaran (Unik) *</label>
+                                <label className="text-xs font-medium text-foreground flex items-center gap-1">
+                                    <span>Kode Teknis (Unik)</span>
+                                    <span className="text-destructive">*</span>
+                                </label>
                                 <span className="text-[11px] text-muted-foreground font-mono">Format slug huruf kecil &amp; underscore</span>
                             </div>
                             <Input
                                 type="text"
-                                placeholder="bca_va"
+                                placeholder="bca_va, qris, mandiri"
                                 value={data.code}
                                 onChange={(e) => setData('code', slugifyCode(e.target.value))}
-                                className="h-9 text-xs font-mono"
+                                className="text-xs font-mono"
                                 required
                             />
-                            {errors.code && <p className="text-destructive text-xs">{errors.code}</p>}
+                            {errors.code && (
+                                <p className="text-xs text-destructive font-medium">{errors.code}</p>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
 
-                {/* Footer Save Button */}
+                {/* Bottom Submit Actions */}
                 <div className="flex items-center justify-end gap-3 pt-2">
-                    <Button variant="outline" size="sm" asChild>
+                    <Button variant="outline" size="default" asChild>
                         <Link href="/manajemen-pembayaran">Batal</Link>
                     </Button>
-                    <Button type="submit" size="sm" disabled={processing} className="cursor-pointer">
-                        <Save className="size-4 mr-1.5" />
+                    <Button type="submit" size="default" disabled={processing} className="cursor-pointer">
+                        <Save className="size-4 mr-2" />
                         <span>{processing ? 'Menyimpan...' : 'Simpan Metode'}</span>
                     </Button>
                 </div>

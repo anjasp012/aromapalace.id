@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\DeviceToken;
+use App\Models\Notification;
 use App\Models\Order;
 use App\Models\User;
 use App\Models\Voucher;
@@ -178,6 +179,21 @@ class FirebaseNotificationService
             'title' => $title,
         ]);
 
+        try {
+            Notification::create([
+                'user_id' => $userId,
+                'for_admin' => false,
+                'type' => $data['type'] ?? 'user',
+                'title' => $title,
+                'body' => $body,
+                'url' => $url,
+                'data' => $data,
+                'is_read' => false,
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Failed to persist user notification: '.$e->getMessage());
+        }
+
         $sentCount = 0;
         foreach ($tokens as $token) {
             if ($this->sendToToken($token, $title, $body, $url, $data)) {
@@ -195,6 +211,20 @@ class FirebaseNotificationService
      */
     public function sendToAdmins(string $title, string $body, ?string $url = null, array $data = []): int
     {
+        try {
+            Notification::create([
+                'for_admin' => true,
+                'type' => $data['type'] ?? 'admin',
+                'title' => $title,
+                'body' => $body,
+                'url' => $url,
+                'data' => $data,
+                'is_read' => false,
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Failed to persist admin notification: '.$e->getMessage());
+        }
+
         $adminTokens = DeviceToken::where(function ($q) {
             $q->where('role', 'admin')
                 ->orWhereHas('user', fn ($uq) => $uq->where('role', 'admin'));
@@ -217,6 +247,21 @@ class FirebaseNotificationService
      */
     public function sendBroadcast(string $title, string $body, ?string $url = null, array $data = []): int
     {
+        try {
+            Notification::create([
+                'user_id' => null,
+                'for_admin' => false,
+                'type' => $data['type'] ?? 'broadcast',
+                'title' => $title,
+                'body' => $body,
+                'url' => $url,
+                'data' => $data,
+                'is_read' => false,
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Failed to persist broadcast notification: '.$e->getMessage());
+        }
+
         // Broadcast to all registered devices (customers, guests, and testing admins)
         $tokens = DeviceToken::pluck('token')->unique()->all();
 

@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             PaymentMethodSeeder::class,
             LoyaltyRewardSeeder::class,
             SliderPromoSeeder::class,
+            NotificationSeeder::class,
         ]);
     }
 }
