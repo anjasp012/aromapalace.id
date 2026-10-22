@@ -362,7 +362,19 @@ export default function CheckoutPage({
             }));
         }
 
-        // Fallback: show courier names without prices until address is selected
+        // Determine fallback label based on actual state
+        const hasSubdistrict = !!(selectedAddress?.subdistrict_id);
+        let fallbackLabel: string;
+        if (!selectedAddress) {
+            fallbackLabel = 'Pilih Alamat Dulu';
+        } else if (!hasSubdistrict) {
+            fallbackLabel = 'Alamat Tidak Lengkap';
+        } else if (loadingRates) {
+            fallbackLabel = 'Menghitung...';
+        } else {
+            fallbackLabel = 'Cek Ongkir';
+        }
+
         return list.map((c) => ({
             id: c.code,
             code: c.code,
@@ -370,10 +382,10 @@ export default function CheckoutPage({
             courierBrand: c.name.split(' ')[0],
             type: c.type,
             price: 0,
-            priceFormatted: selectedAddress ? 'Memuat...' : 'Pilih Alamat Dulu',
+            priceFormatted: fallbackLabel,
             etd: `Layanan ${c.type}`,
         }));
-    }, [propCouriers, shippingRates, selectedAddress]);
+    }, [propCouriers, shippingRates, selectedAddress, loadingRates]);
 
     // Keep selectedAddress and useForm data strictly synchronized with default/primary address
     useEffect(() => {
@@ -408,6 +420,7 @@ export default function CheckoutPage({
         const subdistrictId = selectedAddress?.subdistrict_id ?? (selectedAddress as any)?.kecamatan_id ?? null;
         if (!subdistrictId || deliveryType !== 'delivery') {
             setShippingRates([]);
+            setLoadingRates(false);
             return;
         }
 
