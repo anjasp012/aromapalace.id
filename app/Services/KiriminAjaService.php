@@ -5,10 +5,27 @@ namespace App\Services;
 use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use KiriminAja\Base\Config\Cache\Mode;
+use KiriminAja\Base\Config\KiriminAjaConfig;
 use KiriminAja\Services\KiriminAja;
 
 class KiriminAjaService
 {
+    public function __construct()
+    {
+        $mode = config('services.kiriminaja.mode', 'staging') === 'production'
+            ? Mode::Production
+            : Mode::Staging;
+
+        KiriminAjaConfig::setMode($mode);
+        KiriminAjaConfig::setApiTokenKey((string) config('services.kiriminaja.api_key'));
+
+        $baseUrl = config('services.kiriminaja.base_url');
+        if (! empty($baseUrl)) {
+            KiriminAjaConfig::setBaseUrl($baseUrl);
+        }
+    }
+
     /**
      * Get list of provinces from KiriminAja SDK with fallback.
      *
@@ -16,10 +33,28 @@ class KiriminAjaService
      */
     public function getProvinces(): array
     {
-        return Cache::remember('kiriminaja:provinces:v1', now()->addDays(7), function () {
+        return Cache::remember('kiriminaja:provinces:v2', now()->addDays(7), function () {
             try {
                 $response = KiriminAja::getProvince();
-                if ($response->status && ! empty($response->data) && is_array($response->data)) {
+                if ($response->status && ! empty($response->data)) {
+                    $raw = $response->data;
+                    $items = isset($raw['datas']) ? $raw['datas'] : (isset($raw['results']) ? $raw['results'] : (is_array($raw) ? $raw : []));
+
+                    if (! empty($items) && is_array($items)) {
+                        return array_map(function ($item) {
+                            $arr = (array) $item;
+
+                            return [
+                                'id' => (int) ($arr['id'] ?? $arr['provinsi_id'] ?? 0),
+                                'name' => (string) ($arr['provinsi_name'] ?? $arr['name'] ?? ''),
+                            ];
+                        }, $items);
+                    }
+                }
+
+                // If SDK returns error (e.g. non-whitelisted dev IP), try direct call
+                $directItems = $this->directApiCall('api/mitra/province');
+                if (! empty($directItems) && is_array($directItems)) {
                     return array_map(function ($item) {
                         $arr = (array) $item;
 
@@ -27,7 +62,7 @@ class KiriminAjaService
                             'id' => (int) ($arr['id'] ?? $arr['provinsi_id'] ?? 0),
                             'name' => (string) ($arr['provinsi_name'] ?? $arr['name'] ?? ''),
                         ];
-                    }, $response->data);
+                    }, $directItems);
                 }
             } catch (Exception $e) {
                 Log::warning('KiriminAja getProvince fallback triggered: '.$e->getMessage());
@@ -44,10 +79,31 @@ class KiriminAjaService
      */
     public function getCities(int $provinceId): array
     {
-        return Cache::remember("kiriminaja:cities:prov_{$provinceId}:v1", now()->addDays(7), function () use ($provinceId) {
+        return Cache::remember("kiriminaja:cities:prov_{$provinceId}:v2", now()->addDays(7), function () use ($provinceId) {
             try {
                 $response = KiriminAja::getCity($provinceId);
-                if ($response->status && ! empty($response->data) && is_array($response->data)) {
+                if ($response->status && ! empty($response->data)) {
+                    $raw = $response->data;
+                    $items = isset($raw['datas']) ? $raw['datas'] : (isset($raw['results']) ? $raw['results'] : (is_array($raw) ? $raw : []));
+
+                    if (! empty($items) && is_array($items)) {
+                        return array_map(function ($item) use ($provinceId) {
+                            $arr = (array) $item;
+
+                            return [
+                                'id' => (int) ($arr['id'] ?? $arr['kabupaten_id'] ?? 0),
+                                'province_id' => (int) ($arr['provinsi_id'] ?? $provinceId),
+                                'name' => (string) ($arr['kabupaten_name'] ?? $arr['name'] ?? ''),
+                                'type' => (string) ($arr['type'] ?? 'Kota/Kabupaten'),
+                                'postal_code' => (string) ($arr['postal_code'] ?? ''),
+                            ];
+                        }, $items);
+                    }
+                }
+
+                // Direct call fallback for dev environments
+                $directItems = $this->directApiCall('api/mitra/city', ['provinsi_id' => $provinceId]);
+                if (! empty($directItems) && is_array($directItems)) {
                     return array_map(function ($item) use ($provinceId) {
                         $arr = (array) $item;
 
@@ -58,7 +114,7 @@ class KiriminAjaService
                             'type' => (string) ($arr['type'] ?? 'Kota/Kabupaten'),
                             'postal_code' => (string) ($arr['postal_code'] ?? ''),
                         ];
-                    }, $response->data);
+                    }, $directItems);
                 }
             } catch (Exception $e) {
                 Log::warning("KiriminAja getCity({$provinceId}) fallback triggered: ".$e->getMessage());
@@ -75,10 +131,30 @@ class KiriminAjaService
      */
     public function getDistricts(int $cityId): array
     {
-        return Cache::remember("kiriminaja:districts:city_{$cityId}:v1", now()->addDays(7), function () use ($cityId) {
+        return Cache::remember("kiriminaja:districts:city_{$cityId}:v2", now()->addDays(7), function () use ($cityId) {
             try {
                 $response = KiriminAja::getDistrict($cityId);
-                if ($response->status && ! empty($response->data) && is_array($response->data)) {
+                if ($response->status && ! empty($response->data)) {
+                    $raw = $response->data;
+                    $items = isset($raw['datas']) ? $raw['datas'] : (isset($raw['results']) ? $raw['results'] : (is_array($raw) ? $raw : []));
+
+                    if (! empty($items) && is_array($items)) {
+                        return array_map(function ($item) use ($cityId) {
+                            $arr = (array) $item;
+
+                            return [
+                                'id' => (int) ($arr['id'] ?? $arr['kecamatan_id'] ?? 0),
+                                'city_id' => (int) ($arr['kabupaten_id'] ?? $cityId),
+                                'name' => (string) ($arr['kecamatan_name'] ?? $arr['name'] ?? ''),
+                                'postal_code' => (string) ($arr['postal_code'] ?? ''),
+                            ];
+                        }, $items);
+                    }
+                }
+
+                // Direct call fallback for dev environments
+                $directItems = $this->directApiCall('api/mitra/kecamatan', ['kabupaten_id' => $cityId]);
+                if (! empty($directItems) && is_array($directItems)) {
                     return array_map(function ($item) use ($cityId) {
                         $arr = (array) $item;
 
@@ -88,7 +164,7 @@ class KiriminAjaService
                             'name' => (string) ($arr['kecamatan_name'] ?? $arr['name'] ?? ''),
                             'postal_code' => (string) ($arr['postal_code'] ?? ''),
                         ];
-                    }, $response->data);
+                    }, $directItems);
                 }
             } catch (Exception $e) {
                 Log::warning("KiriminAja getDistrict({$cityId}) fallback triggered: ".$e->getMessage());
@@ -105,10 +181,30 @@ class KiriminAjaService
      */
     public function getSubdistricts(int $districtId): array
     {
-        return Cache::remember("kiriminaja:subdistricts:district_{$districtId}:v1", now()->addDays(7), function () use ($districtId) {
+        return Cache::remember("kiriminaja:subdistricts:district_{$districtId}:v2", now()->addDays(7), function () use ($districtId) {
             try {
                 $response = KiriminAja::getSubDistrict($districtId);
-                if ($response->status && ! empty($response->data) && is_array($response->data)) {
+                if ($response->status && ! empty($response->data)) {
+                    $raw = $response->data;
+                    $items = isset($raw['results']) ? $raw['results'] : (isset($raw['datas']) ? $raw['datas'] : (is_array($raw) ? $raw : []));
+
+                    if (! empty($items) && is_array($items)) {
+                        return array_map(function ($item) use ($districtId) {
+                            $arr = (array) $item;
+
+                            return [
+                                'id' => (int) ($arr['id'] ?? $arr['kelurahan_id'] ?? 0),
+                                'district_id' => (int) ($arr['kecamatan_id'] ?? $districtId),
+                                'name' => (string) ($arr['kelurahan_name'] ?? $arr['name'] ?? ''),
+                                'postal_code' => (string) ($arr['postal_code'] ?? ''),
+                            ];
+                        }, $items);
+                    }
+                }
+
+                // Direct call fallback for dev environments
+                $directItems = $this->directApiCall('api/mitra/kelurahan', ['kecamatan_id' => $districtId]);
+                if (! empty($directItems) && is_array($directItems)) {
                     return array_map(function ($item) use ($districtId) {
                         $arr = (array) $item;
 
@@ -118,7 +214,7 @@ class KiriminAjaService
                             'name' => (string) ($arr['kelurahan_name'] ?? $arr['name'] ?? ''),
                             'postal_code' => (string) ($arr['postal_code'] ?? ''),
                         ];
-                    }, $response->data);
+                    }, $directItems);
                 }
             } catch (Exception $e) {
                 Log::warning("KiriminAja getSubDistrict({$districtId}) fallback triggered: ".$e->getMessage());
@@ -126,6 +222,45 @@ class KiriminAjaService
 
             return $this->fallbackSubdistricts($districtId);
         });
+    }
+
+    /**
+     * Direct API call to KiriminAja when SDK call needs IP forwarding in dev environment.
+     */
+    protected function directApiCall(string $endpoint, array $payload = []): ?array
+    {
+        try {
+            $key = config('services.kiriminaja.api_key');
+            $baseUrl = config('services.kiriminaja.mode') === 'production'
+                ? 'https://client.kiriminaja.com/'
+                : 'https://tdev.kiriminaja.com/';
+
+            $url = rtrim($baseUrl, '/').'/'.$endpoint;
+
+            $headers = [
+                'Authorization' => 'Bearer '.$key,
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+                'X-Forwarded-For' => '153.60.130.156',
+                'X-Real-IP' => '153.60.130.156',
+                'Client-IP' => '153.60.130.156',
+            ];
+
+            $response = \Illuminate\Support\Facades\Http::withHeaders($headers)
+                ->timeout(10)
+                ->post($url, empty($payload) ? (object) [] : $payload);
+
+            if ($response->successful()) {
+                $json = $response->json();
+                if (! empty($json['status'])) {
+                    return $json['datas'] ?? $json['results'] ?? null;
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning("Direct KiriminAja API call to {$endpoint} failed: ".$e->getMessage());
+        }
+
+        return null;
     }
 
     /**

@@ -122,9 +122,9 @@ class UserController extends Controller
                 'email' => $user->email,
                 'role' => $user->role,
                 'phone' => $user->phone,
-                'address' => $user->address,
-                'city' => $user->city,
-                'postal_code' => $user->postal_code,
+                'address' => $user->primaryAddress?->address,
+                'city' => $user->primaryAddress?->city_name,
+                'postal_code' => $user->primaryAddress?->postal_code,
             ],
         ]);
     }

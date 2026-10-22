@@ -73,13 +73,8 @@ class UserAddressController extends Controller
                 'is_primary' => $isPrimary,
             ]);
 
-            if ($isPrimary) {
-                $user->update([
-                    'phone' => $addr->recipient_phone,
-                    'address' => $addr->formatted_address,
-                    'city' => $addr->city_name,
-                    'postal_code' => $addr->postal_code,
-                ]);
+            if ($isPrimary && empty($user->phone)) {
+                $user->update(['phone' => $addr->recipient_phone]);
             }
 
             return $addr;
@@ -147,13 +142,8 @@ class UserAddressController extends Controller
                 'is_primary' => $isPrimary || $address->is_primary,
             ]);
 
-            if ($address->is_primary) {
-                $user->update([
-                    'phone' => $address->recipient_phone,
-                    'address' => $address->formatted_address,
-                    'city' => $address->city_name,
-                    'postal_code' => $address->postal_code,
-                ]);
+            if ($address->is_primary && empty($user->phone)) {
+                $user->update(['phone' => $address->recipient_phone]);
             }
         });
 
@@ -187,12 +177,6 @@ class UserAddressController extends Controller
                 $next = $user->addresses()->latest()->first();
                 if ($next) {
                     $next->update(['is_primary' => true]);
-                    $user->update([
-                        'phone' => $next->recipient_phone,
-                        'address' => $next->formatted_address,
-                        'city' => $next->city_name,
-                        'postal_code' => $next->postal_code,
-                    ]);
                 }
             }
         });
@@ -221,12 +205,9 @@ class UserAddressController extends Controller
             $user->addresses()->where('id', '!=', $address->id)->update(['is_primary' => false]);
             $address->update(['is_primary' => true]);
 
-            $user->update([
-                'phone' => $address->recipient_phone,
-                'address' => $address->formatted_address,
-                'city' => $address->city_name,
-                'postal_code' => $address->postal_code,
-            ]);
+            if (empty($user->phone)) {
+                $user->update(['phone' => $address->recipient_phone]);
+            }
         });
 
         if ($request->wantsJson()) {

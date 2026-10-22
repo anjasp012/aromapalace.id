@@ -141,9 +141,9 @@ class CheckoutController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'phone' => $user->phone ?? '',
-                'address' => $user->address ?? '',
-                'city' => $user->city ?? '',
-                'postal_code' => $user->postal_code ?? '',
+                'address' => $user->primaryAddress?->address ?? '',
+                'city' => $user->primaryAddress?->city_name ?? '',
+                'postal_code' => $user->primaryAddress?->postal_code ?? '',
             ],
             'addresses' => $user->addresses()->get(),
             'primary_address' => $user->primaryAddress,
@@ -382,22 +382,9 @@ class CheckoutController extends Controller
                     $order->items()->create($itemData);
                 }
 
-                // Save user's contact & address to profile if provided so they don't have to re-enter next time
-                $userUpdate = [];
-                if (! empty($validated['recipient_phone'])) {
-                    $userUpdate['phone'] = $validated['recipient_phone'];
-                }
-                if (! empty($validated['shipping_address'])) {
-                    $userUpdate['address'] = $validated['shipping_address'];
-                }
-                if (! empty($validated['city'])) {
-                    $userUpdate['city'] = $validated['city'];
-                }
-                if (! empty($validated['postal_code'])) {
-                    $userUpdate['postal_code'] = $validated['postal_code'];
-                }
-                if (! empty($userUpdate)) {
-                    $user->update($userUpdate);
+                // Save user's contact to profile if empty
+                if (! empty($validated['recipient_phone']) && empty($user->phone)) {
+                    $user->update(['phone' => $validated['recipient_phone']]);
                 }
 
                 // Clear the user's cart

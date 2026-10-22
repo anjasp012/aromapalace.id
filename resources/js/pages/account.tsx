@@ -197,9 +197,6 @@ export default function AccountPage({
             {
                 name: editName.trim(),
                 phone: editPhone.trim(),
-                address: editAddress.trim(),
-                city: editCity.trim(),
-                postal_code: editPostalCode.trim(),
             },
             {
                 preserveScroll: true,
@@ -646,43 +643,17 @@ export default function AccountPage({
                                 />
                             </div>
 
-                            <div className="space-y-1">
-                                <label className="text-xs font-semibold text-foreground">
-                                    {isEn ? 'Complete Shipping Address' : 'Alamat Pengiriman Lengkap'}
-                                </label>
-                                <Input
-                                    type="text"
-                                    value={editAddress}
-                                    onChange={(e) => setEditAddress(e.target.value)}
-                                    placeholder="Jalan, No Rumah, RT/RW, Kelurahan, Kecamatan"
-                                    className="text-xs rounded-xl"
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className="rounded-xl border border-border/80 bg-muted/30 p-3 flex items-start gap-2.5 text-xs text-muted-foreground">
+                                <MapPin className="w-4 h-4 text-[#4A070B] dark:text-[#E8D0BA] shrink-0 mt-0.5" />
                                 <div className="space-y-1">
-                                    <label className="text-xs font-semibold text-foreground">
-                                        {isEn ? 'City / Regency' : 'Kota / Kabupaten'}
-                                    </label>
-                                    <Input
-                                        type="text"
-                                        value={editCity}
-                                        onChange={(e) => setEditCity(e.target.value)}
-                                        placeholder="contoh: Jakarta Selatan"
-                                        className="text-xs rounded-xl"
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs font-semibold text-foreground">
-                                        {isEn ? 'Postal Code' : 'Kode Pos'}
-                                    </label>
-                                    <Input
-                                        type="text"
-                                        value={editPostalCode}
-                                        onChange={(e) => setEditPostalCode(e.target.value)}
-                                        placeholder="contoh: 12345"
-                                        className="text-xs rounded-xl"
-                                    />
+                                    <p className="font-semibold text-foreground text-[11.5px]">
+                                        {isEn ? 'Shipping Addresses' : 'Alamat Pengiriman'}
+                                    </p>
+                                    <p className="text-[11px] leading-relaxed">
+                                        {isEn
+                                            ? 'Manage full delivery addresses (province, city, district) via the Dedicated Address Book menu.'
+                                            : 'Kelola alamat pengiriman lengkap (provinsi, kota, kecamatan, kelurahan) melalui menu Daftar Alamat Pengiriman.'}
+                                    </p>
                                 </div>
                             </div>
                         </div>

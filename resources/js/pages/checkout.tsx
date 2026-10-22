@@ -1025,8 +1025,13 @@ export default function CheckoutPage({
                                     />
                                 </div>
                             </div>
+                        </div>
 
-                            {/* CARD 3: PILIH METODE PEMBAYARAN */}
+                        {/* ======================================================== */}
+                        {/* RIGHT COLUMN: METODE PEMBAYARAN & RINGKASAN BELANJA (4 COLS, desktop sticky top-28) */}
+                        {/* ======================================================== */}
+                        <div className="lg:col-span-4 space-y-4 lg:sticky lg:top-28">
+                            {/* CARD: PILIH METODE PEMBAYARAN */}
                             <div className="rounded-lg border border-border/80 bg-card/60 backdrop-blur-xs p-5 sm:p-6 shadow-none space-y-4">
                                 <div className="flex items-center justify-between pb-3 border-b border-border/80">
                                     <h2 className="font-bold text-base text-foreground tracking-tight">
@@ -1092,13 +1097,8 @@ export default function CheckoutPage({
                                     )}
                                 </div>
                             </div>
-                        </div>
 
-                        {/* ======================================================== */}
-                        {/* RIGHT COLUMN: RINGKASAN BELANJA (4 COLS, desktop sticky top-28) */}
-                        {/* ======================================================== */}
-                        <div className="lg:col-span-4 space-y-4 lg:sticky lg:top-28">
-                            {/* CARD 4: RINGKASAN BELANJA */}
+                            {/* CARD: RINGKASAN BELANJA */}
                             <div className="rounded-lg border border-border/80 bg-card/60 backdrop-blur-xs p-5 sm:p-6 shadow-none space-y-4">
                                 <h2 className="font-bold text-base text-foreground tracking-tight pb-3 border-b border-border/80">
                                     {t('checkout.order_summary')}

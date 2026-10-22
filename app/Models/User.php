@@ -22,9 +22,6 @@ use Illuminate\Support\Carbon;
  * @property string $password
  * @property string $role
  * @property string|null $phone
- * @property string|null $address
- * @property string|null $city
- * @property string|null $postal_code
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -32,8 +29,10 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, CartItem> $cartItems
  * @property-read Membership|null $membership
  * @property-read Collection<int, LoyaltyPointHistory> $pointHistories
+ * @property-read Collection<int, UserAddress> $addresses
+ * @property-read UserAddress|null $primaryAddress
  */
-#[Fillable(['name', 'email', 'password', 'role', 'phone', 'address', 'city', 'postal_code'])]
+#[Fillable(['name', 'email', 'password', 'role', 'phone'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {

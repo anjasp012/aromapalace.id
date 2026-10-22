@@ -83,9 +83,9 @@ class AccountController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'phone' => $user->phone ?? '',
-                'address' => $user->address ?? '',
-                'city' => $user->city ?? '',
-                'postal_code' => $user->postal_code ?? '',
+                'address' => $user->primaryAddress?->address ?? '',
+                'city' => $user->primaryAddress?->city_name ?? '',
+                'postal_code' => $user->primaryAddress?->postal_code ?? '',
                 'role' => $user->role,
                 'joined_at' => $user->created_at ? $user->created_at->format('d M Y') : 'Member Setia',
             ],
@@ -110,20 +110,14 @@ class AccountController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:25'],
-            'address' => ['nullable', 'string', 'max:500'],
-            'city' => ['nullable', 'string', 'max:100'],
-            'postal_code' => ['nullable', 'string', 'max:15'],
         ]);
 
         $user->update([
             'name' => $validated['name'],
             'phone' => $validated['phone'] ?? $user->phone,
-            'address' => $validated['address'] ?? $user->address,
-            'city' => $validated['city'] ?? $user->city,
-            'postal_code' => $validated['postal_code'] ?? $user->postal_code,
         ]);
 
-        return back()->with('success', 'Profil dan alamat Anda berhasil diperbarui.');
+        return back()->with('success', 'Profil Anda berhasil diperbarui.');
     }
 
     /**
