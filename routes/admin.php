@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PaymentMethodController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\SliderPromoController;
 use App\Http\Controllers\Admin\StoreController;
 use App\Http\Controllers\Admin\UserController;
@@ -119,4 +120,8 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('/manajemen-pengguna/{user}/points/add', [UserController::class, 'addPoints'])->name('users.points.add');
     Route::post('/manajemen-pengguna/{user}/points/deduct', [UserController::class, 'deductPoints'])->name('users.points.deduct');
     Route::delete('/manajemen-pengguna/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+
+    // Store & Origin Shipping Settings
+    Route::get('/pengaturan', [SettingController::class, 'index'])->name('settings.index');
+    Route::post('/pengaturan', [SettingController::class, 'update'])->name('settings.update');
 });

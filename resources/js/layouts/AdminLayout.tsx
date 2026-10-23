@@ -23,6 +23,7 @@ import {
     Bell,
     CheckCheck,
     Truck,
+    Settings,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -146,6 +147,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
     const isSliderPromos = url.startsWith('/manajemen-slider-promo');
     const isStores = url.startsWith('/manajemen-butik');
     const isPaymentMethods = url.startsWith('/manajemen-pembayaran');
+    const isSettings = url.startsWith('/pengaturan') || url.startsWith('/admin/pengaturan');
     const isNotifications = url.startsWith('/manajemen-notifikasi');
 
     const handleLogout = () => {
@@ -383,6 +385,21 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                         >
                             <CreditCard className="size-4" />
                             <span>Metode Pembayaran</span>
+                        </Link>
+
+                        <Link
+                            href="/pengaturan"
+                            prefetch="hover"
+                            cacheFor={['30s', '1m']}
+                            onClick={() => setSidebarOpen(false)}
+                            className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
+                                isSettings
+                                    ? 'bg-muted text-primary font-semibold'
+                                    : 'text-muted-foreground hover:text-primary hover:bg-muted'
+                            }`}
+                        >
+                            <Settings className="size-4" />
+                            <span>Pengaturan Toko</span>
                         </Link>
                     </nav>
                 </div>

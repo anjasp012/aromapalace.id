@@ -7,6 +7,7 @@ use App\Models\DeviceToken;
 use App\Models\Order;
 use App\Models\PaymentMethod;
 use App\Models\ProductVariant;
+use App\Models\Setting;
 use App\Models\Store;
 use App\Models\Voucher;
 use App\Services\CatalogService;
@@ -204,8 +205,8 @@ class CheckoutController extends Controller
 
         $weight = (int) ($validated['weight'] ?? 500);
 
-        // Origin district ID from config, default to 4712 (Jakarta Selatan area)
-        $originId = (int) config('services.kiriminaja.origin_district_id', 4712);
+        // Origin district ID from database settings or fallback to config / 4712
+        $originId = (int) Setting::get('shipping_district_id', config('services.kiriminaja.origin_district_id', 4712));
 
         $rates = $destinationId > 0
             ? $this->kiriminAjaService->getShippingRates($originId, $destinationId, $weight)

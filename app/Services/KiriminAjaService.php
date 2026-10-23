@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Order;
+use App\Models\Setting;
 use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -778,10 +779,10 @@ class KiriminAjaService
             $package->cod = 0;
 
             $pickupData = new RequestPickupData;
-            $pickupData->name = 'Aroma Palace Official';
-            $pickupData->phone = '081288889999';
-            $pickupData->address = 'Jl. Kemang Raya No. 10, Jakarta Selatan';
-            $pickupData->kecamatan_id = (int) config('services.kiriminaja.origin_district_id', 4712);
+            $pickupData->name = (string) Setting::get('shipping_sender_name', 'Aroma Palace Official');
+            $pickupData->phone = (string) Setting::get('shipping_sender_phone', '081288889999');
+            $pickupData->address = (string) Setting::get('shipping_address', 'Jl. Kemang Raya No. 10, Jakarta Selatan');
+            $pickupData->kecamatan_id = (int) Setting::get('shipping_district_id', config('services.kiriminaja.origin_district_id', 4712));
             $pickupData->schedule = now()->addHour()->format('Y-m-d H:i:s');
             $pickupData->packages = [$package];
 
