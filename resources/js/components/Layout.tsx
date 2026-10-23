@@ -54,6 +54,7 @@ import {
     Check,
 } from 'lucide-react';
 import { autoRequestNotificationPermission, initFirebaseForegroundListener } from '@/lib/push-notification';
+import { playMenuTapSound } from '@/lib/sound-effects';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import PullToRefresh from '@/components/PullToRefresh';
@@ -1872,6 +1873,7 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
                                     component={item.component}
                                     prefetch={['mount', 'hover']}
                                     cacheFor="2m"
+                                    onClick={playMenuTapSound}
                                     className={`h-full flex flex-col items-center justify-center gap-0.5 px-1 transition relative select-none active:scale-95 duration-150 ${isActive
                                         ? `${item.activeColor} font-bold`
                                         : 'text-muted-foreground hover:text-foreground font-medium'

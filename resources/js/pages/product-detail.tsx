@@ -456,7 +456,7 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
             </div>
 
             {/* PRODUCT HERO SHOWCASE & PURCHASE SECTION */}
-            <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
+            <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-0 pb-8 sm:py-12 lg:py-16">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
 
                     {/* ======================================================== */}
@@ -482,7 +482,7 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
                                 ))}
                             </div>
 
-                            {/* Floating Action Buttons: Love & Share */}
+                            {/* Floating Action Buttons: Love & Share (Matching Desktop rounded-md style) */}
                             <div className="absolute top-3 right-3 flex flex-col gap-2 z-20">
                                 {!isAdmin && (
                                     <Button
@@ -490,7 +490,7 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
                                         size="icon"
                                         onClick={handleToggleWishlist}
                                         className={cn(
-                                            'rounded-full h-9 w-9 bg-background/90 backdrop-blur-md border border-border/80 transition-colors shadow-sm cursor-pointer',
+                                            'rounded-md h-8 w-8 bg-background/90 backdrop-blur-xs border border-border/80 transition-colors shadow-none cursor-pointer',
                                             isWishlisted ? 'text-rose-600' : 'text-muted-foreground hover:text-foreground'
                                         )}
                                         title={isWishlisted ? (isEn ? 'Remove from Wishlist' : 'Hapus dari Wishlist') : (isEn ? 'Save to Wishlist' : 'Simpan ke Wishlist')}
@@ -505,7 +505,7 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
                                     variant="secondary"
                                     size="icon"
                                     onClick={handleShare}
-                                    className="rounded-full h-9 w-9 bg-background/90 backdrop-blur-md border border-border/80 text-muted-foreground hover:text-[#4A070B] transition-colors shadow-sm cursor-pointer"
+                                    className="rounded-md h-8 w-8 bg-background/90 backdrop-blur-xs border border-border/80 text-muted-foreground hover:text-[#4A070B] transition-colors shadow-none cursor-pointer"
                                     title={copiedShare ? (isEn ? 'Link Copied!' : 'Tautan Disalin!') : (isEn ? 'Share Fragrance' : 'Bagikan Wewangian')}
                                 >
                                     {copiedShare ? (
@@ -519,27 +519,27 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
                                     )}
                                 </Button>
                             </div>
-                        </div>
 
-                        {/* Mobile Pagination Dot Indicator */}
-                        {images.length > 1 && (
-                            <div className="flex sm:hidden items-center justify-center gap-1.5 pt-1.5 pb-2">
-                                {images.map((_, idx) => (
-                                    <button
-                                        key={idx}
-                                        type="button"
-                                        onClick={() => scrollMobileGalleryTo(idx)}
-                                        aria-label={`Slide ${idx + 1}`}
-                                        className={cn(
-                                            'h-1.5 rounded-full transition-all duration-300 cursor-pointer',
-                                            activeImageIndex === idx
-                                                ? 'w-6 bg-[#4A070B]'
-                                                : 'w-1.5 bg-neutral-300 dark:bg-neutral-600 hover:bg-neutral-400'
-                                        )}
-                                    />
-                                ))}
-                            </div>
-                        )}
+                            {/* Mobile Pagination Dot Indicator (Inside Image, Bottom Center) */}
+                            {images.length > 1 && (
+                                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20 bg-black/40 backdrop-blur-xs px-2.5 py-1 rounded-full pointer-events-auto">
+                                    {images.map((_, idx) => (
+                                        <button
+                                            key={idx}
+                                            type="button"
+                                            onClick={() => scrollMobileGalleryTo(idx)}
+                                            aria-label={`Slide ${idx + 1}`}
+                                            className={cn(
+                                                'h-1.5 rounded-full transition-all duration-300 cursor-pointer',
+                                                activeImageIndex === idx
+                                                    ? 'w-5 bg-white'
+                                                    : 'w-1.5 bg-white/50 hover:bg-white/80'
+                                            )}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </div>
 
                         {/* DESKTOP GALLERY: Main Stage Image with Border & Zoom */}
                         <div className="hidden sm:block relative aspect-square rounded-lg border border-border/80 bg-muted/30 overflow-hidden group shadow-none">
