@@ -222,27 +222,6 @@ export default function Login({ status, notice }: LoginProps) {
                                     </Button>
                                 </form>
 
-                                {/* BUTUH BANTUAN FOOTER (Matching screenshot) */}
-                                <div className="pt-2.5 border-t border-neutral-100 text-center space-y-0.5 text-xs text-neutral-500">
-                                    <p className="font-medium text-neutral-600">
-                                        {isEn ? 'Need help?' : 'Butuh bantuan?'}
-                                    </p>
-                                    <p className="text-[11.5px]">
-                                        {isEn ? 'Visit ' : 'Kunjungi '}
-                                        <Link href="/support" className="font-bold text-[#4A070B] hover:underline">
-                                            {isEn ? 'Help Center' : 'Pusat Bantuan'}
-                                        </Link>
-                                        {' '}{isEn ? 'or ' : 'atau '}
-                                        <a
-                                            href="https://wa.me/6281234567890?text=Halo%20Aroma%20Palace,%20saya%20butuh%20bantuan%20akun"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="font-bold text-[#4A070B] hover:underline"
-                                        >
-                                            {isEn ? 'Contact Concierge' : 'Hubungi Concierge'}
-                                        </a>
-                                    </p>
-                                </div>
                             </CardContent>
                         </Card>
                     </div>

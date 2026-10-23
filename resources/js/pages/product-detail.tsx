@@ -867,16 +867,6 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
                                 </div>
                             </div>
 
-                            <Button
-                                onClick={() => setWriteReviewOpen(true)}
-                                variant="outline"
-                                className="w-full rounded-md border-[#4A070B]/40 text-[#4A070B] dark:text-[#E8D0BA] hover:bg-[#4A070B]/10 text-xs shadow-none cursor-pointer mt-2"
-                            >
-                                <svg className="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                </svg>
-                                {isEn ? 'Write a Review' : 'Tulis Ulasan Anda'}
-                            </Button>
                         </div>
 
                         {/* Reviews Feed (8 cols) */}
