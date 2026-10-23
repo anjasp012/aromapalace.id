@@ -499,7 +499,6 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
         window.openPromoModal = (v) => handleOpenVoucherModal(v);
         window.openSpotlight = () => {
             setSpotlightOpen(true);
-            setTimeout(() => spotlightInputRef.current?.focus(), 50);
         };
         window.openInfoModal = (tab = 'faq') => {
             setInfoActiveTab(tab);

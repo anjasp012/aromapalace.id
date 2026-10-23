@@ -276,7 +276,7 @@ export default function CartPage({
             </div>
 
             {/* MAIN CONTAINER */}
-            <div className={cn("mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12", items && items.length > 0 && "pb-36 sm:pb-40 lg:pb-12")}>
+            <div className={cn("mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12", items && items.length > 0 && "pb-52 sm:pb-56 lg:pb-12")}>
                 {!items ? (
                     /* SKELETON LOADING STATE FOR INSTANT VISITS */
                     <div className="space-y-4 max-w-3xl mx-auto">
@@ -329,16 +329,26 @@ export default function CartPage({
                                         )}
                                     </span>
                                 </div>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    disabled={isClearing}
-                                    onClick={handleClearCart}
-                                    className="h-7 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md cursor-pointer flex items-center gap-1.5"
-                                >
-                                    {isClearing && <Loader2 className="w-3 h-3 animate-spin text-destructive" />}
-                                    <span>{isClearing ? (isEn ? 'Clearing...' : 'Mengosongkan...') : (isEn ? 'Clear Cart' : 'Kosongkan Keranjang')}</span>
-                                </Button>
+                                <div className="flex items-center gap-2.5 sm:gap-3">
+                                    <Link
+                                        href="/products"
+                                        className="inline-flex items-center gap-1 text-xs font-semibold text-[#4A070B] dark:text-[#E8D0BA] hover:underline"
+                                    >
+                                        <span aria-hidden="true">←</span>
+                                        <span>{isEn ? 'Continue Shopping' : 'Lanjut Belanja'}</span>
+                                    </Link>
+                                    <span className="text-border/80 text-xs">|</span>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        disabled={isClearing}
+                                        onClick={handleClearCart}
+                                        className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md cursor-pointer flex items-center gap-1.5"
+                                    >
+                                        {isClearing && <Loader2 className="w-3 h-3 animate-spin text-destructive" />}
+                                        <span>{isClearing ? (isEn ? 'Clearing...' : 'Mengosongkan...') : (isEn ? 'Clear' : 'Kosongkan')}</span>
+                                    </Button>
+                                </div>
                             </div>
 
                             {/* Item Cards */}
@@ -463,13 +473,26 @@ export default function CartPage({
                                 })}
                             </div>
 
-                            {/* Continue Shopping Link */}
-                            <div className="pt-2">
+                            {/* Continue Shopping Action */}
+                            <div className="pt-4 pb-6">
                                 <Link
                                     href="/products"
-                                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#4A070B] hover:text-[#360407]"
+                                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl border border-border/80 bg-card hover:bg-muted/40 text-foreground hover:text-[#4A070B] dark:hover:text-[#E8D0BA] text-xs sm:text-sm font-semibold transition-colors shadow-xs hover:border-[#4A070B]/40 active:scale-[0.99]"
                                 >
-                                    <span>←</span> {isEn ? 'Continue Shopping' : 'Lanjut Pilih Wewangian Lain'}
+                                    <svg
+                                        className="w-4 h-4 shrink-0 text-[#4A070B] dark:text-[#E8D0BA]"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth="2"
+                                            d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                                        />
+                                    </svg>
+                                    <span>{isEn ? 'Continue Shopping' : 'Lanjut Belanja / Pilih Produk Lain'}</span>
                                 </Link>
                             </div>
                         </div>

@@ -59,13 +59,10 @@ export default function SearchableSelect({
         });
     }, [options, search]);
 
-    // Auto focus search input when popover opens
+    // Reset search when popover opens without forcing autofocus
     useEffect(() => {
         if (open) {
             setSearch('');
-            setTimeout(() => {
-                inputRef.current?.focus();
-            }, 50);
         }
     }, [open]);
 
