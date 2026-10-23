@@ -71,7 +71,7 @@ export default function Login({ status, notice }: LoginProps) {
 
                 <Link
                     href="/"
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/90 hover:text-white transition-all bg-white/10 hover:bg-white/20 border border-white/20 px-3.5 py-2 rounded-xl backdrop-blur-md active:scale-95 shadow-sm"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/90 hover:text-white transition-all bg-white/10 hover:bg-white/20 border border-white/20 px-3.5 py-2 rounded-lg backdrop-blur-md active:scale-95 shadow-sm"
                 >
                     <Home className="w-3.5 h-3.5 text-[#E5A844]" />
                     <span>{isEn ? 'Home' : 'Beranda'}</span>
@@ -81,32 +81,17 @@ export default function Login({ status, notice }: LoginProps) {
             {/* MAIN CONTAINER: 2-COLUMN LAYOUT ON DESKTOP */}
             <main className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-8 py-2 my-auto flex-1 flex items-center justify-center lg:justify-between min-h-0">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center w-full">
-                    {/* LEFT SIDE: PROMINENT BRAND LOGO EMBLEM & STORY (Visible on Desktop) */}
+                    {/* LEFT SIDE: AUTH ILLUSTRATION (Matching Reference Screenshot) */}
                     <div className="hidden lg:flex lg:col-span-6 xl:col-span-7 flex-col items-center justify-center text-center relative pr-4 select-none">
-                        <div className="relative flex flex-col items-center justify-center">
-                            {/* Ambient Glow behind emblem */}
-                            <div className="absolute -inset-12 bg-gradient-to-tr from-[#E5A844]/30 via-[#8C1D24]/40 to-transparent rounded-full blur-3xl pointer-events-none -z-10" />
+                        <div className="relative max-w-[420px] xl:max-w-[480px] w-full flex items-center justify-center">
+                            {/* Ambient Glow behind illustration */}
+                            <div className="absolute -inset-10 bg-gradient-to-tr from-[#E5A844]/20 via-[#8C1D24]/30 to-transparent rounded-full blur-3xl pointer-events-none -z-10" />
 
-                            {/* Large Royal Circular Logo Emblem */}
-                            <div className="relative group cursor-default">
-                                <div className="w-40 h-40 xl:w-48 xl:h-48 rounded-full p-2.5 bg-gradient-to-b from-[#E5A844]/40 via-[#8C1D24]/30 to-transparent shadow-[0_0_50px_rgba(229,168,68,0.35)] ring-4 ring-[#E5A844]/30 flex items-center justify-center backdrop-blur-md">
-                                    <img
-                                        src="/images/logo.png"
-                                        alt="Aroma Palace Emblem"
-                                        className="w-full h-full object-contain rounded-full shadow-2xl transition-transform duration-500 group-hover:scale-105"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Brand Title & Tagline */}
-                            <div className="mt-6 space-y-2 text-center max-w-md">
-                                <h2 className="text-2xl xl:text-3xl font-extrabold tracking-[0.2em] uppercase text-white font-serif">
-                                    Aroma Palace
-                                </h2>
-                                <p className="text-xs xl:text-sm text-[#E5A844] font-medium tracking-widest uppercase">
-                                    Haute Parfumerie &bull; Maison de Parfum
-                                </p>
-                            </div>
+                            <img
+                                src="/images/auth-illustration.png"
+                                alt="Aroma Palace Shopping Experience"
+                                className="w-full max-h-[380px] xl:max-h-[440px] object-contain drop-shadow-2xl transition-transform duration-500 hover:scale-[1.02]"
+                            />
                         </div>
                     </div>
 
@@ -233,7 +218,7 @@ export default function Login({ status, notice }: LoginProps) {
                                     <Button
                                         type="submit"
                                         disabled={processing}
-                                        className="w-full h-11 sm:h-12 rounded-xl bg-[#4A070B] hover:bg-[#360407] active:scale-[0.98] text-white text-sm font-bold shadow-md transition-all cursor-pointer mt-2"
+                                        className="w-full h-11 sm:h-12 rounded-lg bg-[#4A070B] hover:bg-[#360407] active:scale-[0.98] text-white text-sm font-bold shadow-md transition-all cursor-pointer mt-2"
                                     >
                                         {processing ? (
                                             <span className="flex items-center justify-center gap-2">

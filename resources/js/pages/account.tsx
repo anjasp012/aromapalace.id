@@ -612,7 +612,7 @@ export default function AccountPage({
                         <Button
                             variant="outline"
                             onClick={() => setLogoutConfirmOpen(true)}
-                            className="w-full text-xs font-semibold py-4 rounded-xl border-destructive/25 text-destructive hover:bg-destructive/10 cursor-pointer shadow-xs flex items-center justify-center gap-2"
+                            className="w-full text-xs font-semibold py-3 rounded-lg border-destructive/25 text-destructive hover:bg-destructive/10 cursor-pointer shadow-xs flex items-center justify-center gap-2"
                         >
                             <LogOut className="w-4 h-4" />
                             <span>{t('account.logout')}</span>
@@ -778,7 +778,7 @@ export default function AccountPage({
                                 size="sm"
                                 onClick={() => setEditProfileOpen(false)}
                                 disabled={isUpdatingProfile}
-                                className="cursor-pointer rounded-xl"
+                                className="cursor-pointer rounded-lg"
                             >
                                 {t('common.cancel')}
                             </Button>
@@ -786,7 +786,7 @@ export default function AccountPage({
                                 type="submit"
                                 size="sm"
                                 disabled={isUpdatingProfile}
-                                className="bg-[#4A070B] hover:bg-[#360407] text-white cursor-pointer rounded-xl flex items-center gap-1.5"
+                                className="bg-[#4A070B] hover:bg-[#360407] text-white cursor-pointer rounded-lg flex items-center gap-1.5"
                             >
                                 {isUpdatingProfile && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                                 <span>{isUpdatingProfile ? t('account.saving') : t('account.save_changes')}</span>
@@ -860,7 +860,7 @@ export default function AccountPage({
                                 size="sm"
                                 onClick={() => setChangePasswordOpen(false)}
                                 disabled={isUpdatingPassword}
-                                className="cursor-pointer rounded-xl"
+                                className="cursor-pointer rounded-lg"
                             >
                                 {t('common.cancel')}
                             </Button>
@@ -868,7 +868,7 @@ export default function AccountPage({
                                 type="submit"
                                 size="sm"
                                 disabled={isUpdatingPassword}
-                                className="bg-[#4A070B] hover:bg-[#360407] text-white cursor-pointer rounded-xl flex items-center gap-1.5"
+                                className="bg-[#4A070B] hover:bg-[#360407] text-white cursor-pointer rounded-lg flex items-center gap-1.5"
                             >
                                 {isUpdatingPassword && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                                 <span>{isUpdatingPassword ? (isEn ? 'Updating...' : 'Memperbarui...') : t('account.change_password')}</span>
@@ -916,7 +916,7 @@ export default function AccountPage({
                         <Button
                             asChild
                             size="sm"
-                            className="w-full bg-[#4A070B] hover:bg-[#360407] text-white cursor-pointer rounded-xl"
+                            className="w-full bg-[#4A070B] hover:bg-[#360407] text-white cursor-pointer rounded-lg"
                         >
                             <Link href="/membership">
                                 {t('account.view_royale_club')}
@@ -944,7 +944,7 @@ export default function AccountPage({
                             variant="outline"
                             size="sm"
                             onClick={() => setLogoutConfirmOpen(false)}
-                            className="cursor-pointer rounded-xl"
+                            className="cursor-pointer rounded-lg"
                         >
                             {t('common.cancel')}
                         </Button>
@@ -955,7 +955,7 @@ export default function AccountPage({
                             onClick={() => {
                                 router.post('/logout');
                             }}
-                            className="cursor-pointer rounded-xl"
+                            className="cursor-pointer rounded-lg"
                         >
                             {t('account.confirm_logout')}
                         </Button>
@@ -1008,7 +1008,7 @@ export default function AccountPage({
                                 variant="outline"
                                 size="sm"
                                 onClick={() => setDeleteAccountOpen(false)}
-                                className="cursor-pointer rounded-xl"
+                                className="cursor-pointer rounded-lg"
                             >
                                 {t('common.cancel')}
                             </Button>
@@ -1017,7 +1017,7 @@ export default function AccountPage({
                                 size="sm"
                                 variant="destructive"
                                 disabled={isDeletingAccount || !deletePassword}
-                                className="cursor-pointer rounded-xl flex items-center gap-1.5"
+                                className="cursor-pointer rounded-lg flex items-center gap-1.5"
                             >
                                 {isDeletingAccount && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                                 <span>{isDeletingAccount ? t('account.deleting') : t('account.confirm_delete')}</span>
@@ -1056,7 +1056,7 @@ export default function AccountPage({
                                 setEditingAddress(null);
                                 setAddressModalOpen(true);
                             }}
-                            className="w-full h-10 rounded-xl bg-[#4A070B] hover:bg-[#360407] text-white text-xs font-semibold cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
+                            className="w-full h-10 rounded-lg bg-[#4A070B] hover:bg-[#360407] text-white text-xs font-semibold cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
                         >
                             <Plus className="w-4 h-4" />
                             <span>{isEn ? 'Add New Address' : 'Tambah Alamat Baru'}</span>

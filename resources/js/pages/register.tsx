@@ -32,7 +32,7 @@ export default function Register({ status }: RegisterProps) {
     };
 
     return (
-        <div className="min-h-[100dvh] w-full bg-[#4A070B] text-slate-100 relative overflow-x-hidden flex flex-col justify-between selection:bg-[#E5A844] selection:text-[#4A070B]">
+        <div className="h-[100dvh] max-h-[100dvh] w-full bg-[#4A070B] text-slate-100 relative overflow-y-auto lg:overflow-hidden flex flex-col justify-between selection:bg-[#E5A844] selection:text-[#4A070B]">
             <Head title={`${t('auth.register_title')} • Aroma Palace`} />
 
             {/* AMBIENT LUXURY DECORATIVE CIRCLES & BUBBLES */}
@@ -49,24 +49,24 @@ export default function Register({ status }: RegisterProps) {
             </div>
 
             {/* TOP HEADER: BRAND LOGO & HOME BUTTON */}
-            <header className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-8 pt-[max(env(safe-area-inset-top),1.25rem)] pb-4 flex items-center justify-between">
+            <header className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-8 pt-[max(env(safe-area-inset-top),1rem)] pb-2 flex items-center justify-between shrink-0">
                 <Link
                     href="/"
-                    className="inline-flex items-center gap-2.5 group cursor-pointer"
+                    className="inline-flex items-center gap-3 group cursor-pointer"
                 >
                     <img
                         src="/images/logo.png"
                         alt="Aroma Palace"
-                        className="h-9 w-auto brightness-0 invert drop-shadow-md group-hover:scale-105 transition-transform"
+                        className="w-10 h-10 sm:w-11 sm:h-11 object-contain rounded-full shadow-md group-hover:scale-105 transition-transform shrink-0 ring-2 ring-[#E5A844]/30"
                     />
-                    <span className="text-sm font-extrabold tracking-wider text-white uppercase font-sans hidden sm:inline-block">
+                    <span className="text-base sm:text-lg font-extrabold tracking-wider text-white uppercase font-sans">
                         Aroma Palace
                     </span>
                 </Link>
 
                 <Link
                     href="/"
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/90 hover:text-white transition-all bg-white/10 hover:bg-white/20 border border-white/20 px-3.5 py-2 rounded-xl backdrop-blur-md active:scale-95 shadow-sm"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/90 hover:text-white transition-all bg-white/10 hover:bg-white/20 border border-white/20 px-3.5 py-2 rounded-lg backdrop-blur-md active:scale-95 shadow-sm"
                 >
                     <Home className="w-3.5 h-3.5 text-[#E5A844]" />
                     <span>{isEn ? 'Home' : 'Beranda'}</span>
@@ -74,25 +74,19 @@ export default function Register({ status }: RegisterProps) {
             </header>
 
             {/* MAIN CONTAINER: 2-COLUMN LAYOUT ON DESKTOP */}
-            <main className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-8 py-4 sm:py-8 my-auto flex-1 flex items-center justify-center lg:justify-between">
+            <main className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-8 py-2 my-auto flex-1 flex items-center justify-center lg:justify-between min-h-0">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center w-full">
-                    {/* LEFT SIDE: ILLUSTRATION & BRAND STORY (Visible on Desktop) */}
-                    <div className="hidden lg:flex lg:col-span-6 xl:col-span-7 flex-col items-center justify-center text-center relative pr-4">
-                        <div className="relative max-w-[660px] w-full">
-                            <div className="absolute -inset-4 bg-gradient-to-tr from-[#E5A844]/25 via-[#8C1D24]/40 to-transparent rounded-3xl blur-2xl -z-10" />
+                    {/* LEFT SIDE: AUTH ILLUSTRATION (Matching Reference Screenshot) */}
+                    <div className="hidden lg:flex lg:col-span-6 xl:col-span-7 flex-col items-center justify-center text-center relative pr-4 select-none">
+                        <div className="relative max-w-[420px] xl:max-w-[480px] w-full flex items-center justify-center">
+                            {/* Ambient Glow behind illustration */}
+                            <div className="absolute -inset-10 bg-gradient-to-tr from-[#E5A844]/20 via-[#8C1D24]/30 to-transparent rounded-full blur-3xl pointer-events-none -z-10" />
 
-                            <div className="overflow-hidden">
-                                <img
-                                    src="/images/auth-illustration.png"
-                                    alt="Aroma Palace Registration"
-                                    className="w-full h-auto object-cover"
-                                />
-                            </div>
-
-                            <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-black/35 backdrop-blur-md border border-white/15 text-white/90 text-xs shadow-lg">
-                                <Sparkles className="w-3.5 h-3.5 text-[#E5A844]" />
-                                <span>{isEn ? 'Exclusive Fragrance Concierge & Rewards' : 'Akses Eksklusif Koleksi Parfum & Loyalty Rewards'}</span>
-                            </div>
+                            <img
+                                src="/images/auth-illustration.png"
+                                alt="Aroma Palace Registration"
+                                className="w-full max-h-[380px] xl:max-h-[440px] object-contain drop-shadow-2xl transition-transform duration-500 hover:scale-[1.02]"
+                            />
                         </div>
                     </div>
 
@@ -210,7 +204,7 @@ export default function Register({ status }: RegisterProps) {
                                     <Button
                                         type="submit"
                                         disabled={processing}
-                                        className="w-full h-12 rounded-xl bg-[#4A070B] hover:bg-[#360407] active:scale-[0.98] text-white text-sm font-bold shadow-md transition-all cursor-pointer mt-3"
+                                        className="w-full h-11 sm:h-12 rounded-lg bg-[#4A070B] hover:bg-[#360407] active:scale-[0.98] text-white text-sm font-bold shadow-md transition-all cursor-pointer mt-2"
                                     >
                                         {processing ? (
                                             <span className="flex items-center justify-center gap-2">
@@ -224,7 +218,7 @@ export default function Register({ status }: RegisterProps) {
                                 </form>
 
                                 {/* BUTUH BANTUAN FOOTER (Matching screenshot) */}
-                                <div className="pt-3 border-t border-neutral-100 text-center space-y-1 text-xs text-neutral-500">
+                                <div className="pt-2.5 border-t border-neutral-100 text-center space-y-0.5 text-xs text-neutral-500">
                                     <p className="font-medium text-neutral-600">
                                         {isEn ? 'Need help?' : 'Butuh bantuan?'}
                                     </p>
@@ -249,11 +243,6 @@ export default function Register({ status }: RegisterProps) {
                     </div>
                 </div>
             </main>
-
-            {/* BOTTOM SAFE-AREA FOOTER SPACING */}
-            <footer className="relative z-10 w-full py-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] text-center text-[11px] text-white/50">
-                <span>&copy; {new Date().getFullYear()} Aroma Palace Haute Parfumerie. All rights reserved.</span>
-            </footer>
         </div>
     );
 }

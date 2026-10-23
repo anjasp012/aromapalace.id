@@ -1,5 +1,6 @@
 import { createInertiaApp, router } from '@inertiajs/react';
 import { initNativeApp } from '@/lib/native-app';
+import { initAppRedirect } from '@/lib/app-redirect';
 import { resolveComponentForUrl } from '@/lib/route-resolver';
 import { configureEcho } from '@laravel/echo-react';
 
@@ -43,4 +44,7 @@ router.on('before', (event) => {
 // No-op on the website; only runs inside the iOS/Android app shell
 // (status bar, splash, lifecycle, offline banner: see lib/native-app.ts).
 initNativeApp();
+
+// Automatically redirect mobile browser users to the native app, or App Store / Play Store.
+initAppRedirect();
 
