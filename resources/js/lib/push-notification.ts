@@ -384,7 +384,7 @@ export function playNotificationChime(): void {
     if (typeof window === 'undefined') return;
 
     try {
-        const audio = new Audio('/sounds/notif.mp3');
+        const audio = new Audio('/sounds/notif.wav');
         const playPromise = audio.play();
         if (playPromise !== undefined) {
             playPromise.catch(() => {

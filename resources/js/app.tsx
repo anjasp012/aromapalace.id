@@ -48,3 +48,41 @@ initNativeApp();
 // Automatically redirect mobile browser users to the native app, or App Store / Play Store.
 initAppRedirect();
 
+// Enable edge swipe-from-left to navigate back on iOS and mobile browsers
+function initSwipeBack(): void {
+    if (typeof window === 'undefined') return;
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let isEdgeSwipe = false;
+
+    window.addEventListener('touchstart', (e) => {
+        if (e.touches.length !== 1) return;
+        const touch = e.touches[0];
+        if (touch.clientX <= 30) {
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+            isEdgeSwipe = true;
+        } else {
+            isEdgeSwipe = false;
+        }
+    }, { passive: true });
+
+    window.addEventListener('touchend', (e) => {
+        if (!isEdgeSwipe) return;
+        isEdgeSwipe = false;
+        if (e.changedTouches.length !== 1) return;
+        const touch = e.changedTouches[0];
+        const deltaX = touch.clientX - touchStartX;
+        const deltaY = Math.abs(touch.clientY - touchStartY);
+
+        if (deltaX > 65 && deltaY < 50) {
+            if (window.history.length > 1) {
+                window.history.back();
+            }
+        }
+    }, { passive: true });
+}
+
+initSwipeBack();
+

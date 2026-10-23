@@ -1,5 +1,5 @@
 import { Head, Link, usePage, router, Deferred } from '@inertiajs/react';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import Layout from '@/components/Layout';
 import ProductCard, { type ProductItem, ProductCardSkeleton } from '@/components/ProductCard';
 import ProductQuickViewModal from '@/components/ProductQuickViewModal';
@@ -174,6 +174,29 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
     const [copiedShare, setCopiedShare] = useState(false);
     const [isAddingToCart, setIsAddingToCart] = useState(false);
     const [isAddedToCart, setIsAddedToCart] = useState(false);
+
+    const galleryScrollRef = useRef<HTMLDivElement>(null);
+
+    const handleMobileGalleryScroll = () => {
+        if (!galleryScrollRef.current) return;
+        const width = galleryScrollRef.current.offsetWidth;
+        if (width <= 0) return;
+        const newIndex = Math.round(galleryScrollRef.current.scrollLeft / width);
+        if (newIndex !== activeImageIndex && newIndex >= 0 && newIndex < images.length) {
+            setActiveImageIndex(newIndex);
+        }
+    };
+
+    const scrollMobileGalleryTo = (index: number) => {
+        setActiveImageIndex(index);
+        if (galleryScrollRef.current) {
+            const width = galleryScrollRef.current.offsetWidth;
+            galleryScrollRef.current.scrollTo({
+                left: width * index,
+                behavior: 'smooth',
+            });
+        }
+    };
 
     // Dynamic Variants / Size options from Database (optional)
     const availableSizes = useMemo(() => {
@@ -439,9 +462,87 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
                     {/* ======================================================== */}
                     {/* LEFT COLUMN: INTERACTIVE MEDIA GALLERY */}
                     {/* ======================================================== */}
-                    <div className="lg:col-span-6 space-y-4 overflow-x-visible">
-                        {/* Main Stage Image */}
-                        <div className="relative aspect-square rounded-lg border border-border/80 bg-muted/30 overflow-hidden group shadow-none">
+                    <div className="-mx-4 sm:mx-0 lg:col-span-6 space-y-3 sm:space-y-4">
+                        {/* MOBILE ONLY: FULL-BLEED SWIPE GALLERY (Snap Scrolling, Edge-to-Edge, No Padding) */}
+                        <div className="sm:hidden relative w-full aspect-square overflow-hidden bg-muted/20">
+                            <div
+                                ref={galleryScrollRef}
+                                onScroll={handleMobileGalleryScroll}
+                                className="flex w-full h-full overflow-x-auto snap-x snap-mandatory scroll-smooth"
+                                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                            >
+                                {images.map((imgUrl, idx) => (
+                                    <div key={idx} className="w-full h-full shrink-0 snap-center relative">
+                                        <img
+                                            src={imgUrl}
+                                            alt={`${product.name} ${idx + 1}`}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Floating Action Buttons: Love & Share */}
+                            <div className="absolute top-3 right-3 flex flex-col gap-2 z-20">
+                                {!isAdmin && (
+                                    <Button
+                                        variant="secondary"
+                                        size="icon"
+                                        onClick={handleToggleWishlist}
+                                        className={cn(
+                                            'rounded-full h-9 w-9 bg-background/90 backdrop-blur-md border border-border/80 transition-colors shadow-sm cursor-pointer',
+                                            isWishlisted ? 'text-rose-600' : 'text-muted-foreground hover:text-foreground'
+                                        )}
+                                        title={isWishlisted ? (isEn ? 'Remove from Wishlist' : 'Hapus dari Wishlist') : (isEn ? 'Save to Wishlist' : 'Simpan ke Wishlist')}
+                                    >
+                                        <svg className={cn('w-4 h-4', isWishlisted ? 'fill-current' : '')} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                        </svg>
+                                    </Button>
+                                )}
+
+                                <Button
+                                    variant="secondary"
+                                    size="icon"
+                                    onClick={handleShare}
+                                    className="rounded-full h-9 w-9 bg-background/90 backdrop-blur-md border border-border/80 text-muted-foreground hover:text-[#4A070B] transition-colors shadow-sm cursor-pointer"
+                                    title={copiedShare ? (isEn ? 'Link Copied!' : 'Tautan Disalin!') : (isEn ? 'Share Fragrance' : 'Bagikan Wewangian')}
+                                >
+                                    {copiedShare ? (
+                                        <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    ) : (
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                                        </svg>
+                                    )}
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* Mobile Pagination Dot Indicator */}
+                        {images.length > 1 && (
+                            <div className="flex sm:hidden items-center justify-center gap-1.5 pt-1.5 pb-2">
+                                {images.map((_, idx) => (
+                                    <button
+                                        key={idx}
+                                        type="button"
+                                        onClick={() => scrollMobileGalleryTo(idx)}
+                                        aria-label={`Slide ${idx + 1}`}
+                                        className={cn(
+                                            'h-1.5 rounded-full transition-all duration-300 cursor-pointer',
+                                            activeImageIndex === idx
+                                                ? 'w-6 bg-[#4A070B]'
+                                                : 'w-1.5 bg-neutral-300 dark:bg-neutral-600 hover:bg-neutral-400'
+                                        )}
+                                    />
+                                ))}
+                            </div>
+                        )}
+
+                        {/* DESKTOP GALLERY: Main Stage Image with Border & Zoom */}
+                        <div className="hidden sm:block relative aspect-square rounded-lg border border-border/80 bg-muted/30 overflow-hidden group shadow-none">
                             {activeImage ? (
                                 <img
                                     src={activeImage}
@@ -454,7 +555,7 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
                                 </div>
                             )}
 
-                            {/* Top Right Wishlist & Zoom Actions */}
+                            {/* Top Right Actions: Love, Share & Zoom */}
                             <div className="absolute top-3 right-3 flex flex-col gap-2 z-10">
                                 {!isAdmin && (
                                     <Button
@@ -476,8 +577,26 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
                                 <Button
                                     variant="secondary"
                                     size="icon"
+                                    onClick={handleShare}
+                                    className="rounded-md h-8 w-8 bg-background/90 backdrop-blur-xs border border-border/80 text-muted-foreground hover:text-[#4A070B] transition-colors shadow-none cursor-pointer"
+                                    title={copiedShare ? (isEn ? 'Link Copied!' : 'Tautan Disalin!') : (isEn ? 'Share Fragrance' : 'Bagikan Wewangian')}
+                                >
+                                    {copiedShare ? (
+                                        <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    ) : (
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                                        </svg>
+                                    )}
+                                </Button>
+
+                                <Button
+                                    variant="secondary"
+                                    size="icon"
                                     onClick={() => setLightboxOpen(true)}
-                                    className="hidden sm:flex rounded-md h-8 w-8 bg-background/90 backdrop-blur-xs border border-border/80 text-muted-foreground hover:text-foreground shadow-none cursor-pointer"
+                                    className="rounded-md h-8 w-8 bg-background/90 backdrop-blur-xs border border-border/80 text-muted-foreground hover:text-foreground shadow-none cursor-pointer"
                                     title={isEn ? 'Zoom Image' : 'Perbesar Tampilan'}
                                 >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -487,9 +606,9 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
                             </div>
                         </div>
 
-                        {/* Thumbnail Strip */}
+                        {/* Desktop Thumbnail Strip (hidden on mobile) */}
                         {images.length > 1 && (
-                            <div className="flex items-center gap-3 overflow-x-auto pb-1 pt-1 overflow-x-visible">
+                            <div className="hidden sm:flex items-center gap-3 overflow-x-auto pb-1 pt-1">
                                 {images.map((imgUrl, idx) => (
                                     <button
                                         key={idx}
@@ -511,20 +630,6 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
                                 ))}
                             </div>
                         )}
-
-                        {/* Share quick row */}
-                        <div className="flex items-center justify-start pt-2 text-xs text-muted-foreground border-t border-border/70">
-                            <button
-                                type="button"
-                                onClick={handleShare}
-                                className="inline-flex items-center gap-1.5 hover:text-[#4A070B] transition-colors cursor-pointer"
-                            >
-                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                                </svg>
-                                <span>{copiedShare ? (isEn ? 'Link Copied!' : 'Tautan Disalin!') : (isEn ? 'Share This Fragrance' : 'Bagikan Wewangian Ini')}</span>
-                            </button>
-                        </div>
                     </div>
 
                     {/* ======================================================== */}
