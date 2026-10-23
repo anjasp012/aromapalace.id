@@ -241,6 +241,7 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
     const [infoActiveTab, setInfoActiveTab] = useState<string>('faq');
     const [storeModalOpen, setStoreModalOpen] = useState(false);
     const [contactModalOpen, setContactModalOpen] = useState(false);
+    const headerRef = useRef<HTMLElement>(null);
 
     // Toast States
     const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -582,6 +583,25 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, []);
 
+    // Sync header offsetHeight to --main-header-height CSS variable
+    useEffect(() => {
+        const updateHeaderHeight = () => {
+            if (headerRef.current) {
+                const h = headerRef.current.offsetHeight;
+                if (h > 0) {
+                    document.documentElement.style.setProperty('--main-header-height', `${h}px`);
+                }
+            }
+        };
+        updateHeaderHeight();
+        window.addEventListener('resize', updateHeaderHeight);
+        window.addEventListener('scroll', updateHeaderHeight, { passive: true });
+        return () => {
+            window.removeEventListener('resize', updateHeaderHeight);
+            window.removeEventListener('scroll', updateHeaderHeight);
+        };
+    }, []);
+
     // Keep slide toggle arrow orientation in sync with touch/drag scroll
     useEffect(() => {
         const el = navTrackRef.current;
@@ -754,6 +774,7 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
 
             {/* Main Navigation Bar (Sticky with safe-area support when scrolled) */}
             <header
+                ref={headerRef}
                 className={cn(
                     "sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-[#4A070B]/20 shadow-xs transition-[padding,background-color] duration-150",
                     isScrolledPastTopbar ? "pt-[env(safe-area-inset-top,0px)]" : ""

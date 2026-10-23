@@ -473,33 +473,22 @@ export default function OrdersPage({
                 </div>
 
                 {/* STATUS FILTER TABS (Sticky on Mobile & Desktop) */}
-                <div className="sticky top-[96px] sm:top-[120px] z-30 bg-background/95 backdrop-blur-md -mx-4 px-4 sm:mx-0 sm:px-0 py-2 sm:py-3 border-b border-border/80 transition-all">
+                <div className="sticky top-[var(--main-header-height,96px)] sm:top-[calc(var(--main-header-height,130px)+16px)] z-30 bg-background/95 backdrop-blur-md -mx-4 px-4 sm:mx-0 sm:px-0 py-2.5 sm:py-3 border-b border-border/80 transition-all">
                     <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
                         {TABS.map((tab) => {
                             const isActive = (active_tab || 'all') === tab.key;
-                            const count = tab_counts ? tab_counts[tab.key as keyof TabCounts] : undefined;
 
                             return (
                                 <button
                                     key={tab.key}
                                     type="button"
                                     onClick={() => handleTabChange(tab.key)}
-                                    className={`inline-flex items-center gap-2 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer select-none ${isActive
+                                    className={`inline-flex items-center justify-center px-4 py-2 sm:px-4 sm:py-2.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer select-none ${isActive
                                             ? 'bg-[#4A070B] text-white shadow-xs'
                                             : 'bg-muted/50 hover:bg-muted/80 text-muted-foreground hover:text-foreground border border-border/60'
                                         }`}
                                 >
                                     <span>{tab.label}</span>
-                                    {typeof count === 'number' && (
-                                        <span
-                                            className={`inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-extrabold ${isActive
-                                                    ? 'bg-white/20 text-white'
-                                                    : 'bg-muted text-muted-foreground'
-                                                }`}
-                                        >
-                                            {count}
-                                        </span>
-                                    )}
                                 </button>
                             );
                         })}
