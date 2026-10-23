@@ -880,7 +880,7 @@ export default function Products({
                                             )}
                                         </Button>
                                     </SheetTrigger>
-                                    <SheetContent side="left" showCloseButton={false} className="w-[300px] sm:w-[360px] p-6 overflow-y-auto">
+                                    <SheetContent side="left" showCloseButton={false} className="w-[300px] sm:w-[360px] px-6 pb-6 pt-12 sm:pt-8 pt-[max(env(safe-area-inset-top),2.75rem)] overflow-y-auto">
                                         {renderFilterContent()}
                                         <div className="pt-6 sticky bottom-0 bg-background pb-2">
                                             <Button

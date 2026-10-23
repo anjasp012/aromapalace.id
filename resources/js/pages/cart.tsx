@@ -262,7 +262,7 @@ export default function CartPage({
     const totalItemsCount = items?.length ?? 0;
 
     return (
-        <Layout showBottomNav={!items || items.length === 0} disablePullToRefresh={Boolean(items && items.length > 0)}>
+        <Layout showBottomNav={!items || items.length === 0}>
             <Head title={isEn ? 'My Shopping Cart • Aroma Palace' : 'Keranjang Belanja Saya • Aroma Palace'} />
 
             {/* PAGE HEADER BANNER (Matches products.tsx style) */}

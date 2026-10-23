@@ -1,6 +1,6 @@
-import { Head } from '@inertiajs/react';
+import { Head, Deferred } from '@inertiajs/react';
 import Layout from '@/components/Layout';
-import CategoryCard, { type CategoryItem } from '@/components/CategoryCard';
+import CategoryCard, { type CategoryItem, CategoryCardSkeleton } from '@/components/CategoryCard';
 import { useTranslation } from '@/lib/i18n';
 
 interface CategoriesPageProps {
@@ -35,22 +35,33 @@ export default function CategoriesPage({
 
             {/* CATEGORIES GRID - 3 COLUMNS ON MOBILE, 5 COLUMNS ON DESKTOP */}
             <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12 bg-background min-h-[50vh]">
-                {activeCategories.length > 0 ? (
-                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-4 lg:gap-5">
-                        {activeCategories.map((category) => (
-                            <CategoryCard key={category.slug} category={category} />
-                        ))}
-                    </div>
-                ) : (
-                    <div className="text-center py-16 px-4 space-y-3 max-w-md mx-auto">
-                        <h3 className="text-base sm:text-lg font-bold text-foreground">
-                            {t('categories.empty_title')}
-                        </h3>
-                        <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                            {t('categories.empty_desc')}
-                        </p>
-                    </div>
-                )}
+                <Deferred
+                    data="categories"
+                    fallback={
+                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-4 lg:gap-5">
+                            {Array.from({ length: 15 }).map((_, i) => (
+                                <CategoryCardSkeleton key={i} />
+                            ))}
+                        </div>
+                    }
+                >
+                    {activeCategories.length > 0 ? (
+                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-4 lg:gap-5">
+                            {activeCategories.map((category) => (
+                                <CategoryCard key={category.slug} category={category} />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-16 px-4 space-y-3 max-w-md mx-auto">
+                            <h3 className="text-base sm:text-lg font-bold text-foreground">
+                                {t('categories.empty_title')}
+                            </h3>
+                            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                                {t('categories.empty_desc')}
+                            </p>
+                        </div>
+                    )}
+                </Deferred>
             </main>
         </Layout>
     );

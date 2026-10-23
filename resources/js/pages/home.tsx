@@ -222,26 +222,17 @@ export default function Home({
         };
     }, []);
 
-    // Track ongoing page transitions to show immediate loading state on clicked buttons
-    const [navigatingTarget, setNavigatingTarget] = useState<string | null>(null);
+    // Track clicked button ID so only the specifically clicked button shows a loading spinner
+    const [loadingButtonId, setLoadingButtonId] = useState<string | null>(null);
 
     useEffect(() => {
-        const removeStart = router.on('start', (event) => {
-            setNavigatingTarget(event.detail.visit.url.pathname);
-        });
         const removeFinish = router.on('finish', () => {
-            setNavigatingTarget(null);
+            setLoadingButtonId(null);
         });
         return () => {
-            removeStart();
             removeFinish();
         };
     }, []);
-
-    const isNavigatingTo = (path: string) => {
-        if (!navigatingTarget) return false;
-        return navigatingTarget === path || (path !== '/' && navigatingTarget.startsWith(path));
-    };
 
     useEffect(() => {
         if (propPopularProducts.length > 0 || propSliderPromos.length > 0) {
@@ -338,8 +329,8 @@ export default function Home({
                                                             size="default"
                                                             className="shadow-sm font-semibold hover:shadow-md transition-shadow cursor-pointer"
                                                         >
-                                                            <Link href={banner.link} onClick={() => setNavigatingTarget(banner.link)}>
-                                                                {isNavigatingTo(banner.link) && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                                                            <Link href={banner.link} onClick={() => setLoadingButtonId(`hero_shop_${banner.id}`)}>
+                                                                {loadingButtonId === `hero_shop_${banner.id}` && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
                                                                 <span>{isEn ? 'Shop Now' : 'Belanja Sekarang'}</span>
                                                             </Link>
                                                         </Button>
@@ -349,8 +340,8 @@ export default function Home({
                                                             size="default"
                                                             className="bg-background/60 hover:bg-background/90 backdrop-blur-xs border-border/80 cursor-pointer"
                                                         >
-                                                            <Link href="/products?sort=popular" onClick={() => setNavigatingTarget('/products')}>
-                                                                {isNavigatingTo('/products') && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                                                            <Link href="/products?sort=popular" onClick={() => setLoadingButtonId(`hero_explore_${banner.id}`)}>
+                                                                {loadingButtonId === `hero_explore_${banner.id}` && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
                                                                 <span>{isEn ? 'Explore Collection' : 'Jelajahi Koleksi'}</span>
                                                             </Link>
                                                         </Button>
@@ -449,8 +440,8 @@ export default function Home({
                                 <span className="font-bold">{isEn ? 'Categories' : 'Produk'}</span>
                             </h2>
                             <Button asChild variant="ghost" size="sm" className="text-xs">
-                                <Link href="/categories" onClick={() => setNavigatingTarget('/categories')}>
-                                    {isNavigatingTo('/categories') && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                                <Link href="/categories" onClick={() => setLoadingButtonId('categories_all')}>
+                                    {loadingButtonId === 'categories_all' && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
                                     <span>{t('common.see_all')} &rarr;</span>
                                 </Link>
                             </Button>
@@ -475,8 +466,8 @@ export default function Home({
                                 <span className="font-bold">{isEn ? 'Fragrances' : 'Populer'}</span>
                             </h2>
                             <Button asChild variant="ghost" size="sm" className="text-xs">
-                                <Link href="/products?sort=popular" onClick={() => setNavigatingTarget('/products')}>
-                                    {isNavigatingTo('/products') && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                                <Link href="/products?sort=popular" onClick={() => setLoadingButtonId('popular_all')}>
+                                    {loadingButtonId === 'popular_all' && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
                                     <span>{t('common.see_all')} &rarr;</span>
                                 </Link>
                             </Button>
@@ -513,14 +504,14 @@ export default function Home({
                                     </p>
                                     <div className="pt-2 flex flex-wrap gap-2.5">
                                         <Button asChild variant="secondary" size="default">
-                                            <Link href="/products?discount=1" onClick={() => setNavigatingTarget('/products')}>
-                                                {isNavigatingTo('/products') && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                                            <Link href="/products?discount=1" onClick={() => setLoadingButtonId('promo_shop')}>
+                                                {loadingButtonId === 'promo_shop' && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
                                                 <span>{isEn ? 'Shop Promo' : 'Belanja Promo'}</span>
                                             </Link>
                                         </Button>
                                         <Button asChild variant="outline" size="default" className="bg-transparent border-primary-foreground/30 hover:bg-primary-foreground/10 text-primary-foreground">
-                                            <Link href="/cart" onClick={() => setNavigatingTarget('/cart')}>
-                                                {isNavigatingTo('/cart') && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                                            <Link href="/cart" onClick={() => setLoadingButtonId('promo_cart')}>
+                                                {loadingButtonId === 'promo_cart' && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
                                                 <span>{isEn ? 'View Cart' : 'Cek Keranjang'}</span>
                                             </Link>
                                         </Button>
@@ -604,8 +595,9 @@ export default function Home({
                                 <span className="font-bold">{isEn ? 'Just For You' : 'Khusus Untukmu'}</span>
                             </h2>
                             <Button asChild variant="ghost" size="sm" className="text-xs">
-                                <Link href="/products">
-                                    {t('common.see_all')} &rarr;
+                                <Link href="/products" onClick={() => setLoadingButtonId('recommended_all')}>
+                                    {loadingButtonId === 'recommended_all' && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                                    <span>{t('common.see_all')} &rarr;</span>
                                 </Link>
                             </Button>
                         </div>
@@ -643,8 +635,8 @@ export default function Home({
                                     size="sm"
                                     className="text-xs text-white/90 hover:text-white hover:bg-white/10"
                                 >
-                                    <Link href="/products?discount=1" onClick={() => setNavigatingTarget('/products')}>
-                                        {isNavigatingTo('/products') && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                                    <Link href="/products?discount=1" onClick={() => setLoadingButtonId('discount_all')}>
+                                        {loadingButtonId === 'discount_all' && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
                                         <span>{t('common.see_all')} &rarr;</span>
                                     </Link>
                                 </Button>
@@ -708,8 +700,8 @@ export default function Home({
                                 <span className="font-bold">{isEn ? 'Brands' : 'Pilihan'}</span>
                             </h2>
                             <Button asChild variant="ghost" size="sm" className="text-xs">
-                                <Link href="/brands" onClick={() => setNavigatingTarget('/brands')}>
-                                    {isNavigatingTo('/brands') && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                                <Link href="/brands" onClick={() => setLoadingButtonId('brands_all')}>
+                                    {loadingButtonId === 'brands_all' && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
                                     <span>{isEn ? 'Explore Brands' : 'Jelajahi Brand'} &rarr;</span>
                                 </Link>
                             </Button>
@@ -735,8 +727,8 @@ export default function Home({
                                     <span className="font-bold">{isEn ? 'Fragrance Journal' : 'Jurnal Wewangian'}</span>
                                 </h2>
                                 <Button asChild variant="ghost" size="sm" className="text-xs">
-                                    <Link href="/articles" onClick={() => setNavigatingTarget('/articles')}>
-                                        {isNavigatingTo('/articles') && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                                    <Link href="/articles" onClick={() => setLoadingButtonId('articles_all')}>
+                                        {loadingButtonId === 'articles_all' && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
                                         <span>{isEn ? 'Read All' : 'Baca Semua'} &rarr;</span>
                                     </Link>
                                 </Button>

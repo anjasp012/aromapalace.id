@@ -37,21 +37,21 @@ class CategoryController extends Controller
             });
         }
 
-        $categories = $query->get()->map(function (Category $c) use ($categoryImages) {
-            return [
-                'id' => $c->id,
-                'name' => $c->name,
-                'name_en' => $c->name_en,
-                'slug' => $c->slug,
-                'description' => $c->description ?? '',
-                'description_en' => $c->description_en ?? '',
-                'productsCount' => (int) $c->products_count,
-                'image' => $c->thumbnail ?: ($categoryImages[$c->slug] ?? 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=600&q=80'),
-            ];
-        })->values()->all();
-
         return Inertia::render('categories', [
-            'categories' => $categories,
+            'categories' => Inertia::defer(function () use ($query, $categoryImages) {
+                return $query->get()->map(function (Category $c) use ($categoryImages) {
+                    return [
+                        'id' => $c->id,
+                        'name' => $c->name,
+                        'name_en' => $c->name_en,
+                        'slug' => $c->slug,
+                        'description' => $c->description ?? '',
+                        'description_en' => $c->description_en ?? '',
+                        'productsCount' => (int) $c->products_count,
+                        'image' => $c->thumbnail ?: ($categoryImages[$c->slug] ?? 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=600&q=80'),
+                    ];
+                })->values()->all();
+            }),
             'searchQuery' => $search,
         ]);
     }

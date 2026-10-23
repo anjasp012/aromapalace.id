@@ -804,19 +804,16 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
                             </p>
                         </div>
 
-                        {/* Reviews written here are not saved to the server yet, so the button is hidden in the iOS/Android app. */}
-                        {!isNativeApp() && (
                         <Button
                             onClick={() => setWriteReviewOpen(true)}
                             variant="outline"
-                            className="rounded-md border-[#4A070B]/40 text-[#4A070B] dark:text-[#E8D0BA] hover:bg-[#4A070B]/10 text-xs shadow-none cursor-pointer"
+                            className="w-full sm:w-auto shrink-0 rounded-md border-[#4A070B]/40 text-[#4A070B] dark:text-[#E8D0BA] hover:bg-[#4A070B]/10 text-xs shadow-none cursor-pointer"
                         >
                             <svg className="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
                             {isEn ? 'Write a Review' : 'Tulis Ulasan Anda'}
                         </Button>
-                        )}
                     </div>
 
                     {/* Summary Rating Banner & Reviews List */}
@@ -869,15 +866,35 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
                                     <span className="w-8 text-right font-bold text-foreground">0%</span>
                                 </div>
                             </div>
+
+                            <Button
+                                onClick={() => setWriteReviewOpen(true)}
+                                variant="outline"
+                                className="w-full rounded-md border-[#4A070B]/40 text-[#4A070B] dark:text-[#E8D0BA] hover:bg-[#4A070B]/10 text-xs shadow-none cursor-pointer mt-2"
+                            >
+                                <svg className="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                                {isEn ? 'Write a Review' : 'Tulis Ulasan Anda'}
+                            </Button>
                         </div>
 
                         {/* Reviews Feed (8 cols) */}
                         <div className="lg:col-span-8 space-y-3.5">
                             {customReviews.length === 0 ? (
-                                <Card className="p-8 text-center text-xs text-muted-foreground rounded-lg border-border/80 shadow-none">
-                                    {isEn
-                                        ? 'No reviews yet for this fragrance. Be the first to share your experience!'
-                                        : 'Belum ada ulasan untuk wewangian ini. Jadilah yang pertama memberikan ulasan!'}
+                                <Card className="p-8 text-center text-xs text-muted-foreground rounded-lg border-border/80 shadow-none space-y-3">
+                                    <p>
+                                        {isEn
+                                            ? 'No reviews yet for this fragrance. Be the first to share your experience!'
+                                            : 'Belum ada ulasan untuk wewangian ini. Jadilah yang pertama memberikan ulasan!'}
+                                    </p>
+                                    <Button
+                                        onClick={() => setWriteReviewOpen(true)}
+                                        size="sm"
+                                        className="bg-[#4A070B] text-white hover:bg-[#360407] text-xs rounded-md shadow-none cursor-pointer mx-auto"
+                                    >
+                                        {isEn ? 'Write the First Review' : 'Tulis Ulasan Pertama'}
+                                    </Button>
                                 </Card>
                             ) : (
                                 customReviews.map((rev, idx) => (

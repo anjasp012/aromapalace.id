@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
 
@@ -53,3 +54,16 @@ export default function CategoryCard({ category, className }: CategoryCardProps)
         </Link>
     );
 }
+
+export function CategoryCardSkeleton({ className }: { className?: string }) {
+    return (
+        <Card className={cn('overflow-hidden relative aspect-square py-0 gap-0 shadow-none rounded-lg w-full h-full bg-muted/60', className)}>
+            <Skeleton className="w-full h-full" />
+            <div className="absolute inset-x-0 bottom-0 p-2 sm:p-3 space-y-1.5 pointer-events-none">
+                <Skeleton className="h-3 w-3/4 bg-white/40 dark:bg-white/20" />
+                <Skeleton className="h-2 w-1/3 bg-white/30 dark:bg-white/10" />
+            </div>
+        </Card>
+    );
+}
+

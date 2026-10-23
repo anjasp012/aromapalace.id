@@ -28,20 +28,20 @@ class BrandController extends Controller
             });
         }
 
-        $brands = $query->get()->map(function (Brand $b) {
-            return [
-                'id' => $b->id,
-                'name' => $b->name,
-                'slug' => $b->slug,
-                'description' => $b->description ?? '',
-                'description_en' => $b->description_en ?? '',
-                'collectionsCount' => (int) $b->products_count,
-                'image' => $b->thumbnail ?: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=600&q=80',
-            ];
-        })->values()->all();
-
         return Inertia::render('brands', [
-            'brands' => $brands,
+            'brands' => Inertia::defer(function () use ($query) {
+                return $query->get()->map(function (Brand $b) {
+                    return [
+                        'id' => $b->id,
+                        'name' => $b->name,
+                        'slug' => $b->slug,
+                        'description' => $b->description ?? '',
+                        'description_en' => $b->description_en ?? '',
+                        'collectionsCount' => (int) $b->products_count,
+                        'image' => $b->thumbnail ?: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=600&q=80',
+                    ];
+                })->values()->all();
+            }),
             'searchQuery' => $search,
         ]);
     }

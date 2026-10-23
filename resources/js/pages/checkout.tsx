@@ -815,21 +815,12 @@ export default function CheckoutPage({
     const totalItemsCount = items?.length ?? 0;
 
     return (
-        <Layout showFooter={false} showBottomNav={false} disablePullToRefresh>
+        <Layout showFooter={false} showBottomNav={false}>
             <Head title={`${t('checkout.confirm_title')} & ${t('checkout.title')} • Aroma Palace`} />
 
             {/* PAGE HEADER BANNER (Exact match to cart.tsx) */}
-            <div className="border-b border-border/70 bg-background py-8 sm:py-12">
+            <div className="border-b border-border/70 bg-background py-10 sm:py-14">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center space-y-3">
-                    <div className="flex items-center justify-start pb-1">
-                        <Link
-                            href="/cart"
-                            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg border border-border/80 bg-background hover:bg-muted text-xs font-semibold text-[#4A070B] dark:text-[#E8D0BA] transition-all shadow-2xs group"
-                        >
-                            <span className="transition-transform duration-200 group-hover:-translate-x-1">←</span>
-                            <span>{isEn ? 'Back to Cart' : 'Kembali ke Keranjang'}</span>
-                        </Link>
-                    </div>
                     <h1 className="text-3xl sm:text-4xl lg:text-5xl tracking-tight text-foreground">
                         <span className="font-light">{isEn ? 'Order' : 'Konfirmasi &'}</span>{' '}
                         <span className="font-bold text-[#4A070B] dark:text-[#E8D0BA]">{isEn ? 'Checkout' : 'Pembayaran'}</span>
@@ -1519,13 +1510,12 @@ export default function CheckoutPage({
                             </div>
 
                             {/* Back to Cart Link (Placed under Ringkasan Belanja Card) */}
-                            <div className="pt-3">
+                            <div className="pt-2.5">
                                 <Link
                                     href="/cart"
-                                    className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-lg border border-border/80 bg-card hover:bg-muted text-xs font-semibold text-[#4A070B] dark:text-[#E8D0BA] transition-all shadow-2xs group"
+                                    className="inline-flex items-center gap-1.5 font-semibold text-xs text-[#4A070B] dark:text-[#E8D0BA] hover:text-[#360407] transition-colors"
                                 >
-                                    <span className="transition-transform duration-200 group-hover:-translate-x-1">←</span>
-                                    <span>{isEn ? 'Back to Shopping Cart' : 'Kembali ke Keranjang Belanja'}</span>
+                                    <span>←</span> {isEn ? 'Back to Cart' : 'Kembali ke Keranjang'}
                                 </Link>
                             </div>
                         </div>

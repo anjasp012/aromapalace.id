@@ -1,6 +1,6 @@
-import { Head } from '@inertiajs/react';
+import { Head, Deferred } from '@inertiajs/react';
 import Layout from '@/components/Layout';
-import BrandCard, { type BrandItem } from '@/components/BrandCard';
+import BrandCard, { type BrandItem, BrandCardSkeleton } from '@/components/BrandCard';
 import { useTranslation } from '@/lib/i18n';
 
 interface BrandsPageProps {
@@ -35,22 +35,33 @@ export default function BrandsPage({
 
             {/* BRANDS GRID - 3 COLUMNS ON MOBILE, 5 COLUMNS ON DESKTOP */}
             <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12 bg-background min-h-[50vh]">
-                {activeBrands.length > 0 ? (
-                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-4 lg:gap-5">
-                        {activeBrands.map((brand) => (
-                            <BrandCard key={brand.slug} brand={brand} />
-                        ))}
-                    </div>
-                ) : (
-                    <div className="text-center py-16 px-4 space-y-3 max-w-md mx-auto">
-                        <h3 className="text-base sm:text-lg font-bold text-foreground">
-                            {t('brands.empty_title')}
-                        </h3>
-                        <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                            {t('brands.empty_desc')}
-                        </p>
-                    </div>
-                )}
+                <Deferred
+                    data="brands"
+                    fallback={
+                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-4 lg:gap-5">
+                            {Array.from({ length: 15 }).map((_, i) => (
+                                <BrandCardSkeleton key={i} />
+                            ))}
+                        </div>
+                    }
+                >
+                    {activeBrands.length > 0 ? (
+                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-4 lg:gap-5">
+                            {activeBrands.map((brand) => (
+                                <BrandCard key={brand.slug} brand={brand} />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-16 px-4 space-y-3 max-w-md mx-auto">
+                            <h3 className="text-base sm:text-lg font-bold text-foreground">
+                                {t('brands.empty_title')}
+                            </h3>
+                            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                                {t('brands.empty_desc')}
+                            </p>
+                        </div>
+                    )}
+                </Deferred>
             </main>
         </Layout>
     );

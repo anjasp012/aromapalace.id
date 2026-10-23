@@ -265,14 +265,22 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
             href: '/',
             component: 'home',
             active: url === '/',
-            icon: <Home className="w-5 h-5" />,
+            renderIcon: (active: boolean) => (
+                <Home className="w-5 h-5 transition-transform duration-200" fill={active ? 'currentColor' : 'none'} strokeWidth={active ? 2.3 : 1.8} />
+            ),
+            activeColor: 'text-[#4A070B] dark:text-[#E8D0BA]',
+            activeBg: 'bg-[#4A070B]/10 dark:bg-[#E8D0BA]/15',
         },
         {
             label: isEn ? 'Articles' : 'Artikel',
             href: '/articles',
             component: 'articles',
             active: url.startsWith('/articles'),
-            icon: <BookOpen className="w-5 h-5" />,
+            renderIcon: (active: boolean) => (
+                <BookOpen className="w-5 h-5 transition-transform duration-200" fill={active ? 'currentColor' : 'none'} strokeWidth={active ? 2.3 : 1.8} />
+            ),
+            activeColor: 'text-[#4A070B] dark:text-[#E8D0BA]',
+            activeBg: 'bg-[#4A070B]/10 dark:bg-[#E8D0BA]/15',
         },
         {
             label: isEn ? 'Wishlist' : 'Favorit',
@@ -280,21 +288,37 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
             component: user ? 'wishlist' : 'login',
             active: url.startsWith('/wishlist'),
             badge: wishlistCount,
-            icon: <Heart className="w-5 h-5" />,
+            renderIcon: (active: boolean) => (
+                <Heart className={`w-5 h-5 transition-transform duration-200 ${active ? 'text-rose-600 dark:text-rose-400' : ''}`} fill={active ? 'currentColor' : 'none'} strokeWidth={active ? 2.3 : 1.8} />
+            ),
+            activeColor: 'text-rose-600 dark:text-rose-400',
+            activeBg: 'bg-rose-500/10 dark:bg-rose-500/20',
         },
         {
             label: isEn ? 'Transactions' : 'Transaksi',
             href: user ? '/account/orders' : '/login?notice=' + encodeURIComponent(isEn ? 'Please sign in to view your orders.' : 'Silakan masuk untuk melihat transaksi Anda.'),
             component: user ? 'orders' : 'login',
             active: url.startsWith('/account/orders') || url.startsWith('/orders') || url.startsWith('/payment'),
-            icon: <Package className="w-5 h-5" />,
+            renderIcon: (active: boolean) => (
+                <Package className="w-5 h-5 transition-transform duration-200" fill={active ? 'currentColor' : 'none'} strokeWidth={active ? 2.3 : 1.8} />
+            ),
+            activeColor: 'text-[#4A070B] dark:text-[#E8D0BA]',
+            activeBg: 'bg-[#4A070B]/10 dark:bg-[#E8D0BA]/15',
         },
         {
             label: user ? (isAdmin ? 'Admin' : (isEn ? 'Account' : 'Akun')) : (isEn ? 'Account' : 'Akun'),
             href: user ? (isAdmin ? '/admin/dashboard' : '/account') : '/login',
             component: user ? (isAdmin ? undefined : 'account') : 'login',
             active: (url === '/account' || url.startsWith('/membership') || url.startsWith('/loyalty') || url.startsWith('/login') || url.startsWith('/register') || (isAdmin && url.startsWith('/admin'))) && !url.startsWith('/account/orders') && !url.startsWith('/orders') && !url.startsWith('/payment'),
-            icon: isAdmin ? <LayoutDashboard className="w-5 h-5" /> : <User className="w-5 h-5" />,
+            renderIcon: (active: boolean) => (
+                isAdmin ? (
+                    <LayoutDashboard className="w-5 h-5 transition-transform duration-200" fill={active ? 'currentColor' : 'none'} strokeWidth={active ? 2.3 : 1.8} />
+                ) : (
+                    <User className="w-5 h-5 transition-transform duration-200" fill={active ? 'currentColor' : 'none'} strokeWidth={active ? 2.3 : 1.8} />
+                )
+            ),
+            activeColor: 'text-[#4A070B] dark:text-[#E8D0BA]',
+            activeBg: 'bg-[#4A070B]/10 dark:bg-[#E8D0BA]/15',
         },
     ], [url, user, isAdmin, wishlistCount, isEn]);
 
@@ -622,11 +646,6 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
                         title={isEn ? "Click to view voucher details" : "Klik untuk melihat detail voucher"}
                     >
                         <span className="text-[#E5A844] text-xs shrink-0 animate-pulse select-none">✦</span>
-                        {activeHeaderVoucher?.code && (
-                            <span className="shrink-0 bg-[#E5A844]/20 border border-[#E5A844]/40 text-[#E5A844] font-bold text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded tracking-wider uppercase font-mono">
-                                {activeHeaderVoucher.code}
-                            </span>
-                        )}
                         <span className={cn(
                             "font-medium text-[10.5px] sm:text-xs tracking-tight transition-all duration-300 truncate",
                             isVoucherFading ? "opacity-0 -translate-y-1 scale-95" : "opacity-100 translate-y-0 scale-100"
@@ -1853,18 +1872,18 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
                                     component={item.component}
                                     prefetch={['mount', 'hover']}
                                     cacheFor="2m"
-                                    className={`h-full flex flex-col items-center justify-center gap-0.5 px-1 transition relative select-none active:scale-95 duration-100 ${isActive
-                                        ? 'text-[#4A070B] dark:text-[#E8D0BA] font-bold'
+                                    className={`h-full flex flex-col items-center justify-center gap-0.5 px-1 transition relative select-none active:scale-95 duration-150 ${isActive
+                                        ? `${item.activeColor} font-bold`
                                         : 'text-muted-foreground hover:text-foreground font-medium'
                                         }`}
                                 >
                                     {isActive && (
-                                        <span className="absolute -top-px left-0 right-0 h-0.5 bg-[#4A070B] dark:bg-[#E8D0BA]" />
+                                        <span className="absolute -top-px left-2.5 right-2.5 h-0.5 rounded-full bg-[#4A070B] dark:bg-[#E8D0BA]" />
                                     )}
-                                    <div className="relative flex items-center justify-center">
-                                        {item.icon}
+                                    <div className={`relative flex items-center justify-center p-1 rounded-full transition-all duration-200 ${isActive ? `${item.activeBg} scale-105` : ''}`}>
+                                        {item.renderIcon(isActive)}
                                         {Boolean(item.badge && item.badge > 0) && (
-                                            <span className="absolute -top-1.5 -right-2.5 h-3.5 min-w-[14px] px-1 flex items-center justify-center text-[9px] font-bold bg-[#4A070B] dark:bg-[#E8D0BA] text-white dark:text-[#4A070B] rounded-full ring-2 ring-background">
+                                            <span className="absolute -top-1 -right-2 h-3.5 min-w-[14px] px-1 flex items-center justify-center text-[9px] font-bold bg-[#4A070B] dark:bg-[#E8D0BA] text-white dark:text-[#4A070B] rounded-full ring-2 ring-background">
                                                 {item.badge! > 99 ? '99+' : item.badge}
                                             </span>
                                         )}
