@@ -473,7 +473,7 @@ export default function OrdersPage({
                 </div>
 
                 {/* STATUS FILTER TABS (Sticky on Mobile & Desktop) */}
-                <div className="sticky top-[var(--main-header-height,96px)] sm:top-[calc(var(--main-header-height,130px)+16px)] z-30 bg-background/95 backdrop-blur-md -mx-4 px-4 sm:mx-0 sm:px-0 py-2.5 sm:py-3 border-b border-border/80 transition-all">
+                <div className="sticky top-[var(--main-header-height,96px)] sm:top-[calc(var(--main-header-height,130px)+0px)] z-30 bg-background/95 backdrop-blur-md -mx-4 px-4 sm:mx-0 sm:px-0 py-2.5 sm:py-3 border-b border-border/80 transition-all">
                     <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
                         {TABS.map((tab) => {
                             const isActive = (active_tab || 'all') === tab.key;
@@ -484,8 +484,8 @@ export default function OrdersPage({
                                     type="button"
                                     onClick={() => handleTabChange(tab.key)}
                                     className={`inline-flex items-center justify-center px-4 py-2 sm:px-4 sm:py-2.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer select-none ${isActive
-                                            ? 'bg-[#4A070B] text-white shadow-xs'
-                                            : 'bg-muted/50 hover:bg-muted/80 text-muted-foreground hover:text-foreground border border-border/60'
+                                        ? 'bg-[#4A070B] text-white shadow-xs'
+                                        : 'bg-muted/50 hover:bg-muted/80 text-muted-foreground hover:text-foreground border border-border/60'
                                         }`}
                                 >
                                     <span>{tab.label}</span>
@@ -867,150 +867,142 @@ export default function OrdersPage({
                                         {/* Status Pesanan Stepper */}
                                         {!isPendingPayment && (
                                             <div className="pt-4 border-t border-border/80 space-y-3">
-                                            <div className="flex items-center justify-between">
-                                                <span className="font-bold text-xs text-foreground">Status Pesanan</span>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setShowTracking(!showTracking)}
-                                                    className="text-xs font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-1 cursor-pointer"
-                                                >
-                                                    <span>{showTracking ? 'Sembunyikan' : 'Lihat'}</span>
-                                                    {showTracking ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                                                </button>
-                                            </div>
+                                                <div className="flex items-center justify-between">
+                                                    <span className="font-bold text-xs text-foreground">Status Pesanan</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowTracking(!showTracking)}
+                                                        className="text-xs font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-1 cursor-pointer"
+                                                    >
+                                                        <span>{showTracking ? 'Sembunyikan' : 'Lihat'}</span>
+                                                        {showTracking ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                                                    </button>
+                                                </div>
 
-                                            {showTracking && (
-                                                <div className="space-y-4 pt-1 animate-in fade-in duration-200">
-                                                    {/* 4 Stepper Icons: Bayar -> Diproses -> Dikirim -> Selesai */}
-                                                    <div className="grid grid-cols-4 text-center">
-                                                        <div className="flex flex-col items-center">
-                                                            <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shadow-xs ${
-                                                                currentStep >= 1 ? 'bg-[#FEF08A] dark:bg-amber-900/50 text-[#854D0E] dark:text-amber-300' : 'bg-muted text-muted-foreground'
-                                                            }`}>
-                                                                <CreditCard className="w-4 h-4 sm:w-5 sm:h-5" />
+                                                {showTracking && (
+                                                    <div className="space-y-4 pt-1 animate-in fade-in duration-200">
+                                                        {/* 4 Stepper Icons: Bayar -> Diproses -> Dikirim -> Selesai */}
+                                                        <div className="grid grid-cols-4 text-center">
+                                                            <div className="flex flex-col items-center">
+                                                                <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shadow-xs ${currentStep >= 1 ? 'bg-[#FEF08A] dark:bg-amber-900/50 text-[#854D0E] dark:text-amber-300' : 'bg-muted text-muted-foreground'
+                                                                    }`}>
+                                                                    <CreditCard className="w-4 h-4 sm:w-5 sm:h-5" />
+                                                                </div>
+                                                                <span className="text-[10px] font-semibold mt-1.5 text-foreground truncate max-w-full">Bayar</span>
                                                             </div>
-                                                            <span className="text-[10px] font-semibold mt-1.5 text-foreground truncate max-w-full">Bayar</span>
-                                                        </div>
 
-                                                        <div className="flex flex-col items-center">
-                                                            <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shadow-xs ${
-                                                                currentStep >= 2 ? 'bg-[#FEF08A] dark:bg-amber-900/50 text-[#854D0E] dark:text-amber-300' : 'bg-muted text-muted-foreground'
-                                                            }`}>
-                                                                <Package className="w-4 h-4 sm:w-5 sm:h-5" />
+                                                            <div className="flex flex-col items-center">
+                                                                <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shadow-xs ${currentStep >= 2 ? 'bg-[#FEF08A] dark:bg-amber-900/50 text-[#854D0E] dark:text-amber-300' : 'bg-muted text-muted-foreground'
+                                                                    }`}>
+                                                                    <Package className="w-4 h-4 sm:w-5 sm:h-5" />
+                                                                </div>
+                                                                <span className="text-[10px] font-semibold mt-1.5 text-foreground truncate max-w-full">Diproses</span>
                                                             </div>
-                                                            <span className="text-[10px] font-semibold mt-1.5 text-foreground truncate max-w-full">Diproses</span>
-                                                        </div>
 
-                                                        <div className="flex flex-col items-center">
-                                                            <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shadow-xs ${
-                                                                currentStep >= 3 ? 'bg-[#FEF08A] dark:bg-amber-900/50 text-[#854D0E] dark:text-amber-300' : 'bg-muted text-muted-foreground'
-                                                            }`}>
-                                                                {isPickup ? (
-                                                                    <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
-                                                                ) : (
-                                                                    <Truck className="w-4 h-4 sm:w-5 sm:h-5" />
-                                                                )}
+                                                            <div className="flex flex-col items-center">
+                                                                <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shadow-xs ${currentStep >= 3 ? 'bg-[#FEF08A] dark:bg-amber-900/50 text-[#854D0E] dark:text-amber-300' : 'bg-muted text-muted-foreground'
+                                                                    }`}>
+                                                                    {isPickup ? (
+                                                                        <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
+                                                                    ) : (
+                                                                        <Truck className="w-4 h-4 sm:w-5 sm:h-5" />
+                                                                    )}
+                                                                </div>
+                                                                <span className="text-[10px] font-semibold mt-1.5 text-foreground truncate max-w-full">
+                                                                    {isPickup ? 'Pengambilan' : 'Dikirim'}
+                                                                </span>
                                                             </div>
-                                                            <span className="text-[10px] font-semibold mt-1.5 text-foreground truncate max-w-full">
-                                                                {isPickup ? 'Pengambilan' : 'Dikirim'}
-                                                            </span>
-                                                        </div>
 
-                                                        <div className="flex flex-col items-center">
-                                                            <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shadow-xs ${
-                                                                currentStep >= 4 ? 'bg-[#FEF08A] dark:bg-amber-900/50 text-[#854D0E] dark:text-amber-300' : 'bg-muted text-muted-foreground'
-                                                            }`}>
-                                                                <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                                                            <div className="flex flex-col items-center">
+                                                                <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shadow-xs ${currentStep >= 4 ? 'bg-[#FEF08A] dark:bg-amber-900/50 text-[#854D0E] dark:text-amber-300' : 'bg-muted text-muted-foreground'
+                                                                    }`}>
+                                                                    <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                                                                </div>
+                                                                <span className="text-[10px] font-semibold mt-1.5 text-foreground truncate max-w-full">Selesai</span>
                                                             </div>
-                                                            <span className="text-[10px] font-semibold mt-1.5 text-foreground truncate max-w-full">Selesai</span>
                                                         </div>
-                                                    </div>
 
-                                                    {/* Stepper Connecting Line with Node Circles */}
-                                                    <div className="relative flex items-center justify-between px-6 sm:px-10">
-                                                        <div className="absolute left-8 right-8 sm:left-12 sm:right-12 top-1/2 -translate-y-1/2 border-t-2 border-dashed border-[#FACC15] dark:border-amber-600 z-0" />
-                                                        <div className={`relative z-10 w-5 h-5 rounded-full bg-background border-2 flex items-center justify-center text-[10px] font-bold ${
-                                                            currentStep >= 2 ? 'border-amber-500 text-amber-600 dark:text-amber-400' : 'border-amber-500 text-amber-600 dark:text-amber-400'
-                                                        }`}>
-                                                            {currentStep >= 2 ? '✓' : '1'}
+                                                        {/* Stepper Connecting Line with Node Circles */}
+                                                        <div className="relative flex items-center justify-between px-6 sm:px-10">
+                                                            <div className="absolute left-8 right-8 sm:left-12 sm:right-12 top-1/2 -translate-y-1/2 border-t-2 border-dashed border-[#FACC15] dark:border-amber-600 z-0" />
+                                                            <div className={`relative z-10 w-5 h-5 rounded-full bg-background border-2 flex items-center justify-center text-[10px] font-bold ${currentStep >= 2 ? 'border-amber-500 text-amber-600 dark:text-amber-400' : 'border-amber-500 text-amber-600 dark:text-amber-400'
+                                                                }`}>
+                                                                {currentStep >= 2 ? '✓' : '1'}
+                                                            </div>
+                                                            <div className={`relative z-10 w-5 h-5 rounded-full bg-background border-2 flex items-center justify-center text-[10px] font-bold ${currentStep >= 3 ? 'border-amber-500 text-amber-600 dark:text-amber-400' : currentStep >= 2 ? 'border-amber-500 text-amber-600 dark:text-amber-400' : 'border-muted-foreground/40 text-muted-foreground'
+                                                                }`}>
+                                                                {currentStep >= 3 ? '✓' : '2'}
+                                                            </div>
+                                                            <div className={`relative z-10 w-5 h-5 rounded-full bg-background border-2 flex items-center justify-center text-[10px] font-bold ${currentStep >= 4 ? 'border-amber-500 text-amber-600 dark:text-amber-400' : currentStep >= 3 ? 'border-amber-500 text-amber-600 dark:text-amber-400' : 'border-muted-foreground/40 text-muted-foreground'
+                                                                }`}>
+                                                                {currentStep >= 4 ? '✓' : '3'}
+                                                            </div>
+                                                            <div className={`relative z-10 w-5 h-5 rounded-full bg-background border-2 flex items-center justify-center text-[10px] font-bold ${currentStep >= 4 ? 'border-amber-500 text-amber-600 dark:text-amber-400' : 'border-muted-foreground/40 text-muted-foreground'
+                                                                }`}>
+                                                                {currentStep >= 4 ? '✓' : '4'}
+                                                            </div>
                                                         </div>
-                                                        <div className={`relative z-10 w-5 h-5 rounded-full bg-background border-2 flex items-center justify-center text-[10px] font-bold ${
-                                                            currentStep >= 3 ? 'border-amber-500 text-amber-600 dark:text-amber-400' : currentStep >= 2 ? 'border-amber-500 text-amber-600 dark:text-amber-400' : 'border-muted-foreground/40 text-muted-foreground'
-                                                        }`}>
-                                                            {currentStep >= 3 ? '✓' : '2'}
-                                                        </div>
-                                                        <div className={`relative z-10 w-5 h-5 rounded-full bg-background border-2 flex items-center justify-center text-[10px] font-bold ${
-                                                            currentStep >= 4 ? 'border-amber-500 text-amber-600 dark:text-amber-400' : currentStep >= 3 ? 'border-amber-500 text-amber-600 dark:text-amber-400' : 'border-muted-foreground/40 text-muted-foreground'
-                                                        }`}>
-                                                            {currentStep >= 4 ? '✓' : '3'}
-                                                        </div>
-                                                        <div className={`relative z-10 w-5 h-5 rounded-full bg-background border-2 flex items-center justify-center text-[10px] font-bold ${
-                                                            currentStep >= 4 ? 'border-amber-500 text-amber-600 dark:text-amber-400' : 'border-muted-foreground/40 text-muted-foreground'
-                                                        }`}>
-                                                            {currentStep >= 4 ? '✓' : '4'}
-                                                        </div>
-                                                    </div>
 
-                                                    {/* Status Text & Action Link */}
-                                                    <div className="text-center space-y-1 pt-1">
-                                                        <div className="font-bold text-xs sm:text-sm text-foreground">
-                                                            {effectiveStatus === 'selesai'
-                                                                ? 'Pesanan Selesai / Terverifikasi!'
-                                                                : (effectiveStatus === 'dikirim' || effectiveStatus === 'pengambilan')
-                                                                    ? (isPickup ? 'Pesanan Siap Diambil di Butik!' : 'Pesanan Sedang Dikirim!')
-                                                                    : effectiveStatus === 'diproses'
-                                                                        ? (isPickup ? 'Pesanan Sedang Disiapkan di Butik!' : 'Pesanan Sedang Diproses & Dikemas!')
-                                                                        : effectiveStatus === 'menunggu_konfirmasi'
-                                                                            ? 'Menunggu Konfirmasi Pesanan!'
-                                                                            : 'Menunggu Pembayaran!'}
-                                                        </div>
-                                                        <p className="text-[11px] text-muted-foreground">
-                                                            {effectiveStatus === 'selesai'
-                                                                ? 'Pesanan telah diterima dan transaksi telah selesai. Terima kasih telah berbelanja di Aroma Palace.'
-                                                                : (effectiveStatus === 'dikirim' || effectiveStatus === 'pengambilan')
-                                                                    ? (isPickup
-                                                                        ? `Wewangian Anda telah siap diambil di butik ${selectedOrder.store?.name || 'Aroma Palace'}. Silakan tunjukkan detail pesanan ini kepada kurator butik kami.`
-                                                                        : 'Pesanan Anda sedang dalam perjalanan oleh kurir pengiriman ke alamat tujuan.')
-                                                                    : effectiveStatus === 'diproses'
+                                                        {/* Status Text & Action Link */}
+                                                        <div className="text-center space-y-1 pt-1">
+                                                            <div className="font-bold text-xs sm:text-sm text-foreground">
+                                                                {effectiveStatus === 'selesai'
+                                                                    ? 'Pesanan Selesai / Terverifikasi!'
+                                                                    : (effectiveStatus === 'dikirim' || effectiveStatus === 'pengambilan')
+                                                                        ? (isPickup ? 'Pesanan Siap Diambil di Butik!' : 'Pesanan Sedang Dikirim!')
+                                                                        : effectiveStatus === 'diproses'
+                                                                            ? (isPickup ? 'Pesanan Sedang Disiapkan di Butik!' : 'Pesanan Sedang Diproses & Dikemas!')
+                                                                            : effectiveStatus === 'menunggu_konfirmasi'
+                                                                                ? 'Menunggu Konfirmasi Pesanan!'
+                                                                                : 'Menunggu Pembayaran!'}
+                                                            </div>
+                                                            <p className="text-[11px] text-muted-foreground">
+                                                                {effectiveStatus === 'selesai'
+                                                                    ? 'Pesanan telah diterima dan transaksi telah selesai. Terima kasih telah berbelanja di Aroma Palace.'
+                                                                    : (effectiveStatus === 'dikirim' || effectiveStatus === 'pengambilan')
                                                                         ? (isPickup
-                                                                            ? 'Pembayaran telah terverifikasi. Pesanan Anda sedang disiapkan oleh kurator butik kami.'
-                                                                            : 'Pembayaran telah terverifikasi. Pesanan Anda sedang disiapkan dan dikemas secara eksklusif.')
-                                                                        : effectiveStatus === 'menunggu_konfirmasi'
-                                                                            ? 'Pembayaran telah kami terima dan sedang menunggu konfirmasi admin Aroma Palace.'
-                                                                            : 'Segera selesaikan pembayaran sebelum batas waktu berakhir.'}
-                                                        </p>
-                                                        {isPendingPayment ? (
-                                                            <Link
-                                                                href={`/payment/${selectedOrder.order_number}`}
-                                                                className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 pt-0.5"
-                                                            >
-                                                                <span>Selesaikan Pembayaran →</span>
-                                                            </Link>
-                                                        ) : isPickup ? (
-                                                            selectedOrder.store?.gmaps_link ? (
-                                                                <a
-                                                                    href={selectedOrder.store.gmaps_link}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
+                                                                            ? `Wewangian Anda telah siap diambil di butik ${selectedOrder.store?.name || 'Aroma Palace'}. Silakan tunjukkan detail pesanan ini kepada kurator butik kami.`
+                                                                            : 'Pesanan Anda sedang dalam perjalanan oleh kurir pengiriman ke alamat tujuan.')
+                                                                        : effectiveStatus === 'diproses'
+                                                                            ? (isPickup
+                                                                                ? 'Pembayaran telah terverifikasi. Pesanan Anda sedang disiapkan oleh kurator butik kami.'
+                                                                                : 'Pembayaran telah terverifikasi. Pesanan Anda sedang disiapkan dan dikemas secara eksklusif.')
+                                                                            : effectiveStatus === 'menunggu_konfirmasi'
+                                                                                ? 'Pembayaran telah kami terima dan sedang menunggu konfirmasi admin Aroma Palace.'
+                                                                                : 'Segera selesaikan pembayaran sebelum batas waktu berakhir.'}
+                                                            </p>
+                                                            {isPendingPayment ? (
+                                                                <Link
+                                                                    href={`/payment/${selectedOrder.order_number}`}
                                                                     className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 pt-0.5"
                                                                 >
-                                                                    <span>Petunjuk Lokasi Butik →</span>
-                                                                </a>
+                                                                    <span>Selesaikan Pembayaran →</span>
+                                                                </Link>
+                                                            ) : isPickup ? (
+                                                                selectedOrder.store?.gmaps_link ? (
+                                                                    <a
+                                                                        href={selectedOrder.store.gmaps_link}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 pt-0.5"
+                                                                    >
+                                                                        <span>Petunjuk Lokasi Butik →</span>
+                                                                    </a>
+                                                                ) : (
+                                                                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 cursor-default pt-0.5">
+                                                                        <span>Ambil di Butik →</span>
+                                                                    </span>
+                                                                )
                                                             ) : (
                                                                 <span className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 cursor-default pt-0.5">
-                                                                    <span>Ambil di Butik →</span>
+                                                                    <span>Lacak Pesanan →</span>
                                                                 </span>
-                                                            )
-                                                        ) : (
-                                                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 cursor-default pt-0.5">
-                                                                <span>Lacak Pesanan →</span>
-                                                            </span>
-                                                        )}
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
+                                                )}
+                                            </div>
+                                        )}
 
                                         {/* Ordered Products Section */}
                                         <div className="pt-4 border-t border-border/80 space-y-3">
