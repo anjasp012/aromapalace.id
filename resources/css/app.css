@@ -191,17 +191,6 @@ input[type=number] {
     -moz-appearance: textfield;
 }
 
-/* Kurangi rounded input di mobile secara global tanpa memodifikasi komponen bawaan shadcn */
-@media (max-width: 640px) {
-    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="hidden"]),
-    textarea,
-    select,
-    [data-slot="input"],
-    [data-slot="select-trigger"] {
-        border-radius: 4px !important;
-    }
-}
-
 /* ========================
    NATIVE APP SPECIFIC STYLES
    Applied when running inside Capacitor / PWA
