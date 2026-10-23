@@ -35,7 +35,7 @@ export default function Login({ status, notice }: LoginProps) {
     };
 
     return (
-        <div className="h-[100dvh] max-h-[100dvh] w-full bg-[#4A070B] text-slate-100 relative overflow-y-auto lg:overflow-hidden flex flex-col justify-between selection:bg-[#E5A844] selection:text-[#4A070B]">
+        <div className="fixed inset-0 h-[100dvh] max-h-[100dvh] w-full bg-[#4A070B] text-slate-100 overflow-hidden flex flex-col justify-between selection:bg-[#E5A844] selection:text-[#4A070B] overscroll-none">
             <Head title={`${t('auth.login_title')} • Aroma Palace`} />
 
             {/* AMBIENT LUXURY DECORATIVE CIRCLES & BUBBLES */}
@@ -83,14 +83,14 @@ export default function Login({ status, notice }: LoginProps) {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center w-full">
                     {/* LEFT SIDE: AUTH ILLUSTRATION (Matching Reference Screenshot) */}
                     <div className="hidden lg:flex lg:col-span-6 xl:col-span-7 flex-col items-center justify-center text-center relative pr-4 select-none">
-                        <div className="relative max-w-[420px] xl:max-w-[480px] w-full flex items-center justify-center">
+                        <div className="relative max-w-[480px] xl:max-w-[560px] w-full flex items-center justify-center">
                             {/* Ambient Glow behind illustration */}
                             <div className="absolute -inset-10 bg-gradient-to-tr from-[#E5A844]/20 via-[#8C1D24]/30 to-transparent rounded-full blur-3xl pointer-events-none -z-10" />
 
                             <img
                                 src="/images/auth-illustration.png"
                                 alt="Aroma Palace Shopping Experience"
-                                className="w-full max-h-[380px] xl:max-h-[440px] object-contain drop-shadow-2xl transition-transform duration-500 hover:scale-[1.02]"
+                                className="w-full max-h-[460px] xl:max-h-[540px] object-contain drop-shadow-2xl transition-transform duration-500 hover:scale-[1.02]"
                             />
                         </div>
                     </div>
@@ -150,9 +150,6 @@ export default function Login({ status, notice }: LoginProps) {
                                             className="h-11 sm:h-12 px-4 text-sm rounded-xl bg-neutral-50 text-neutral-900 border-neutral-300 focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-[#4A070B] focus-visible:border-[#4A070B] transition-all"
                                             required
                                         />
-                                        <p className="text-[11px] text-neutral-400">
-                                            Contoh: user@aromapalace.id atau 08123456789
-                                        </p>
                                         {errors.email && (
                                             <p className="text-[11px] font-semibold text-red-600 mt-1">{errors.email}</p>
                                         )}
@@ -195,8 +192,8 @@ export default function Login({ status, notice }: LoginProps) {
                                         )}
                                     </div>
 
-                                    {/* REMEMBER ME & FORGOT PASSWORD */}
-                                    <div className="flex items-center justify-between text-xs pt-0.5">
+                                    {/* REMEMBER ME */}
+                                    <div className="flex items-center text-xs pt-0.5">
                                         <label className="flex items-center gap-2 cursor-pointer text-neutral-600 select-none">
                                             <input
                                                 type="checkbox"
@@ -206,12 +203,6 @@ export default function Login({ status, notice }: LoginProps) {
                                             />
                                             <span className="font-medium text-neutral-700">{t('auth.remember_me')}</span>
                                         </label>
-                                        <Link
-                                            href="/support"
-                                            className="text-[11px] font-semibold text-[#4A070B] hover:text-[#360407] hover:underline cursor-pointer"
-                                        >
-                                            {t('auth.forgot_password')}
-                                        </Link>
                                     </div>
 
                                     {/* SUBMIT BUTTON (Vibrant & Prominent like screenshot) */}
