@@ -403,14 +403,14 @@ export default function AddressModal({
                                 placeholder={isEn ? 'e.g. Grandma House, Villa' : 'Contoh: Rumah Nenek, Kos, Butik'}
                                 value={customLabel}
                                 onChange={(e) => setCustomLabel(e.target.value)}
-                                className="h-8.5 text-xs mt-1.5 bg-background border-border/80"
+                                className="h-11 sm:h-12 text-sm rounded-xl px-4 mt-1.5 bg-background border-border/80"
                             />
                         )}
                     </div>
 
                     {/* NAMA PENERIMA & NOMOR TELEPON */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div className="space-y-1">
+                        <div className="space-y-1.5">
                             <label className="text-xs font-semibold text-foreground">
                                 {isEn ? 'Recipient Name' : 'Nama Penerima'} <span className="text-destructive">*</span>
                             </label>
@@ -419,12 +419,12 @@ export default function AddressModal({
                                 placeholder="Nama lengkap penerima"
                                 value={recipientName}
                                 onChange={(e) => setRecipientName(e.target.value)}
-                                className="h-9 text-xs bg-background border-border/80"
+                                className="h-11 sm:h-12 text-sm rounded-xl px-4 bg-background border-border/80"
                                 required
                             />
                         </div>
 
-                        <div className="space-y-1">
+                        <div className="space-y-1.5">
                             <label className="text-xs font-semibold text-foreground">
                                 {isEn ? 'WhatsApp / Phone Number' : 'Nomor WhatsApp / HP'} <span className="text-destructive">*</span>
                             </label>
@@ -433,7 +433,7 @@ export default function AddressModal({
                                 placeholder="08xxxxxxxxxx"
                                 value={recipientPhone}
                                 onChange={(e) => setRecipientPhone(e.target.value)}
-                                className="h-9 text-xs bg-background border-border/80"
+                                className="h-11 sm:h-12 text-sm rounded-xl px-4 bg-background border-border/80"
                                 required
                             />
                         </div>
@@ -525,7 +525,7 @@ export default function AddressModal({
                     </div>
 
                     {/* KODE POS */}
-                    <div className="space-y-1">
+                    <div className="space-y-1.5">
                         <label className="text-xs font-semibold text-foreground">
                             {isEn ? 'Postal Code' : 'Kode Pos'} <span className="text-destructive">*</span>
                         </label>
@@ -534,7 +534,7 @@ export default function AddressModal({
                             placeholder="Contoh: 12190"
                             value={postalCode}
                             onChange={(e) => setPostalCode(e.target.value)}
-                            className="h-9 text-xs bg-background border-border/80"
+                            className="h-11 sm:h-12 text-sm rounded-xl px-4 bg-background border-border/80"
                             required
                         />
                     </div>

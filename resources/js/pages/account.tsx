@@ -719,7 +719,7 @@ export default function AccountPage({
                                     </p>
                                 </div>
                             </div>
-                            <div className="space-y-1">
+                            <div className="space-y-1.5">
                                 <label className="text-xs font-semibold text-foreground">{t('auth.full_name')}</label>
                                 <Input
                                     type="text"
@@ -727,11 +727,11 @@ export default function AccountPage({
                                     onChange={(e) => setEditName(e.target.value)}
                                     placeholder={t('auth.full_name_placeholder')}
                                     required
-                                    className="text-xs rounded-xl"
+                                    className="h-12 text-sm rounded-xl px-4 border-border/80 bg-background"
                                 />
                             </div>
 
-                            <div className="space-y-1">
+                            <div className="space-y-1.5">
                                 <label className="text-xs font-semibold text-foreground">
                                     {t('auth.email')} ({isEn ? 'Fixed' : 'Tetap'})
                                 </label>
@@ -739,11 +739,11 @@ export default function AccountPage({
                                     type="email"
                                     value={user.email}
                                     disabled
-                                    className="text-xs rounded-xl bg-muted/50 text-muted-foreground cursor-not-allowed"
+                                    className="h-12 text-sm rounded-xl px-4 bg-muted/50 text-muted-foreground border-border/80 cursor-not-allowed"
                                 />
                             </div>
 
-                            <div className="space-y-1">
+                            <div className="space-y-1.5">
                                 <label className="text-xs font-semibold text-foreground">
                                     {isEn ? 'Phone / WhatsApp Number' : 'Nomor Telepon / WhatsApp'}
                                 </label>
@@ -752,7 +752,7 @@ export default function AccountPage({
                                     value={editPhone}
                                     onChange={(e) => setEditPhone(e.target.value)}
                                     placeholder="contoh: 08123456789"
-                                    className="text-xs rounded-xl"
+                                    className="h-12 text-sm rounded-xl px-4 border-border/80 bg-background"
                                 />
                             </div>
 
@@ -815,8 +815,8 @@ export default function AccountPage({
                             </div>
                         )}
 
-                        <div className="space-y-3.5 my-4">
-                            <div className="space-y-1">
+                        <div className="space-y-4 my-4">
+                            <div className="space-y-1.5">
                                 <label className="text-xs font-semibold text-foreground">{t('account.current_password')}</label>
                                 <Input
                                     type="password"
@@ -824,11 +824,11 @@ export default function AccountPage({
                                     onChange={(e) => setCurrentPassword(e.target.value)}
                                     placeholder={t('account.current_password')}
                                     required
-                                    className="text-xs rounded-xl"
+                                    className="h-12 text-sm rounded-xl px-4 border-border/80 bg-background"
                                 />
                             </div>
 
-                            <div className="space-y-1">
+                            <div className="space-y-1.5">
                                 <label className="text-xs font-semibold text-foreground">{t('account.new_password')}</label>
                                 <Input
                                     type="password"
@@ -836,11 +836,11 @@ export default function AccountPage({
                                     onChange={(e) => setNewPassword(e.target.value)}
                                     placeholder={t('auth.password_min')}
                                     required
-                                    className="text-xs rounded-xl"
+                                    className="h-12 text-sm rounded-xl px-4 border-border/80 bg-background"
                                 />
                             </div>
 
-                            <div className="space-y-1">
+                            <div className="space-y-1.5">
                                 <label className="text-xs font-semibold text-foreground">{t('account.confirm_password')}</label>
                                 <Input
                                     type="password"
@@ -848,7 +848,7 @@ export default function AccountPage({
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                     placeholder={t('account.confirm_password')}
                                     required
-                                    className="text-xs rounded-xl"
+                                    className="h-12 text-sm rounded-xl px-4 border-border/80 bg-background"
                                 />
                             </div>
                         </div>
@@ -998,7 +998,7 @@ export default function AccountPage({
                                 placeholder={t('account.delete_password_placeholder')}
                                 autoComplete="current-password"
                                 required
-                                className="text-sm rounded-xl"
+                                className="h-12 text-sm rounded-xl px-4 border-border/80 bg-background"
                             />
                         </div>
 
