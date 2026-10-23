@@ -78,14 +78,14 @@ export default function Register({ status }: RegisterProps) {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center w-full">
                     {/* LEFT SIDE: ILLUSTRATION & BRAND STORY (Visible on Desktop) */}
                     <div className="hidden lg:flex lg:col-span-6 xl:col-span-7 flex-col items-center justify-center text-center relative pr-4">
-                        <div className="relative max-w-[460px] w-full">
+                        <div className="relative max-w-[660px] w-full">
                             <div className="absolute -inset-4 bg-gradient-to-tr from-[#E5A844]/25 via-[#8C1D24]/40 to-transparent rounded-3xl blur-2xl -z-10" />
 
-                            <div className="rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-white/95 backdrop-blur-md p-2">
+                            <div className="overflow-hidden">
                                 <img
                                     src="/images/auth-illustration.png"
                                     alt="Aroma Palace Registration"
-                                    className="w-full h-auto object-cover rounded-2xl"
+                                    className="w-full h-auto object-cover"
                                 />
                             </div>
 
