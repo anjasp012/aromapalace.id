@@ -6,4 +6,6 @@
     <color name="colorAccent">#C9973A</color>
     <!-- Navigation bar & splash background -->
     <color name="colorBackground">#4A070B</color>
+    <!-- Splash screen background (matches splashscreen.jpeg) -->
+    <color name="splashBackground">#210302</color>
 </resources>
