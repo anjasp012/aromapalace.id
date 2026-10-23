@@ -83,7 +83,7 @@ export default function Register({ status }: RegisterProps) {
 
                             <div className="rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-white/95 backdrop-blur-md p-2">
                                 <img
-                                    src="/images/auth-illustration.jpg"
+                                    src="/images/auth-illustration.png"
                                     alt="Aroma Palace Registration"
                                     className="w-full h-auto object-cover rounded-2xl"
                                 />

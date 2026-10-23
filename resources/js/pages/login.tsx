@@ -90,7 +90,7 @@ export default function Login({ status, notice }: LoginProps) {
                             {/* Crisp Illustration Container */}
                             <div className="rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-white/95 backdrop-blur-md p-2">
                                 <img
-                                    src="/images/auth-illustration.jpg"
+                                    src="/images/auth-illustration.png"
                                     alt="Aroma Palace Experience"
                                     className="w-full h-auto object-cover rounded-2xl"
                                 />
