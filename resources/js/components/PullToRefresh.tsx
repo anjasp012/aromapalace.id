@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { router } from '@inertiajs/react';
+import { playSwipeRefreshSound } from '@/lib/sound-effects';
 
 interface PullToRefreshProps {
     children: React.ReactNode;
@@ -35,6 +36,9 @@ export default function PullToRefresh({
     const executeRefresh = useCallback(() => {
         setIsRefreshing(true);
         setPullDistance(HOLD_HEIGHT);
+        if (!hasVibratedRef.current) {
+            playSwipeRefreshSound();
+        }
 
         if (onRefresh) {
             Promise.resolve(onRefresh()).finally(() => {
@@ -116,16 +120,10 @@ export default function PullToRefresh({
                 e.preventDefault();
             }
 
-            // Haptic trigger once threshold is crossed
+            // Swipe sound & tactile haptic trigger once threshold is crossed
             if (pull >= THRESHOLD && !hasVibratedRef.current) {
                 hasVibratedRef.current = true;
-                if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-                    try {
-                        navigator.vibrate(14);
-                    } catch {
-                        // ignore error
-                    }
-                }
+                playSwipeRefreshSound();
             } else if (pull < THRESHOLD && hasVibratedRef.current) {
                 hasVibratedRef.current = false;
             }

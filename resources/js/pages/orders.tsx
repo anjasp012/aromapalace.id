@@ -472,9 +472,9 @@ export default function OrdersPage({
                     </Link>
                 </div>
 
-                {/* STATUS FILTER TABS (Serverside) */}
-                <div className="border-b border-border/80">
-                    <div className="flex items-center gap-2 overflow-x-auto pb-3 scrollbar-none">
+                {/* STATUS FILTER TABS (Sticky on Mobile & Desktop) */}
+                <div className="sticky top-[96px] sm:top-[120px] z-30 bg-background/95 backdrop-blur-md -mx-4 px-4 sm:mx-0 sm:px-0 py-2 sm:py-3 border-b border-border/80 transition-all">
+                    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
                         {TABS.map((tab) => {
                             const isActive = (active_tab || 'all') === tab.key;
                             const count = tab_counts ? tab_counts[tab.key as keyof TabCounts] : undefined;
@@ -484,9 +484,9 @@ export default function OrdersPage({
                                     key={tab.key}
                                     type="button"
                                     onClick={() => handleTabChange(tab.key)}
-                                    className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer select-none ${isActive
+                                    className={`inline-flex items-center gap-2 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer select-none ${isActive
                                             ? 'bg-[#4A070B] text-white shadow-xs'
-                                            : 'bg-muted/40 hover:bg-muted/70 text-muted-foreground hover:text-foreground border border-border/60'
+                                            : 'bg-muted/50 hover:bg-muted/80 text-muted-foreground hover:text-foreground border border-border/60'
                                         }`}
                                 >
                                     <span>{tab.label}</span>
@@ -562,21 +562,6 @@ export default function OrdersPage({
                 ) : (
                     /* ORDERS LIST */
                     <div className="w-full space-y-4">
-                        <div className="flex items-center justify-between pb-2 border-b border-border/80">
-                            <span className="text-xs text-muted-foreground">
-                                Menampilkan <strong className="text-foreground">{orders.length}</strong> pesanan
-                                {active_tab && active_tab !== 'all' && (
-                                    <span> • Status: <strong className="text-foreground">{TABS.find((t) => t.key === active_tab)?.label}</strong></span>
-                                )}
-                            </span>
-                            <Link
-                                href="/products"
-                                className="text-xs font-semibold text-[#4A070B] dark:text-[#E8D0BA]"
-                            >
-                                Belanja Lagi →
-                            </Link>
-                        </div>
-
                         {orders.map((order) => {
                             const isPending = (order.order_status || order.status) === 'menunggu_pembayaran' || (order.status === 'pending' && (!order.order_status || order.order_status === 'menunggu_pembayaran'));
                             const isExpanded = !!expandedOrders[order.id];
@@ -1212,15 +1197,15 @@ export default function OrdersPage({
                                     type="button"
                                     onClick={() => handleDownloadInvoice(invoiceModalOrder.order_number)}
                                     disabled={isDownloadingInvoice}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#4A070B] hover:bg-[#360407] text-white text-xs font-semibold shadow-xs transition active:scale-95 cursor-pointer disabled:opacity-70"
+                                    className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-[#4A070B] hover:bg-[#360407] text-white shadow-xs transition active:scale-95 cursor-pointer disabled:opacity-70"
                                     title="Download Invoice (PDF)"
+                                    aria-label="Download Invoice"
                                 >
                                     {isDownloadingInvoice ? (
-                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                        <Loader2 className="w-4 h-4 animate-spin" />
                                     ) : (
-                                        <Download className="w-3.5 h-3.5" />
+                                        <Download className="w-4 h-4" />
                                     )}
-                                    <span>Download</span>
                                 </button>
 
                                 {/* Close Button */}

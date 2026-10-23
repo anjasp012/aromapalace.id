@@ -1372,11 +1372,11 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
                 </footer>
             )}
 
-            {/* Notification Toast */}
+            {/* Notification Toast (Top Center on Mobile, Bottom Right on Desktop) */}
             {toastMessage && (
-                <div className={`fixed ${shouldShowBottomNav ? 'bottom-20 md:bottom-6' : 'bottom-6'} right-6 z-50 rounded-xl border border-border bg-card text-card-foreground px-4 py-3 text-xs shadow-xl flex items-center gap-2.5 animate-in fade-in slide-in-from-bottom-3 duration-200`}>
-                    <span className="text-primary font-bold">✓</span>
-                    <span>{toastMessage}</span>
+                <div className="fixed top-[calc(env(safe-area-inset-top,0px)+1rem)] left-1/2 -translate-x-1/2 md:top-auto md:left-auto md:translate-x-0 md:bottom-6 md:right-6 z-[100] max-w-[calc(100vw-32px)] sm:max-w-md w-max rounded-xl border border-border/80 bg-card/95 backdrop-blur-md text-card-foreground px-4 py-3 text-xs shadow-2xl flex items-center gap-2.5 animate-in fade-in slide-in-from-top-4 md:slide-in-from-bottom-3 duration-200 pointer-events-auto">
+                    <span className="text-primary font-bold shrink-0">✓</span>
+                    <span className="truncate sm:whitespace-normal font-medium">{toastMessage}</span>
                 </div>
             )}
 

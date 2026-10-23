@@ -164,15 +164,15 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
                             type="button"
                             onClick={handleDownload}
                             disabled={isDownloading}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#F7D070] to-[#E5A844] hover:from-[#E5A844] hover:to-[#C98A2C] text-[#360407] text-xs font-bold shadow-xs transition active:scale-95 cursor-pointer disabled:opacity-70"
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-r from-[#F7D070] to-[#E5A844] hover:from-[#E5A844] hover:to-[#C98A2C] text-[#360407] shadow-xs transition active:scale-95 cursor-pointer disabled:opacity-70"
                             title="Download Invoice (PDF)"
+                            aria-label="Download Invoice"
                         >
                             {isDownloading ? (
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
-                                <Download className="w-3.5 h-3.5" />
+                                <Download className="w-4 h-4" />
                             )}
-
                         </button>
                     </div>
                 </header>

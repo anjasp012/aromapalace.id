@@ -457,7 +457,7 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
 
             {/* PRODUCT HERO SHOWCASE & PURCHASE SECTION */}
             <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-0 pb-8 sm:py-12 lg:py-16">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 sm:gap-8 lg:gap-12 items-start">
 
                     {/* ======================================================== */}
                     {/* LEFT COLUMN: INTERACTIVE MEDIA GALLERY */}
