@@ -225,7 +225,6 @@ export default function AdminLogin({ status, storefront_url = 'https://aromapala
                                     autoComplete="email"
                                     className="h-11 text-sm bg-white/[0.04] border-white/10 text-white placeholder:text-slate-500 rounded-xl focus-visible:ring-1 focus-visible:ring-[#E5A844] focus-visible:border-[#E5A844] transition-all"
                                     required
-                                    autoFocus
                                 />
                             </div>
 

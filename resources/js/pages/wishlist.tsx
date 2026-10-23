@@ -6,6 +6,8 @@ import ProductCard, { type ProductItem } from '@/components/ProductCard';
 import ProductQuickViewModal from '@/components/ProductQuickViewModal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Loader2, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface FragranceProduct extends ProductItem {
     id: number;
@@ -41,6 +43,8 @@ interface WishlistPageProps {
 export default function WishlistPage({ items = [] }: WishlistPageProps) {
     const { t, isEn } = useTranslation();
     const [selectedBottle, setSelectedBottle] = useState<ProductItem | null>(null);
+    const [addingId, setAddingId] = useState<number | null>(null);
+    const [addedId, setAddedId] = useState<number | null>(null);
 
     const handleToggleWishlist = (productId: number) => {
         router.post(
@@ -51,6 +55,9 @@ export default function WishlistPage({ items = [] }: WishlistPageProps) {
     };
 
     const handleAddToCart = (product: ProductItem) => {
+        if (addingId !== null) return;
+        setAddingId(product.id);
+
         router.post(
             '/cart',
             {
@@ -58,7 +65,21 @@ export default function WishlistPage({ items = [] }: WishlistPageProps) {
                 quantity: 1,
                 volume: product.volume || '50ml',
             },
-            { preserveScroll: true }
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setTimeout(() => {
+                        setAddingId(null);
+                        setAddedId(product.id);
+                        setTimeout(() => {
+                            setAddedId((prev) => (prev === product.id ? null : prev));
+                        }, 2000);
+                    }, 400);
+                },
+                onError: () => {
+                    setAddingId(null);
+                },
+            }
         );
     };
 
@@ -139,13 +160,33 @@ export default function WishlistPage({ items = [] }: WishlistPageProps) {
                                         <Button
                                             type="button"
                                             size="sm"
+                                            disabled={addingId === item.product.id}
                                             onClick={() => handleAddToCart(item.product)}
-                                            className="w-full h-8 text-[11px] font-semibold bg-[#4A070B] hover:bg-[#360407] text-white rounded-md shadow-none cursor-pointer flex items-center justify-center gap-1.5"
+                                            className={cn(
+                                                "w-full h-8 text-[11px] font-semibold rounded-md shadow-none cursor-pointer flex items-center justify-center gap-1.5 transition-all duration-300",
+                                                addedId === item.product.id
+                                                    ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
+                                                    : "bg-[#4A070B] hover:bg-[#360407] text-white"
+                                            )}
                                         >
-                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                                            </svg>
-                                            <span>{t('wishlist.add_to_cart')}</span>
+                                            {addingId === item.product.id ? (
+                                                <>
+                                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                    <span>{isEn ? 'Adding...' : 'Memasukkan...'}</span>
+                                                </>
+                                            ) : addedId === item.product.id ? (
+                                                <>
+                                                    <Check className="w-3.5 h-3.5 stroke-[2.5] animate-in zoom-in-75 duration-200" />
+                                                    <span>{isEn ? 'Added!' : 'Berhasil Ditambahkan!'}</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                                    </svg>
+                                                    <span>{t('wishlist.add_to_cart')}</span>
+                                                </>
+                                            )}
                                         </Button>
                                     </div>
                                 </div>

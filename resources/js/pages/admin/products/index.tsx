@@ -536,7 +536,6 @@ export default function AdminProductsIndex({
                                         value={newStockValue}
                                         onChange={(e) => setNewStockValue(Math.max(0, parseInt(e.target.value) || 0))}
                                         className="h-9"
-                                        autoFocus
                                     />
                                 </div>
                                 <div className="flex justify-end gap-2 pt-1">

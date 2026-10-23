@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/lib/i18n';
 import {
     Package,
     Clock,
@@ -140,6 +141,15 @@ export default function OrdersPage({
     const [copiedInvoice, setCopiedInvoice] = useState(false);
     const [showTracking, setShowTracking] = useState(true);
     const [expandedOrders, setExpandedOrders] = useState<Record<number, boolean>>({});
+    const [navigatingOrderNumber, setNavigatingOrderNumber] = useState<string | null>(null);
+    const { isEn } = useTranslation();
+
+    const handlePayNow = (orderNumber: string) => {
+        setNavigatingOrderNumber(orderNumber);
+        router.visit(`/payment/${orderNumber}`, {
+            onFinish: () => setNavigatingOrderNumber(null),
+        });
+    };
 
     // Lock body scroll and close on Escape when modal is open
     useEffect(() => {
@@ -657,15 +667,24 @@ export default function OrdersPage({
                                             </Button>
 
                                             {isPending && (
-                                                <Link href={`/payment/${order.order_number}`}>
-                                                    <Button
-                                                        size="sm"
-                                                        className="bg-[#4A070B] hover:bg-[#360407] text-white text-xs font-semibold h-9 px-3.5 sm:px-4 rounded-md shadow-xs cursor-pointer active:scale-95 transition"
-                                                    >
-                                                        <span className="sm:hidden">Bayar Sekarang</span>
-                                                        <span className="hidden sm:inline">Selesaikan Pembayaran</span>
-                                                    </Button>
-                                                </Link>
+                                                <Button
+                                                    size="sm"
+                                                    disabled={navigatingOrderNumber === order.order_number}
+                                                    onClick={() => handlePayNow(order.order_number)}
+                                                    className="bg-[#4A070B] hover:bg-[#360407] text-white text-xs font-semibold h-9 px-3.5 sm:px-4 rounded-md shadow-xs cursor-pointer active:scale-95 transition flex items-center justify-center gap-1.5"
+                                                >
+                                                    {navigatingOrderNumber === order.order_number ? (
+                                                        <>
+                                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                            <span>{isEn ? 'Processing...' : 'Memproses...'}</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <span className="sm:hidden">{isEn ? 'Pay Now' : 'Bayar Sekarang'}</span>
+                                                            <span className="hidden sm:inline">{isEn ? 'Complete Payment' : 'Selesaikan Pembayaran'}</span>
+                                                        </>
+                                                    )}
+                                                </Button>
                                             )}
                                         </div>
                                     </div>
@@ -1137,11 +1156,20 @@ export default function OrdersPage({
 
                                     {/* Selesaikan Pembayaran button only when pending; disappears if already paid */}
                                     {isPendingPayment && (
-                                        <Link href={`/payment/${selectedOrder.order_number}`} className="block w-full">
-                                            <Button className="w-full bg-[#4A070B] hover:bg-[#360407] text-white font-semibold rounded-md h-11 text-xs sm:text-sm shadow-none transition active:scale-[0.98] cursor-pointer">
-                                                Selesaikan Pembayaran
-                                            </Button>
-                                        </Link>
+                                        <Button
+                                            disabled={navigatingOrderNumber === selectedOrder.order_number}
+                                            onClick={() => handlePayNow(selectedOrder.order_number)}
+                                            className="w-full bg-[#4A070B] hover:bg-[#360407] text-white font-semibold rounded-md h-11 text-xs sm:text-sm shadow-none transition active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
+                                        >
+                                            {navigatingOrderNumber === selectedOrder.order_number ? (
+                                                <>
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                    <span>{isEn ? 'Redirecting to Payment...' : 'Menuju Halaman Pembayaran...'}</span>
+                                                </>
+                                            ) : (
+                                                <span>{isEn ? 'Complete Payment' : 'Selesaikan Pembayaran'}</span>
+                                            )}
+                                        </Button>
                                     )}
                                 </div>
                             </div>
