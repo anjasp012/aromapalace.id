@@ -187,81 +187,84 @@ export default function ArticleDetail({
                     </div>
                 </div>
 
-                {/* 2. ARTICLE HEADER SECTION */}
-                <header className="max-w-4xl mx-auto px-4 sm:px-6 pt-10 sm:pt-12 pb-6 space-y-4">
-                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-foreground leading-tight sm:leading-snug">
-                        {activeTitle}
-                    </h1>
-
-                    <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                        {activeExcerpt}
-                    </p>
-
-                    {/* Metadata & Actions */}
-                    <div className="pt-3 border-t border-border/60 flex flex-wrap items-center justify-between gap-4">
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground font-medium">
-                            <span className="flex items-center gap-1">
-                                <Calendar className="w-3.5 h-3.5" />
-                                {article.date}
-                            </span>
-                            <span>&bull;</span>
-                            <span className="flex items-center gap-1">
-                                <Clock className="w-3.5 h-3.5" />
-                                {article.readTime} {isEn ? 'read' : 'baca'}
-                            </span>
+                {/* ARTICLE BODY (On Mobile: Thumbnail is full-bleed on top, followed by Header & Content. On Desktop: Header first, then contained Thumbnail) */}
+                <div className="flex flex-col">
+                    {/* THUMBNAIL IMAGE (Order-1 on Mobile, full-bleed edge-to-edge; Order-2 on Desktop inside container) */}
+                    {thumbnailSrc && (
+                        <div className="w-full sm:max-w-4xl sm:mx-auto sm:px-6 sm:mb-8 order-1 sm:order-2">
+                            <div className="relative overflow-hidden aspect-[16/9] sm:aspect-[21/10] bg-muted shadow-xs rounded-none sm:rounded-xl border-b sm:border border-border/80">
+                                <img
+                                    src={thumbnailSrc}
+                                    alt={activeTitle}
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
                         </div>
+                    )}
 
-                        {/* Share Actions */}
-                        <div className="flex items-center gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleShareWhatsApp}
-                                className="h-8 text-xs gap-1.5 cursor-pointer text-[#4A070B] dark:text-[#E8D0BA] border-border"
-                            >
-                                <MessageCircle className="w-3.5 h-3.5" />
-                                <span>WhatsApp</span>
-                            </Button>
+                    {/* 2. ARTICLE HEADER SECTION (Order-2 on Mobile, Order-1 on Desktop) */}
+                    <header className="max-w-4xl w-full mx-auto px-4 sm:px-6 pt-6 sm:pt-12 pb-6 space-y-4 order-2 sm:order-1">
+                        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-foreground leading-tight sm:leading-snug">
+                            {activeTitle}
+                        </h1>
 
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleCopyLink}
-                                className="h-8 text-xs gap-1.5 cursor-pointer border-border"
-                            >
-                                {copied ? (
-                                    <>
-                                        <Check className="w-3.5 h-3.5 text-emerald-600" />
-                                        <span className="text-emerald-600 font-semibold">{isEn ? 'Copied!' : 'Tersalin!'}</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Share2 className="w-3.5 h-3.5" />
-                                        <span>{isEn ? 'Copy Link' : 'Salin Tautan'}</span>
-                                    </>
-                                )}
-                            </Button>
+                        <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+                            {activeExcerpt}
+                        </p>
+
+                        {/* Metadata & Actions */}
+                        <div className="pt-3 border-t border-border/60 flex flex-wrap items-center justify-between gap-4">
+                            <div className="flex items-center gap-3 text-xs text-muted-foreground font-medium">
+                                <span className="flex items-center gap-1">
+                                    <Calendar className="w-3.5 h-3.5" />
+                                    {article.date}
+                                </span>
+                                <span>&bull;</span>
+                                <span className="flex items-center gap-1">
+                                    <Clock className="w-3.5 h-3.5" />
+                                    {article.readTime} {isEn ? 'read' : 'baca'}
+                                </span>
+                            </div>
+
+                            {/* Share Actions */}
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleShareWhatsApp}
+                                    className="h-8 text-xs gap-1.5 cursor-pointer text-[#4A070B] dark:text-[#E8D0BA] border-border"
+                                >
+                                    <MessageCircle className="w-3.5 h-3.5" />
+                                    <span>WhatsApp</span>
+                                </Button>
+
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleCopyLink}
+                                    className="h-8 text-xs gap-1.5 cursor-pointer border-border"
+                                >
+                                    {copied ? (
+                                        <>
+                                            <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                            <span className="text-emerald-600 font-semibold">{isEn ? 'Copied!' : 'Tersalin!'}</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Share2 className="w-3.5 h-3.5" />
+                                            <span>{isEn ? 'Copy Link' : 'Salin Tautan'}</span>
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
                         </div>
-                    </div>
-                </header>
+                    </header>
 
-                {/* 3. THUMBNAIL IMAGE */}
-                {thumbnailSrc && (
-                    <div className="max-w-4xl mx-auto px-4 sm:px-6 mb-8">
-                        <div className="relative overflow-hidden rounded-xl aspect-[16/9] sm:aspect-[21/10] bg-muted shadow-xs border border-border/80">
-                            <img
-                                src={thumbnailSrc}
-                                alt={activeTitle}
-                                className="w-full h-full object-cover"
-                            />
+                    {/* 4. MAIN ARTICLE CONTENT */}
+                    <div className="max-w-3xl w-full mx-auto px-4 sm:px-6 order-3">
+                        <div className="prose prose-neutral dark:prose-invert max-w-none">
+                            {renderFormattedContent(activeContent)}
                         </div>
-                    </div>
-                )}
-
-                {/* 4. MAIN ARTICLE CONTENT */}
-                <div className="max-w-3xl mx-auto px-4 sm:px-6">
-                    <div className="prose prose-neutral dark:prose-invert max-w-none">
-                        {renderFormattedContent(activeContent)}
                     </div>
                 </div>
 
