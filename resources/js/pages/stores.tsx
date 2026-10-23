@@ -283,7 +283,7 @@ export default function StoresPage({
             </Head>
 
             {/* PAGE HEADER BANNER (Consistent with cart, wishlist, checkout, articles) */}
-            <div className="border-b border-border/70 bg-gradient-to-b from-muted/30 via-background to-background py-10 sm:py-14">
+            <div className="border-b border-border/70 bg-background py-10 sm:py-14">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center space-y-3">
                     <h1 className="text-3xl sm:text-4xl lg:text-5xl tracking-tight text-foreground">
                         <span className="font-light">{isEn ? 'Boutique Locations &' : 'Lokasi Butik &'}</span>{' '}

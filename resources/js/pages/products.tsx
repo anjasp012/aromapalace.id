@@ -880,21 +880,14 @@ export default function Products({
                                             )}
                                         </Button>
                                     </SheetTrigger>
-                                    <SheetContent side="left" className="w-[300px] sm:w-[360px] p-6 overflow-y-auto">
-                                        <SheetHeader className="text-left mb-4">
-                                            <SheetTitle className="text-sm font-bold uppercase tracking-wider text-foreground">
-                                                {isEn ? 'Fragrance Filters' : 'Filter Wewangian'}
-                                            </SheetTitle>
-                                        </SheetHeader>
+                                    <SheetContent side="left" showCloseButton={false} className="w-[300px] sm:w-[360px] p-6 overflow-y-auto">
                                         {renderFilterContent()}
                                         <div className="pt-6 sticky bottom-0 bg-background pb-2">
                                             <Button
                                                 onClick={() => setMobileFilterOpen(false)}
-                                                className="w-full bg-foreground hover:bg-foreground/90 text-background rounded-md text-xs font-semibold h-10 shadow-none"
+                                                className="w-full bg-foreground hover:bg-foreground/90 text-background rounded-md text-xs font-semibold h-10 shadow-none cursor-pointer"
                                             >
-                                                {isEn
-                                                    ? `Apply Filters (${filteredFragrances.length} Products)`
-                                                    : `Terapkan Filter (${filteredFragrances.length} Produk)`}
+                                                {isEn ? 'Apply Filters' : 'Terapkan Filter'}
                                             </Button>
                                         </div>
                                     </SheetContent>

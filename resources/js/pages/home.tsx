@@ -21,6 +21,7 @@ import VoucherCard, { type VoucherItem } from '@/components/VoucherCard';
 import ArticleCard, { type ArticleItem } from '@/components/ArticleCard';
 import BrandCard, { type BrandItem } from '@/components/BrandCard';
 import { useTranslation } from '@/lib/i18n';
+import { Loader2 } from 'lucide-react';
 
 export interface SliderPromoItem {
     id: number;
@@ -221,6 +222,27 @@ export default function Home({
         };
     }, []);
 
+    // Track ongoing page transitions to show immediate loading state on clicked buttons
+    const [navigatingTarget, setNavigatingTarget] = useState<string | null>(null);
+
+    useEffect(() => {
+        const removeStart = router.on('start', (event) => {
+            setNavigatingTarget(event.detail.visit.url.pathname);
+        });
+        const removeFinish = router.on('finish', () => {
+            setNavigatingTarget(null);
+        });
+        return () => {
+            removeStart();
+            removeFinish();
+        };
+    }, []);
+
+    const isNavigatingTo = (path: string) => {
+        if (!navigatingTarget) return false;
+        return navigatingTarget === path || (path !== '/' && navigatingTarget.startsWith(path));
+    };
+
     useEffect(() => {
         if (propPopularProducts.length > 0 || propSliderPromos.length > 0) {
             try {
@@ -314,17 +336,23 @@ export default function Home({
                                                         <Button
                                                             asChild
                                                             size="default"
-                                                            className="shadow-sm font-semibold hover:shadow-md transition-shadow"
+                                                            className="shadow-sm font-semibold hover:shadow-md transition-shadow cursor-pointer"
                                                         >
-                                                            <Link href={banner.link}>Belanja Sekarang</Link>
+                                                            <Link href={banner.link} onClick={() => setNavigatingTarget(banner.link)}>
+                                                                {isNavigatingTo(banner.link) && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                                                                <span>{isEn ? 'Shop Now' : 'Belanja Sekarang'}</span>
+                                                            </Link>
                                                         </Button>
                                                         <Button
                                                             asChild
                                                             variant="outline"
                                                             size="default"
-                                                            className="bg-background/60 hover:bg-background/90 backdrop-blur-xs border-border/80"
+                                                            className="bg-background/60 hover:bg-background/90 backdrop-blur-xs border-border/80 cursor-pointer"
                                                         >
-                                                            <Link href="/products?sort=popular">Jelajahi Koleksi</Link>
+                                                            <Link href="/products?sort=popular" onClick={() => setNavigatingTarget('/products')}>
+                                                                {isNavigatingTo('/products') && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                                                                <span>{isEn ? 'Explore Collection' : 'Jelajahi Koleksi'}</span>
+                                                            </Link>
                                                         </Button>
                                                     </div>
 
@@ -421,8 +449,9 @@ export default function Home({
                                 <span className="font-bold">{isEn ? 'Categories' : 'Produk'}</span>
                             </h2>
                             <Button asChild variant="ghost" size="sm" className="text-xs">
-                                <Link href="/categories">
-                                    {t('common.see_all')} &rarr;
+                                <Link href="/categories" onClick={() => setNavigatingTarget('/categories')}>
+                                    {isNavigatingTo('/categories') && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                                    <span>{t('common.see_all')} &rarr;</span>
                                 </Link>
                             </Button>
                         </div>
@@ -446,8 +475,9 @@ export default function Home({
                                 <span className="font-bold">{isEn ? 'Fragrances' : 'Populer'}</span>
                             </h2>
                             <Button asChild variant="ghost" size="sm" className="text-xs">
-                                <Link href="/products?sort=popular">
-                                    {t('common.see_all')} &rarr;
+                                <Link href="/products?sort=popular" onClick={() => setNavigatingTarget('/products')}>
+                                    {isNavigatingTo('/products') && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                                    <span>{t('common.see_all')} &rarr;</span>
                                 </Link>
                             </Button>
                         </div>
@@ -483,10 +513,16 @@ export default function Home({
                                     </p>
                                     <div className="pt-2 flex flex-wrap gap-2.5">
                                         <Button asChild variant="secondary" size="default">
-                                            <Link href="/products?discount=1">{isEn ? 'Shop Promo' : 'Belanja Promo'}</Link>
+                                            <Link href="/products?discount=1" onClick={() => setNavigatingTarget('/products')}>
+                                                {isNavigatingTo('/products') && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                                                <span>{isEn ? 'Shop Promo' : 'Belanja Promo'}</span>
+                                            </Link>
                                         </Button>
                                         <Button asChild variant="outline" size="default" className="bg-transparent border-primary-foreground/30 hover:bg-primary-foreground/10 text-primary-foreground">
-                                            <Link href="/cart">{isEn ? 'View Cart' : 'Cek Keranjang'}</Link>
+                                            <Link href="/cart" onClick={() => setNavigatingTarget('/cart')}>
+                                                {isNavigatingTo('/cart') && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                                                <span>{isEn ? 'View Cart' : 'Cek Keranjang'}</span>
+                                            </Link>
                                         </Button>
                                     </div>
                                 </div>
@@ -607,8 +643,9 @@ export default function Home({
                                     size="sm"
                                     className="text-xs text-white/90 hover:text-white hover:bg-white/10"
                                 >
-                                    <Link href="/products?discount=1">
-                                        {t('common.see_all')} &rarr;
+                                    <Link href="/products?discount=1" onClick={() => setNavigatingTarget('/products')}>
+                                        {isNavigatingTo('/products') && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                                        <span>{t('common.see_all')} &rarr;</span>
                                     </Link>
                                 </Button>
                             </div>
@@ -671,8 +708,9 @@ export default function Home({
                                 <span className="font-bold">{isEn ? 'Brands' : 'Pilihan'}</span>
                             </h2>
                             <Button asChild variant="ghost" size="sm" className="text-xs">
-                                <Link href="/brands">
-                                    {isEn ? 'Explore Brands' : 'Jelajahi Brand'} &rarr;
+                                <Link href="/brands" onClick={() => setNavigatingTarget('/brands')}>
+                                    {isNavigatingTo('/brands') && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                                    <span>{isEn ? 'Explore Brands' : 'Jelajahi Brand'} &rarr;</span>
                                 </Link>
                             </Button>
                         </div>
@@ -697,8 +735,9 @@ export default function Home({
                                     <span className="font-bold">{isEn ? 'Fragrance Journal' : 'Jurnal Wewangian'}</span>
                                 </h2>
                                 <Button asChild variant="ghost" size="sm" className="text-xs">
-                                    <Link href="/articles">
-                                        {isEn ? 'Read All' : 'Baca Semua'} &rarr;
+                                    <Link href="/articles" onClick={() => setNavigatingTarget('/articles')}>
+                                        {isNavigatingTo('/articles') && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                                        <span>{isEn ? 'Read All' : 'Baca Semua'} &rarr;</span>
                                     </Link>
                                 </Button>
                             </div>

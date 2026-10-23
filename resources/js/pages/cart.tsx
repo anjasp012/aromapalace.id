@@ -1,5 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -69,6 +70,10 @@ export default function CartPage({
     available_vouchers = [],
 }: Partial<CartPageProps>) {
     const { t, isEn } = useTranslation();
+    const [isMounted, setIsMounted] = useState(false);
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
     const [updatingId, setUpdatingId] = useState<number | null>(null);
     const [removingId, setRemovingId] = useState<number | null>(null);
     const [isClearing, setIsClearing] = useState(false);
@@ -257,7 +262,7 @@ export default function CartPage({
     const totalItemsCount = items?.length ?? 0;
 
     return (
-        <Layout showBottomNav={!items || items.length === 0}>
+        <Layout showBottomNav={!items || items.length === 0} disablePullToRefresh={Boolean(items && items.length > 0)}>
             <Head title={isEn ? 'My Shopping Cart • Aroma Palace' : 'Keranjang Belanja Saya • Aroma Palace'} />
 
             {/* PAGE HEADER BANNER (Matches products.tsx style) */}
@@ -378,11 +383,6 @@ export default function CartPage({
                                                         <span className="inline-flex items-center gap-1 text-[11px] bg-muted/40 border border-border/70 px-2 py-0.5 rounded-md">
                                                             <span>{isEn ? 'Size:' : 'Ukuran:'}</span>
                                                             <strong className="text-foreground">{item.volume}</strong>
-                                                            {item.variant_name && (
-                                                                <span className="text-[#4A070B] font-medium ml-0.5">
-                                                                    ({item.variant_name})
-                                                                </span>
-                                                            )}
                                                         </span>
                                                         <span className="text-[11px]">
                                                             {isEn ? 'Unit Price:' : 'Harga Satuan:'} <strong className="text-[#4A070B] dark:text-[#E8D0BA]">{item.unit_price_formatted}</strong>
@@ -593,118 +593,123 @@ export default function CartPage({
                     </div>
                 )}
 
-                {/* MOBILE FLOATING BOTTOM SUMMARY BAR (Voucher + Sticky Checkout) */}
-                {items && items.length > 0 && (
-                    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t border-border shadow-[0_-8px_30px_rgba(0,0,0,0.12)] pb-[max(env(safe-area-inset-bottom),0px)]">
-                        {/* Attached Voucher Bar */}
-                        <div className="px-4 py-2 border-b border-border/60 bg-muted/20">
-                            {voucherApplied && voucherDiscount > 0 ? (
-                                <div className="flex items-center justify-between text-xs">
-                                    <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium truncate">
-                                        <svg className="w-3.5 h-3.5 shrink-0 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                                        </svg>
-                                        <span className="truncate">
-                                            Voucher <strong className="font-bold">{voucherCode.toUpperCase()}</strong>: -Rp {voucherDiscount.toLocaleString('id-ID')}
-                                        </span>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={handleRemoveVoucher}
-                                        className="text-[11px] text-destructive hover:underline font-semibold cursor-pointer shrink-0 ml-2"
-                                    >
-                                        {isEn ? 'Remove' : 'Hapus'}
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="space-y-1">
-                                    <form onSubmit={handleApplyVoucher} className="flex items-center gap-2">
-                                        <div className="relative flex-1">
-                                            <svg
-                                                className="w-3.5 h-3.5 text-[#E5A844] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
+                {/* MOBILE FLOATING BOTTOM SUMMARY BAR (Voucher + Sticky Checkout, portaled to document.body) */}
+                {items && items.length > 0 && (() => {
+                    const mobileCartBar = (
+                        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border shadow-[0_-8px_30px_rgba(0,0,0,0.12)] pb-[max(env(safe-area-inset-bottom),0px)]">
+                            {/* Attached Voucher Bar */}
+                            <div className="px-4 py-2 border-b border-border/60 bg-muted/20">
+                                {voucherApplied && voucherDiscount > 0 ? (
+                                    <div className="flex items-center justify-between text-xs">
+                                        <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium truncate">
+                                            <svg className="w-3.5 h-3.5 shrink-0 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                                             </svg>
-                                            <Input
-                                                type="text"
-                                                placeholder={isEn ? 'Have a Promo Voucher?' : 'Punya Kode Voucher Promo?'}
-                                                value={voucherCode}
-                                                onChange={(e) => {
-                                                    setVoucherCode(e.target.value);
-                                                    if (voucherError) setVoucherError(null);
-                                                }}
-                                                className="h-8.5 pl-8 pr-2.5 rounded-md border border-border/80 bg-background text-xs uppercase tracking-wider focus:border-[#4A070B] focus:ring-1 focus:ring-[#4A070B]/25 shadow-none"
-                                            />
+                                            <span className="truncate">
+                                                Voucher <strong className="font-bold">{voucherCode.toUpperCase()}</strong>: -Rp {voucherDiscount.toLocaleString('id-ID')}
+                                            </span>
                                         </div>
-                                        <Button
-                                            type="submit"
-                                            variant="outline"
-                                            size="sm"
-                                            className="h-8.5 px-3 rounded-md border border-[#4A070B] text-[#4A070B] hover:bg-[#4A070B] hover:text-white text-xs font-semibold shadow-none cursor-pointer shrink-0 transition-colors"
+                                        <button
+                                            type="button"
+                                            onClick={handleRemoveVoucher}
+                                            className="text-[11px] text-destructive hover:underline font-semibold cursor-pointer shrink-0 ml-2"
                                         >
-                                            {isEn ? 'Apply' : 'Terapkan'}
-                                        </Button>
-                                    </form>
-                                    {voucherError && (
-                                        <p className="text-[10.5px] text-destructive font-medium flex items-center gap-1">
-                                            <span>⚠</span> {voucherError}
-                                        </p>
-                                    )}
-                                    {voucherSuccess && (
-                                        <p className="text-[10.5px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
-                                            <span>✓</span> {voucherSuccess}
-                                        </p>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Primary Bottom Bar */}
-                        <div className="mx-auto max-w-7xl px-4 py-2.5 sm:px-6 flex items-center justify-between gap-3">
-                            {/* Summary info: Total Pembayaran */}
-                            <div className="flex flex-col min-w-0">
-                                <span className="text-[10.5px] font-medium text-muted-foreground truncate">
-                                    {isEn ? `Total (${totalItemsCount} items)` : `Total (${totalItemsCount} produk)`}
-                                </span>
-                                <div className="flex items-baseline gap-1.5 flex-wrap">
-                                    <span className="text-lg font-black text-[#4A070B] dark:text-[#E8D0BA] tracking-tight">
-                                        {finalTotalFormatted}
-                                    </span>
-                                </div>
+                                            {isEn ? 'Remove' : 'Hapus'}
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-1">
+                                        <form onSubmit={handleApplyVoucher} className="flex items-center gap-2">
+                                            <div className="relative flex-1">
+                                                <svg
+                                                    className="w-3.5 h-3.5 text-[#E5A844] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                                </svg>
+                                                <Input
+                                                    type="text"
+                                                    placeholder={isEn ? 'Have a Promo Voucher?' : 'Punya Kode Voucher Promo?'}
+                                                    value={voucherCode}
+                                                    onChange={(e) => {
+                                                        setVoucherCode(e.target.value);
+                                                        if (voucherError) setVoucherError(null);
+                                                    }}
+                                                    className="h-8.5 pl-8 pr-2.5 rounded-md border border-border/80 bg-background text-xs uppercase tracking-wider focus:border-[#4A070B] focus:ring-1 focus:ring-[#4A070B]/25 shadow-none"
+                                                />
+                                            </div>
+                                            <Button
+                                                type="submit"
+                                                variant="outline"
+                                                size="sm"
+                                                className="h-8.5 px-3 rounded-md border border-[#4A070B] text-[#4A070B] hover:bg-[#4A070B] hover:text-white text-xs font-semibold shadow-none cursor-pointer shrink-0 transition-colors"
+                                            >
+                                                {isEn ? 'Apply' : 'Terapkan'}
+                                            </Button>
+                                        </form>
+                                        {voucherError && (
+                                            <p className="text-[10.5px] text-destructive font-medium flex items-center gap-1">
+                                                <span>⚠</span> {voucherError}
+                                            </p>
+                                        )}
+                                        {voucherSuccess && (
+                                            <p className="text-[10.5px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+                                                <span>✓</span> {voucherSuccess}
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
-                            {/* Checkout Action Button */}
-                            <Button
-                                size="default"
-                                disabled={isNavigatingCheckout}
-                                onClick={handleProceedToCheckout}
-                                className="h-10.5 px-5 sm:px-6 bg-[#4A070B] hover:bg-[#360407] text-white font-semibold rounded-md text-xs sm:text-sm shadow-none transition active:scale-[0.98] cursor-pointer flex items-center gap-2 shrink-0 disabled:opacity-80"
-                            >
-                                {isNavigatingCheckout ? (
-                                    <Loader2 className="w-3.5 h-3.5 animate-spin text-[#E5A844]" />
-                                ) : (
-                                    <svg
-                                        className="w-3.5 h-3.5 text-[#E5A844]"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth="2"
-                                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                                        />
-                                    </svg>
-                                )}
-                                <span>{isNavigatingCheckout ? (isEn ? 'Preparing Checkout...' : 'Menyiapkan Checkout...') : (isEn ? `Proceed (${totalItemsCount})` : `Lanjut ke Pembayaran (${totalItemsCount})`)}</span>
-                            </Button>
+                            {/* Primary Bottom Bar */}
+                            <div className="mx-auto max-w-7xl px-4 py-2.5 sm:px-6 flex items-center justify-between gap-3">
+                                {/* Summary info: Total Pembayaran */}
+                                <div className="flex flex-col min-w-0">
+                                    <span className="text-[10.5px] font-medium text-muted-foreground truncate">
+                                        {isEn ? `Total (${totalItemsCount} items)` : `Total (${totalItemsCount} produk)`}
+                                    </span>
+                                    <div className="flex items-baseline gap-1.5 flex-wrap">
+                                        <span className="text-lg font-black text-[#4A070B] dark:text-[#E8D0BA] tracking-tight">
+                                            {finalTotalFormatted}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Checkout Action Button */}
+                                <Button
+                                    size="default"
+                                    disabled={isNavigatingCheckout}
+                                    onClick={handleProceedToCheckout}
+                                    className="h-10.5 px-5 sm:px-6 bg-[#4A070B] hover:bg-[#360407] text-white font-semibold rounded-md text-xs sm:text-sm shadow-none transition active:scale-[0.98] cursor-pointer flex items-center gap-2 shrink-0 disabled:opacity-80"
+                                >
+                                    {isNavigatingCheckout ? (
+                                        <Loader2 className="w-3.5 h-3.5 animate-spin text-[#E5A844]" />
+                                    ) : (
+                                        <svg
+                                            className="w-3.5 h-3.5 text-[#E5A844]"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth="2"
+                                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                                            />
+                                        </svg>
+                                    )}
+                                    <span>{isNavigatingCheckout ? (isEn ? 'Preparing Checkout...' : 'Menyiapkan Checkout...') : (isEn ? `Proceed (${totalItemsCount})` : `Lanjut ke Pembayaran (${totalItemsCount})`)}</span>
+                                </Button>
+                            </div>
                         </div>
-                    </div>
-                )}
+                    );
+                    return isMounted && typeof document !== 'undefined'
+                        ? createPortal(mobileCartBar, document.body)
+                        : mobileCartBar;
+                })()}
             </div>
         </Layout>
     );

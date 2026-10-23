@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Head, Link, useForm } from '@inertiajs/react';
 import Layout from '@/components/Layout';
 import { useTranslation } from '@/lib/i18n';
@@ -311,6 +312,10 @@ export default function CheckoutPage({
     primary_address = null,
 }: CheckoutProps) {
     const { t, pickText, isEn } = useTranslation();
+    const [isMounted, setIsMounted] = useState(false);
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
 
     // Delivery Type: delivery vs pickup
@@ -810,12 +815,21 @@ export default function CheckoutPage({
     const totalItemsCount = items?.length ?? 0;
 
     return (
-        <Layout showFooter={false} showBottomNav={false}>
+        <Layout showFooter={false} showBottomNav={false} disablePullToRefresh>
             <Head title={`${t('checkout.confirm_title')} & ${t('checkout.title')} • Aroma Palace`} />
 
             {/* PAGE HEADER BANNER (Exact match to cart.tsx) */}
-            <div className="border-b border-border/70 bg-gradient-to-b from-muted/30 via-background to-background py-10 sm:py-14">
+            <div className="border-b border-border/70 bg-background py-8 sm:py-12">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center space-y-3">
+                    <div className="flex items-center justify-start pb-1">
+                        <Link
+                            href="/cart"
+                            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg border border-border/80 bg-background hover:bg-muted text-xs font-semibold text-[#4A070B] dark:text-[#E8D0BA] transition-all shadow-2xs group"
+                        >
+                            <span className="transition-transform duration-200 group-hover:-translate-x-1">←</span>
+                            <span>{isEn ? 'Back to Cart' : 'Kembali ke Keranjang'}</span>
+                        </Link>
+                    </div>
                     <h1 className="text-3xl sm:text-4xl lg:text-5xl tracking-tight text-foreground">
                         <span className="font-light">{isEn ? 'Order' : 'Konfirmasi &'}</span>{' '}
                         <span className="font-bold text-[#4A070B] dark:text-[#E8D0BA]">{isEn ? 'Checkout' : 'Pembayaran'}</span>
@@ -828,7 +842,7 @@ export default function CheckoutPage({
 
             {/* MAIN TWO-COLUMN CONTAINER (gap-6 & card styling consistent with cart.tsx) */}
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12 pb-36 sm:pb-40 lg:pb-12">
-                <form onSubmit={handleOpenConfirm}>
+                <form id="checkout-form" onSubmit={handleOpenConfirm}>
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                         {/* ======================================================== */}
                         {/* LEFT COLUMN: ALAMAT PENGIRIMAN & PRODUK (8 COLS, space-y-4) */}
@@ -1232,11 +1246,6 @@ export default function CheckoutPage({
                                                     <span className="inline-flex items-center gap-1 text-[11px] bg-muted/40 border border-border/70 px-2 py-0.5 rounded-md">
                                                         <span className="text-muted-foreground">Ukuran:</span>
                                                         <strong className="text-foreground">{item.volume}</strong>
-                                                        {item.variant_name && (
-                                                            <span className="text-[#4A070B] dark:text-[#E8D0BA] font-medium ml-0.5">
-                                                                ({item.variant_name})
-                                                            </span>
-                                                        )}
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center gap-2 flex-wrap text-xs">
@@ -1510,134 +1519,143 @@ export default function CheckoutPage({
                             </div>
 
                             {/* Back to Cart Link (Placed under Ringkasan Belanja Card) */}
-                            <div className="pt-0.5">
+                            <div className="pt-3">
                                 <Link
                                     href="/cart"
-                                    className="inline-flex items-center gap-1.5 font-semibold text-xs text-[#4A070B] dark:text-[#E8D0BA] hover:text-[#360407] transition-colors"
+                                    className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-lg border border-border/80 bg-card hover:bg-muted text-xs font-semibold text-[#4A070B] dark:text-[#E8D0BA] transition-all shadow-2xs group"
                                 >
-                                    <span>←</span> {isEn ? 'Back to Cart' : 'Kembali ke Keranjang'}
+                                    <span className="transition-transform duration-200 group-hover:-translate-x-1">←</span>
+                                    <span>{isEn ? 'Back to Shopping Cart' : 'Kembali ke Keranjang Belanja'}</span>
                                 </Link>
                             </div>
                         </div>
                     </div>
 
-                    {/* MOBILE FLOATING BOTTOM SUMMARY BAR (Voucher + Sticky Pay Button) */}
-                    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t border-border shadow-[0_-8px_30px_rgba(0,0,0,0.12)] pb-[max(env(safe-area-inset-bottom),0px)]">
-                        {/* Attached Voucher Bar (Identical to cart.tsx) */}
-                        <div className="px-4 py-2 border-b border-border/60 bg-muted/20">
-                            {appliedVoucher && voucherDiscount > 0 ? (
-                                <div className="flex items-center justify-between text-xs">
-                                    <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium truncate">
-                                        <svg className="w-3.5 h-3.5 shrink-0 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                                        </svg>
-                                        <span className="truncate">
-                                            Voucher <strong className="font-bold">{appliedVoucher.toUpperCase()}</strong>: -Rp {voucherDiscount.toLocaleString('id-ID')}
-                                        </span>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={handleRemoveVoucher}
-                                        className="text-[11px] text-destructive hover:underline font-semibold cursor-pointer shrink-0 ml-2"
-                                    >
-                                        {isEn ? 'Remove' : 'Hapus'}
-                                    </button>
+                    {/* MOBILE FLOATING BOTTOM SUMMARY BAR (Voucher + Sticky Pay Button, portaled to document.body) */}
+                    {(() => {
+                        const mobileBarContent = (
+                            <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border shadow-[0_-8px_30px_rgba(0,0,0,0.12)] pb-[max(env(safe-area-inset-bottom),0px)]">
+                                {/* Attached Voucher Bar (Identical to cart.tsx) */}
+                                <div className="px-4 py-2 border-b border-border/60 bg-muted/20">
+                                    {appliedVoucher && voucherDiscount > 0 ? (
+                                        <div className="flex items-center justify-between text-xs">
+                                            <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium truncate">
+                                                <svg className="w-3.5 h-3.5 shrink-0 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                                </svg>
+                                                <span className="truncate">
+                                                    Voucher <strong className="font-bold">{appliedVoucher.toUpperCase()}</strong>: -Rp {voucherDiscount.toLocaleString('id-ID')}
+                                                </span>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={handleRemoveVoucher}
+                                                className="text-[11px] text-destructive hover:underline font-semibold cursor-pointer shrink-0 ml-2"
+                                            >
+                                                {isEn ? 'Remove' : 'Hapus'}
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-2">
+                                                <div className="relative flex-1">
+                                                    <svg
+                                                        className="w-3.5 h-3.5 text-[#E5A844] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        viewBox="0 0 24 24"
+                                                    >
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                                    </svg>
+                                                    <Input
+                                                        type="text"
+                                                        placeholder={isEn ? 'Have a Promo Voucher?' : 'Punya Kode Voucher Promo?'}
+                                                        value={voucherCodeInput}
+                                                        onChange={(e) => {
+                                                            setVoucherCodeInput(e.target.value);
+                                                            if (voucherError) setVoucherError(null);
+                                                        }}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                e.preventDefault();
+                                                                handleApplyVoucher(e);
+                                                            }
+                                                        }}
+                                                        className="h-8.5 pl-8 pr-2.5 rounded-md border border-border/80 bg-background text-xs uppercase tracking-wider focus:border-[#4A070B] focus:ring-1 focus:ring-[#4A070B]/25 shadow-none"
+                                                    />
+                                                </div>
+                                                <Button
+                                                    type="button"
+                                                    onClick={handleApplyVoucher}
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-8.5 px-3 rounded-md border border-[#4A070B] text-[#4A070B] hover:bg-[#4A070B] hover:text-white text-xs font-semibold shadow-none cursor-pointer shrink-0 transition-colors"
+                                                >
+                                                    {isEn ? 'Apply' : 'Terapkan'}
+                                                </Button>
+                                            </div>
+                                            {voucherError && (
+                                                <p className="text-[10.5px] text-destructive font-medium flex items-center gap-1 animate-in fade-in duration-150">
+                                                    <span>⚠</span> {voucherError}
+                                                </p>
+                                            )}
+                                            {voucherSuccess && (
+                                                <p className="text-[10.5px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1 animate-in fade-in duration-150">
+                                                    <span>✓</span> {voucherSuccess}
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
-                            ) : (
-                                <div className="space-y-1">
-                                    <div className="flex items-center gap-2">
-                                        <div className="relative flex-1">
+
+                                {/* Primary Bottom Bar */}
+                                <div className="mx-auto max-w-7xl px-4 py-2.5 sm:px-6 flex items-center justify-between gap-3">
+                                    {/* Summary info: Total Pembayaran */}
+                                    <div className="flex flex-col min-w-0">
+                                        <span className="text-[10.5px] font-medium text-muted-foreground truncate">
+                                            Total ({totalItemsCount} produk)
+                                        </span>
+                                        <div className="flex items-baseline gap-1.5 flex-wrap">
+                                            <span className="text-lg font-black text-[#4A070B] dark:text-[#E8D0BA] tracking-tight">
+                                                {finalTotalFormatted}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Pay Action Button */}
+                                    <Button
+                                        type="button"
+                                        onClick={handleOpenConfirm}
+                                        disabled={processing}
+                                        size="default"
+                                        className="h-10.5 px-5 sm:px-6 bg-[#4A070B] hover:bg-[#360407] text-white font-semibold rounded-md text-xs sm:text-sm shadow-none transition active:scale-[0.98] cursor-pointer flex items-center gap-2 shrink-0 disabled:opacity-80"
+                                    >
+                                        {processing ? (
+                                            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#E5A844]" />
+                                        ) : (
                                             <svg
-                                                className="w-3.5 h-3.5 text-[#E5A844] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
+                                                className="w-3.5 h-3.5 text-[#E5A844]"
                                                 fill="none"
                                                 stroke="currentColor"
                                                 viewBox="0 0 24 24"
                                             >
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth="2"
+                                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                                                />
                                             </svg>
-                                            <Input
-                                                type="text"
-                                                placeholder={isEn ? 'Have a Promo Voucher?' : 'Punya Kode Voucher Promo?'}
-                                                value={voucherCodeInput}
-                                                onChange={(e) => {
-                                                    setVoucherCodeInput(e.target.value);
-                                                    if (voucherError) setVoucherError(null);
-                                                }}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') {
-                                                        e.preventDefault();
-                                                        handleApplyVoucher(e);
-                                                    }
-                                                }}
-                                                className="h-8.5 pl-8 pr-2.5 rounded-md border border-border/80 bg-background text-xs uppercase tracking-wider focus:border-[#4A070B] focus:ring-1 focus:ring-[#4A070B]/25 shadow-none"
-                                            />
-                                        </div>
-                                        <Button
-                                            type="button"
-                                            onClick={handleApplyVoucher}
-                                            variant="outline"
-                                            size="sm"
-                                            className="h-8.5 px-3 rounded-md border border-[#4A070B] text-[#4A070B] hover:bg-[#4A070B] hover:text-white text-xs font-semibold shadow-none cursor-pointer shrink-0 transition-colors"
-                                        >
-                                            {isEn ? 'Apply' : 'Terapkan'}
-                                        </Button>
-                                    </div>
-                                    {voucherError && (
-                                        <p className="text-[10.5px] text-destructive font-medium flex items-center gap-1 animate-in fade-in duration-150">
-                                            <span>⚠</span> {voucherError}
-                                        </p>
-                                    )}
-                                    {voucherSuccess && (
-                                        <p className="text-[10.5px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1 animate-in fade-in duration-150">
-                                            <span>✓</span> {voucherSuccess}
-                                        </p>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Primary Bottom Bar */}
-                        <div className="mx-auto max-w-7xl px-4 py-2.5 sm:px-6 flex items-center justify-between gap-3">
-                            {/* Summary info: Total Pembayaran */}
-                            <div className="flex flex-col min-w-0">
-                                <span className="text-[10.5px] font-medium text-muted-foreground truncate">
-                                    Total ({totalItemsCount} produk)
-                                </span>
-                                <div className="flex items-baseline gap-1.5 flex-wrap">
-                                    <span className="text-lg font-black text-[#4A070B] dark:text-[#E8D0BA] tracking-tight">
-                                        {finalTotalFormatted}
-                                    </span>
+                                        )}
+                                        <span>{processing ? (isEn ? 'Processing...' : 'Memproses...') : (isEn ? `Pay (${totalItemsCount})` : `Bayar (${totalItemsCount})`)}</span>
+                                    </Button>
                                 </div>
                             </div>
-
-                            {/* Pay Action Button */}
-                            <Button
-                                type="submit"
-                                disabled={processing}
-                                size="default"
-                                className="h-10.5 px-5 sm:px-6 bg-[#4A070B] hover:bg-[#360407] text-white font-semibold rounded-md text-xs sm:text-sm shadow-none transition active:scale-[0.98] cursor-pointer flex items-center gap-2 shrink-0 disabled:opacity-80"
-                            >
-                                {processing ? (
-                                    <Loader2 className="w-3.5 h-3.5 animate-spin text-[#E5A844]" />
-                                ) : (
-                                    <svg
-                                        className="w-3.5 h-3.5 text-[#E5A844]"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth="2"
-                                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                                        />
-                                    </svg>
-                                )}
-                                <span>{processing ? (isEn ? 'Processing...' : 'Memproses...') : (isEn ? `Pay (${totalItemsCount})` : `Bayar (${totalItemsCount})`)}</span>
-                            </Button>
-                        </div>
-                    </div>
+                        );
+                        return isMounted && typeof document !== 'undefined'
+                            ? createPortal(mobileBarContent, document.body)
+                            : mobileBarContent;
+                    })()}
                 </form>
             </div>
 

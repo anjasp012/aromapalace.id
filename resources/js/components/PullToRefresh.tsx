@@ -18,6 +18,10 @@ export default function PullToRefresh({
     onRefresh,
     disabled = false,
 }: PullToRefreshProps) {
+    if (disabled) {
+        return <>{children}</>;
+    }
+
     const [pullDistance, setPullDistance] = useState(0);
     const [isDragging, setIsDragging] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -224,11 +228,15 @@ export default function PullToRefresh({
 
             {/* CONTENT CONTAINER (Only this moves when pulling down; navbar remains fixed) */}
             <div
-                className="w-full flex-1 flex flex-col will-change-transform"
-                style={{
-                    transform: pullDistance > 0 ? `translate3d(0, ${pullDistance}px, 0)` : undefined,
-                    transition: isDragging ? 'none' : 'transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1)',
-                }}
+                className="w-full flex-1 flex flex-col"
+                style={
+                    pullDistance > 0
+                        ? {
+                            transform: `translate3d(0, ${pullDistance}px, 0)`,
+                            transition: isDragging ? 'none' : 'transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                        }
+                        : undefined
+                }
             >
                 {children}
             </div>

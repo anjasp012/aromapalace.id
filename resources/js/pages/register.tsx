@@ -29,7 +29,7 @@ export default function Register({ status }: RegisterProps) {
         <Layout>
             <Head title={`${t('auth.register_title')} - Aroma Palace`} />
 
-            <div className="min-h-[75vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background via-muted/20 to-background">
+            <div className="min-h-[75vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-background">
                 <div className="w-full max-w-md space-y-6">
                     {/* Header */}
                     <div className="text-center space-y-2">

@@ -28,8 +28,8 @@ export default function BrandCard({ brand, className }: BrandCardProps) {
             cacheFor={['30s', '1m']}
             className={cn('block h-full group', className)}
         >
-            <Card className="p-2.5 sm:p-4 transition flex flex-col justify-between h-full py-2.5 sm:py-3 gap-0 shadow-none hover:border-foreground/30 rounded-lg w-full">
-                <div className="space-y-2 sm:space-y-3">
+            <Card className="p-2 sm:p-3.5 transition flex flex-col justify-between h-full py-2 sm:py-3 gap-0 shadow-none hover:border-foreground/30 rounded-lg w-full">
+                <div className="space-y-1.5 sm:space-y-2.5">
                     <div className="aspect-square rounded-md overflow-hidden bg-muted">
                         <img
                             src={brand.image}
@@ -40,17 +40,17 @@ export default function BrandCard({ brand, className }: BrandCardProps) {
                         />
                     </div>
                     <div>
-                        <h4 className="text-[11px] sm:text-sm font-bold text-foreground truncate group-hover:text-primary transition-colors">
+                        <h4 className="text-[10.5px] sm:text-sm font-bold text-foreground truncate group-hover:text-primary transition-colors">
                             {brand.name}
                         </h4>
-                        <p className="text-[10px] sm:text-[11px] text-muted-foreground line-clamp-1 sm:line-clamp-2 mt-0.5 leading-relaxed">
+                        <p className="hidden sm:line-clamp-2 text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
                             {displayDesc}
                         </p>
                     </div>
                 </div>
-                <div className="pt-2 sm:pt-3 border-t border-border flex items-center justify-between text-[10px] sm:text-[11px] text-muted-foreground mt-2 sm:mt-3">
-                    <span>{brand.collectionsCount} {isEn ? 'Collections' : 'Koleksi'}</span>
-                    <span className="group-hover:translate-x-0.5 transition-transform">&rarr;</span>
+                <div className="pt-1.5 sm:pt-2.5 border-t border-border flex items-center justify-between text-[9.5px] sm:text-[11px] text-muted-foreground mt-1.5 sm:mt-2.5">
+                    <span className="truncate">{brand.collectionsCount} {isEn ? 'Koleksi' : 'Koleksi'}</span>
+                    <span className="group-hover:translate-x-0.5 transition-transform shrink-0">&rarr;</span>
                 </div>
             </Card>
         </Link>

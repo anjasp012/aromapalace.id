@@ -166,7 +166,7 @@ export default function ArticleDetail({
 
             <article className="bg-background min-h-screen pb-20">
                 {/* BREADCRUMB NAVIGATION */}
-                <div className="border-b border-border/70 bg-muted/20">
+                <div className="border-b border-border/70 bg-background">
                     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3.5">
                         <nav className="flex items-center gap-2 text-xs text-muted-foreground overflow-x-auto whitespace-nowrap">
                             <Link href="/" className="hover:text-foreground transition-colors flex items-center gap-1">

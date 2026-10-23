@@ -1,7 +1,7 @@
 import { Head, router } from '@inertiajs/react';
 import { useState, useEffect, useRef } from 'react';
 import Layout from '@/components/Layout';
-import ArticleCard, { type ArticleItem } from '@/components/ArticleCard';
+import ArticleCard, { type ArticleItem, ArticleCardSkeleton } from '@/components/ArticleCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, X, Loader2 } from 'lucide-react';
@@ -90,8 +90,8 @@ export default function ArticlesPage({
                 />
             </Head>
 
-            {/* PAGE HEADER BANNER (Consistent with cart, wishlist, checkout) */}
-            <div className="border-b border-border/70 bg-gradient-to-b from-muted/30 via-background to-background py-10 sm:py-14">
+            {/* PAGE HEADER BANNER (Consistent with cart, wishlist, products) */}
+            <div className="border-b border-border/70 bg-background py-10 sm:py-14">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center space-y-3">
                     <h1 className="text-3xl sm:text-4xl lg:text-5xl tracking-tight text-foreground">
                         <span className="font-light">{isEn ? 'Articles &' : 'Artikel &'}</span>{' '}
@@ -163,8 +163,14 @@ export default function ArticlesPage({
                     </div>
                 </div>
 
-                {/* Articles Grid */}
-                {articles.length > 0 ? (
+                {/* Articles Grid or Skeleton */}
+                {!articles || isSearching ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 sm:gap-6">
+                        {Array.from({ length: 8 }).map((_, i) => (
+                            <ArticleCardSkeleton key={i} />
+                        ))}
+                    </div>
+                ) : articles.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 sm:gap-6">
                         {articles.map((article) => (
                             <ArticleCard key={article.slug} article={article} />

@@ -76,7 +76,7 @@ export default function SupportPage({ faqs = [], channels }: SupportProps) {
             <Head title={isEn ? 'Customer Care & Support • Aroma Palace' : 'Layanan Pelanggan & Bantuan • Aroma Palace'} />
 
             {/* HERO MARKETING & SUPPORT BANNER */}
-            <div className="border-b border-border/70 bg-gradient-to-b from-[#4A070B]/10 via-[#4A070B]/5 to-background py-10 sm:py-16">
+            <div className="border-b border-border/70 bg-background py-10 sm:py-16">
                 <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 text-center space-y-4">
                     <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-[#4A070B] text-white shadow-sm">
                         <Headphones className="w-3.5 h-3.5 text-[#E5A844]" />

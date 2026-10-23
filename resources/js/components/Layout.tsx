@@ -72,6 +72,7 @@ interface LayoutProps {
     children: ReactNode;
     showFooter?: boolean;
     showBottomNav?: boolean;
+    disablePullToRefresh?: boolean;
 }
 
 interface SuggestionProduct {
@@ -147,7 +148,7 @@ declare global {
     }
 }
 
-export default function Layout({ children, showFooter = true, showBottomNav }: LayoutProps) {
+export default function Layout({ children, showFooter = true, showBottomNav, disablePullToRefresh = false }: LayoutProps) {
     const { url, props } = usePage<SharedProps>();
     const user = props?.auth?.user;
     const isAdmin = Boolean(props?.auth?.is_admin || user?.role === 'admin');
@@ -190,22 +191,16 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    // Random rotating announcement every 4.5 seconds
+    // Sequential rotating announcement every 3.5 seconds across active database vouchers
     useEffect(() => {
         if (headerVouchers.length <= 1) return;
         const timer = setInterval(() => {
             setIsVoucherFading(true);
             setTimeout(() => {
-                setCurrentVoucherIndex((prev) => {
-                    let next = Math.floor(Math.random() * headerVouchers.length);
-                    if (next === prev && headerVouchers.length > 1) {
-                        next = (prev + 1) % headerVouchers.length;
-                    }
-                    return next;
-                });
+                setCurrentVoucherIndex((prev) => (prev + 1) % headerVouchers.length);
                 setIsVoucherFading(false);
             }, 250);
-        }, 4500);
+        }, 3500);
 
         return () => clearInterval(timer);
     }, [headerVouchers.length]);
@@ -623,16 +618,26 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                     <button
                         type="button"
                         onClick={() => handleOpenVoucherModal(activeHeaderVoucher)}
-                        className="flex-1 min-w-0 flex items-center justify-start gap-1.5 sm:gap-2 text-xs text-white/95 hover:text-white transition cursor-pointer text-left group"
+                        className="max-w-[210px] sm:max-w-[340px] md:max-w-[420px] lg:max-w-lg min-w-0 flex items-center justify-start gap-1.5 sm:gap-2 text-xs text-white/95 hover:text-white transition cursor-pointer text-left group overflow-hidden"
                         title={isEn ? "Click to view voucher details" : "Klik untuk melihat detail voucher"}
                     >
-                        <span className="text-[#E5A844] text-xs shrink-0 animate-pulse">✦</span>
+                        <span className="text-[#E5A844] text-xs shrink-0 animate-pulse select-none">✦</span>
+                        {activeHeaderVoucher?.code && (
+                            <span className="shrink-0 bg-[#E5A844]/20 border border-[#E5A844]/40 text-[#E5A844] font-bold text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded tracking-wider uppercase font-mono">
+                                {activeHeaderVoucher.code}
+                            </span>
+                        )}
                         <span className={cn(
-                            "font-normal text-[11px] sm:text-xs tracking-tight transition-all duration-300 truncate",
-                            isVoucherFading ? "opacity-0 -translate-y-0.5" : "opacity-100 translate-y-0"
+                            "font-medium text-[10.5px] sm:text-xs tracking-tight transition-all duration-300 truncate",
+                            isVoucherFading ? "opacity-0 -translate-y-1 scale-95" : "opacity-100 translate-y-0 scale-100"
                         )}>
-                            <span className="sm:hidden">{limitWords(promoFullText, 6)}</span>
-                            <span className="hidden sm:inline">{promoFullText}</span>
+                            <span>
+                                {activeHeaderVoucher?.type === 'percentage'
+                                    ? (isEn ? `Up to ${activeHeaderVoucher.value}% off! Claim →` : `Diskon hingga ${activeHeaderVoucher.value}%! Klaim →`)
+                                    : (isEn
+                                        ? `Rp ${new Intl.NumberFormat('id-ID').format(activeHeaderVoucher?.value || 0)} off! Claim →`
+                                        : `Potongan Rp ${new Intl.NumberFormat('id-ID').format(activeHeaderVoucher?.value || 0)}! Klaim →`)}
+                            </span>
                         </span>
                     </button>
 
@@ -1124,7 +1129,7 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
             </header>
 
             {/* Main Content Area with Pull-To-Refresh (Header/Navbar stays fixed at the top) */}
-            <PullToRefresh>
+            <PullToRefresh disabled={disablePullToRefresh}>
                 <main className={`flex-1 ${shouldShowBottomNav ? 'pb-20 md:pb-0' : ''}`}>
                     {children}
                 </main>
