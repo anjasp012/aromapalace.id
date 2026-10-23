@@ -8,6 +8,10 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 });
 
 Broadcast::channel('orders.{orderNumber}', function (User $user, string $orderNumber) {
+    if ($user->isAdmin()) {
+        return true;
+    }
+
     return $user->orders()->where('order_number', $orderNumber)->exists();
 });
 

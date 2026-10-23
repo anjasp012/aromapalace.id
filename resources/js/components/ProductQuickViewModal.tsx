@@ -47,6 +47,7 @@ export default function ProductQuickViewModal({
     if (!product) return null;
 
     const handleAdd = () => {
+        if (isAdmin) return;
         if (!user) {
             router.visit(
                 '/login?notice=' +
@@ -63,23 +64,43 @@ export default function ProductQuickViewModal({
         if (isAdding) return;
         setIsAdding(true);
 
-        setTimeout(() => {
-            if (onAddToCart) {
-                onAddToCart(product, quantity);
-            } else {
-                window.showCartToast?.(
-                    isEn
-                        ? `${quantity}x ${product.name} (${product.volume || '100ml'}) added to your cart.`
-                        : `${quantity}x ${product.name} (${product.volume || '100ml'}) berhasil ditambahkan ke keranjang.`
-                );
-            }
+        if (onAddToCart) {
+            onAddToCart(product, quantity);
             setIsAdding(false);
             setIsAdded(true);
             setTimeout(() => {
                 setIsAdded(false);
                 onOpenChange(false);
             }, 600);
-        }, 350);
+        } else {
+            router.post(
+                '/cart',
+                {
+                    product_id: product.id,
+                    quantity: quantity,
+                    volume: product.volume || '50ml',
+                },
+                {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        window.showCartToast?.(
+                            isEn
+                                ? `${quantity}x ${product.name} (${product.volume || '50ml'}) added to your cart.`
+                                : `${quantity}x ${product.name} (${product.volume || '50ml'}) berhasil ditambahkan ke keranjang.`
+                        );
+                        setIsAdding(false);
+                        setIsAdded(true);
+                        setTimeout(() => {
+                            setIsAdded(false);
+                            onOpenChange(false);
+                        }, 600);
+                    },
+                    onError: () => {
+                        setIsAdding(false);
+                    },
+                }
+            );
+        }
     };
 
     const categoryOrFamily = product.category || product.family;

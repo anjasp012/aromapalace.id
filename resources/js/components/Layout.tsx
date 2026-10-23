@@ -56,6 +56,7 @@ import {
 import { autoRequestNotificationPermission, initFirebaseForegroundListener } from '@/lib/push-notification';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
+import PullToRefresh from '@/components/PullToRefresh';
 
 import { App as CapApp } from '@capacitor/app';
 
@@ -954,8 +955,6 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                             ) : (
                                 <Link
                                     href={user ? '/cart' : '/login?notice=' + encodeURIComponent(isEn ? 'Please sign in to view your shopping cart.' : 'Silakan masuk untuk melihat keranjang belanja Anda.')}
-                                    prefetch="hover"
-                                    cacheFor={['30s', '1m']}
                                     className="flex items-center justify-center sm:flex-col sm:gap-0.5 text-[#4A070B] hover:text-[#360407] transition cursor-pointer w-9 h-9 sm:w-auto sm:h-auto sm:px-1 sm:py-0.5 group relative rounded-full sm:rounded-none hover:bg-[#4A070B]/5 sm:hover:bg-transparent active:scale-95 shrink-0 -mr-1"
                                     aria-label={isEn ? "Shopping Cart" : "Keranjang Belanja"}
                                 >
@@ -1124,10 +1123,12 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
                 </div>
             </header>
 
-            {/* Main Content Area */}
-            <main className={`flex-1 ${shouldShowBottomNav ? 'pb-20 md:pb-0' : ''}`}>
-                {children}
-            </main>
+            {/* Main Content Area with Pull-To-Refresh (Header/Navbar stays fixed at the top) */}
+            <PullToRefresh>
+                <main className={`flex-1 ${shouldShowBottomNav ? 'pb-20 md:pb-0' : ''}`}>
+                    {children}
+                </main>
+            </PullToRefresh>
 
             {/* Modern Clean Footer with Rich Burgundy Gradient matching Produk Diskon */}
             {showFooter && (

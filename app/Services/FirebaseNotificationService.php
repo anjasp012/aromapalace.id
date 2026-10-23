@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Events\AdminNotificationCreated;
+use App\Events\OrderPaid;
 use App\Models\DeviceToken;
 use App\Models\Notification;
 use App\Models\Order;
@@ -336,6 +337,13 @@ class FirebaseNotificationService
         }
         Cache::put($cacheKey, true, now()->addMinutes(10));
 
+        // Real-time WebSocket: Broadcast to the user viewing the payment page
+        try {
+            event(new OrderPaid($order));
+        } catch (\Throwable $e) {
+            Log::warning('Failed to broadcast OrderPaid event in notifyPaymentSuccess: '.$e->getMessage());
+        }
+
         $formattedTotal = 'Rp '.number_format($order->total_amount, 0, ',', '.');
 
         // Ke Customer
@@ -433,6 +441,45 @@ class FirebaseNotificationService
             body: "Gunakan kode {$voucher->code} untuk {$discountInfo} di Aroma Palace. Jangan lewatkan!",
             url: url('/products'),
             data: ['voucher_code' => $voucher->code, 'type' => 'voucher_reward']
+        );
+    }
+
+    /**
+     * 7. Notifikasi Pembatalan Pesanan (Auto Cancel 24 Jam):
+     * - Ke Customer: "Pesanan Dibatalkan"
+     * - Ke Admin: "Pesanan Dibatalkan Otomatis"
+     */
+    public function notifyOrderCanceled(Order $order, string $reason = 'Batas waktu pembayaran 24 jam telah berakhir.'): void
+    {
+        $cacheKey = "fcm_order_canceled_sent_{$order->id}";
+        if (Cache::has($cacheKey)) {
+            return;
+        }
+        Cache::put($cacheKey, true, now()->addMinutes(10));
+
+        if ($order->user_id) {
+            $this->sendToUser(
+                user: $order->user_id,
+                title: 'Pesanan Dibatalkan #'.$order->order_number,
+                body: "Pesanan wewangian Anda telah dibatalkan otomatis karena {$reason}",
+                url: url('/account/orders'),
+                data: [
+                    'order_id' => (string) $order->id,
+                    'order_number' => (string) $order->order_number,
+                    'type' => 'order_canceled',
+                ]
+            );
+        }
+
+        $this->sendToAdmins(
+            title: 'Pesanan Dibatalkan (Waktu Habis) #'.$order->order_number,
+            body: "Pesanan dari {$order->recipient_name} dibatalkan otomatis karena waktu pembayaran habis.",
+            url: '/manajemen-pesanan/'.$order->id,
+            data: [
+                'order_id' => (string) $order->id,
+                'order_number' => (string) $order->order_number,
+                'type' => 'admin_order_canceled',
+            ]
         );
     }
 }

@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\OrderPaid;
 use App\Services\FirebaseNotificationService;
 use App\Services\MembershipService;
+use App\Services\OrderService;
 use App\Services\PakasirService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -35,6 +37,12 @@ class PaymentController extends Controller
 
         if (! $orderModel) {
             return redirect()->route('home')->with('error', 'Pesanan tidak ditemukan.');
+        }
+
+        // Auto-cancel if pending and older than 24 hours
+        if ($orderModel->payment_status === 'pending' && $orderModel->created_at && $orderModel->created_at->copy()->addHours(24)->isPast()) {
+            app(OrderService::class)->cancelOrder($orderModel, 'Batas waktu pembayaran 24 jam telah berakhir.');
+            $orderModel->refresh();
         }
 
         return Inertia::render('payment', [
@@ -74,23 +82,34 @@ class PaymentController extends Controller
         }
 
         if ($orderModel->payment_status === 'pending') {
-            $txnRes = $this->pakasirService->createTransaction($orderModel->order_number, $orderModel->total_amount, $orderModel->payment_method);
-            if ($txnRes['success'] && ! empty($txnRes['data']['txn_id'])) {
-                $statusRes = $this->pakasirService->checkTransactionStatus($txnRes['data']['txn_id']);
-                if ($statusRes['success']) {
-                    $status = strtolower((string) ($statusRes['data']['status'] ?? ''));
-                    if ($status === 'completed') {
-                        $orderModel->update([
-                            'payment_status' => 'paid',
-                            'status' => 'diproses',
-                        ]);
-                        app(FirebaseNotificationService::class)->notifyPaymentSuccess($orderModel);
-                        app(MembershipService::class)->awardOrderPoints($orderModel);
-                    } elseif ($status === 'canceled') {
-                        $orderModel->update([
-                            'payment_status' => 'canceled',
-                            'status' => 'dibatalkan',
-                        ]);
+            // Auto-cancel if pending and older than 24 hours
+            if ($orderModel->created_at && $orderModel->created_at->copy()->addHours(24)->isPast()) {
+                app(OrderService::class)->cancelOrder($orderModel, 'Batas waktu pembayaran 24 jam telah berakhir.');
+                $orderModel->refresh();
+            } else {
+                $txnRes = $this->pakasirService->createTransaction($orderModel->order_number, $orderModel->total_amount, $orderModel->payment_method);
+                if ($txnRes['success'] && ! empty($txnRes['data']['txn_id'])) {
+                    $statusRes = $this->pakasirService->checkTransactionStatus($txnRes['data']['txn_id']);
+                    if ($statusRes['success']) {
+                        $status = strtolower((string) ($statusRes['data']['status'] ?? ''));
+                        if ($status === 'completed') {
+                            DB::transaction(function () use ($orderModel) {
+                                $locked = Order::where('id', $orderModel->id)->lockForUpdate()->first();
+                                if ($locked && $locked->payment_status === 'pending') {
+                                    $locked->update([
+                                        'payment_status' => 'paid',
+                                        'status' => 'diproses',
+                                    ]);
+                                    event(new OrderPaid($locked));
+                                    app(FirebaseNotificationService::class)->notifyPaymentSuccess($locked);
+                                    app(MembershipService::class)->awardOrderPoints($locked);
+                                }
+                            });
+                            $orderModel->refresh();
+                        } elseif ($status === 'canceled') {
+                            app(OrderService::class)->cancelOrder($orderModel, 'Dibatalkan oleh gateway Pakasir.');
+                            $orderModel->refresh();
+                        }
                     }
                 }
             }

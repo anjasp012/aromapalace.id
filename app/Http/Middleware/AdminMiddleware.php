@@ -26,6 +26,10 @@ class AdminMiddleware
                 abort(403, 'Akses terbatas untuk administrator Aroma Palace.');
             }
 
+            auth()->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
             return redirect()->route('admin.login')->withErrors([
                 'email' => 'Akses ditolak. Akun Anda tidak memiliki hak akses administrator Aroma Palace.',
             ]);

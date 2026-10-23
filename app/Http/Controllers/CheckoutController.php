@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\CancelExpiredOrderJob;
 use App\Models\DeviceToken;
 use App\Models\Order;
 use App\Models\PaymentMethod;
@@ -512,6 +513,9 @@ class CheckoutController extends Controller
 
             if ($order->payment_status === 'paid') {
                 app(MembershipService::class)->awardOrderPoints($order);
+            } else {
+                // Delayed Job: Auto cancel after 24 hours if still unpaid, restore stock, and send FCM notification
+                CancelExpiredOrderJob::dispatch($order->id)->delay(now()->addHours(24));
             }
 
             return redirect()->route('payment.show', ['order' => $order->order_number])

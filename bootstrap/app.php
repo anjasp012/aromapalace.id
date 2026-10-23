@@ -44,6 +44,10 @@ return Application::configure(basePath: dirname(__DIR__))
             $isAdminHost = $request->getHost() === $adminDomain || str_starts_with($request->getHost(), 'admin.');
 
             if ($isAdminHost) {
+                if ($request->user() && ! $request->user()->isAdmin()) {
+                    return route('home');
+                }
+
                 return route('admin.dashboard');
             }
 

@@ -30,6 +30,7 @@ class OrderPaid implements ShouldBroadcastNow
     {
         return [
             new PrivateChannel('orders.'.$this->order->order_number),
+            new Channel('orders.'.$this->order->order_number),
         ];
     }
 

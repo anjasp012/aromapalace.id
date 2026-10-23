@@ -456,7 +456,7 @@ export default function AccountPage({
                                         <User className="w-4 h-4" />
                                     </div>
                                     <span className="text-xs sm:text-sm font-semibold text-foreground">
-                                        {displayName}
+                                        {isEn ? 'Profile' : 'Profil'}
                                     </span>
                                 </div>
                                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
