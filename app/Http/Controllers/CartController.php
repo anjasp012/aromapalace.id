@@ -154,7 +154,7 @@ class CartController extends Controller
             ]);
         }
 
-        return back()->with('success', "{$quantity}x “{$product['name']}” ({$volume}) berhasil ditambahkan ke keranjang.");
+        return back()->with('success', 'Berhasil ditambahkan ke keranjang.');
     }
 
     /**
@@ -171,7 +171,7 @@ class CartController extends Controller
             'quantity' => (int) $validated['quantity'],
         ]);
 
-        return back()->with('success', 'Jumlah produk berhasil diperbarui.');
+        return back()->with('success', 'Jumlah produk diperbarui.');
     }
 
     /**
@@ -182,7 +182,7 @@ class CartController extends Controller
         $item = $request->user()->cartItems()->findOrFail($id);
         $item->delete();
 
-        return back()->with('success', 'Produk berhasil dihapus dari keranjang.');
+        return back()->with('success', 'Produk dihapus.');
     }
 
     /**
@@ -192,7 +192,7 @@ class CartController extends Controller
     {
         $request->user()->cartItems()->delete();
 
-        return back()->with('success', 'Seluruh isi keranjang belanja Anda telah dikosongkan.');
+        return back()->with('success', 'Keranjang dikosongkan.');
     }
 
     /**
@@ -206,7 +206,7 @@ class CartController extends Controller
             if ($voucher) {
                 session(['applied_voucher' => $voucher->code]);
 
-                return back()->with('success', "Voucher {$voucher->code} berhasil dipasang.");
+                return back()->with('success', "Voucher {$voucher->code} diterapkan.");
             }
         }
 
@@ -220,6 +220,6 @@ class CartController extends Controller
     {
         $request->session()->forget('applied_voucher');
 
-        return back()->with('success', 'Voucher berhasil dilepas.');
+        return back()->with('success', 'Voucher dilepas.');
     }
 }

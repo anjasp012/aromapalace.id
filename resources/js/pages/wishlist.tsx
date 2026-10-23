@@ -88,7 +88,7 @@ export default function WishlistPage({ items = [] }: WishlistPageProps) {
             <Head title={`${t('wishlist.title')} • Aroma Palace`} />
 
             {/* PAGE HEADER BANNER (Matches products.tsx style) */}
-            <div className="border-b border-border/70 bg-gradient-to-b from-muted/30 via-background to-background py-10 sm:py-14">
+            <div className="border-b border-border/70 bg-background py-10 sm:py-14">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center space-y-3">
                     <h1 className="text-3xl sm:text-4xl lg:text-5xl tracking-tight text-foreground">
                         <span className="font-light">{isEn ? 'My Fragrance' : 'Wishlist'}</span>{' '}
@@ -125,7 +125,7 @@ export default function WishlistPage({ items = [] }: WishlistPageProps) {
                 ) : (
                     <div className="space-y-6">
                         {/* TOOLBAR */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/80">
+                        <div className="flex items-center justify-between gap-4 pb-4 border-b border-border/80">
                             <div className="flex items-center gap-2">
                                 <span className="text-xs text-muted-foreground">
                                     {t('wishlist.showing_count', { count: items.length })}
@@ -134,13 +134,6 @@ export default function WishlistPage({ items = [] }: WishlistPageProps) {
                                     {t('wishlist.saved_badge')}
                                 </Badge>
                             </div>
-
-                            <Link
-                                href="/products"
-                                className="text-xs font-semibold text-[#4A070B] hover:text-[#360407] transition-colors"
-                            >
-                                {t('wishlist.find_more')}
-                            </Link>
                         </div>
 
                         {/* PRODUCT GRID USING THE EXACT SAME ProductCard COMPONENT AS PRODUCTS.TSX */}

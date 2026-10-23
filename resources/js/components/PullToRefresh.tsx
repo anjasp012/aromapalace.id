@@ -154,7 +154,7 @@ export default function PullToRefresh({
 
     return (
         <div
-            className="relative w-full flex-1 flex flex-col"
+            className="relative w-full flex-1 flex flex-col bg-background"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}

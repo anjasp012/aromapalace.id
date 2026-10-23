@@ -65,7 +65,7 @@ class WishlistController extends Controller
         if ($existing) {
             $existing->delete();
 
-            return back()->with('success', "“{$product['name']}” berhasil dihapus dari wishlist.");
+            return back()->with('success', 'Dihapus dari wishlist.');
         }
 
         Wishlist::create([
@@ -73,7 +73,7 @@ class WishlistController extends Controller
             'product_id' => $productId,
         ]);
 
-        return back()->with('success', "“{$product['name']}” berhasil ditambahkan ke wishlist.");
+        return back()->with('success', 'Ditambahkan ke wishlist.');
     }
 
     /**
@@ -86,7 +86,7 @@ class WishlistController extends Controller
             ->delete();
 
         if ($deleted) {
-            return back()->with('success', 'Wewangian berhasil dihapus dari wishlist.');
+            return back()->with('success', 'Dihapus dari wishlist.');
         }
 
         return back()->with('error', 'Wewangian tidak ditemukan di wishlist Anda.');

@@ -21,6 +21,8 @@ export function resolveComponentForUrl(pathname: string): string | null {
 
     if (clean === '/') return 'home';
     if (clean === '/products') return 'products';
+    if (clean === '/brands') return 'brands';
+    if (clean === '/categories') return 'categories';
     if (clean.startsWith('/products/')) return 'product-detail';
     if (clean === '/cart') return 'cart';
     if (clean === '/checkout') return 'checkout';
@@ -32,7 +34,6 @@ export function resolveComponentForUrl(pathname: string): string | null {
     if (clean === '/stores') return 'stores';
     if (clean === '/about') return 'about';
     if (clean === '/articles') return 'articles';
-    if (clean.startsWith('/articles/')) return 'article-detail';
     if (clean === '/support') return 'support';
     if (clean === '/privacy-policy') return 'privacy-policy';
     if (clean === '/login') return 'login';

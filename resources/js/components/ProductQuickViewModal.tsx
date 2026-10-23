@@ -84,9 +84,7 @@ export default function ProductQuickViewModal({
                     preserveScroll: true,
                     onSuccess: () => {
                         window.showCartToast?.(
-                            isEn
-                                ? `${quantity}x ${product.name} (${product.volume || '50ml'}) added to your cart.`
-                                : `${quantity}x ${product.name} (${product.volume || '50ml'}) berhasil ditambahkan ke keranjang.`
+                            isEn ? 'Added to cart.' : 'Berhasil masuk keranjang.'
                         );
                         setIsAdding(false);
                         setIsAdded(true);

@@ -280,7 +280,7 @@ export default function AccountPage({
         <Layout showFooter={false}>
             <Head title={`${t('account.title')} • Aroma Palace`} />
 
-            <div className="min-h-screen bg-[#F8F9FA] dark:bg-background">
+            <div className="min-h-screen bg-background">
                 {/* MAIN CONTENT CONTAINER */}
                 <div className="max-w-xl mx-auto px-4 pt-4 sm:pt-6 pb-20">
                     {/* Profile & Points Card */}

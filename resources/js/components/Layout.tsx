@@ -484,14 +484,15 @@ export default function Layout({ children, showFooter = true, showBottomNav }: L
 
     // Toasts logic
     const triggerToast = (msg: string) => {
+        if (!msg) return;
         setToastMessage(msg);
-        setTimeout(() => setToastMessage(null), 3000);
+        setTimeout(() => setToastMessage(null), 2500);
     };
 
     const copyPromoCode = (code: string) => {
         if (!code) return;
         navigator.clipboard?.writeText(code);
-        triggerToast(isEn ? `Promo code "${code}" copied!` : `Kode promo "${code}" berhasil disalin!`);
+        triggerToast(isEn ? `Code "${code}" copied!` : `Kode "${code}" disalin!`);
     };
 
     // Global Window bindings

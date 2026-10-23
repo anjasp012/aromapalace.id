@@ -281,29 +281,15 @@ export default function Home({
                         <Card
                             className="relative overflow-hidden border-0 sm:border sm:border-border/70 py-0 gap-0 shadow-none sm:shadow-lg rounded-none sm:rounded-2xl group transition-all duration-700 bg-transparent sm:bg-card"
                         >
-                            {/* Dynamic Ambient Background Canvas (Hardware-accelerated Image Ambient Glow, no heavy color code divs) */}
-                            <div className="absolute inset-0 pointer-events-none overflow-hidden -z-20">
+                            {/* Subtle Ambient Background Tint (Desktop only, 0% CPU/GPU overhead, no heavy blur image) */}
+                            <div className="hidden lg:block absolute inset-0 pointer-events-none overflow-hidden -z-20">
                                 {banners.map((b, idx) => (
                                     <div
                                         key={`ambient-${b.id}`}
                                         aria-hidden="true"
-                                        className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${activeSlide === idx ? 'opacity-100' : 'opacity-0'
-                                            }`}
+                                        className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${activeSlide === idx ? 'opacity-100' : 'opacity-0'}`}
                                     >
-                                        {/* Base Ambient Tint Gradient */}
                                         <div className={`absolute inset-0 bg-gradient-to-br ${b.ambientGradient}`} />
-
-                                        {/* Image-based Ambient Flare: gentle blurred banner image radiating into card background */}
-                                        <div className="absolute -inset-10 opacity-30 sm:opacity-40 blur-2xl sm:blur-3xl saturate-150 transform-gpu pointer-events-none overflow-hidden">
-                                            <img
-                                                src={b.image}
-                                                alt=""
-                                                className="w-full h-full object-cover scale-110"
-                                            />
-                                        </div>
-
-                                        {/* Soft Vignette Overlay to ensure crisp contrast on text */}
-                                        <div className="absolute inset-0 bg-gradient-to-r from-background/40 via-background/20 to-transparent pointer-events-none" />
                                     </div>
                                 ))}
                             </div>
@@ -369,18 +355,6 @@ export default function Home({
                                                         href={banner.link}
                                                         className="relative w-full h-full lg:max-w-[500px] flex items-center justify-center block cursor-pointer"
                                                     >
-                                                        {/* Ambient Flare behind Image (Desktop) */}
-                                                        <div
-                                                            aria-hidden="true"
-                                                            className="hidden lg:block absolute -inset-3 sm:-inset-6 rounded-2xl overflow-hidden pointer-events-none blur-2xl sm:blur-3xl opacity-65 sm:opacity-80 scale-105 sm:scale-110 saturate-150 transform-gpu transition-all duration-700"
-                                                        >
-                                                            <img
-                                                                src={banner.image}
-                                                                alt=""
-                                                                className="w-full h-full object-cover"
-                                                            />
-                                                        </div>
-
                                                         {/* Crisp Main Image Card */}
                                                         <div className="relative z-10 w-full h-full rounded-2xl overflow-hidden border border-border/50 lg:border lg:border-white/60 dark:lg:border-white/10 bg-background shadow-md lg:shadow-xl">
                                                             <img
@@ -447,7 +421,7 @@ export default function Home({
                                 <span className="font-bold">{isEn ? 'Categories' : 'Produk'}</span>
                             </h2>
                             <Button asChild variant="ghost" size="sm" className="text-xs">
-                                <Link href="/products">
+                                <Link href="/categories">
                                     {t('common.see_all')} &rarr;
                                 </Link>
                             </Button>
@@ -697,7 +671,7 @@ export default function Home({
                                 <span className="font-bold">{isEn ? 'Brands' : 'Pilihan'}</span>
                             </h2>
                             <Button asChild variant="ghost" size="sm" className="text-xs">
-                                <Link href="/products">
+                                <Link href="/brands">
                                     {isEn ? 'Explore Brands' : 'Jelajahi Brand'} &rarr;
                                 </Link>
                             </Button>

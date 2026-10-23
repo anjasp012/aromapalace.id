@@ -39,11 +39,29 @@ export default function ArticleDetail({
 }: ArticleDetailProps) {
     const { t, pickText, isEn } = useTranslation();
     const [copied, setCopied] = useState(false);
-    const thumbnailSrc = article.thumbnail || article.image || '';
 
-    const activeTitle = pickText(article.title, article.title_en);
-    const activeExcerpt = pickText(article.excerpt, article.excerpt_en);
-    const activeContent = pickText(article.content, article.content_en);
+    if (!article) {
+        return (
+            <Layout>
+                <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 space-y-6 animate-pulse">
+                    <div className="h-4 w-32 bg-muted rounded" />
+                    <div className="h-8 w-3/4 bg-muted rounded" />
+                    <div className="h-64 w-full bg-muted rounded-xl" />
+                    <div className="space-y-3 pt-4">
+                        <div className="h-4 w-full bg-muted rounded" />
+                        <div className="h-4 w-5/6 bg-muted rounded" />
+                        <div className="h-4 w-4/6 bg-muted rounded" />
+                    </div>
+                </div>
+            </Layout>
+        );
+    }
+
+    const thumbnailSrc = article?.thumbnail || article?.image || '';
+
+    const activeTitle = pickText(article?.title || '', article?.title_en || '') || (isEn ? 'Article' : 'Artikel');
+    const activeExcerpt = pickText(article?.excerpt || '', article?.excerpt_en || '') || '';
+    const activeContent = pickText(article?.content || '', article?.content_en || '') || '';
 
     const handleCopyLink = () => {
         if (typeof window !== 'undefined') {
@@ -66,7 +84,9 @@ export default function ArticleDetail({
     };
 
     // Format content: HTML from TextEditor, or fallback to markdown headers (##), blockquotes (>), lists (-), and paragraphs
-    const renderFormattedContent = (content: string) => {
+    const renderFormattedContent = (content: string = '') => {
+        if (!content) return null;
+
         if (/<[a-z][\s\S]*>/i.test(content)) {
             return (
                 <div
