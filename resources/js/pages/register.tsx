@@ -10,6 +10,7 @@ import {
     Home,
     Sparkles,
     Loader2,
+    Globe,
 } from 'lucide-react';
 
 interface RegisterProps {
@@ -17,7 +18,7 @@ interface RegisterProps {
 }
 
 export default function Register({ status }: RegisterProps) {
-    const { t, isEn } = useTranslation();
+    const { t, isEn, setLanguage } = useTranslation();
     const [showPassword, setShowPassword] = useState(false);
 
     const { data, setData, post, processing, errors } = useForm({
@@ -64,13 +65,25 @@ export default function Register({ status }: RegisterProps) {
                     </span>
                 </Link>
 
-                <Link
-                    href="/"
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/90 hover:text-white transition-all bg-white/10 hover:bg-white/20 border border-white/20 px-3.5 py-2 rounded-lg backdrop-blur-md active:scale-95 shadow-sm"
-                >
-                    <Home className="w-3.5 h-3.5 text-[#E5A844]" />
-                    <span>{isEn ? 'Home' : 'Beranda'}</span>
-                </Link>
+                <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={() => setLanguage(isEn ? 'id' : 'en')}
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/90 hover:text-white transition-all bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-2 rounded-lg backdrop-blur-md active:scale-95 shadow-sm cursor-pointer"
+                        title={isEn ? 'Ganti ke Bahasa Indonesia' : 'Switch to English'}
+                    >
+                        <Globe className="w-3.5 h-3.5 text-[#E5A844]" />
+                        <span>{isEn ? '🇮🇩 ID' : '🇬🇧 EN'}</span>
+                    </button>
+
+                    <Link
+                        href="/"
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/90 hover:text-white transition-all bg-white/10 hover:bg-white/20 border border-white/20 px-3.5 py-2 rounded-lg backdrop-blur-md active:scale-95 shadow-sm"
+                    >
+                        <Home className="w-3.5 h-3.5 text-[#E5A844]" />
+                        <span>{isEn ? 'Home' : 'Beranda'}</span>
+                    </Link>
+                </div>
             </header>
 
             {/* MAIN CONTAINER: 2-COLUMN LAYOUT ON DESKTOP */}
@@ -121,13 +134,13 @@ export default function Register({ status }: RegisterProps) {
                                     {/* FULL NAME INPUT */}
                                     <div className="space-y-1.5">
                                         <label className="text-xs font-semibold text-neutral-800 block">
-                                            {t('auth.full_name')}
+                                            {isEn ? 'Full Name' : 'Nama Lengkap'}
                                         </label>
                                         <Input
                                             type="text"
                                             name="name"
                                             autoComplete="name"
-                                            placeholder="Masukkan nama lengkap Anda"
+                                            placeholder={isEn ? 'Enter your full name' : 'Masukkan nama lengkap Anda'}
                                             value={data.name}
                                             onChange={(e) => setData('name', e.target.value)}
                                             className="h-12 px-4 text-sm rounded-xl bg-neutral-50 text-neutral-900 border-neutral-300 focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-[#4A070B] focus-visible:border-[#4A070B] transition-all"
@@ -141,7 +154,7 @@ export default function Register({ status }: RegisterProps) {
                                     {/* EMAIL INPUT */}
                                     <div className="space-y-1.5">
                                         <label className="text-xs font-semibold text-neutral-800 block">
-                                            {t('auth.email')}
+                                            {isEn ? 'Email Address' : 'Alamat Email'}
                                         </label>
                                         <Input
                                             type="email"
@@ -151,7 +164,7 @@ export default function Register({ status }: RegisterProps) {
                                             autoCapitalize="none"
                                             autoCorrect="off"
                                             spellCheck={false}
-                                            placeholder="Masukkan email Anda"
+                                            placeholder={isEn ? 'Enter your email' : 'Masukkan email Anda'}
                                             value={data.email}
                                             onChange={(e) => setData('email', e.target.value)}
                                             className="h-12 px-4 text-sm rounded-xl bg-neutral-50 text-neutral-900 border-neutral-300 focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-[#4A070B] focus-visible:border-[#4A070B] transition-all"
@@ -165,14 +178,14 @@ export default function Register({ status }: RegisterProps) {
                                     {/* PASSWORD INPUT */}
                                     <div className="space-y-1.5">
                                         <label className="text-xs font-semibold text-neutral-800 block">
-                                            {t('auth.password')}
+                                            {isEn ? 'Password' : 'Kata Sandi'}
                                         </label>
                                         <div className="relative">
                                             <Input
                                                 type={showPassword ? 'text' : 'password'}
                                                 name="password"
                                                 autoComplete="new-password"
-                                                placeholder="Minimal 6 karakter"
+                                                placeholder={isEn ? 'Minimum 6 characters' : 'Minimal 6 karakter'}
                                                 value={data.password}
                                                 onChange={(e) => setData('password', e.target.value)}
                                                 className="h-12 pl-4 pr-11 text-sm rounded-xl bg-neutral-50 text-neutral-900 border-neutral-300 focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-[#4A070B] focus-visible:border-[#4A070B] transition-all"
@@ -206,7 +219,7 @@ export default function Register({ status }: RegisterProps) {
                                         {processing ? (
                                             <span className="flex items-center justify-center gap-2">
                                                 <Loader2 className="w-4 h-4 animate-spin" />
-                                                <span>{t('auth.registering')}</span>
+                                                <span>{isEn ? 'Registering...' : 'Mendaftar...'}</span>
                                             </span>
                                         ) : (
                                             <span>{isEn ? 'Create Account' : 'Daftar Sekarang'}</span>

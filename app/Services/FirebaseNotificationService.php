@@ -68,6 +68,20 @@ class FirebaseNotificationService
                             'title' => $title,
                             'body' => $body,
                         ],
+                        'android' => [
+                            'notification' => [
+                                'sound' => env('FCM_ANDROID_SOUND', 'notif'),
+                                'channel_id' => 'aroma_palace_channel',
+                                'default_sound' => false,
+                            ],
+                        ],
+                        'apns' => [
+                            'payload' => [
+                                'aps' => [
+                                    'sound' => env('FCM_IOS_SOUND', 'notif.wav'),
+                                ],
+                            ],
+                        ],
                         'webpush' => [
                             'notification' => [
                                 'title' => $title,

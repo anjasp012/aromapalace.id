@@ -10,8 +10,7 @@ import {
     Home,
     Sparkles,
     Loader2,
-    HelpCircle,
-    MessageCircle,
+    Globe,
 } from 'lucide-react';
 
 interface LoginProps {
@@ -20,7 +19,7 @@ interface LoginProps {
 }
 
 export default function Login({ status, notice }: LoginProps) {
-    const { t, isEn } = useTranslation();
+    const { t, isEn, setLanguage } = useTranslation();
     const [showPassword, setShowPassword] = useState(false);
 
     const { data, setData, post, processing, errors } = useForm({
@@ -69,13 +68,25 @@ export default function Login({ status, notice }: LoginProps) {
                     </span>
                 </Link>
 
-                <Link
-                    href="/"
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/90 hover:text-white transition-all bg-white/10 hover:bg-white/20 border border-white/20 px-3.5 py-2 rounded-lg backdrop-blur-md active:scale-95 shadow-sm"
-                >
-                    <Home className="w-3.5 h-3.5 text-[#E5A844]" />
-                    <span>{isEn ? 'Home' : 'Beranda'}</span>
-                </Link>
+                <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={() => setLanguage(isEn ? 'id' : 'en')}
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/90 hover:text-white transition-all bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-2 rounded-lg backdrop-blur-md active:scale-95 shadow-sm cursor-pointer"
+                        title={isEn ? 'Ganti ke Bahasa Indonesia' : 'Switch to English'}
+                    >
+                        <Globe className="w-3.5 h-3.5 text-[#E5A844]" />
+                        <span>{isEn ? '🇮🇩 ID' : '🇬🇧 EN'}</span>
+                    </button>
+
+                    <Link
+                        href="/"
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/90 hover:text-white transition-all bg-white/10 hover:bg-white/20 border border-white/20 px-3.5 py-2 rounded-lg backdrop-blur-md active:scale-95 shadow-sm"
+                    >
+                        <Home className="w-3.5 h-3.5 text-[#E5A844]" />
+                        <span>{isEn ? 'Home' : 'Beranda'}</span>
+                    </Link>
+                </div>
             </header>
 
             {/* MAIN CONTAINER: 2-COLUMN LAYOUT ON DESKTOP */}
@@ -134,7 +145,7 @@ export default function Login({ status, notice }: LoginProps) {
                                     {/* EMAIL INPUT */}
                                     <div className="space-y-1">
                                         <label className="text-xs font-semibold text-neutral-800 block">
-                                            {t('auth.email')}
+                                            {isEn ? 'Email Address' : 'Alamat Email'}
                                         </label>
                                         <Input
                                             type="email"
@@ -144,7 +155,7 @@ export default function Login({ status, notice }: LoginProps) {
                                             autoCapitalize="none"
                                             autoCorrect="off"
                                             spellCheck={false}
-                                            placeholder="Masukkan email atau nomor handphone"
+                                            placeholder={isEn ? 'Enter your email or phone number' : 'Masukkan email atau nomor handphone'}
                                             value={data.email}
                                             onChange={(e) => setData('email', e.target.value)}
                                             className="h-11 sm:h-12 px-4 text-sm rounded-xl bg-neutral-50 text-neutral-900 border-neutral-300 focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-[#4A070B] focus-visible:border-[#4A070B] transition-all"
@@ -159,7 +170,7 @@ export default function Login({ status, notice }: LoginProps) {
                                     <div className="space-y-1">
                                         <div className="flex items-center justify-between">
                                             <label className="text-xs font-semibold text-neutral-800 block">
-                                                {t('auth.password')}
+                                                {isEn ? 'Password' : 'Kata Sandi'}
                                             </label>
                                         </div>
                                         <div className="relative">
@@ -167,7 +178,7 @@ export default function Login({ status, notice }: LoginProps) {
                                                 type={showPassword ? 'text' : 'password'}
                                                 name="password"
                                                 autoComplete="current-password"
-                                                placeholder="Masukkan kata sandi akun Anda"
+                                                placeholder={isEn ? 'Enter your account password' : 'Masukkan kata sandi akun Anda'}
                                                 value={data.password}
                                                 onChange={(e) => setData('password', e.target.value)}
                                                 className="h-11 sm:h-12 pl-4 pr-11 text-sm rounded-xl bg-neutral-50 text-neutral-900 border-neutral-300 focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-[#4A070B] focus-visible:border-[#4A070B] transition-all"
@@ -201,7 +212,7 @@ export default function Login({ status, notice }: LoginProps) {
                                                 onChange={(e) => setData('remember', e.target.checked)}
                                                 className="w-4 h-4 rounded border-neutral-300 text-[#4A070B] focus:ring-[#4A070B] cursor-pointer"
                                             />
-                                            <span className="font-medium text-neutral-700">{t('auth.remember_me')}</span>
+                                            <span className="font-medium text-neutral-700">{isEn ? 'Remember me' : 'Ingat saya'}</span>
                                         </label>
                                     </div>
 
@@ -214,7 +225,7 @@ export default function Login({ status, notice }: LoginProps) {
                                         {processing ? (
                                             <span className="flex items-center justify-center gap-2">
                                                 <Loader2 className="w-4 h-4 animate-spin" />
-                                                <span>{t('auth.processing')}</span>
+                                                <span>{isEn ? 'Signing In...' : 'Memproses...'}</span>
                                             </span>
                                         ) : (
                                             <span>{isEn ? 'Sign In' : 'Selanjutnya'}</span>

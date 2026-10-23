@@ -76,6 +76,19 @@ function setupNativePushListeners(csrfToken?: string, onNotificationReceived?: (
     if (!isNative || nativeListenersRegistered) return;
     nativeListenersRegistered = true;
 
+    // Create Android Notification Channel with custom sound
+    if (Capacitor.getPlatform() === 'android') {
+        PushNotifications.createChannel({
+            id: 'aroma_palace_channel',
+            name: 'Aroma Palace Notifications',
+            description: 'Notifikasi pesanan dan promo Aroma Palace',
+            importance: 5,
+            visibility: 1,
+            sound: 'notif',
+            vibration: true,
+        }).catch((e) => console.warn('[Native Push] createChannel error:', e));
+    }
+
     // 1. Success getting device FCM / APNs token
     PushNotifications.addListener('registration', async (token: Token) => {
         console.log('[Native Push] Registered with token:', token.value);
@@ -371,6 +384,24 @@ export function playNotificationChime(): void {
     if (typeof window === 'undefined') return;
 
     try {
+        const audio = new Audio('/sounds/notif.mp3');
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(() => {
+                playSynthesizedChime();
+            });
+            return;
+        }
+    } catch {
+        playSynthesizedChime();
+        return;
+    }
+
+    playSynthesizedChime();
+}
+
+function playSynthesizedChime(): void {
+    try {
         const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
         if (!AudioContextClass) return;
 
@@ -399,7 +430,7 @@ export function playNotificationChime(): void {
 
         osc2.start(now + 0.12);
         osc2.stop(now + 0.9);
-    } catch (e) {
+    } catch {
         // AudioContext might be blocked until user gesture, ignore silently
     }
 }

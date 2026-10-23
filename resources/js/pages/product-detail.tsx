@@ -975,7 +975,7 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
 
             {/* WRITE REVIEW MODAL */}
             <Dialog open={writeReviewOpen} onOpenChange={setWriteReviewOpen}>
-                <DialogContent className="max-w-md p-6 rounded-lg border-border shadow-none">
+                <DialogContent className="w-[calc(100vw-32px)] sm:w-full max-w-md p-5 sm:p-6 rounded-2xl border-border bg-card shadow-2xl">
                     <DialogHeader className="text-left space-y-1">
                         <DialogTitle className="text-base font-bold text-foreground">
                             {isEn ? 'Share Your Fragrance Experience' : 'Bagikan Pengalaman Aroma Anda'}
