@@ -86,6 +86,7 @@ interface OrderData {
     city?: string;
     postal_code?: string;
     courier?: string;
+    tracking_number?: string | null;
     shipping_cost?: number;
     shipping_cost_formatted?: string;
     subtotal?: number;
@@ -572,6 +573,15 @@ export default function OrdersPage({
                                             <span className="hidden sm:inline text-muted-foreground">{order.created_at}</span>
                                             <span className="hidden sm:inline text-muted-foreground">•</span>
                                             <span className="hidden sm:inline text-muted-foreground">{order.payment_channel}</span>
+                                            {order.tracking_number && (
+                                                <>
+                                                    <span className="hidden sm:inline text-muted-foreground">•</span>
+                                                    <span className="inline-flex items-center gap-1 font-mono text-[11px] font-bold text-[#4A070B] dark:text-[#E8D0BA] bg-[#4A070B]/10 dark:bg-[#E8D0BA]/15 px-2 py-0.5 rounded border border-[#4A070B]/20 dark:border-[#E8D0BA]/20">
+                                                        <Truck className="w-3 h-3 shrink-0" />
+                                                        <span>Resi: {order.tracking_number}</span>
+                                                    </span>
+                                                </>
+                                            )}
                                         </div>
 
                                         <div className="shrink-0">
@@ -839,6 +849,29 @@ export default function OrdersPage({
                                                     <div className="text-muted-foreground text-[11px]">
                                                         Express Delivery (1 - 3 Hari)
                                                     </div>
+                                                    {selectedOrder.tracking_number && (
+                                                        <div className="mt-2.5 p-2.5 rounded-lg bg-[#4A070B]/5 dark:bg-[#E8D0BA]/10 border border-[#4A070B]/20 dark:border-[#E8D0BA]/20 flex items-center justify-between gap-2">
+                                                            <div className="min-w-0">
+                                                                <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                                                                    Nomor Resi / AWB
+                                                                </div>
+                                                                <div className="font-mono text-xs sm:text-sm font-extrabold text-foreground truncate">
+                                                                    {selectedOrder.tracking_number}
+                                                                </div>
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    navigator.clipboard.writeText(selectedOrder.tracking_number!);
+                                                                    setCopiedCode(true);
+                                                                    setTimeout(() => setCopiedCode(false), 2000);
+                                                                }}
+                                                                className="px-2.5 py-1 text-xs font-semibold rounded-md border border-border/80 bg-background hover:bg-muted text-foreground transition-colors shrink-0 cursor-pointer shadow-none"
+                                                            >
+                                                                {copiedCode ? 'Tersalin' : 'Salin'}
+                                                            </button>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
 

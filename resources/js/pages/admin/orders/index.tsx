@@ -44,6 +44,7 @@ interface OrderSummary {
     store_id?: number | null;
     store_name?: string;
     courier?: string;
+    tracking_number?: string | null;
     city?: string;
     total_amount: number;
     total_amount_formatted: string;
@@ -341,8 +342,13 @@ export default function AdminOrdersIndex({
                                                             <Truck className="size-3 mr-1" /> Kurir
                                                         </Badge>
                                                         <div className="text-[10px] text-muted-foreground mt-1 truncate max-w-[140px]">
-                                                            {order.courier || 'JNE Express'}
+                                                            {order.courier || 'Kurir Rekanan'}
                                                         </div>
+                                                        {order.tracking_number && (
+                                                            <div className="text-[9.5px] font-mono text-primary font-semibold truncate max-w-[140px] mt-0.5">
+                                                                Resi: {order.tracking_number}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 )}
                                             </td>

@@ -16,14 +16,34 @@ import {
     User,
     Phone,
     MapPin,
-    Tag,
     FileText,
     Check,
+    ChevronDown,
+    Sparkles,
+    Copy,
+    Edit2,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
+import {
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+} from '@/components/ui/dialog';
 
 interface OrderItemDetail {
     id: number;
@@ -72,6 +92,7 @@ interface OrderDetail {
     city?: string;
     postal_code?: string;
     courier?: string;
+    tracking_number?: string | null;
     shipping_cost: number;
     shipping_cost_formatted: string;
     subtotal: number;
@@ -102,6 +123,22 @@ interface OrderShowProps {
 export default function AdminOrderShow({ order }: OrderShowProps) {
     const isPickup = order.delivery_type === 'pickup';
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+    const [isManualModalOpen, setIsManualModalOpen] = useState(false);
+    const [manualTrackingNumber, setManualTrackingNumber] = useState(order.tracking_number || '');
+    const [manualCourier, setManualCourier] = useState(order.courier || '');
+    const [manualError, setManualError] = useState('');
+    const [copiedTracking, setCopiedTracking] = useState(false);
+
+    React.useEffect(() => {
+        setManualTrackingNumber(order.tracking_number || '');
+        setManualCourier(order.courier || '');
+    }, [order.tracking_number, order.courier]);
+
+    const isPaid = order.payment_status === 'paid';
+    const canShip = (order.order_status === 'diproses' || isPaid) &&
+        order.order_status !== 'dikirim' &&
+        order.order_status !== 'selesai' &&
+        order.order_status !== 'dibatalkan';
 
     const currentStep = (() => {
         switch (order.order_status) {
@@ -125,6 +162,53 @@ export default function AdminOrderShow({ order }: OrderShowProps) {
                 onFinish: () => setIsUpdatingStatus(false),
             }
         );
+    };
+
+    const handleShipAutomatic = () => {
+        setIsUpdatingStatus(true);
+        router.patch(
+            `/manajemen-pesanan/${order.order_number}/status`,
+            {
+                status: 'dikirim',
+                shipping_mode: 'kiriminaja',
+            },
+            {
+                onFinish: () => setIsUpdatingStatus(false),
+            }
+        );
+    };
+
+    const handleShipManual = (e: React.FormEvent) => {
+        e.preventDefault();
+        const trimmed = manualTrackingNumber.trim();
+        if (!trimmed) {
+            setManualError('Nomor resi wajib diisi.');
+            return;
+        }
+
+        setIsUpdatingStatus(true);
+        router.patch(
+            `/manajemen-pesanan/${order.order_number}/status`,
+            {
+                status: 'dikirim',
+                shipping_mode: 'manual',
+                tracking_number: trimmed,
+                courier: manualCourier.trim() || order.courier || 'Kurir Rekanan',
+            },
+            {
+                onFinish: () => {
+                    setIsUpdatingStatus(false);
+                    setIsManualModalOpen(false);
+                },
+            }
+        );
+    };
+
+    const handleCopyTracking = () => {
+        if (!order.tracking_number) return;
+        navigator.clipboard.writeText(order.tracking_number);
+        setCopiedTracking(true);
+        setTimeout(() => setCopiedTracking(false), 2000);
     };
 
     const renderPaymentStatusBadge = () => {
@@ -212,24 +296,77 @@ export default function AdminOrderShow({ order }: OrderShowProps) {
 
                         {/* Direct Action Buttons */}
                         <div className="flex flex-wrap items-center gap-2">
-                            {order.order_status === 'diproses' && (
-                                <Button
-                                    size="sm"
-                                    onClick={() => handleUpdateStatus('dikirim')}
-                                    disabled={isUpdatingStatus}
-                                >
-                                    {isPickup ? (
-                                        <>
-                                            <ShoppingBag className="size-4 mr-1.5" />
-                                            <span>Siap Diambil di Butik</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Truck className="size-4 mr-1.5" />
-                                            <span>Telah Dikirim Kurir</span>
-                                        </>
-                                    )}
-                                </Button>
+                            {canShip && (
+                                isPickup ? (
+                                    <Button
+                                        size="sm"
+                                        onClick={() => handleUpdateStatus('dikirim')}
+                                        disabled={isUpdatingStatus}
+                                    >
+                                        <ShoppingBag className="size-4 mr-1.5" />
+                                        <span>Siap Diambil di Butik</span>
+                                    </Button>
+                                ) : (
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button
+                                                size="sm"
+                                                disabled={isUpdatingStatus}
+                                                className="bg-[#4A070B] hover:bg-[#360407] text-[#E8D0BA] dark:bg-[#E8D0BA] dark:text-[#4A070B] dark:hover:bg-[#dfc4ab] font-medium shadow-xs"
+                                            >
+                                                <Truck className="size-4 mr-1.5" />
+                                                <span>Kirim</span>
+                                                <ChevronDown className="size-3.5 ml-1.5 opacity-70" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" className="w-64 p-1.5">
+                                            <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground px-2 py-1.5">
+                                                Metode Penerbitan Resi
+                                            </DropdownMenuLabel>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem
+                                                onClick={handleShipAutomatic}
+                                                disabled={isUpdatingStatus}
+                                                className="cursor-pointer py-2 px-2.5 rounded-md focus:bg-accent"
+                                            >
+                                                <div className="flex items-start gap-2.5">
+                                                    <div className="p-1.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">
+                                                        <Sparkles className="size-4" />
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-xs font-semibold text-foreground">Resi Otomatis</div>
+                                                        <div className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
+                                                            Generate resi resmi dari KiriminAja
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem
+                                                onClick={() => {
+                                                    setManualTrackingNumber(order.tracking_number || '');
+                                                    setManualCourier(order.courier || '');
+                                                    setManualError('');
+                                                    setIsManualModalOpen(true);
+                                                }}
+                                                disabled={isUpdatingStatus}
+                                                className="cursor-pointer py-2 px-2.5 rounded-md focus:bg-accent"
+                                            >
+                                                <div className="flex items-start gap-2.5">
+                                                    <div className="p-1.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5">
+                                                        <FileText className="size-4" />
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-xs font-semibold text-foreground">Resi Manual</div>
+                                                        <div className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
+                                                            Input nomor resi & kurir sendiri
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                )
                             )}
 
                             {order.order_status === 'dikirim' && (
@@ -380,9 +517,85 @@ export default function AdminOrderShow({ order }: OrderShowProps) {
                                         )}
                                     </div>
                                 ) : (
-                                    <div className="space-y-1 text-xs">
-                                        <div className="text-muted-foreground font-medium">Alamat Tujuan:</div>
-                                        <div className="rounded-lg border p-3 bg-muted/30 space-y-1">
+                                    <>
+                                        {order.tracking_number ? (
+                                            <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3.5 space-y-2">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                                                        <Truck className="size-3.5 text-primary" />
+                                                        <span>Nomor Resi / AWB</span>
+                                                    </span>
+                                                    <Badge variant="outline" className="text-[10px] font-mono uppercase bg-background">
+                                                        {order.courier || 'Kurir Rekanan'}
+                                                    </Badge>
+                                                </div>
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <span className="font-mono text-sm sm:text-base font-extrabold text-foreground tracking-wider select-all">
+                                                        {order.tracking_number}
+                                                    </span>
+                                                    <div className="flex items-center gap-1.5 shrink-0">
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={handleCopyTracking}
+                                                            className="h-7 px-2.5 text-xs"
+                                                        >
+                                                            {copiedTracking ? (
+                                                                <>
+                                                                    <Check className="size-3 mr-1 text-emerald-600" />
+                                                                    <span>Tersalin</span>
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <Copy className="size-3 mr-1" />
+                                                                    <span>Salin</span>
+                                                                </>
+                                                            )}
+                                                        </Button>
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => {
+                                                                setManualTrackingNumber(order.tracking_number || '');
+                                                                setManualCourier(order.courier || '');
+                                                                setManualError('');
+                                                                setIsManualModalOpen(true);
+                                                            }}
+                                                            className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                                                        >
+                                                            <Edit2 className="size-3 mr-1" />
+                                                            <span>Ubah</span>
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (order.order_status === 'dikirim' || order.order_status === 'selesai') ? (
+                                            <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 p-3 flex items-center justify-between gap-2">
+                                                <div className="text-xs text-amber-800 dark:text-amber-300">
+                                                    Pesanan telah dikirim namun nomor resi belum dicatat.
+                                                </div>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        setManualTrackingNumber('');
+                                                        setManualCourier(order.courier || '');
+                                                        setManualError('');
+                                                        setIsManualModalOpen(true);
+                                                    }}
+                                                    className="h-7 text-xs shrink-0"
+                                                >
+                                                    Input Resi
+                                                </Button>
+                                            </div>
+                                        ) : null}
+
+                                        <div className="space-y-1 text-xs">
+                                            <div className="text-muted-foreground font-medium">Alamat Tujuan:</div>
+                                            <div className="rounded-lg border p-3 bg-muted/30 space-y-1">
                                             <div className="text-foreground">{order.shipping_address || '-'}</div>
                                             <div className="font-medium text-foreground">
                                                 {[
@@ -395,6 +608,7 @@ export default function AdminOrderShow({ order }: OrderShowProps) {
                                             </div>
                                         </div>
                                     </div>
+                                    </>
                                 )}
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
@@ -478,16 +692,34 @@ export default function AdminOrderShow({ order }: OrderShowProps) {
                                     <Package className="size-3.5 mr-2 text-blue-500" />
                                     <span>Set ke Diproses</span>
                                 </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleUpdateStatus('dikirim')}
-                                    disabled={isUpdatingStatus || order.order_status === 'dikirim'}
-                                    className="w-full justify-start text-xs"
-                                >
-                                    <Truck className="size-3.5 mr-2 text-indigo-500" />
-                                    <span>Set ke {isPickup ? 'Siap Diambil' : 'Dikirim'}</span>
-                                </Button>
+                                {isPickup ? (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleUpdateStatus('dikirim')}
+                                        disabled={isUpdatingStatus || order.order_status === 'dikirim'}
+                                        className="w-full justify-start text-xs"
+                                    >
+                                        <Truck className="size-3.5 mr-2 text-indigo-500" />
+                                        <span>Set ke Siap Diambil</span>
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                            setManualTrackingNumber(order.tracking_number || '');
+                                            setManualCourier(order.courier || '');
+                                            setManualError('');
+                                            setIsManualModalOpen(true);
+                                        }}
+                                        disabled={isUpdatingStatus || order.order_status === 'dikirim'}
+                                        className="w-full justify-start text-xs"
+                                    >
+                                        <Truck className="size-3.5 mr-2 text-indigo-500" />
+                                        <span>Set ke Dikirim (Input Resi)</span>
+                                    </Button>
+                                )}
                                 <Button
                                     variant="outline"
                                     size="sm"
@@ -503,6 +735,77 @@ export default function AdminOrderShow({ order }: OrderShowProps) {
                     </div>
                 </div>
             </div>
+
+            {/* Modal Dialog Input Resi Manual */}
+            <Dialog open={isManualModalOpen} onOpenChange={setIsManualModalOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <FileText className="size-5 text-[#4A070B] dark:text-[#E8D0BA]" />
+                            <span>Kirim Pesanan - Resi Manual</span>
+                        </DialogTitle>
+                        <DialogDescription>
+                            Masukkan kurir dan nomor resi pengiriman untuk pesanan #{order.order_number}.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <form onSubmit={handleShipManual} className="space-y-4 py-2">
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-foreground">
+                                Kurir Pengiriman
+                            </label>
+                            <Input
+                                value={manualCourier}
+                                onChange={(e) => setManualCourier(e.target.value)}
+                                placeholder="Contoh: J&T Express, JNE, SiCepat"
+                                className="text-xs"
+                            />
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-foreground">
+                                Nomor Resi / No. Waybill <span className="text-destructive">*</span>
+                            </label>
+                            <Input
+                                value={manualTrackingNumber}
+                                onChange={(e) => {
+                                    setManualTrackingNumber(e.target.value);
+                                    if (manualError) setManualError('');
+                                }}
+                                placeholder="Contoh: JP8291038291, TJNE01928392"
+                                className="font-mono text-xs"
+                                autoFocus
+                            />
+                            {manualError && (
+                                <p className="text-[11px] text-destructive font-medium">{manualError}</p>
+                            )}
+                            <p className="text-[11px] text-muted-foreground">
+                                Nomor resi akan langsung dikirimkan ke akun pembeli dan dapat dipantau di status pesanan.
+                            </p>
+                        </div>
+
+                        <DialogFooter className="pt-2 gap-2 sm:gap-0">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setIsManualModalOpen(false)}
+                                disabled={isUpdatingStatus}
+                            >
+                                Batal
+                            </Button>
+                            <Button
+                                type="submit"
+                                size="sm"
+                                disabled={isUpdatingStatus}
+                                className="bg-[#4A070B] hover:bg-[#360407] text-[#E8D0BA] dark:bg-[#E8D0BA] dark:text-[#4A070B] dark:hover:bg-[#dfc4ab]"
+                            >
+                                {isUpdatingStatus ? 'Menyimpan...' : 'Kirim Pesanan'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </AdminLayout>
     );
 }

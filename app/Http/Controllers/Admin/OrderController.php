@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Services\CatalogService;
 use App\Services\FirebaseNotificationService;
+use App\Services\KiriminAjaService;
 use App\Services\MembershipService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -128,6 +129,9 @@ class OrderController extends Controller
                 'string',
                 'in:menunggu_pembayaran,diproses,dikirim,pengambilan,selesai,dibatalkan',
             ],
+            'shipping_mode' => ['nullable', 'string', 'in:kiriminaja,manual'],
+            'tracking_number' => ['nullable', 'string', 'max:100'],
+            'courier' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:500'],
         ]);
 
@@ -148,6 +152,33 @@ class OrderController extends Controller
 
         if (isset($validated['notes'])) {
             $orderModel->notes = $validated['notes'];
+        }
+
+        $customFlash = null;
+
+        // Handle shipping & tracking number when status is dikirim or when tracking_number is provided
+        if ($newStatus === 'dikirim' && $orderModel->delivery_type !== 'pickup') {
+            $shippingMode = $validated['shipping_mode'] ?? null;
+
+            if ($shippingMode === 'kiriminaja') {
+                $kirimResult = app(KiriminAjaService::class)->requestPickupForOrder($orderModel);
+                $orderModel->tracking_number = $kirimResult['tracking_number'];
+                if (! empty($kirimResult['courier']) && empty($orderModel->courier)) {
+                    $orderModel->courier = $kirimResult['courier'];
+                }
+                $customFlash = "Pesanan #{$orderModel->order_number} berhasil dikirim dengan Resi Otomatis KiriminAja: {$orderModel->tracking_number}.";
+            } elseif (! empty($validated['tracking_number'])) {
+                $orderModel->tracking_number = trim($validated['tracking_number']);
+                if (! empty($validated['courier'])) {
+                    $orderModel->courier = trim($validated['courier']);
+                }
+                $customFlash = "Pesanan #{$orderModel->order_number} berhasil dikirim dengan Resi Manual: {$orderModel->tracking_number}.";
+            }
+        } elseif (! empty($validated['tracking_number'])) {
+            $orderModel->tracking_number = trim($validated['tracking_number']);
+            if (! empty($validated['courier'])) {
+                $orderModel->courier = trim($validated['courier']);
+            }
         }
 
         $orderModel->save();
@@ -173,7 +204,9 @@ class OrderController extends Controller
             default => $newStatus,
         };
 
-        return back()->with('success', "Status pesanan #{$orderModel->order_number} berhasil diperbarui menjadi \"{$label}\".");
+        $flashMessage = $customFlash ?? "Status pesanan #{$orderModel->order_number} berhasil diperbarui menjadi \"{$label}\".";
+
+        return back()->with('success', $flashMessage);
     }
 
     /**
@@ -210,6 +243,7 @@ class OrderController extends Controller
             'store_id' => $order->store_id,
             'store_name' => $order->store?->name,
             'courier' => $order->courier,
+            'tracking_number' => $order->tracking_number,
             'city' => $order->city,
             'total_amount' => $order->total_amount,
             'total_amount_formatted' => 'Rp '.number_format($order->total_amount, 0, ',', '.'),
@@ -306,6 +340,7 @@ class OrderController extends Controller
             'city' => $order->city_name,
             'postal_code' => $order->postal_code,
             'courier' => $order->courier,
+            'tracking_number' => $order->tracking_number,
             'shipping_cost' => (int) $order->shipping_cost,
             'shipping_cost_formatted' => $order->shipping_cost > 0 ? 'Rp '.number_format($order->shipping_cost, 0, ',', '.') : 'Gratis',
             'subtotal' => (int) $order->subtotal,

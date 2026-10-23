@@ -399,13 +399,19 @@ class FirebaseNotificationService
         }
 
         $courierName = $order->courier ?: 'Kurir Rekanan';
+        $trackingText = $order->tracking_number ? " (No. Resi: {$order->tracking_number})" : '';
 
         $this->sendToUser(
             user: $order->user_id,
             title: 'Pesanan Anda Sedang Dikirim!',
-            body: "Pesanan #{$order->order_number} telah diserahkan kepada {$courierName}. Nantikan aroma mewah Anda segera tiba.",
+            body: "Pesanan #{$order->order_number} telah diserahkan kepada {$courierName}{$trackingText}. Nantikan aroma mewah Anda segera tiba.",
             url: url('/account/orders'),
-            data: ['order_id' => (string) $order->id, 'type' => 'order_shipped']
+            data: [
+                'order_id' => (string) $order->id,
+                'order_number' => (string) $order->order_number,
+                'tracking_number' => (string) ($order->tracking_number ?? ''),
+                'type' => 'order_shipped',
+            ]
         );
     }
 

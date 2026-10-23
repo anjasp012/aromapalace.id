@@ -323,6 +323,11 @@
                 <td style="width: 35%; vertical-align: top;">
                     <div class="meta-heading">Metode Pengiriman</div>
                     <div style="font-weight: 700; color: #111827;">{{ $order['courier'] }}</div>
+                    @if (!empty($order['tracking_number']))
+                        <div style="color: #4b5563; font-size: 9.5px; font-family: monospace; margin-top: 3px;">
+                            No. Resi: <strong>{{ $order['tracking_number'] }}</strong>
+                        </div>
+                    @endif
                 </td>
                 <td style="width: 65%; vertical-align: top;">
                     <div class="meta-heading">Alamat Pengiriman</div>

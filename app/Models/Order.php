@@ -24,6 +24,7 @@ use Illuminate\Support\Carbon;
  * @property string $city
  * @property string|null $postal_code
  * @property string $courier
+ * @property string|null $tracking_number
  * @property int $shipping_cost
  * @property string $payment_method
  * @property string|null $payment_channel
@@ -59,6 +60,7 @@ use Illuminate\Support\Carbon;
     'subdistrict_name',
     'postal_code',
     'courier',
+    'tracking_number',
     'shipping_cost',
     'payment_method',
     'payment_channel',

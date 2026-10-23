@@ -28,6 +28,7 @@ interface InvoiceProps {
         city: string;
         postal_code?: string | null;
         courier: string;
+        tracking_number?: string | null;
         shipping_cost: number;
         shipping_cost_formatted: string;
         payment_method: string;
@@ -357,6 +358,11 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
                                 <div className="font-bold text-gray-900">
                                     {order.courier}
                                 </div>
+                                {order.tracking_number && (
+                                    <div className="text-[10px] text-gray-600 font-mono mt-1">
+                                        No. Resi: <span className="font-bold text-gray-900">{order.tracking_number}</span>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="col-span-8">
