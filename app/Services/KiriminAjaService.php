@@ -431,6 +431,7 @@ class KiriminAjaService
             'height' => 10,
             'item_value' => max(10000, (int) $order->total_amount),
             'shipping_cost' => (int) $order->shipping_cost,
+            'insurance_amount' => 0,
             'service' => $courierCode,
             'service_type' => $serviceType,
             'item_name' => 'Parfum Aroma Palace',

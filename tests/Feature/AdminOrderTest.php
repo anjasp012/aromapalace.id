@@ -5,6 +5,8 @@ use App\Models\OrderItem;
 use App\Models\Store;
 use App\Models\User;
 use App\Services\KiriminAjaService;
+use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\Http;
 
 test('guest cannot access admin routes and is redirected to login', function () {
     $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
@@ -324,4 +326,55 @@ test('admin receives flash error when kiriminaja request pickup fails', function
     // Status must remain diproses, not changed to dikirim!
     expect($order->status)->toBe('diproses')
         ->and($order->tracking_number)->toBeNull();
+});
+
+test('kiriminaja service sends insurance_amount as 0 without insurance fee', function () {
+    Http::fake([
+        '*/api/mitra/v2/schedules' => Http::response(['status' => true, 'schedules' => [['clock' => '2026-10-25 14:00:00']]], 200),
+        '*/api/mitra/v6.1/request_pickup' => Http::response([
+            'status' => true,
+            'pickup_number' => 'PICKUP-TEST-123',
+            'details' => [
+                [
+                    'awb' => 'AWB-TEST-123',
+                    'kj_order_id' => 'KJ-123',
+                ],
+            ],
+        ], 200),
+    ]);
+
+    $customer = User::factory()->create();
+    $order = Order::create([
+        'order_number' => 'AP-INS-'.uniqid(),
+        'user_id' => $customer->id,
+        'delivery_type' => 'delivery',
+        'recipient_name' => 'Citra Kirana',
+        'recipient_phone' => '081234567897',
+        'shipping_address' => 'Jl. Senopati No. 20',
+        'city' => 'Jakarta Selatan',
+        'courier' => 'JNE Express Reguler',
+        'shipping_cost' => 18000,
+        'payment_method' => 'qris',
+        'payment_status' => 'paid',
+        'status' => 'diproses',
+        'subtotal' => 350000,
+        'discount_amount' => 0,
+        'total_amount' => 368000,
+    ]);
+
+    $service = app(KiriminAjaService::class);
+    $result = $service->requestPickupForOrder($order);
+
+    expect($result['success'])->toBeTrue()
+        ->and($result['tracking_number'])->toBe('AWB-TEST-123');
+
+    Http::assertSent(function (Request $request) {
+        if (! str_contains($request->url(), 'request_pickup')) {
+            return false;
+        }
+
+        $package = $request['packages'][0] ?? [];
+
+        return isset($package['insurance_amount']) && $package['insurance_amount'] === 0;
+    });
 });
