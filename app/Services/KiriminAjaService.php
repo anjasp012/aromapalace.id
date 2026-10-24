@@ -104,40 +104,40 @@ class KiriminAjaService
         }
 
         try {
-            $originId = (int) Setting::get('shipping_district_id', config('services.kiriminaja.origin_district_id', 4712));
-            $response = Http::withToken($token)
-                ->withHeaders([
-                    'Accept' => 'application/json',
-                    'Content-Type' => 'application/json',
-                ])
-                ->timeout(10)
-                ->post("{$baseUrl}/api/mitra/v6.1/shipping_price", [
-                    'origin' => $originId ?: 4712,
-                    'destination' => 2101,
-                    'weight' => 500,
-                    'courier' => ['jne'],
-                ]);
+            // Configure SDK with the test mode & token
+            $sdkMode = $activeMode === 'production' ? Mode::Production : Mode::Staging;
+            KiriminAjaConfig::setMode($sdkMode);
+            KiriminAjaConfig::setApiTokenKey($token);
+            $baseUrl = $activeMode === 'production' ? 'https://client.kiriminaja.com' : 'https://tdev.kiriminaja.com';
+            KiriminAjaConfig::setBaseUrl($baseUrl);
 
-            $json = $response->json() ?? [];
+            $data = new ShippingFullPriceData;
+            $data->origin = 1;
+            $data->destination = 2;
+            $data->weight = 1000;
 
-            if ($response->successful() && ($json['status'] ?? false)) {
+            $response = KiriminAja::fullShippingPrice($data);
+
+            if ($response && ($response->status ?? false)) {
                 return [
                     'success' => true,
                     'mode' => $activeMode,
-                    'message' => 'Koneksi ke KiriminAja ('.ucfirst($activeMode).') berhasil & terautentikasi.',
+                    'message' => 'Koneksi ke KiriminAja ('.ucfirst($activeMode).') via SDK berhasil & terautentikasi.',
                     'token_preview' => $tokenPreview,
-                    'details' => $json,
+                    'details' => (array) ($response->data ?? []),
                 ];
             }
 
-            $rawText = $json['text'] ?? ($json['message'] ?? 'Response error dari KiriminAja');
-            if ($response->status() === 401 || str_contains(strtolower((string) $rawText), 'unauthorized')) {
+            $rawText = $response->message ?? ($response->text ?? 'Response error dari KiriminAja SDK');
+            $rawDetails = (array) ($response->data ?? []);
+
+            if (str_contains(strtolower((string) $rawText), 'unauthorized')) {
                 return [
                     'success' => false,
                     'mode' => $activeMode,
                     'message' => "Unauthorized: API Key ditolak oleh server KiriminAja ({$activeMode}). Pastikan API Key sesuai dengan akun KiriminAja mode ".ucfirst($activeMode).'.',
                     'token_preview' => $tokenPreview,
-                    'details' => $json,
+                    'details' => $rawDetails,
                 ];
             }
 
@@ -146,7 +146,7 @@ class KiriminAjaService
                 'mode' => $activeMode,
                 'message' => "KiriminAja merespons: {$rawText}",
                 'token_preview' => $tokenPreview,
-                'details' => $json,
+                'details' => $rawDetails,
             ];
         } catch (\Throwable $e) {
             return [
