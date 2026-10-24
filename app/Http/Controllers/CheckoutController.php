@@ -156,16 +156,20 @@ class CheckoutController extends Controller
             ? $this->kiriminAjaService->getShippingRates($originId, (int) $primaryAddress->district_id, $totalWeight)
             : [];
 
+        $initialShippingCost = (! empty($initialShippingRates) && isset($initialShippingRates[0]['price']))
+            ? (int) $initialShippingRates[0]['price']
+            : 0;
+
         return Inertia::render('checkout', [
             'items' => $items,
             'subtotal' => $subtotal,
             'subtotal_formatted' => 'Rp '.number_format($subtotal, 0, ',', '.'),
-            'shipping_fee' => 0,
-            'shipping_fee_formatted' => 'Ongkos kirim dihitung saat pemilihan kurir',
+            'shipping_fee' => $initialShippingCost,
+            'shipping_fee_formatted' => $initialShippingCost > 0 ? 'Rp '.number_format($initialShippingCost, 0, ',', '.') : 'Ongkos kirim dihitung saat pemilihan kurir',
             'discount_amount' => $discountAmount,
             'discount_amount_formatted' => 'Rp '.number_format($discountAmount, 0, ',', '.'),
-            'total' => $total,
-            'total_formatted' => 'Rp '.number_format($total, 0, ',', '.'),
+            'total' => max(0, $total + $initialShippingCost),
+            'total_formatted' => 'Rp '.number_format(max(0, $total + $initialShippingCost), 0, ',', '.'),
             'initial_voucher' => $initialVoucher,
             'available_vouchers' => $availableVouchers,
             'stores' => $stores,

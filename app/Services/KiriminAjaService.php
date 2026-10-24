@@ -295,6 +295,10 @@ class KiriminAjaService
                     $serviceName = (string) ($arr['service_name'] ?? strtoupper($serviceCode));
                     $serviceType = (string) ($arr['service_type'] ?? 'REG');
                     $cost = (int) ($arr['cost'] ?? 0);
+                    if ($cost <= 0) {
+                        continue;
+                    }
+
                     $etd = (string) ($arr['etd'] ?? '');
 
                     $results[] = [
@@ -303,7 +307,7 @@ class KiriminAjaService
                         'name' => $serviceName,
                         'service' => $serviceType,
                         'price' => $cost,
-                        'price_formatted' => $cost === 0 ? 'Gratis' : 'Rp '.number_format($cost, 0, ',', '.'),
+                        'price_formatted' => 'Rp '.number_format($cost, 0, ',', '.'),
                         'etd' => ! empty($etd) ? 'Estimasi '.$etd.' Hari' : '1-3 Hari',
                     ];
                 }

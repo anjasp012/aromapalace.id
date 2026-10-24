@@ -453,6 +453,13 @@ export default function CheckoutPage({
                         courier: firstCourier.name || firstCourier.code || '',
                         shipping_cost: firstCourier.price || 0,
                     }));
+                } else if (!cancelled) {
+                    setShippingRates([]);
+                    setData((prev) => ({
+                        ...prev,
+                        courier: '',
+                        shipping_cost: 0,
+                    }));
                 }
             })
             .catch(() => { /* silently fallback */ })
@@ -550,6 +557,7 @@ export default function CheckoutPage({
 
     const handleSelectAddress = (addr: UserAddress) => {
         setSelectedAddress(addr);
+        setSelectedCourierIndex(0);
         setData((prev) => ({
             ...prev,
             address_id: addr.id,
@@ -562,6 +570,8 @@ export default function CheckoutPage({
             subdistrict_name: addr.subdistrict_name || '',
             city: addr.city_name,
             postal_code: addr.postal_code,
+            courier: '',
+            shipping_cost: 0,
         }));
     };
 
@@ -1410,15 +1420,28 @@ export default function CheckoutPage({
 
                                     <div className="flex items-center justify-between text-muted-foreground">
                                         <span>Total Ongkos Kirim</span>
-                                        <span className="font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md text-[10.5px]">
-                                            {deliveryType === 'pickup'
-                                                ? 'Gratis (Ambil di Butik)'
-                                                : selectedCourier?.price && selectedCourier.price > 0
-                                                    ? `Rp ${selectedCourier.price.toLocaleString('id-ID')}`
-                                                    : selectedCourier?.price === 0
-                                                        ? 'Gratis'
-                                                        : (courierOptions.length === 0 ? '-' : 'Rp 0')}
-                                        </span>
+                                        {deliveryType === 'pickup' ? (
+                                            <span className="font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md text-[10.5px]">
+                                                Gratis (Ambil di Butik)
+                                            </span>
+                                        ) : selectedCourier && selectedCourier.price > 0 ? (
+                                            <span className="font-bold text-foreground text-xs">
+                                                Rp {selectedCourier.price.toLocaleString('id-ID')}
+                                            </span>
+                                        ) : loadingRates ? (
+                                            <span className="text-xs text-muted-foreground flex items-center gap-1 font-medium">
+                                                <Loader2 className="w-3 h-3 animate-spin text-[#4A070B] dark:text-[#E8D0BA]" />
+                                                Menghitung...
+                                            </span>
+                                        ) : courierOptions.length === 0 ? (
+                                            <span className="text-xs text-destructive font-medium">
+                                                {selectedAddress ? 'Tidak tersedia' : '-'}
+                                            </span>
+                                        ) : (
+                                            <span className="text-xs text-muted-foreground font-medium">
+                                                Belum dipilih
+                                            </span>
+                                        )}
                                     </div>
 
                                     {appliedVoucher && voucherDiscount > 0 && (
