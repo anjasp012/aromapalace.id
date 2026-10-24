@@ -391,6 +391,36 @@ export async function enablePushNotifications(csrfToken?: string): Promise<{ suc
 }
 
 /**
+ * Disable push notifications and unregister token on backend
+ */
+export async function disablePushNotifications(csrfToken?: string): Promise<{ success: boolean; message: string }> {
+    try {
+        const token = localStorage.getItem('aromapalace_fcm_token');
+        if (token) {
+            await fetch('/api/device-tokens', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': csrfToken || (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+                },
+                body: JSON.stringify({ token }),
+            });
+        }
+        localStorage.setItem('aromapalace_notifications_enabled', 'false');
+        return {
+            success: true,
+            message: 'Notifikasi berhasil dinonaktifkan.',
+        };
+    } catch (err: any) {
+        return {
+            success: false,
+            message: err?.message || 'Gagal menonaktifkan notifikasi.',
+        };
+    }
+}
+
+/**
  * Play a high quality luxury notification chime sound using Web Audio API
  */
 export function playNotificationChime(): void {
