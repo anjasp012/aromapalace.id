@@ -21,9 +21,9 @@ class SettingController extends Controller
         $settings = Setting::getAll();
 
         // Ensure defaults for KiriminAja integration
-        $settings['kiriminaja_mode'] = $settings['kiriminaja_mode'] ?? config('services.kiriminaja.mode', 'staging');
-        $settings['kiriminaja_api_key'] = $settings['kiriminaja_api_key'] ?? config('services.kiriminaja.api_key', '');
-        $settings['kiriminaja_prefix'] = $settings['kiriminaja_prefix'] ?? config('services.kiriminaja.prefix', 'ARPL');
+        $settings['kiriminaja_mode'] = $settings['kiriminaja_mode'] ?? 'staging';
+        $settings['kiriminaja_api_key'] = $settings['kiriminaja_api_key'] ?? '';
+        $settings['kiriminaja_prefix'] = $settings['kiriminaja_prefix'] ?? 'ARPL';
 
         return Inertia::render('admin/settings/index', [
             'settings' => $settings,

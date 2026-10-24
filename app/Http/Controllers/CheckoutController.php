@@ -213,8 +213,8 @@ class CheckoutController extends Controller
 
         $weight = max(100, (int) ($validated['weight'] ?? 1000));
 
-        // Origin district ID from database settings or fallback to config / 4712
-        $originId = (int) Setting::get('shipping_district_id', config('services.kiriminaja.origin_district_id', 4712));
+        // Origin district ID from database settings (defaults to 2101 - Jakarta Selatan)
+        $originId = (int) Setting::get('shipping_district_id', 2101);
 
         $rates = $destinationId > 0
             ? $this->kiriminAjaService->getShippingRates($originId, $destinationId, $weight)

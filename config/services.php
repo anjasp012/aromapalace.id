@@ -43,15 +43,8 @@ return [
     ],
 
     'kiriminaja' => [
-        'mode' => env('KIRIMINAJA_MODE', 'staging'),
-        'api_key' => env('KIRIMINAJA_API_KEY', ''),
-        'base_url' => env('KIRIMINAJA_BASE_URL'),
-        'pin' => env('KIRIMINAJA_PIN', '123456'),
-        'prefix' => env('KIRIMINAJA_PREFIX', 'ARPL'),
-        'cache_store' => env('KIRIMINAJA_CACHE_STORE', 'file'),
-        'cache_prefix' => env('KIRIMINAJA_CACHE_PREFIX', 'kiriminaja:'),
-        // Subdistrict ID (kecamatan) of the warehouse / origin. Set via KIRIMINAJA_ORIGIN_DISTRICT_ID.
-        'origin_district_id' => env('KIRIMINAJA_ORIGIN_DISTRICT_ID', 4712),
+        'cache_store' => 'file',
+        'cache_prefix' => 'kiriminaja:',
     ],
 
 ];

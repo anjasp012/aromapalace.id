@@ -52,37 +52,27 @@ class KiriminAjaService
     }
 
     /**
-     * Get active KiriminAja API key from database Setting or config fallback.
+     * Get active KiriminAja API key from database Setting.
      */
     public function getApiKey(): string
     {
-        $dbKey = Setting::get('kiriminaja_api_key');
-        if (! empty($dbKey)) {
-            return trim((string) $dbKey);
-        }
-
-        return trim((string) config('services.kiriminaja.api_key', ''));
+        return trim((string) Setting::get('kiriminaja_api_key', ''));
     }
 
     /**
-     * Get active KiriminAja mode ('staging' or 'production').
+     * Get active KiriminAja mode ('staging' or 'production') from database Setting.
      */
     public function getMode(): string
     {
-        $dbMode = Setting::get('kiriminaja_mode');
-        if (! empty($dbMode)) {
-            return (string) $dbMode;
-        }
-
-        return (string) config('services.kiriminaja.mode', 'staging');
+        return (string) Setting::get('kiriminaja_mode', 'staging');
     }
 
     /**
-     * Get active KiriminAja base URL.
+     * Get active KiriminAja base URL from database Setting or mode default.
      */
     public function getBaseUrl(?string $mode = null): string
     {
-        $customBaseUrl = config('services.kiriminaja.base_url');
+        $customBaseUrl = Setting::get('kiriminaja_base_url');
         if (! empty($customBaseUrl)) {
             return rtrim((string) $customBaseUrl, '/');
         }
@@ -95,18 +85,13 @@ class KiriminAjaService
     }
 
     /**
-     * Get registered KiriminAja order prefix.
+     * Get registered KiriminAja order prefix from database Setting.
      */
     public function getPrefix(): string
     {
         $dbPrefix = Setting::get('kiriminaja_prefix');
-        if (! empty($dbPrefix)) {
-            return strtoupper(trim((string) $dbPrefix));
-        }
 
-        $configPrefix = config('services.kiriminaja.prefix', 'ARPL');
-
-        return strtoupper(trim((string) $configPrefix)) ?: 'ARPL';
+        return strtoupper(trim((string) $dbPrefix)) ?: 'ARPL';
     }
 
     /**
@@ -782,7 +767,7 @@ class KiriminAjaService
         $senderName = (string) Setting::get('shipping_sender_name', Setting::get('store_name', 'Aroma Palace Official'));
         $senderPhone = (string) Setting::get('shipping_sender_phone', Setting::get('store_phone', '081288889999'));
         $senderAddress = (string) Setting::get('shipping_address', Setting::get('store_address', 'Jl. Kemang Raya No. 10, Jakarta Selatan'));
-        $originDistrictId = (int) Setting::get('shipping_district_id', config('services.kiriminaja.origin_district_id', 4712));
+        $originDistrictId = (int) Setting::get('shipping_district_id', 2101);
         $platformName = (string) Setting::get('store_name', 'Aroma Palace');
 
         $token = $this->getApiKey();
