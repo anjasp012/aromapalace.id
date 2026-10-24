@@ -331,7 +331,7 @@ test('admin receives flash error when kiriminaja request pickup fails', function
 test('kiriminaja service sends insurance_amount as 0 without insurance fee', function () {
     Http::fake([
         '*/api/mitra/v2/schedules' => Http::response(['status' => true, 'schedules' => [['clock' => '2026-10-25 14:00:00']]], 200),
-        '*/api/mitra/v6.1/request_pickup' => Http::response([
+        '*/api/mitra/v6.2/request_pickup' => Http::response([
             'status' => true,
             'pickup_number' => 'PICKUP-TEST-123',
             'details' => [
@@ -378,6 +378,8 @@ test('kiriminaja service sends insurance_amount as 0 without insurance fee', fun
         return isset($package['insurance_amount'])
             && $package['insurance_amount'] === 0
             && isset($request['pin'])
-            && $request['pin'] === '123456';
+            && $request['pin'] === '123456'
+            && isset($package['order_id'])
+            && strlen($package['order_id']) <= 20;
     });
 });

@@ -332,8 +332,26 @@ class KiriminAjaService
      */
     public function requestPickupForOrder(Order $order): array
     {
-        $prefix = (string) Setting::get('kiriminaja_prefix', 'ARPL');
-        $orderIdForKiriminAja = $prefix.'-'.$order->order_number;
+        $prefix = strtoupper(trim((string) Setting::get('kiriminaja_prefix', 'ARPL')));
+        if (empty($prefix)) {
+            $prefix = 'ARPL';
+        }
+
+        // Clean order number if it already contains prefix or default AP- prefix
+        $rawNumber = (string) $order->order_number;
+        if (str_starts_with($rawNumber, $prefix.'-')) {
+            $orderIdForKiriminAja = $rawNumber;
+        } elseif (str_starts_with($rawNumber, 'AP-')) {
+            $orderIdForKiriminAja = $prefix.'-'.substr($rawNumber, 3);
+        } else {
+            $orderIdForKiriminAja = $prefix.'-'.$rawNumber;
+        }
+
+        // KiriminAja requires order_id to be at most 20 characters
+        if (strlen($orderIdForKiriminAja) > 20) {
+            $allowedSuffixLen = max(1, 20 - (strlen($prefix) + 1));
+            $orderIdForKiriminAja = $prefix.'-'.substr($rawNumber, -$allowedSuffixLen);
+        }
 
         // 1. Tentukan kurir & tipe layanan
         $courierRaw = strtolower((string) ($order->courier ?: 'jne'));
