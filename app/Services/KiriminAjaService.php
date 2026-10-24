@@ -29,6 +29,8 @@ class KiriminAjaService
         ])
           ->post('https://tdev.kiriminaja.com/api/mitra/province');
 
+          $res = KiriminAja::getProvince();
+          dd($res);
  dd([
     'status' => $response->status(),
     'successful' => $response->successful(),
@@ -36,7 +38,6 @@ class KiriminAjaService
     'json' => $response->json(),
 ]);
         try {
-            $res = KiriminAja::getProvince();
             return ($res->status && is_array($res->data)) ? $res->data : [];
         } catch (\Throwable $e) {
             Log::warning('KiriminAja getProvince error: ' . $e->getMessage());
