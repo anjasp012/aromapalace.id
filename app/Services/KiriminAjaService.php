@@ -44,7 +44,7 @@ class KiriminAjaService
      */
     public function getProvinces(): array
     {
-        $cached = Cache::get('kiriminaja:provinces:v2');
+        $cached = Cache::get('kiriminaja:provinces');
         if (is_array($cached) && ! empty($cached)) {
             return $cached;
         }
@@ -63,7 +63,7 @@ class KiriminAjaService
                     ];
                 }, $res->data));
 
-                Cache::put('kiriminaja:provinces:v2', $items, now()->addDays(30));
+                Cache::put('kiriminaja:provinces', $items, now()->addDays(30));
 
                 return $items;
             }
@@ -83,7 +83,7 @@ class KiriminAjaService
      */
     public function getCities(int $provinceId): array
     {
-        $cacheKey = "kiriminaja:cities:v2:{$provinceId}";
+        $cacheKey = "kiriminaja:cities:{$provinceId}";
         $cached = Cache::get($cacheKey);
         if (is_array($cached) && ! empty($cached)) {
             return $cached;
@@ -130,7 +130,7 @@ class KiriminAjaService
      */
     public function getDistricts(int $cityId): array
     {
-        $cacheKey = "kiriminaja:districts:v2:{$cityId}";
+        $cacheKey = "kiriminaja:districts:{$cityId}";
         $cached = Cache::get($cacheKey);
         if (is_array($cached) && ! empty($cached)) {
             return $cached;
@@ -176,7 +176,7 @@ class KiriminAjaService
      */
     public function getSubdistricts(int $districtId): array
     {
-        $cacheKey = "kiriminaja:subdistricts:v2:{$districtId}";
+        $cacheKey = "kiriminaja:subdistricts:{$districtId}";
         $cached = Cache::get($cacheKey);
         if (is_array($cached) && ! empty($cached)) {
             return $cached;
@@ -222,7 +222,7 @@ class KiriminAjaService
      */
     public function getCouriers(): array
     {
-        return Cache::remember('kiriminaja:couriers:v1', now()->addDays(7), function () {
+        return Cache::remember('kiriminaja:couriers', now()->addDays(7), function () {
             try {
                 $res = KiriminAja::getCouriers();
                 if ($res->status && is_array($res->data) && ! empty($res->data)) {

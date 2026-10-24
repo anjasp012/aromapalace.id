@@ -1404,9 +1404,11 @@ export default function CheckoutPage({
                                         <span className="font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md text-[10.5px]">
                                             {deliveryType === 'pickup'
                                                 ? 'Gratis (Ambil di Butik)'
-                                                : selectedCourier.price > 0
+                                                : selectedCourier?.price && selectedCourier.price > 0
                                                     ? `Rp ${selectedCourier.price.toLocaleString('id-ID')}`
-                                                    : 'Gratis'}
+                                                    : selectedCourier?.price === 0
+                                                        ? 'Gratis'
+                                                        : (courierOptions.length === 0 ? '-' : 'Rp 0')}
                                         </span>
                                     </div>
 
@@ -1725,7 +1727,7 @@ export default function CheckoutPage({
                                     <div className="flex items-start justify-between gap-2">
                                         <span className="text-muted-foreground shrink-0">Kurir</span>
                                         <span className="font-semibold text-foreground text-right">
-                                            {selectedCourier.courierBrand} ({selectedCourier.priceFormatted})
+                                            {selectedCourier ? `${selectedCourier.courierBrand} (${selectedCourier.priceFormatted})` : (isEn ? 'Not selected' : 'Belum dipilih')}
                                         </span>
                                     </div>
                                 </>
