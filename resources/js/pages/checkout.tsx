@@ -344,16 +344,8 @@ export default function CheckoutPage({
     const [shippingRates, setShippingRates] = useState<ShippingRate[]>([]);
     const [loadingRates, setLoadingRates] = useState(false);
 
-    // Build courier options from server (KiriminAja SDK) - merged with live rates
+    // Build courier options strictly from real KiriminAja live rates (no dummy/fallback couriers)
     const courierOptions = useMemo(() => {
-        const list = propCouriers.length > 0 ? propCouriers : [
-            { code: 'jne', name: 'JNE Express', region: 'DOMESTIC', type: 'Express' },
-            { code: 'jnt', name: 'J&T Express', region: 'DOMESTIC', type: 'Express' },
-            { code: 'sicepat', name: 'SiCepat Express', region: 'DOMESTIC', type: 'Express' },
-            { code: 'lion', name: 'Lion Parcel', region: 'DOMESTIC', type: 'Express' },
-            { code: 'anteraja', name: 'AnterAja', region: 'DOMESTIC', type: 'Express' },
-        ];
-
         if (shippingRates.length > 0) {
             return shippingRates.map((r) => ({
                 id: r.code,
@@ -367,30 +359,8 @@ export default function CheckoutPage({
             }));
         }
 
-        // Determine fallback label based on actual state
-        const hasCoverage = !!(selectedAddress?.district_id || selectedAddress?.subdistrict_id);
-        let fallbackLabel: string;
-        if (!selectedAddress) {
-            fallbackLabel = 'Pilih Alamat Dulu';
-        } else if (!hasCoverage) {
-            fallbackLabel = 'Alamat Tidak Lengkap';
-        } else if (loadingRates) {
-            fallbackLabel = 'Menghitung...';
-        } else {
-            fallbackLabel = 'Pilih Pengiriman';
-        }
-
-        return list.map((c) => ({
-            id: c.code,
-            code: c.code,
-            name: c.name,
-            courierBrand: c.name.split(' ')[0],
-            type: c.type,
-            price: 0,
-            priceFormatted: fallbackLabel,
-            etd: `Layanan ${c.type}`,
-        }));
-    }, [propCouriers, shippingRates, selectedAddress, loadingRates]);
+        return [];
+    }, [shippingRates]);
 
     // Keep selectedAddress and useForm data strictly synchronized with default/primary address
     useEffect(() => {
@@ -1039,12 +1009,17 @@ export default function CheckoutPage({
                                                         }
                                                         return;
                                                     }
+                                                    if (courierOptions.length === 0) {
+                                                        return;
+                                                    }
                                                     setShowCourierModal(!showCourierModal);
                                                 }}
                                                 className={`rounded-md border p-3 transition flex items-center justify-between gap-3 ${
                                                     !selectedAddress
                                                         ? 'border-dashed border-amber-500/40 bg-amber-500/5 cursor-pointer hover:border-amber-500'
-                                                        : 'border-border/80 hover:border-border cursor-pointer bg-background/50'
+                                                        : courierOptions.length === 0 && !loadingRates
+                                                            ? 'border-destructive/40 bg-destructive/5'
+                                                            : 'border-border/80 hover:border-border cursor-pointer bg-background/50'
                                                 }`}
                                             >
                                                 {!selectedAddress ? (
@@ -1052,6 +1027,20 @@ export default function CheckoutPage({
                                                         <MapPin className="w-4 h-4 text-amber-600 shrink-0" />
                                                         <span className="font-medium">
                                                             {isEn ? 'Select or add a delivery address first to calculate shipping' : 'Tentukan alamat pengiriman terlebih dahulu untuk melihat opsi kurir & ongkir'}
+                                                        </span>
+                                                    </div>
+                                                ) : loadingRates ? (
+                                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                        <Loader2 className="w-4 h-4 animate-spin text-[#4A070B] dark:text-[#E8D0BA] shrink-0" />
+                                                        <span className="font-medium">
+                                                            {isEn ? 'Calculating shipping rates...' : 'Menghitung ongkos kirim ekspedisi...'}
+                                                        </span>
+                                                    </div>
+                                                ) : courierOptions.length === 0 ? (
+                                                    <div className="flex items-center gap-2 text-xs text-destructive">
+                                                        <AlertCircle className="w-4 h-4 text-destructive shrink-0" />
+                                                        <span className="font-semibold">
+                                                            {isEn ? 'No courier delivery available for this address' : 'Tidak ada kurir pengiriman yang tersedia untuk wilayah ini'}
                                                         </span>
                                                     </div>
                                                 ) : (
@@ -1074,24 +1063,21 @@ export default function CheckoutPage({
                                                     </div>
                                                 )}
                                                 <div className="flex items-center gap-2 shrink-0">
-                                                    <span className={`text-xs font-bold ${selectedCourier?.price > 0 ? 'text-[#4A070B] dark:text-[#E8D0BA]' : 'text-amber-700 dark:text-amber-300'}`}>
-                                                        {!selectedAddress ? (isEn ? '+ Choose Address' : '+ Pilih Alamat') : (selectedCourier?.priceFormatted || 'Pilih Kurir')}
+                                                    <span className={`text-xs font-bold ${selectedCourier?.price && selectedCourier.price > 0 ? 'text-[#4A070B] dark:text-[#E8D0BA]' : (selectedAddress && courierOptions.length === 0 ? 'text-destructive' : 'text-amber-700 dark:text-amber-300')}`}>
+                                                        {!selectedAddress ? (isEn ? '+ Choose Address' : '+ Pilih Alamat') : (selectedCourier?.priceFormatted || (courierOptions.length === 0 ? (isEn ? 'Unavailable' : 'Tidak Tersedia') : 'Pilih Kurir'))}
                                                     </span>
-                                                    <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                                                    </svg>
+                                                    {courierOptions.length > 0 && (
+                                                        <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                                                        </svg>
+                                                    )}
                                                 </div>
                                             </div>
 
-                                            {/* Dropdown Options for Couriers (from KiriminAja SDK + live rates) */}
-                                            {showCourierModal && (
+                                            {/* Dropdown Options for Couriers (only displayed if couriers are available) */}
+                                            {showCourierModal && courierOptions.length > 0 && (
                                                 <div className="rounded-md border border-border/80 p-2 space-y-1 bg-background/80 max-h-64 overflow-y-auto">
-                                                    {loadingRates ? (
-                                                        <div className="p-3 text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
-                                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                                            Memuat ongkos kirim...
-                                                        </div>
-                                                    ) : courierOptions.map((c, idx) => (
+                                                    {courierOptions.map((c, idx) => (
                                                         <div
                                                             key={c.id}
                                                             onClick={() => handleSelectCourier(idx)}

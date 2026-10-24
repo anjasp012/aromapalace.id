@@ -196,28 +196,8 @@ class KiriminAjaService
                 Log::warning('KiriminAja getCouriers error: '.$e->getMessage());
             }
 
-            return $this->fallbackCouriers();
+            return [];
         });
-    }
-
-    /**
-     * Daftar kurir domestik utama sebagai fallback.
-     *
-     * @return array<int, array{code: string, name: string, region: string, type: string}>
-     */
-    public function fallbackCouriers(): array
-    {
-        return [
-            ['code' => 'jne', 'name' => 'JNE Express', 'region' => 'DOMESTIC', 'type' => 'Express'],
-            ['code' => 'jnt', 'name' => 'J&T Express', 'region' => 'DOMESTIC', 'type' => 'Express'],
-            ['code' => 'sicepat', 'name' => 'SiCepat Express', 'region' => 'DOMESTIC', 'type' => 'Express'],
-            ['code' => 'spx', 'name' => 'SPX Express', 'region' => 'DOMESTIC', 'type' => 'Express'],
-            ['code' => 'lion', 'name' => 'Lion Parcel', 'region' => 'DOMESTIC', 'type' => 'Express'],
-            ['code' => 'anteraja', 'name' => 'AnterAja', 'region' => 'DOMESTIC', 'type' => 'Express'],
-            ['code' => 'idx', 'name' => 'ID Express', 'region' => 'DOMESTIC', 'type' => 'Express'],
-            ['code' => 'sap', 'name' => 'SAP Express', 'region' => 'DOMESTIC', 'type' => 'Express'],
-            ['code' => 'tiki', 'name' => 'TIKI', 'region' => 'DOMESTIC', 'type' => 'Express'],
-        ];
     }
 
     /**
