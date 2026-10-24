@@ -12,12 +12,6 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use KiriminAja\Base\Config\KiriminAjaConfig;
-use KiriminAja\Models\PackageData;
-use KiriminAja\Models\PackageItemData;
-use KiriminAja\Models\RequestPickupData;
-use KiriminAja\Models\RequestPickupDataList;
-use KiriminAja\Models\ShippingFullPriceData;
-use KiriminAja\Models\ShippingPriceData;
 use KiriminAja\Services\KiriminAja;
 
 class KiriminAjaService
@@ -59,7 +53,7 @@ class KiriminAjaService
     public function getProvinces(): array
     {
         $res = KiriminAja::getProvince();
-        dd(KiriminAja());
+        dd($res);
         try {
             return ($res->status && is_array($res->data)) ? $res->data : [];
         } catch (\Throwable $e) {
