@@ -52,26 +52,44 @@ class KiriminAjaService
 
     public function getProvinces(): array
     {
-        $res = KiriminAja::getProvince();
+        // 1. Panggilan via SDK
+        $sdkRes = KiriminAja::getProvince();
 
-        $vpsIpv4 = null;
-        $vpsDualStack = null;
+        // 2. Panggilan langsung via HTTP untuk membaca respon asli server KiriminAja
+        $rawResBody = null;
+        $rawResStatus = null;
         try {
-            $vpsIpv4 = Http::timeout(3)->get('https://api.ipify.org')->body();
+            $raw = Http::timeout(5)->withHeaders([
+                'Authorization' => 'Bearer ' . $this->apiKey,
+                'Accept' => 'application/json',
+            ])->post(rtrim($this->baseUrl, '/') . '/api/mitra/province', []);
+
+            $rawResStatus = $raw->status();
+            $rawResBody = $raw->json() ?: $raw->body();
+        } catch (\Throwable $e) {
+            $rawResBody = 'Curl error: ' . $e->getMessage();
+        }
+
+        // 3. Cek IP yang digunakan VPS
+        $ipv4 = null;
+        $ipv6or4 = null;
+        try {
+            $ipv4 = Http::timeout(3)->get('https://api.ipify.org')->body();
         } catch (\Throwable $e) {}
 
         try {
-            $vpsDualStack = Http::timeout(3)->get('https://api64.ipify.org')->body();
+            $ipv6or4 = Http::timeout(3)->get('https://api64.ipify.org')->body();
         } catch (\Throwable $e) {}
 
         dd([
-            'response' => $res,
-            'api_key_filled' => !empty($this->apiKey),
-            'mode' => $this->mode,
-            'baseUrl' => $this->baseUrl,
-            'vps_ipv4_only' => $vpsIpv4,
-            'vps_default_ip_used' => $vpsDualStack,
-            'is_using_ipv6' => str_contains($vpsDualStack ?? '', ':'),
+            'sdk_result' => $sdkRes,
+            'kiriminaja_raw_status' => $rawResStatus,
+            'kiriminaja_raw_response' => $rawResBody,
+            'vps_ipv4' => $ipv4,
+            'vps_default_ip' => $ipv6or4,
+            'apakah_vps_default_ipv6' => str_contains($ipv6or4 ?? '', ':'),
+            'api_key_digunakan' => substr($this->apiKey, 0, 15) . '...',
+            'base_url' => $this->baseUrl,
         ]);
 
         try {
