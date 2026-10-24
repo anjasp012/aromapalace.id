@@ -123,8 +123,8 @@ class KiriminAjaService
             ];
         }
         KiriminAjaConfig::setMode('staging');
-    KiriminAjaConfig::setApiTokenKey($token);
-    KiriminAjaConfig::setBaseUrl($baseUrl);
+        KiriminAjaConfig::setApiTokenKey("v4.local.4SJhuA3f8eNSoRjtlkJRMcGpjEELOLzSIWl8HaJ7vnYVVHUe8-NHIU-gEE7BiowIF6GYKQP_FBodo0rJw1eNXa9DvDA0xNs-RzVZN8JarOkS3ZROhXYezDbTgRQknMnNyna9E8hXdagBB6gz6MsWj9OAeKaVIzYiARCbfPQs");
+        KiriminAjaConfig::setBaseUrl("https://tdev.kiriminaja.com");
         $provinces = KiriminAja::getProvince();
         dd($provinces);
         try {
