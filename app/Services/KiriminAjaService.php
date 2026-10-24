@@ -52,7 +52,6 @@ class KiriminAjaService
 
     public function getProvinces(): array
     {
-        dd(KiriminAjaConfig::getBaseUrl(), KiriminAjaConfig::getMode());
         $res = KiriminAja::getProvince();
         dd($res);
         try {
