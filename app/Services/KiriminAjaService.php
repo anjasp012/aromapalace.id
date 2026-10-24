@@ -36,7 +36,7 @@ class KiriminAjaService
     /**
      * Apply active configuration to the KiriminAjaConfig SDK singleton.
      */
-    public function applyConfig(?string $apiKey = null, ?string $mode = null): void
+    public function applyConfig(?string $apiKey = null, ?string $mode = null, ?string $baseUrl = null): void
     {
         $activeMode = $mode ?: $this->getMode();
         $rawToken = $apiKey !== null && trim($apiKey) !== '' ? $apiKey : $this->getApiKey();
@@ -45,9 +45,12 @@ class KiriminAjaService
         KiriminAjaConfig::setMode($activeMode === 'production' ? Mode::Production : Mode::Staging);
         KiriminAjaConfig::setApiTokenKey($token);
 
-        $baseUrl = $this->getBaseUrl($activeMode);
-        if (! empty($baseUrl)) {
-            KiriminAjaConfig::setBaseUrl($baseUrl);
+        $effectiveBaseUrl = $baseUrl !== null
+            ? (trim($baseUrl) !== '' ? rtrim(trim($baseUrl), '/') : null)
+            : $this->getBaseUrl();
+
+        if ($effectiveBaseUrl !== null && $effectiveBaseUrl !== '') {
+            KiriminAjaConfig::setBaseUrl($effectiveBaseUrl);
         }
     }
 
@@ -68,20 +71,16 @@ class KiriminAjaService
     }
 
     /**
-     * Get active KiriminAja base URL from database Setting or mode default.
+     * Get optional custom KiriminAja base URL from database Setting (null by default).
      */
-    public function getBaseUrl(?string $mode = null): string
+    public function getBaseUrl(): ?string
     {
         $customBaseUrl = Setting::get('kiriminaja_base_url');
         if (! empty($customBaseUrl)) {
-            return rtrim((string) $customBaseUrl, '/');
+            return rtrim(trim((string) $customBaseUrl), '/');
         }
 
-        $activeMode = $mode ?: $this->getMode();
-
-        return $activeMode === 'production'
-            ? 'https://client.kiriminaja.com'
-            : 'https://tdev.kiriminaja.com';
+        return null;
     }
 
     /**
@@ -99,7 +98,7 @@ class KiriminAjaService
      *
      * @return array{success: bool, mode: string, message: string, token_preview: string, details?: mixed}
      */
-    public function testConnection(?string $apiKey = null, ?string $mode = null): array
+    public function testConnection(?string $apiKey = null, ?string $mode = null, ?string $baseUrl = null): array
     {
         $activeMode = $mode ?: $this->getMode();
         $token = $apiKey !== null ? trim(trim($apiKey), "\"'") : $this->getApiKey();
@@ -124,7 +123,7 @@ class KiriminAjaService
         }
 
         try {
-            $this->applyConfig($token, $activeMode);
+            $this->applyConfig($token, $activeMode, $baseUrl);
 
             $data = new ShippingFullPriceData;
             $data->origin = 1;

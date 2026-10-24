@@ -24,6 +24,7 @@ class SettingController extends Controller
         $settings['kiriminaja_mode'] = $settings['kiriminaja_mode'] ?? 'staging';
         $settings['kiriminaja_api_key'] = $settings['kiriminaja_api_key'] ?? '';
         $settings['kiriminaja_prefix'] = $settings['kiriminaja_prefix'] ?? 'ARPL';
+        $settings['kiriminaja_base_url'] = $settings['kiriminaja_base_url'] ?? '';
 
         return Inertia::render('admin/settings/index', [
             'settings' => $settings,
@@ -61,6 +62,7 @@ class SettingController extends Controller
             'kiriminaja_mode' => ['nullable', 'string', 'in:staging,production'],
             'kiriminaja_api_key' => ['nullable', 'string', 'max:500'],
             'kiriminaja_prefix' => ['nullable', 'string', 'max:20'],
+            'kiriminaja_base_url' => ['nullable', 'string', 'max:255'],
         ]);
 
         if (isset($validated['kiriminaja_api_key'])) {
@@ -68,6 +70,9 @@ class SettingController extends Controller
         }
         if (isset($validated['kiriminaja_prefix'])) {
             $validated['kiriminaja_prefix'] = strtoupper(trim((string) $validated['kiriminaja_prefix']));
+        }
+        if (isset($validated['kiriminaja_base_url'])) {
+            $validated['kiriminaja_base_url'] = rtrim(trim((string) $validated['kiriminaja_base_url']), '/');
         }
 
         $settingConfigs = [
@@ -91,6 +96,7 @@ class SettingController extends Controller
             'kiriminaja_mode' => ['group' => 'shipping', 'type' => 'string'],
             'kiriminaja_api_key' => ['group' => 'shipping', 'type' => 'string'],
             'kiriminaja_prefix' => ['group' => 'shipping', 'type' => 'string'],
+            'kiriminaja_base_url' => ['group' => 'shipping', 'type' => 'string'],
         ];
 
         foreach ($settingConfigs as $key => $config) {
@@ -117,13 +123,18 @@ class SettingController extends Controller
         $validated = $request->validate([
             'mode' => ['nullable', 'string', 'in:staging,production'],
             'api_key' => ['nullable', 'string', 'max:500'],
+            'base_url' => ['nullable', 'string', 'max:255'],
         ]);
 
         $apiKey = array_key_exists('api_key', $request->all())
             ? (string) ($request->input('api_key') ?? '')
             : null;
 
-        $result = $service->testConnection($apiKey, $validated['mode'] ?? null);
+        $result = $service->testConnection(
+            $apiKey,
+            $validated['mode'] ?? null,
+            $validated['base_url'] ?? null
+        );
 
         return response()->json($result);
     }

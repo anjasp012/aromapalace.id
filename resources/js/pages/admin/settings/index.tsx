@@ -46,6 +46,7 @@ export default function SettingsIndex({ settings = {} }: SettingsIndexProps) {
         kiriminaja_mode: settings.kiriminaja_mode || 'staging',
         kiriminaja_api_key: settings.kiriminaja_api_key || '',
         kiriminaja_prefix: settings.kiriminaja_prefix || 'ARPL',
+        kiriminaja_base_url: settings.kiriminaja_base_url || '',
 
         // Alamat Origin Pengiriman & KiriminAja
         shipping_sender_name: settings.shipping_sender_name || '',
@@ -87,6 +88,7 @@ export default function SettingsIndex({ settings = {} }: SettingsIndexProps) {
                 body: JSON.stringify({
                     mode: data.kiriminaja_mode,
                     api_key: data.kiriminaja_api_key,
+                    base_url: data.kiriminaja_base_url || undefined,
                 }),
             });
             const json = await res.json();
@@ -557,6 +559,27 @@ export default function SettingsIndex({ settings = {} }: SettingsIndexProps) {
                                     </p>
                                     {errors.kiriminaja_prefix && (
                                         <p className="text-xs text-destructive">{errors.kiriminaja_prefix}</p>
+                                    )}
+                                </div>
+
+                                {/* Custom Base URL (Opsional / Boleh Null) */}
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                                        <span>Custom Base URL (Opsional)</span>
+                                        <span className="text-[10px] text-muted-foreground font-mono">Boleh kosong (default SDK)</span>
+                                    </label>
+                                    <Input
+                                        type="text"
+                                        placeholder={data.kiriminaja_mode === 'production' ? 'https://client.kiriminaja.com (default)' : 'https://tdev.kiriminaja.com (default)'}
+                                        value={data.kiriminaja_base_url}
+                                        onChange={(e) => setData('kiriminaja_base_url', e.target.value)}
+                                        className="h-9 text-xs font-mono"
+                                    />
+                                    <p className="text-[11px] text-muted-foreground">
+                                        Biarkan kosong agar SDK otomatis menggunakan endpoint resmi sesuai mode. Hanya diisi jika Anda menggunakan reverse proxy / endpoint khusus.
+                                    </p>
+                                    {errors.kiriminaja_base_url && (
+                                        <p className="text-xs text-destructive">{errors.kiriminaja_base_url}</p>
                                     )}
                                 </div>
 
