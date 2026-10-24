@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\KiriminAjaService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use KiriminAja\Services\KiriminAja;
 
 class CoverageAreaController extends Controller
 {
@@ -17,6 +18,10 @@ class CoverageAreaController extends Controller
      */
     public function provinces(): JsonResponse
     {
+        
+          $res = KiriminAja::getProvince();
+          dd($res);
+
         $provinces = $this->kiriminAjaService->getProvinces();
 
         return response()->json([
