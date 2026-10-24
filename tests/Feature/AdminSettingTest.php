@@ -56,6 +56,9 @@ test('admin can update store contact and kiriminaja origin settings', function (
             'shipping_subdistrict_id' => 54300,
             'shipping_subdistrict_name' => 'Senayan',
             'shipping_postal_code' => '12190',
+            'kiriminaja_mode' => 'staging',
+            'kiriminaja_api_key' => 'v4.local.test_key_sample',
+            'kiriminaja_prefix' => 'ARPL',
         ]);
 
     $response->assertRedirect();
@@ -66,4 +69,24 @@ test('admin can update store contact and kiriminaja origin settings', function (
     expect(Setting::get('shipping_sender_name'))->toBe('Gudang Pusat Aroma Palace');
     expect((int) Setting::get('shipping_district_id'))->toBe(4715);
     expect(Setting::get('shipping_postal_code'))->toBe('12190');
+    expect(Setting::get('kiriminaja_mode'))->toBe('staging');
+    expect(Setting::get('kiriminaja_api_key'))->toBe('v4.local.test_key_sample');
+    expect(Setting::get('kiriminaja_prefix'))->toBe('ARPL');
+});
+
+test('admin can test kiriminaja connection via endpoint', function () {
+    $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
+    $admin = User::factory()->admin()->create();
+
+    $response = $this->actingAs($admin)
+        ->postJson("http://{$adminDomain}/pengaturan/test-kiriminaja", [
+            'mode' => 'staging',
+            'api_key' => '',
+        ]);
+
+    $response->assertOk()
+        ->assertJson([
+            'success' => false,
+            'mode' => 'staging',
+        ]);
 });

@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use App\Services\KiriminAjaService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -17,6 +19,11 @@ class SettingController extends Controller
     public function index(): Response
     {
         $settings = Setting::getAll();
+
+        // Ensure defaults for KiriminAja integration
+        $settings['kiriminaja_mode'] = $settings['kiriminaja_mode'] ?? config('services.kiriminaja.mode', 'staging');
+        $settings['kiriminaja_api_key'] = $settings['kiriminaja_api_key'] ?? config('services.kiriminaja.api_key', '');
+        $settings['kiriminaja_prefix'] = $settings['kiriminaja_prefix'] ?? config('services.kiriminaja.prefix', 'ARPL');
 
         return Inertia::render('admin/settings/index', [
             'settings' => $settings,
@@ -49,7 +56,19 @@ class SettingController extends Controller
             'shipping_subdistrict_id' => ['nullable', 'integer'],
             'shipping_subdistrict_name' => ['nullable', 'string', 'max:255'],
             'shipping_postal_code' => ['nullable', 'string', 'max:20'],
+
+            // KiriminAja API Integration
+            'kiriminaja_mode' => ['nullable', 'string', 'in:staging,production'],
+            'kiriminaja_api_key' => ['nullable', 'string', 'max:500'],
+            'kiriminaja_prefix' => ['nullable', 'string', 'max:20'],
         ]);
+
+        if (isset($validated['kiriminaja_api_key'])) {
+            $validated['kiriminaja_api_key'] = trim((string) $validated['kiriminaja_api_key']);
+        }
+        if (isset($validated['kiriminaja_prefix'])) {
+            $validated['kiriminaja_prefix'] = strtoupper(trim((string) $validated['kiriminaja_prefix']));
+        }
 
         $settingConfigs = [
             'store_name' => ['group' => 'contact', 'type' => 'string'],
@@ -69,6 +88,9 @@ class SettingController extends Controller
             'shipping_subdistrict_id' => ['group' => 'shipping', 'type' => 'integer'],
             'shipping_subdistrict_name' => ['group' => 'shipping', 'type' => 'string'],
             'shipping_postal_code' => ['group' => 'shipping', 'type' => 'string'],
+            'kiriminaja_mode' => ['group' => 'shipping', 'type' => 'string'],
+            'kiriminaja_api_key' => ['group' => 'shipping', 'type' => 'string'],
+            'kiriminaja_prefix' => ['group' => 'shipping', 'type' => 'string'],
         ];
 
         foreach ($settingConfigs as $key => $config) {
@@ -84,6 +106,25 @@ class SettingController extends Controller
 
         Setting::clearCache();
 
-        return back()->with('success', 'Pengaturan kontak toko dan alamat asal KiriminAja berhasil disimpan.');
+        return back()->with('success', 'Pengaturan toko, integrasi KiriminAja, dan alamat asal berhasil disimpan.');
+    }
+
+    /**
+     * Test KiriminAja API connection and authorization.
+     */
+    public function testKiriminAja(Request $request, KiriminAjaService $service): JsonResponse
+    {
+        $validated = $request->validate([
+            'mode' => ['nullable', 'string', 'in:staging,production'],
+            'api_key' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $apiKey = array_key_exists('api_key', $request->all())
+            ? (string) ($request->input('api_key') ?? '')
+            : null;
+
+        $result = $service->testConnection($apiKey, $validated['mode'] ?? null);
+
+        return response()->json($result);
     }
 }

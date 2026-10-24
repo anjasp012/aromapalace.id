@@ -124,4 +124,5 @@ Route::middleware(['auth', 'admin'])->group(function () {
     // Store & Origin Shipping Settings
     Route::get('/pengaturan', [SettingController::class, 'index'])->name('settings.index');
     Route::post('/pengaturan', [SettingController::class, 'update'])->name('settings.update');
+    Route::post('/pengaturan/test-kiriminaja', [SettingController::class, 'testKiriminAja'])->name('settings.test-kiriminaja');
 });

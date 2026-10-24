@@ -16,6 +16,11 @@ import {
     ShieldCheck,
     Store,
     Loader2,
+    Key,
+    Eye,
+    EyeOff,
+    RefreshCw,
+    ExternalLink,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -37,6 +42,11 @@ export default function SettingsIndex({ settings = {} }: SettingsIndexProps) {
         store_whatsapp: settings.store_whatsapp || '',
         store_description: settings.store_description || '',
 
+        // Integrasi KiriminAja (Kredensial & Logistik)
+        kiriminaja_mode: settings.kiriminaja_mode || 'staging',
+        kiriminaja_api_key: settings.kiriminaja_api_key || '',
+        kiriminaja_prefix: settings.kiriminaja_prefix || 'ARPL',
+
         // Alamat Origin Pengiriman & KiriminAja
         shipping_sender_name: settings.shipping_sender_name || '',
         shipping_sender_phone: settings.shipping_sender_phone || '',
@@ -51,6 +61,45 @@ export default function SettingsIndex({ settings = {} }: SettingsIndexProps) {
         shipping_subdistrict_name: settings.shipping_subdistrict_name || '',
         shipping_postal_code: settings.shipping_postal_code || '',
     });
+
+    // KiriminAja test connection state
+    const [showApiKey, setShowApiKey] = useState(false);
+    const [testingKiriminAja, setTestingKiriminAja] = useState(false);
+    const [testResult, setTestResult] = useState<{
+        success: boolean;
+        message: string;
+        mode?: string;
+        token_preview?: string;
+    } | null>(null);
+
+    const handleTestKiriminAja = async () => {
+        setTestingKiriminAja(true);
+        setTestResult(null);
+        try {
+            const csrfToken = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '';
+            const res = await fetch('/pengaturan/test-kiriminaja', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                body: JSON.stringify({
+                    mode: data.kiriminaja_mode,
+                    api_key: data.kiriminaja_api_key,
+                }),
+            });
+            const json = await res.json();
+            setTestResult(json);
+        } catch (err: any) {
+            setTestResult({
+                success: false,
+                message: 'Gagal menghubungi server untuk menguji koneksi: ' + (err?.message || err),
+            });
+        } finally {
+            setTestingKiriminAja(false);
+        }
+    };
 
     // Coverage hierarchy lists
     const [provinces, setProvinces] = useState<SearchableOption[]>([]);
@@ -376,14 +425,193 @@ export default function SettingsIndex({ settings = {} }: SettingsIndexProps) {
                             </CardContent>
                         </Card>
 
+                        {/* BAGIAN 1B: INTEGRASI KIRIMINAJA (MODE & API KEY) */}
+                        <Card className="shadow-xs border-border/80">
+                            <CardHeader className="pb-4">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2 text-[#4A070B] dark:text-red-400">
+                                        <Key className="size-4.5" />
+                                        <CardTitle className="text-base font-bold">Integrasi KiriminAja</CardTitle>
+                                    </div>
+                                    <Badge
+                                        variant="outline"
+                                        className={
+                                            data.kiriminaja_mode === 'production'
+                                                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-300 font-semibold text-[11px]'
+                                                : 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-300 font-semibold text-[11px]'
+                                        }
+                                    >
+                                        {data.kiriminaja_mode === 'production' ? 'Production (Live)' : 'Staging (Sandbox)'}
+                                    </Badge>
+                                </div>
+                                <CardDescription className="text-xs">
+                                    Kredensial API KiriminAja resmi untuk cek ongkir otomatis dan penerbitan Resi Otomatis (Request Pickup kurir).
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {/* Mode Selection */}
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                                        <span>Mode Lingkungan API</span>
+                                        <span className="text-destructive">*</span>
+                                    </label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setData('kiriminaja_mode', 'staging')}
+                                            className={`p-2.5 rounded-xl border text-left transition-all ${
+                                                data.kiriminaja_mode === 'staging'
+                                                    ? 'border-amber-500 bg-amber-500/10 text-amber-950 dark:text-amber-200 ring-1 ring-amber-500'
+                                                    : 'border-border/80 hover:bg-muted/40 text-muted-foreground'
+                                            }`}
+                                        >
+                                            <div className="font-bold text-xs">Staging (Sandbox)</div>
+                                            <div className="text-[10px] opacity-80 mt-0.5">tdev.kiriminaja.com (Uji coba)</div>
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setData('kiriminaja_mode', 'production')}
+                                            className={`p-2.5 rounded-xl border text-left transition-all ${
+                                                data.kiriminaja_mode === 'production'
+                                                    ? 'border-[#4A070B] bg-[#4A070B]/10 text-[#4A070B] dark:text-red-300 ring-1 ring-[#4A070B]'
+                                                    : 'border-border/80 hover:bg-muted/40 text-muted-foreground'
+                                            }`}
+                                        >
+                                            <div className="font-bold text-xs">Production (Live)</div>
+                                            <div className="text-[10px] opacity-80 mt-0.5">client.kiriminaja.com (Nyata)</div>
+                                        </button>
+                                    </div>
+                                    {errors.kiriminaja_mode && (
+                                        <p className="text-xs text-destructive">{errors.kiriminaja_mode}</p>
+                                    )}
+                                </div>
+
+                                {/* API Key Input */}
+                                <div className="space-y-1.5">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-xs font-semibold text-foreground">
+                                            API Key / Token KiriminAja
+                                        </label>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowApiKey(!showApiKey)}
+                                            className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1 font-medium"
+                                        >
+                                            {showApiKey ? (
+                                                <>
+                                                    <EyeOff className="size-3" />
+                                                    <span>Sembunyikan</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Eye className="size-3" />
+                                                    <span>Lihat Token</span>
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                    <div className="relative">
+                                        <Input
+                                            type={showApiKey ? 'text' : 'password'}
+                                            placeholder="v4.local... atau token production dari KiriminAja"
+                                            value={data.kiriminaja_api_key}
+                                            onChange={(e) => setData('kiriminaja_api_key', e.target.value)}
+                                            className="h-10 text-xs font-mono pr-9"
+                                        />
+                                        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
+                                            <Key className="size-3.5" />
+                                        </div>
+                                    </div>
+                                    {errors.kiriminaja_api_key && (
+                                        <p className="text-xs text-destructive">{errors.kiriminaja_api_key}</p>
+                                    )}
+
+                                    {/* Warning banner for Staging Token in Production Mode */}
+                                    {data.kiriminaja_mode === 'production' && data.kiriminaja_api_key?.startsWith('v4.local.') && (
+                                        <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs flex items-start gap-2">
+                                            <AlertCircle className="size-4 shrink-0 mt-0.5 text-amber-600" />
+                                            <div className="leading-relaxed">
+                                                <strong>Perhatian:</strong> Token saat ini berawalan <code>v4.local...</code> (token Staging/Sandbox). Server KiriminAja Production akan menolak token ini dengan status <code>Unauthorized.</code>. Masukkan API Key Production dari dashboard KiriminAja Anda, atau ubah mode ke <strong>Staging</strong>.
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Prefix Order ID */}
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                                        <span>Prefix Order ID KiriminAja</span>
+                                        <span className="text-[10px] text-muted-foreground font-mono">Maks. 10 karakter</span>
+                                    </label>
+                                    <Input
+                                        type="text"
+                                        placeholder="ARPL"
+                                        value={data.kiriminaja_prefix}
+                                        onChange={(e) => setData('kiriminaja_prefix', e.target.value.toUpperCase())}
+                                        maxLength={10}
+                                        className="h-9 text-xs font-mono font-bold uppercase tracking-wider"
+                                    />
+                                    <p className="text-[11px] text-muted-foreground">
+                                        Prefix terdaftar di akun KiriminAja Anda (default: <code>ARPL</code>). Paket resi otomatis wajib diawali prefix ini.
+                                    </p>
+                                    {errors.kiriminaja_prefix && (
+                                        <p className="text-xs text-destructive">{errors.kiriminaja_prefix}</p>
+                                    )}
+                                </div>
+
+                                {/* Test Connection Button & Result */}
+                                <div className="pt-2 border-t border-border/60 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs text-muted-foreground">
+                                            Uji kredensial sebelum menyimpan:
+                                        </span>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={handleTestKiriminAja}
+                                            disabled={testingKiriminAja || !data.kiriminaja_api_key}
+                                            className="h-8 text-xs gap-1.5 font-medium border-[#4A070B]/30 hover:bg-[#4A070B]/10 hover:text-[#4A070B] dark:hover:text-red-300"
+                                        >
+                                            <RefreshCw className={`size-3.5 ${testingKiriminAja ? 'animate-spin' : ''}`} />
+                                            <span>{testingKiriminAja ? 'Menguji Koneksi...' : 'Uji Koneksi KiriminAja'}</span>
+                                        </Button>
+                                    </div>
+
+                                    {testResult && (
+                                        <div
+                                            className={`p-3 rounded-xl border text-xs space-y-1 ${
+                                                testResult.success
+                                                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-900 dark:text-emerald-200'
+                                                    : 'bg-destructive/10 border-destructive/30 text-destructive dark:text-red-300'
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-1.5 font-bold">
+                                                {testResult.success ? (
+                                                    <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
+                                                ) : (
+                                                    <AlertCircle className="size-4 text-destructive shrink-0" />
+                                                )}
+                                                <span>{testResult.success ? 'Koneksi Berhasil' : 'Koneksi Ditolak / Gagal'}</span>
+                                            </div>
+                                            <p className="leading-relaxed pl-5.5 text-[11px]">
+                                                {testResult.message}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+
                         {/* Info Badge KiriminAja Origin Helper */}
                         <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-200 space-y-2">
                             <div className="flex items-center gap-2 font-semibold text-xs">
                                 <Info className="size-4 shrink-0 text-amber-600" />
-                                <span>Bagaimana KiriminAja Menggunakan Alamat Ini?</span>
+                                <span>Bagaimana KiriminAja Menggunakan Pengaturan Ini?</span>
                             </div>
                             <p className="text-xs leading-relaxed text-muted-foreground dark:text-amber-300/80">
-                                Saat pembeli menghitung estimasi ongkos kirim di checkout, sistem akan menggunakan <strong className="text-foreground">Kecamatan Asal (Origin District ID)</strong> di samping sebagai titik awal keberangkatan paket.
+                                Saat admin menekan tombol <strong>Kirim dengan Resi Otomatis</strong> pada pesanan, sistem akan menghubungi endpoint KiriminAja (<code className="text-foreground">{data.kiriminaja_mode === 'production' ? 'https://client.kiriminaja.com' : 'https://tdev.kiriminaja.com'}</code>) untuk menjadwalkan pickup kurir dan menerbitkan nomor AWB/Resi asli.
                             </p>
                         </div>
                     </div>

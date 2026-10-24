@@ -16,16 +16,158 @@ use KiriminAja\Services\KiriminAja;
 
 class KiriminAjaService
 {
+    /**
+     * Get active KiriminAja API key from Setting (database) or config fallback.
+     */
+    public function getApiKey(): string
+    {
+        $dbKey = Setting::get('kiriminaja_api_key');
+        if (! empty($dbKey)) {
+            return trim((string) $dbKey);
+        }
+
+        return trim((string) config('services.kiriminaja.api_key', ''));
+    }
+
+    /**
+     * Get active KiriminAja mode ('staging' or 'production').
+     */
+    public function getMode(): string
+    {
+        $dbMode = Setting::get('kiriminaja_mode');
+        if (! empty($dbMode)) {
+            return (string) $dbMode;
+        }
+
+        return (string) config('services.kiriminaja.mode', 'staging');
+    }
+
+    /**
+     * Get active KiriminAja base URL.
+     */
+    public function getBaseUrl(): string
+    {
+        $customBaseUrl = config('services.kiriminaja.base_url');
+        if (! empty($customBaseUrl)) {
+            return rtrim($customBaseUrl, '/');
+        }
+
+        return $this->getMode() === 'production'
+            ? 'https://client.kiriminaja.com'
+            : 'https://tdev.kiriminaja.com';
+    }
+
+    /**
+     * Get registered KiriminAja order prefix.
+     */
+    public function getPrefix(): string
+    {
+        $dbPrefix = Setting::get('kiriminaja_prefix');
+        if (! empty($dbPrefix)) {
+            return strtoupper(trim((string) $dbPrefix));
+        }
+
+        $configPrefix = config('services.kiriminaja.prefix', 'ARPL');
+
+        return strtoupper(trim((string) $configPrefix)) ?: 'ARPL';
+    }
+
+    /**
+     * Test API connection and authorization to KiriminAja.
+     *
+     * @return array{success: bool, mode: string, message: string, token_preview: string, details?: mixed}
+     */
+    public function testConnection(?string $apiKey = null, ?string $mode = null): array
+    {
+        $activeMode = $mode ?: $this->getMode();
+        $token = trim((string) ($apiKey !== null ? $apiKey : $this->getApiKey()));
+        $baseUrl = $activeMode === 'production' ? 'https://client.kiriminaja.com' : 'https://tdev.kiriminaja.com';
+
+        $tokenPreview = strlen($token) > 10 ? substr($token, 0, 8).'...'.substr($token, -6) : '(kosong)';
+
+        if (empty($token)) {
+            return [
+                'success' => false,
+                'mode' => $activeMode,
+                'message' => 'API Key belum diisi.',
+                'token_preview' => $tokenPreview,
+            ];
+        }
+
+        if ($activeMode === 'production' && str_starts_with($token, 'v4.local.')) {
+            return [
+                'success' => false,
+                'mode' => $activeMode,
+                'message' => 'Token "v4.local..." adalah token Staging (Sandbox). Token ini tidak dapat digunakan di Mode Production (Live). Harap masukkan API Key Production Anda dari dashboard KiriminAja atau ubah Mode ke Staging.',
+                'token_preview' => $tokenPreview,
+            ];
+        }
+
+        try {
+            $originId = (int) Setting::get('shipping_district_id', config('services.kiriminaja.origin_district_id', 4712));
+            $response = Http::withToken($token)
+                ->withHeaders([
+                    'Accept' => 'application/json',
+                    'Content-Type' => 'application/json',
+                ])
+                ->timeout(10)
+                ->post("{$baseUrl}/api/mitra/v6.1/shipping_price", [
+                    'origin' => $originId ?: 4712,
+                    'destination' => 2101,
+                    'weight' => 500,
+                    'courier' => ['jne'],
+                ]);
+
+            $json = $response->json() ?? [];
+
+            if ($response->successful() && ($json['status'] ?? false)) {
+                return [
+                    'success' => true,
+                    'mode' => $activeMode,
+                    'message' => 'Koneksi ke KiriminAja ('.ucfirst($activeMode).') berhasil & terautentikasi.',
+                    'token_preview' => $tokenPreview,
+                    'details' => $json,
+                ];
+            }
+
+            $rawText = $json['text'] ?? ($json['message'] ?? 'Response error dari KiriminAja');
+            if ($response->status() === 401 || str_contains(strtolower((string) $rawText), 'unauthorized')) {
+                return [
+                    'success' => false,
+                    'mode' => $activeMode,
+                    'message' => "Unauthorized: API Key ditolak oleh server KiriminAja ({$activeMode}). Pastikan API Key sesuai dengan akun KiriminAja mode ".ucfirst($activeMode).'.',
+                    'token_preview' => $tokenPreview,
+                    'details' => $json,
+                ];
+            }
+
+            return [
+                'success' => false,
+                'mode' => $activeMode,
+                'message' => "KiriminAja merespons: {$rawText}",
+                'token_preview' => $tokenPreview,
+                'details' => $json,
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'success' => false,
+                'mode' => $activeMode,
+                'message' => 'Gagal menghubungi server KiriminAja: '.$e->getMessage(),
+                'token_preview' => $tokenPreview,
+            ];
+        }
+    }
+
     public function __construct()
     {
-        $mode = config('services.kiriminaja.mode', 'staging') === 'production'
+        $mode = $this->getMode() === 'production'
             ? Mode::Production
             : Mode::Staging;
 
         KiriminAjaConfig::setMode($mode);
-        KiriminAjaConfig::setApiTokenKey((string) config('services.kiriminaja.api_key'));
+        KiriminAjaConfig::setApiTokenKey($this->getApiKey());
 
-        $baseUrl = config('services.kiriminaja.base_url');
+        $baseUrl = $this->getBaseUrl();
         if (! empty($baseUrl)) {
             KiriminAjaConfig::setBaseUrl($baseUrl);
         }
@@ -472,10 +614,8 @@ class KiriminAjaService
     protected function directApiCall(string $endpoint, array $payload = []): ?array
     {
         try {
-            $key = config('services.kiriminaja.api_key');
-            $baseUrl = config('services.kiriminaja.mode') === 'production'
-                ? 'https://client.kiriminaja.com/'
-                : 'https://tdev.kiriminaja.com/';
+            $key = $this->getApiKey();
+            $baseUrl = $this->getBaseUrl();
 
             $url = rtrim($baseUrl, '/').'/'.$endpoint;
 
@@ -747,8 +887,7 @@ class KiriminAjaService
     public function requestPickupForOrder(Order $order): array
     {
         // 1. Resolve registered KiriminAja order prefix
-        $prefix = (string) Setting::get('kiriminaja_prefix', config('services.kiriminaja.prefix', 'ARPL'));
-        $prefix = strtoupper(trim($prefix)) ?: 'ARPL';
+        $prefix = $this->getPrefix();
 
         // KiriminAja packages[0].order_id MUST begin with the account's registered prefix.
         // Clean order number so it matches prefix: e.g. "AP-20261024-ABCDE" -> "ARPL-20261024-ABCDE"
@@ -827,15 +966,32 @@ class KiriminAjaService
         $originDistrictId = (int) Setting::get('shipping_district_id', config('services.kiriminaja.origin_district_id', 4712));
         $platformName = (string) Setting::get('store_name', 'Aroma Palace');
 
-        // 5. Select pickup schedule from KiriminAja API
-        $mode = config('services.kiriminaja.mode', 'staging');
-        $baseUrl = $mode === 'production' ? 'https://client.kiriminaja.com' : 'https://tdev.kiriminaja.com';
-        $customBaseUrl = config('services.kiriminaja.base_url');
-        if (! empty($customBaseUrl)) {
-            $baseUrl = rtrim($customBaseUrl, '/');
-        }
-        $token = (string) config('services.kiriminaja.api_key');
+        // 5. Credentials and environment resolution
+        $mode = $this->getMode();
+        $baseUrl = $this->getBaseUrl();
+        $token = $this->getApiKey();
 
+        if (empty($token)) {
+            return [
+                'success' => false,
+                'tracking_number' => '',
+                'courier' => $order->courier ?: strtoupper($courierCode),
+                'source' => 'kiriminaja_empty_token',
+                'message' => 'API Key KiriminAja belum diatur. Silakan atur API Key di menu Pengaturan Toko.',
+            ];
+        }
+
+        if ($mode === 'production' && str_starts_with($token, 'v4.local.')) {
+            return [
+                'success' => false,
+                'tracking_number' => '',
+                'courier' => $order->courier ?: strtoupper($courierCode),
+                'source' => 'kiriminaja_mode_mismatch',
+                'message' => 'API Key yang digunakan adalah token Staging (v4.local...), tetapi Mode sistem diatur ke Production. Harap gunakan API Key Production dari KiriminAja atau ubah Mode ke Staging di menu Pengaturan Toko.',
+            ];
+        }
+
+        // Select pickup schedule from KiriminAja API
         $pickupSchedule = null;
         try {
             $schedRes = Http::withToken($token)
@@ -930,6 +1086,47 @@ class KiriminAjaService
                     $flatErrors[] = is_array($messages) ? implode(', ', $messages) : (string) $messages;
                 }
                 $errorText .= ': '.implode('; ', $flatErrors);
+            }
+
+            // Automatic Retry for duplicate order_id rejection ("tidak bisa diproses ulang")
+            if (str_contains($errorText, 'tidak bisa diproses ulang') || str_contains($errorText, 'belum dicancel')) {
+                $retryUniqueSuffix = strtoupper(substr(uniqid(), -4));
+                $retryOrderId = substr($prefix.'-'.substr($cleanNumber, 0, 10).'-'.$retryUniqueSuffix, 0, 20);
+                $payload['packages'][0]['order_id'] = $retryOrderId;
+
+                Log::info("KiriminAja auto-retrying pickup with fresh order_id {$retryOrderId} for order #{$order->order_number}");
+
+                $retryRes = Http::withToken($token)
+                    ->withHeaders([
+                        'Accept' => 'application/json',
+                        'Content-Type' => 'application/json',
+                    ])
+                    ->timeout(15)
+                    ->post("{$baseUrl}/api/mitra/v6.1/request_pickup", $payload);
+
+                $retryJson = $retryRes->json() ?? [];
+                if ($retryRes->successful() && ($retryJson['status'] ?? false)) {
+                    $retryDetails = $retryJson['details'] ?? [];
+                    $firstRetryDetail = ! empty($retryDetails) ? (array) $retryDetails[0] : [];
+                    $retryPickupNum = $retryJson['pickup_number'] ?? null;
+                    $retryAwb = $firstRetryDetail['awb'] ?? null;
+                    $trackingNumber = $retryAwb ?: ($retryPickupNum ?: ($firstRetryDetail['kj_order_id'] ?? $retryOrderId));
+
+                    Log::info("KiriminAja retry requestPickup success for order #{$order->order_number}: tracking={$trackingNumber}");
+
+                    return [
+                        'success' => true,
+                        'tracking_number' => (string) $trackingNumber,
+                        'courier' => $order->courier ?: strtoupper($courierCode),
+                        'source' => 'kiriminaja_live',
+                        'message' => 'Resi otomatis KiriminAja berhasil diterbitkan ('.($retryPickupNum ?: $trackingNumber).').',
+                    ];
+                }
+            }
+
+            // Provide clear diagnostic for 401 Unauthorized errors
+            if ($response->status() === 401 || str_contains(strtolower((string) $errorText), 'unauthorized')) {
+                $errorText = "Unauthorized: API Key KiriminAja ditolak oleh server ({$mode}). Pastikan API Key dan Mode (".ucfirst($mode).') di menu Pengaturan Toko sudah sesuai dengan kredensial akun KiriminAja Anda.';
             }
 
             Log::error("KiriminAja requestPickup rejected for order #{$order->order_number}: {$errorText}", [
