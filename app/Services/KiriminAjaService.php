@@ -52,6 +52,14 @@ class KiriminAjaService
 
     public function getProvinces(): array
     {
+        $data = new ShippingFullPriceData();
+$data->origin = 1;
+$data->destination = 2;
+$data->weight = 1000;
+
+$pricess= KiriminAja::fullShippingPrice($data);
+dd($pricess);
+
         try {
             $res = KiriminAja::getProvince();
             return ($res->status && is_array($res->data)) ? $res->data : [];
