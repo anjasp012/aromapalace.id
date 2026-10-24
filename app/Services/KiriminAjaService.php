@@ -440,6 +440,8 @@ class KiriminAjaService
             'package_type_id' => 1,
         ];
 
+        $pin = trim((string) Setting::get('kiriminaja_pin', '123456'));
+
         $payload = [
             'name' => $senderName,
             'phone' => $senderPhone,
@@ -450,7 +452,11 @@ class KiriminAjaService
             'packages' => [$packagePayload],
         ];
 
-        // 6. Request pickup ke API KiriminAja
+        if (! empty($pin)) {
+            $payload['pin'] = $pin;
+        }
+
+        // 6. Request pickup ke API KiriminAja v6.2
         try {
             $response = Http::withToken($token)
                 ->withHeaders([
@@ -458,7 +464,7 @@ class KiriminAjaService
                     'Content-Type' => 'application/json',
                 ])
                 ->timeout(15)
-                ->post("{$baseUrl}/api/mitra/v6.1/request_pickup", $payload);
+                ->post("{$baseUrl}/api/mitra/v6.2/request_pickup", $payload);
 
             $json = $response->json() ?? [];
 
@@ -498,6 +504,56 @@ class KiriminAjaService
                 'courier' => $order->courier ?: strtoupper($courierCode),
                 'source' => 'kiriminaja_exception',
                 'message' => 'Koneksi ke KiriminAja bermasalah: '.$e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Test connection & authentication to KiriminAja API.
+     *
+     * @return array{success: bool, mode: string, message: string}
+     */
+    public function testConnection(?string $apiKey = null, ?string $mode = null, ?string $baseUrl = null): array
+    {
+        $testMode = $mode ?: $this->mode;
+        $testKey = $apiKey !== null ? trim($apiKey) : $this->apiKey;
+
+        if (empty($testKey)) {
+            return [
+                'success' => false,
+                'mode' => $testMode,
+                'message' => 'API Key KiriminAja belum diatur atau kosong.',
+            ];
+        }
+
+        $base = $baseUrl ?: ($testMode === 'production' ? 'https://client.kiriminaja.com' : 'https://tdev.kiriminaja.com');
+
+        try {
+            $response = Http::withToken($testKey)
+                ->withHeaders(['Accept' => 'application/json'])
+                ->timeout(8)
+                ->post("{$base}/api/mitra/v2/provinces");
+
+            if ($response->successful() && ($response->json('status') ?? false)) {
+                return [
+                    'success' => true,
+                    'mode' => $testMode,
+                    'message' => 'Koneksi ke KiriminAja berhasil terhubung.',
+                ];
+            }
+
+            $msg = $response->json('text') ?? ($response->json('message') ?? 'Kredensial API Key tidak valid.');
+
+            return [
+                'success' => false,
+                'mode' => $testMode,
+                'message' => (string) $msg,
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'success' => false,
+                'mode' => $testMode,
+                'message' => 'Gagal menghubungi server KiriminAja: '.$e->getMessage(),
             ];
         }
     }

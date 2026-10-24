@@ -375,6 +375,9 @@ test('kiriminaja service sends insurance_amount as 0 without insurance fee', fun
 
         $package = $request['packages'][0] ?? [];
 
-        return isset($package['insurance_amount']) && $package['insurance_amount'] === 0;
+        return isset($package['insurance_amount'])
+            && $package['insurance_amount'] === 0
+            && isset($request['pin'])
+            && $request['pin'] === '123456';
     });
 });

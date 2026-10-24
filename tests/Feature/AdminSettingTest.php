@@ -59,6 +59,7 @@ test('admin can update store contact and kiriminaja origin settings', function (
             'kiriminaja_mode' => 'staging',
             'kiriminaja_api_key' => 'v4.local.test_key_sample',
             'kiriminaja_prefix' => 'ARPL',
+            'kiriminaja_pin' => '123456',
         ]);
 
     $response->assertRedirect();
@@ -72,6 +73,7 @@ test('admin can update store contact and kiriminaja origin settings', function (
     expect(Setting::get('kiriminaja_mode'))->toBe('staging');
     expect(Setting::get('kiriminaja_api_key'))->toBe('v4.local.test_key_sample');
     expect(Setting::get('kiriminaja_prefix'))->toBe('ARPL');
+    expect(Setting::get('kiriminaja_pin'))->toBe('123456');
 });
 
 test('admin can test kiriminaja connection via endpoint', function () {

@@ -43,6 +43,8 @@ export default function SettingsIndex({ settings = {} }: SettingsIndexProps) {
         // Integrasi KiriminAja (Kredensial & Logistik)
         kiriminaja_mode: settings.kiriminaja_mode || 'staging',
         kiriminaja_api_key: settings.kiriminaja_api_key || '',
+        kiriminaja_prefix: settings.kiriminaja_prefix || 'ARPL',
+        kiriminaja_pin: settings.kiriminaja_pin || '123456',
         // Alamat Origin Pengiriman & KiriminAja
         shipping_sender_name: settings.shipping_sender_name || '',
         shipping_sender_phone: settings.shipping_sender_phone || '',
@@ -516,6 +518,29 @@ export default function SettingsIndex({ settings = {} }: SettingsIndexProps) {
                                     </p>
                                     {errors.kiriminaja_prefix && (
                                         <p className="text-xs text-destructive">{errors.kiriminaja_prefix}</p>
+                                    )}
+                                </div>
+
+                                {/* PIN Transaksi KiriminAja */}
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                                        <span>PIN Transaksi KiriminAja</span>
+                                        <span className="text-[10px] text-muted-foreground font-mono">6 digit angka</span>
+                                    </label>
+                                    <Input
+                                        type="password"
+                                        inputMode="numeric"
+                                        placeholder="123456"
+                                        value={data.kiriminaja_pin}
+                                        onChange={(e) => setData('kiriminaja_pin', e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                        maxLength={6}
+                                        className="h-9 text-xs font-mono tracking-widest"
+                                    />
+                                    <p className="text-[11px] text-muted-foreground">
+                                        PIN otorisasi akun KiriminAja (KA Credit) untuk pemotongan ongkir saat request pickup otomatis.
+                                    </p>
+                                    {errors.kiriminaja_pin && (
+                                        <p className="text-xs text-destructive">{errors.kiriminaja_pin}</p>
                                     )}
                                 </div>
 

@@ -24,6 +24,7 @@ class SettingController extends Controller
         $settings['kiriminaja_mode'] = $settings['kiriminaja_mode'] ?? 'staging';
         $settings['kiriminaja_api_key'] = $settings['kiriminaja_api_key'] ?? '';
         $settings['kiriminaja_prefix'] = $settings['kiriminaja_prefix'] ?? 'ARPL';
+        $settings['kiriminaja_pin'] = $settings['kiriminaja_pin'] ?? '123456';
 
         return Inertia::render('admin/settings/index', [
             'settings' => $settings,
@@ -61,6 +62,7 @@ class SettingController extends Controller
             'kiriminaja_mode' => ['nullable', 'string', 'in:staging,production'],
             'kiriminaja_api_key' => ['nullable', 'string', 'max:500'],
             'kiriminaja_prefix' => ['nullable', 'string', 'max:20'],
+            'kiriminaja_pin' => ['nullable', 'string', 'max:10'],
         ]);
 
         if (isset($validated['kiriminaja_api_key'])) {
@@ -68,6 +70,9 @@ class SettingController extends Controller
         }
         if (isset($validated['kiriminaja_prefix'])) {
             $validated['kiriminaja_prefix'] = strtoupper(trim((string) $validated['kiriminaja_prefix']));
+        }
+        if (isset($validated['kiriminaja_pin'])) {
+            $validated['kiriminaja_pin'] = trim((string) $validated['kiriminaja_pin']);
         }
 
         $settingConfigs = [
@@ -91,6 +96,7 @@ class SettingController extends Controller
             'kiriminaja_mode' => ['group' => 'shipping', 'type' => 'string'],
             'kiriminaja_api_key' => ['group' => 'shipping', 'type' => 'string'],
             'kiriminaja_prefix' => ['group' => 'shipping', 'type' => 'string'],
+            'kiriminaja_pin' => ['group' => 'shipping', 'type' => 'string'],
         ];
 
         foreach ($settingConfigs as $key => $config) {
