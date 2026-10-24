@@ -339,9 +339,21 @@ export async function enablePushNotifications(csrfToken?: string): Promise<{ suc
 
         const ua = navigator.userAgent;
         let browser = 'Chrome';
-        if (ua.includes('Firefox')) browser = 'Firefox';
-        else if (ua.includes('Edg/')) browser = 'Edge';
-        else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
+        let detectedDeviceType: 'web' | 'android' | 'ios' = 'web';
+
+        if (/iPhone|iPad|iPod/i.test(ua)) {
+            detectedDeviceType = 'ios';
+            browser = 'Safari Mobile (iOS)';
+        } else if (/Android/i.test(ua)) {
+            detectedDeviceType = 'android';
+            browser = 'Chrome Mobile (Android)';
+        } else if (ua.includes('Firefox')) {
+            browser = 'Firefox';
+        } else if (ua.includes('Edg/')) {
+            browser = 'Edge';
+        } else if (ua.includes('Safari') && !ua.includes('Chrome')) {
+            browser = 'Safari';
+        }
 
         const response = await fetch('/api/device-tokens', {
             method: 'POST',
@@ -352,7 +364,7 @@ export async function enablePushNotifications(csrfToken?: string): Promise<{ suc
             },
             body: JSON.stringify({
                 token: fcmToken,
-                device_type: 'web',
+                device_type: detectedDeviceType,
                 browser: browser,
             }),
         });

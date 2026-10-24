@@ -35,10 +35,9 @@ class DeviceTokenController extends Controller
         );
 
         if ($user) {
-            // Remove older duplicate tokens for this user on the same device_type
+            // Only clean up tokens that have been inactive for over 90 days
             DeviceToken::where('user_id', $user->id)
-                ->where('token', '!=', $validated['token'])
-                ->where('device_type', $deviceType)
+                ->where('last_used_at', '<', now()->subDays(90))
                 ->delete();
         }
 

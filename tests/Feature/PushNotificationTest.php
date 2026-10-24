@@ -138,3 +138,35 @@ test('firebase notification service dispatches order, payment, pickup, shipping 
 
     expect(true)->toBeTrue();
 });
+
+test('user can log in and register multiple mobile devices simultaneously without deleting previous tokens', function () {
+    $customer = User::factory()->create(['role' => 'customer']);
+
+    // 1. Register Android device
+    $this->actingAs($customer)->postJson(route('device-tokens.store'), [
+        'token' => 'fcm_android_phone_token_111',
+        'device_type' => 'android',
+        'browser' => 'Aroma Palace Mobile App (ANDROID)',
+    ])->assertOk();
+
+    // 2. Register iPhone device
+    $this->actingAs($customer)->postJson(route('device-tokens.store'), [
+        'token' => 'fcm_iphone_phone_token_222',
+        'device_type' => 'ios',
+        'browser' => 'Aroma Palace Mobile App (IOS)',
+    ])->assertOk();
+
+    // 3. Register a second Android tablet
+    $this->actingAs($customer)->postJson(route('device-tokens.store'), [
+        'token' => 'fcm_android_tablet_token_333',
+        'device_type' => 'android',
+        'browser' => 'Aroma Palace Mobile App (ANDROID)',
+    ])->assertOk();
+
+    // All three tokens must remain active and associated with the customer
+    expect(DeviceToken::where('user_id', $customer->id)->count())->toBe(3);
+    $tokens = DeviceToken::where('user_id', $customer->id)->pluck('token')->all();
+    expect($tokens)->toContain('fcm_android_phone_token_111');
+    expect($tokens)->toContain('fcm_iphone_phone_token_222');
+    expect($tokens)->toContain('fcm_android_tablet_token_333');
+});
