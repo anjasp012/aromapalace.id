@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -102,7 +103,11 @@ class PaymentController extends Controller
                                         'payment_status' => 'paid',
                                         'status' => 'diproses',
                                     ]);
-                                    event(new OrderPaid($locked));
+                                    try {
+                                        event(new OrderPaid($locked));
+                                    } catch (\Throwable $e) {
+                                        Log::warning('Broadcast OrderPaid failed: '.$e->getMessage());
+                                    }
                                     app(FirebaseNotificationService::class)->notifyPaymentSuccess($locked);
                                     app(MembershipService::class)->awardOrderPoints($locked);
                                 }

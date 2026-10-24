@@ -1042,35 +1042,25 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
 
                             <DropdownMenu>
                                 <DropdownMenuTrigger
-                                    className={`inline-flex items-center gap-1 py-2.5 sm:py-3.5 border-b-2 -mb-px transition cursor-pointer outline-none whitespace-nowrap ${url.startsWith('/products') && !url.includes('popular') && !url.includes('discount')
+                                    className={`inline-flex items-center gap-1 py-2.5 sm:py-3.5 border-b-2 -mb-px transition cursor-pointer outline-none whitespace-nowrap ${(url.startsWith('/products') && !url.includes('popular') && !url.includes('discount')) || url.startsWith('/categories') || url.startsWith('/brands')
                                         ? 'text-[#4A070B] font-bold border-[#4A070B]'
                                         : 'text-muted-foreground hover:text-foreground border-transparent hover:border-[#4A070B]/30'
                                         }`}
                                 >
-                                    <span>{isEn ? 'CATALOG' : 'KATALOG'}</span>
+                                    <span>{isEn ? 'SHOP' : 'BELANJA'}</span>
                                     <svg className="w-3 h-3 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                                     </svg>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="start" className="w-56">
                                     <DropdownMenuItem asChild>
-                                        <Link href="/products" prefetch="hover" cacheFor={['30s', '2m']}>{isEn ? 'All Catalog' : 'Semua Katalog'}</Link>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem asChild>
-                                        <Link href="/products?category=parfum-wanita" prefetch="hover" cacheFor={['30s', '2m']}>{isEn ? "Women's Perfume" : 'Parfum Wanita'}</Link>
+                                        <Link href="/products" prefetch="hover" cacheFor={['30s', '2m']}>{isEn ? 'All Products' : 'Semua Produk'}</Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem asChild>
-                                        <Link href="/products?category=parfum-pria" prefetch="hover" cacheFor={['30s', '2m']}>{isEn ? "Men's Perfume" : 'Parfum Pria'}</Link>
+                                        <Link href="/categories" prefetch="hover" cacheFor={['30s', '2m']}>{isEn ? 'Category' : 'Kategori'}</Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem asChild>
-                                        <Link href="/products?category=unisex-fragrance" prefetch="hover" cacheFor={['30s', '2m']}>Unisex Fragrance</Link>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem asChild>
-                                        <Link href="/products?category=discovery-sets" prefetch="hover" cacheFor={['30s', '2m']}>Discovery Sets &amp; Vials</Link>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem asChild>
-                                        <Link href="/products?category=body-and-hair-mist" prefetch="hover" cacheFor={['30s', '2m']}>Body &amp; Hair Mist</Link>
+                                        <Link href="/brands" prefetch="hover" cacheFor={['30s', '2m']}>{isEn ? 'Brands' : 'Brand'}</Link>
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -1084,7 +1074,7 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
                                     : 'text-muted-foreground hover:text-foreground border-transparent hover:border-[#4A070B]/30'
                                     }`}
                             >
-                                {isEn ? 'BESTSELLERS' : 'TERLARIS'}
+                                {isEn ? 'BEST SELLERS' : 'TERLARIS'}
                             </Link>
 
                             <Link
@@ -1099,7 +1089,7 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
                                 {isEn ? 'SPECIAL OFFERS' : 'PROMO SPESIAL'}
                             </Link>
 
-                            <Link
+                            {/* <Link
                                 href="/articles"
                                 prefetch="hover"
                                 cacheFor={['30s', '2m']}
@@ -1109,7 +1099,7 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
                                     }`}
                             >
                                 {isEn ? 'ARTICLES' : 'ARTIKEL'}
-                            </Link>
+                            </Link> */}
 
                             <Link
                                 href="/stores"
@@ -1120,7 +1110,7 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
                                     : 'text-muted-foreground hover:text-foreground border-transparent hover:border-[#4A070B]/30'
                                     }`}
                             >
-                                {isEn ? 'STORE LOCATIONS' : 'LOKASI TOKO'}
+                                {isEn ? 'STORE LOCATOR' : 'LOKASI TOKO'}
                             </Link>
 
                             <Link

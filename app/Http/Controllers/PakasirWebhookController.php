@@ -87,7 +87,11 @@ class PakasirWebhookController extends Controller
                     'status' => 'diproses',
                 ]);
 
-                event(new OrderPaid($order));
+                try {
+                    event(new OrderPaid($order));
+                } catch (\Throwable $e) {
+                    Log::warning('Broadcast OrderPaid failed: '.$e->getMessage());
+                }
                 app(FirebaseNotificationService::class)->notifyPaymentSuccess($order);
                 app(MembershipService::class)->awardOrderPoints($order);
             } elseif ($status === 'canceled') {
