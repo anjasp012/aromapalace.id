@@ -16,6 +16,7 @@ use KiriminAja\Models\RequestPickupData;
 use KiriminAja\Models\RequestPickupDataList;
 use KiriminAja\Models\ShippingFullPriceData;
 use KiriminAja\Services\KiriminAja;
+use KiriminAja\Models\PackageItemMetadata;
 
 class KiriminAjaService
 {
