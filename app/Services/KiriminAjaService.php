@@ -27,11 +27,10 @@ class KiriminAjaService
         $this->mode = (string) Setting::get('kiriminaja_mode');
         $this->apiKey = (string) Setting::get('kiriminaja_api_key');
         $this->origin = (int) Setting::get('shipping_district_id'); // ID Kecamatan Asal Pengiriman dari Database
-        $this->baseUrl = Setting::get('kiriminaja_mode') == 'staging' ? 'https://tdev.kiriminaja.com' : 'https://client.kiriminaja.com';
+        
         // Inisialisasi konfigurasi SDK KiriminAja
         try {
             KiriminAjaConfig::setMode($this->mode);
-            KiriminAjaConfig::setBaseUrl($this->baseUrl);
             if (!empty($this->apiKey)) {
                 KiriminAjaConfig::setApiTokenKey($this->apiKey);
             }
@@ -42,7 +41,6 @@ class KiriminAjaService
 
     public function getProvinces(): array
     {
-        dd(KiriminAja::getProvince());
         try {
             $res = KiriminAja::getProvince();
             return ($res->status && is_array($res->data)) ? $res->data : [];
