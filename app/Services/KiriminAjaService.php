@@ -54,21 +54,24 @@ class KiriminAjaService
     {
         $res = KiriminAja::getProvince();
 
-        $vpsIp = null;
+        $vpsIpv4 = null;
+        $vpsDualStack = null;
         try {
-            $vpsIp = Http::timeout(3)->get('https://api.ipify.org')->body();
-        } catch (\Throwable $e) {
-            $vpsIp = $e->getMessage();
-        }
+            $vpsIpv4 = Http::timeout(3)->get('https://api.ipify.org')->body();
+        } catch (\Throwable $e) {}
+
+        try {
+            $vpsDualStack = Http::timeout(3)->get('https://api64.ipify.org')->body();
+        } catch (\Throwable $e) {}
 
         dd([
             'response' => $res,
             'api_key_filled' => !empty($this->apiKey),
-            'api_key_preview' => !empty($this->apiKey) ? substr($this->apiKey, 0, 12) . '...' : '(KOSONG DI VPS)',
             'mode' => $this->mode,
             'baseUrl' => $this->baseUrl,
-            'vps_outbound_ip' => $vpsIp,
-            'catatan' => 'Jika api_key_preview KOSONG, isi di CMS Settings atau .env VPS. Jika api_key sudah ada tapi response 401, daftarkan vps_outbound_ip ke IP Whitelist Dashboard KiriminAja.',
+            'vps_ipv4_only' => $vpsIpv4,
+            'vps_default_ip_used' => $vpsDualStack,
+            'is_using_ipv6' => str_contains($vpsDualStack ?? '', ':'),
         ]);
 
         try {
