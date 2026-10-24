@@ -122,9 +122,9 @@ class KiriminAjaService
                 'token_preview' => $tokenPreview,
             ];
         }
-        KiriminAjaConfig::setMode('staging')
-    ::setApiTokenKey($token)
-    ::setBaseUrl($baseUrl);
+        KiriminAjaConfig::setMode('staging');
+    KiriminAjaConfig::setApiTokenKey($token);
+    KiriminAjaConfig::setBaseUrl($baseUrl);
         $provinces = KiriminAja::getProvince();
         dd($provinces);
         try {
