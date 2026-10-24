@@ -353,38 +353,7 @@ class KiriminAjaService
             $orderIdForKiriminAja = $prefix.'-'.substr($rawNumber, -$allowedSuffixLen);
         }
 
-        // 1. Tentukan kurir & tipe layanan
-        $courierRaw = strtolower((string) ($order->courier ?: 'jne'));
-        $courierCode = 'jne';
-        $serviceType = 'REG';
-
-        if (str_contains($courierRaw, 'j&t') || str_contains($courierRaw, 'jnt')) {
-            $courierCode = 'jnt';
-            $serviceType = 'EZ';
-        } elseif (str_contains($courierRaw, 'sicepat')) {
-            $courierCode = 'sicepat';
-            $serviceType = 'SIUNT';
-        } elseif (str_contains($courierRaw, 'spx')) {
-            $courierCode = 'spx';
-            $serviceType = '1';
-        } elseif (str_contains($courierRaw, 'anteraja')) {
-            $courierCode = 'anteraja';
-            $serviceType = 'REG';
-        } elseif (str_contains($courierRaw, 'lion')) {
-            $courierCode = 'lion';
-            $serviceType = 'REGPACK';
-        } elseif (str_contains($courierRaw, 'tiki')) {
-            $courierCode = 'tiki';
-            $serviceType = 'REG';
-        } elseif (str_contains($courierRaw, 'sap')) {
-            $courierCode = 'sap';
-            $serviceType = 'FLUDRREG';
-        } elseif (str_contains($courierRaw, 'idx')) {
-            $courierCode = 'idx';
-            $serviceType = '00';
-        }
-
-        // 2. Resolve destination kecamatan ID
+        // 1. Resolve destination kecamatan ID
         $destinationDistrictId = null;
         if ($order->user_id) {
             $addr = UserAddress::where('user_id', $order->user_id)
@@ -400,15 +369,114 @@ class KiriminAjaService
             }
         }
 
+        // Jika belum dapat district_id, cari via KiriminAja API berdasarkan nama kecamatan di order
+        if (! $destinationDistrictId && ! empty($order->district_name)) {
+            try {
+                $searchRes = KiriminAja::getDistrictByName($order->district_name);
+                if ($searchRes->status && ! empty($searchRes->data)) {
+                    $first = (array) (is_array($searchRes->data) ? ($searchRes->data[0] ?? []) : []);
+                    if (! empty($first['id'])) {
+                        $destinationDistrictId = (int) $first['id'];
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning("Failed to resolve district by name '{$order->district_name}': ".$e->getMessage());
+            }
+        }
+
         if (! $destinationDistrictId) {
-            $destinationDistrictId = 2101; // default ke Jakarta Selatan
+            $destinationDistrictId = 2101; // default fallback
+        }
+
+        $originDistrictId = $this->origin ?: 2101;
+        $weight = max(1000, (int) ($order->total_weight ?? 1000));
+
+        // 2. Tentukan kurir, service_type, dan shipping_cost yang valid sesuai tarif real-time KiriminAja
+        $courierRaw = strtolower((string) ($order->courier ?: 'jne'));
+        $courierCode = 'jne';
+        $serviceType = 'REG';
+        $shippingCost = (int) $order->shipping_cost;
+
+        $liveRates = $this->getShippingRates($originDistrictId, $destinationDistrictId, $weight);
+        $matchedRate = null;
+
+        if (! empty($liveRates)) {
+            // Prioritas 1: Cocokkan kurir DAN nominal ongkir yang persis sama
+            foreach ($liveRates as $rate) {
+                $codeMatch = str_contains($courierRaw, strtolower($rate['courier_code']))
+                    || str_contains($courierRaw, strtolower($rate['name']));
+                if ($codeMatch && (int) $rate['price'] === $shippingCost) {
+                    $matchedRate = $rate;
+                    break;
+                }
+            }
+
+            // Prioritas 2: Cocokkan kurir dan nama service
+            if (! $matchedRate) {
+                foreach ($liveRates as $rate) {
+                    $codeMatch = str_contains($courierRaw, strtolower($rate['courier_code']));
+                    $serviceMatch = str_contains($courierRaw, strtolower($rate['service']))
+                        || str_contains($courierRaw, strtolower($rate['name']));
+                    if ($codeMatch && $serviceMatch) {
+                        $matchedRate = $rate;
+                        break;
+                    }
+                }
+            }
+
+            // Prioritas 3: Ambil layanan reguler pertama dari kurir yang dipilih
+            if (! $matchedRate) {
+                foreach ($liveRates as $rate) {
+                    if (str_contains($courierRaw, strtolower($rate['courier_code']))) {
+                        $matchedRate = $rate;
+                        break;
+                    }
+                }
+            }
+
+            // Prioritas 4: Fallback ke rate pertama
+            if (! $matchedRate) {
+                $matchedRate = $liveRates[0];
+            }
+
+            if ($matchedRate) {
+                $courierCode = (string) $matchedRate['courier_code'];
+                $serviceType = (string) $matchedRate['service'];
+                // KiriminAja mewajibkan shipping_cost sama persis dengan kalkulasi sistemnya
+                $shippingCost = (int) $matchedRate['price'];
+            }
+        } else {
+            if (str_contains($courierRaw, 'j&t') || str_contains($courierRaw, 'jnt')) {
+                $courierCode = 'jnt';
+                $serviceType = 'EZ';
+            } elseif (str_contains($courierRaw, 'sicepat')) {
+                $courierCode = 'sicepat';
+                $serviceType = 'REG';
+            } elseif (str_contains($courierRaw, 'spx')) {
+                $courierCode = 'spx';
+                $serviceType = '1';
+            } elseif (str_contains($courierRaw, 'anteraja')) {
+                $courierCode = 'anteraja';
+                $serviceType = 'REG';
+            } elseif (str_contains($courierRaw, 'lion')) {
+                $courierCode = 'lion';
+                $serviceType = 'REGPACK';
+            } elseif (str_contains($courierRaw, 'tiki')) {
+                $courierCode = 'tiki';
+                $serviceType = 'REG';
+            } elseif (str_contains($courierRaw, 'sap')) {
+                $courierCode = 'sap';
+                $serviceType = 'FLUDRREG';
+            } elseif (str_contains($courierRaw, 'idx')) {
+                $courierCode = 'idx';
+                $serviceType = '00';
+            }
         }
 
         // 3. Data pengirim dari settings database
         $senderName = (string) Setting::get('shipping_sender_name', Setting::get('store_name', 'Aroma Palace Official'));
         $senderPhone = (string) Setting::get('shipping_sender_phone', Setting::get('store_phone', '081288889999'));
         $senderAddress = (string) Setting::get('shipping_address', Setting::get('store_address', 'Jl. Kemang Raya No. 10, Jakarta Selatan'));
-        $originDistrictId = $this->origin ?: 2101;
         $platformName = (string) Setting::get('store_name', 'Aroma Palace');
 
         $baseUrl = $this->mode === 'production' ? 'https://client.kiriminaja.com' : 'https://tdev.kiriminaja.com';
@@ -443,12 +511,12 @@ class KiriminAjaService
             'destination_address' => (string) ($order->shipping_address ?: 'Alamat Penerima'),
             'destination_kecamatan_id' => $destinationDistrictId,
             'destination_zipcode' => (string) ($order->postal_code ?: '12130'),
-            'weight' => max(100, (int) ($order->total_weight ?? 500)),
+            'weight' => $weight,
             'width' => 10,
             'length' => 10,
             'height' => 10,
             'item_value' => max(10000, (int) $order->total_amount),
-            'shipping_cost' => (int) $order->shipping_cost,
+            'shipping_cost' => $shippingCost,
             'insurance_amount' => 0,
             'service' => $courierCode,
             'service_type' => $serviceType,
