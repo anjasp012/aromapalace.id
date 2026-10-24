@@ -59,7 +59,7 @@ class KiriminAjaService
     public function getProvinces(): array
     {
         $res = KiriminAja::getProvince();
-        dd($res);
+        dd(KiriminAja());
         try {
             return ($res->status && is_array($res->data)) ? $res->data : [];
         } catch (\Throwable $e) {
