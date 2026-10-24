@@ -27,7 +27,8 @@ class KiriminAjaService
     protected function applyConfig(?string $apiKey = null, ?string $mode = null): void
     {
         $activeMode = $mode ?: $this->getMode();
-        $token = $apiKey !== null ? trim($apiKey) : $this->getApiKey();
+        $rawToken = $apiKey !== null && trim($apiKey) !== '' ? $apiKey : $this->getApiKey();
+        $token = trim(trim($rawToken), "\"'");
 
         KiriminAjaConfig::setMode($activeMode === 'production' ? Mode::Production : Mode::Staging);
         KiriminAjaConfig::setApiTokenKey($token);
@@ -129,7 +130,7 @@ class KiriminAjaService
     public function testConnection(?string $apiKey = null, ?string $mode = null): array
     {
         $activeMode = $mode ?: $this->getMode();
-        $token = trim((string) ($apiKey !== null ? $apiKey : $this->getApiKey()));
+        $token = $apiKey !== null ? trim(trim($apiKey), "\"'") : $this->getApiKey();
         $tokenPreview = strlen($token) > 10 ? substr($token, 0, 8).'...'.substr($token, -6) : '(kosong)';
 
         if (empty($token)) {

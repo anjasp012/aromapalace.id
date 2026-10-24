@@ -581,7 +581,7 @@ export default function SettingsIndex({ settings = {} }: SettingsIndexProps) {
 
                                     {testResult && (
                                         <div
-                                            className={`p-3 rounded-xl border text-xs space-y-1 ${
+                                            className={`p-3 rounded-xl border text-xs space-y-1.5 ${
                                                 testResult.success
                                                     ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-900 dark:text-emerald-200'
                                                     : 'bg-destructive/10 border-destructive/30 text-destructive dark:text-red-300'
@@ -593,11 +593,21 @@ export default function SettingsIndex({ settings = {} }: SettingsIndexProps) {
                                                 ) : (
                                                     <AlertCircle className="size-4 text-destructive shrink-0" />
                                                 )}
-                                                <span>{testResult.success ? 'Koneksi Berhasil' : 'Koneksi Ditolak / Gagal'}</span>
+                                                <span>{testResult.success ? 'Koneksi Berhasil' : 'Koneksi Ditolak (401)'}</span>
+                                                {testResult.mode && (
+                                                    <span className="ml-auto text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-background/60 border">
+                                                        Mode: {testResult.mode}
+                                                    </span>
+                                                )}
                                             </div>
                                             <p className="leading-relaxed pl-5.5 text-[11px]">
                                                 {testResult.message}
                                             </p>
+                                            {testResult.token_preview && (
+                                                <div className="pl-5.5 text-[10px] font-mono text-muted-foreground">
+                                                    Token diuji: <code>{testResult.token_preview}</code>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
