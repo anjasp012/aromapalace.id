@@ -20,15 +20,16 @@ class KiriminAjaService
     
     public function getProvinces(): array
     {
-        $response = Http::withHeaders([
-          'Authorization' => 'Bearer v4.local.4SJhuA3f8eNSoRjtlkJRMcGpjEELOLzSIWl8HaJ7vnYVVHUe8-NHIU-gEE7BiowIF6GYKQP_FBodo0rJw1eNXa9DvDA0xNs-RzVZN8JarOkS3ZROhXYezDbTgRQknMnNyna9E8hXdagBB6gz6MsWj9OAeKaVIzYiARCbfPQs'
-        ])
-          ->post('https://tdev.kiriminaja.com/api/mitra/province');
-          dd([
+        $response = Http::withOptions([
+    'curl' => [
+        CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
+    ],
+])->withToken(config('services.kiriminaja.token'))
+  ->post('https://tdev.kiriminaja.com/api/mitra/province');
+
+dd([
     'status' => $response->status(),
-    'successful' => $response->successful(),
-    'body' => $response->body(),
-    'json' => $response->json(),
+    'body' => $response->json(),
 ]);
         try {
             $res = KiriminAja::getProvince();
