@@ -141,8 +141,20 @@ class CheckoutController extends Controller
             $primaryAddress->update(['is_primary' => true]);
         }
 
-        // Load couriers from KiriminAja SDK (cached 1 day)
-        $couriers = $this->kiriminAjaService->getCouriers();
+        // Hitung total berat paket dari keranjang belanja (minimal 1000g untuk standar ekspedisi)
+        $totalWeight = 0;
+        foreach ($items as $item) {
+            $volNum = (int) filter_var($item['volume'] ?? '100', FILTER_SANITIZE_NUMBER_INT);
+            $itemWeight = max(250, ($volNum > 0 ? $volNum : 100) * 3);
+            $totalWeight += $itemWeight * (int) ($item['quantity'] ?? 1);
+        }
+        $totalWeight = max(1000, $totalWeight);
+
+        // Ambil tarif pengiriman riil KiriminAja jika alamat utama memiliki district_id
+        $originId = (int) Setting::get('shipping_district_id', 2101);
+        $initialShippingRates = ($primaryAddress && $primaryAddress->district_id)
+            ? $this->kiriminAjaService->getShippingRates($originId, (int) $primaryAddress->district_id, $totalWeight)
+            : [];
 
         return Inertia::render('checkout', [
             'items' => $items,
@@ -158,7 +170,7 @@ class CheckoutController extends Controller
             'available_vouchers' => $availableVouchers,
             'stores' => $stores,
             'payment_methods' => $paymentMethods,
-            'couriers' => $couriers,
+            'initial_shipping_rates' => $initialShippingRates,
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,

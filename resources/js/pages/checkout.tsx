@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Head, Link, useForm } from '@inertiajs/react';
 import Layout from '@/components/Layout';
@@ -101,7 +101,7 @@ interface CheckoutProps {
     available_vouchers?: AvailableVoucher[];
     stores?: StoreOption[];
     payment_methods?: PaymentMethodItem[];
-    couriers?: CourierOption[];
+    initial_shipping_rates?: ShippingRate[];
     user: {
         id?: number;
         name: string;
@@ -306,7 +306,7 @@ export default function CheckoutPage({
     available_vouchers = [],
     stores = [],
     payment_methods = [],
-    couriers: propCouriers = [],
+    initial_shipping_rates = [],
     user,
     addresses = [],
     primary_address = null,
@@ -340,9 +340,11 @@ export default function CheckoutPage({
     const [addressSelectorOpen, setAddressSelectorOpen] = useState(false);
     const [editingAddress, setEditingAddress] = useState<UserAddress | null>(null);
 
-    // Shipping rates fetched from KiriminAja API (declared after selectedAddress to avoid TDZ)
-    const [shippingRates, setShippingRates] = useState<ShippingRate[]>([]);
+    // Shipping rates fetched from KiriminAja API (initialized with live server rates if available)
+    const [shippingRates, setShippingRates] = useState<ShippingRate[]>(initial_shipping_rates || []);
     const [loadingRates, setLoadingRates] = useState(false);
+    const initialAddressIdRef = useRef<number | null>(initialSelectedAddress?.id || null);
+    const hasInitialRatesRef = useRef<boolean>((initial_shipping_rates && initial_shipping_rates.length > 0) ? true : false);
 
     // Build courier options strictly from real KiriminAja live rates (no dummy/fallback couriers)
     const courierOptions = useMemo(() => {
@@ -411,6 +413,13 @@ export default function CheckoutPage({
             return;
         }
 
+        // If server already provided valid rates for initial selected address, skip redundant first fetch
+        if (hasInitialRatesRef.current && selectedAddress?.id === initialAddressIdRef.current) {
+            hasInitialRatesRef.current = false;
+            return;
+        }
+        hasInitialRatesRef.current = false;
+
         let cancelled = false;
         setLoadingRates(true);
         setShippingRates([]);
@@ -441,7 +450,7 @@ export default function CheckoutPage({
                     const firstCourier = json.rates[0];
                     setData((prev) => ({
                         ...prev,
-                        courier: firstCourier.name || firstCourier.code || 'JNE Express Reguler',
+                        courier: firstCourier.name || firstCourier.code || '',
                         shipping_cost: firstCourier.price || 0,
                     }));
                 }
@@ -531,7 +540,7 @@ export default function CheckoutPage({
         subdistrict_name: initialSelectedAddress?.subdistrict_name || '',
         city: initialSelectedAddress?.city_name || user?.city || '',
         postal_code: initialSelectedAddress?.postal_code || user?.postal_code || '',
-        courier: courierOptions[0]?.name || courierOptions[0]?.id || 'JNE Express Reguler',
+        courier: courierOptions[0]?.name || courierOptions[0]?.id || '',
         shipping_cost: courierOptions[0]?.price || 0,
         payment_method: 'qris',
         voucher_code: initial_voucher,
@@ -732,7 +741,7 @@ export default function CheckoutPage({
                     subdistrict_name: activeAddress.subdistrict_name || '',
                     city: activeAddress.city_name || prev.city,
                     postal_code: activeAddress.postal_code || prev.postal_code,
-                    courier: selectedCourier?.name || prev.courier || 'JNE Express Reguler',
+                    courier: selectedCourier?.name || prev.courier || '',
                     shipping_cost: currentShippingCost,
                 }));
             }
