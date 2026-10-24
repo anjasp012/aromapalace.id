@@ -4,26 +4,34 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Store;
 use App\Models\User;
+use App\Services\KiriminAjaService;
 
 test('guest cannot access admin routes and is redirected to login', function () {
-    $this->get('/admin')->assertRedirect('/login');
-    $this->get('/admin/dashboard')->assertRedirect('/login');
-    $this->get('/admin/orders')->assertRedirect('/login');
+    $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
+
+    $this->get("http://{$adminDomain}/")
+        ->assertRedirect("http://{$adminDomain}/login");
+    $this->get("http://{$adminDomain}/dashboard")
+        ->assertRedirect("http://{$adminDomain}/login");
+    $this->get("http://{$adminDomain}/manajemen-pesanan")
+        ->assertRedirect("http://{$adminDomain}/login");
 });
 
-test('regular customer receives 403 forbidden when accessing admin dashboard', function () {
+test('regular customer cannot access admin dashboard', function () {
+    $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
     $customer = User::factory()->create(['role' => 'customer']);
 
     $this->actingAs($customer)
-        ->get('/admin/dashboard')
-        ->assertForbidden();
+        ->get("http://{$adminDomain}/dashboard")
+        ->assertRedirect("http://{$adminDomain}/login");
 });
 
 test('admin can access dashboard and receives metrics', function () {
+    $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
     $admin = User::factory()->admin()->create();
 
     $response = $this->actingAs($admin)
-        ->get('/admin/dashboard');
+        ->get("http://{$adminDomain}/dashboard");
 
     $response->assertOk()
         ->assertInertia(fn ($page) => $page
@@ -36,6 +44,7 @@ test('admin can access dashboard and receives metrics', function () {
 });
 
 test('admin can view orders index with status filter and search', function () {
+    $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
     $admin = User::factory()->admin()->create();
     $customer = User::factory()->create();
 
@@ -70,7 +79,7 @@ test('admin can view orders index with status filter and search', function () {
     ]);
 
     $response = $this->actingAs($admin)
-        ->get('/admin/orders?status=diproses');
+        ->get("http://{$adminDomain}/manajemen-pesanan?status=diproses");
 
     $response->assertOk()
         ->assertInertia(fn ($page) => $page
@@ -82,6 +91,7 @@ test('admin can view orders index with status filter and search', function () {
 });
 
 test('admin can view order detail page', function () {
+    $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
     $admin = User::factory()->admin()->create();
     $customer = User::factory()->create();
 
@@ -118,7 +128,7 @@ test('admin can view order detail page', function () {
     ]);
 
     $response = $this->actingAs($admin)
-        ->get("/admin/orders/{$order->order_number}");
+        ->get("http://{$adminDomain}/manajemen-pesanan/{$order->order_number}");
 
     $response->assertOk()
         ->assertInertia(fn ($page) => $page
@@ -130,6 +140,7 @@ test('admin can view order detail page', function () {
 });
 
 test('admin can update order status from menunggu_pembayaran to diproses and sync payment_status to paid', function () {
+    $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
     $admin = User::factory()->admin()->create();
     $customer = User::factory()->create();
 
@@ -154,7 +165,7 @@ test('admin can update order status from menunggu_pembayaran to diproses and syn
     ]);
 
     $response = $this->actingAs($admin)
-        ->patch("/admin/orders/{$order->order_number}/status", [
+        ->patch("http://{$adminDomain}/manajemen-pesanan/{$order->order_number}/status", [
             'status' => 'diproses',
             'notes' => 'Pembayaran terverifikasi oleh admin',
         ]);
@@ -167,7 +178,8 @@ test('admin can update order status from menunggu_pembayaran to diproses and syn
         ->and($order->notes)->toBe('Pembayaran terverifikasi oleh admin');
 });
 
-test('admin can update status to dikirim and selesai', function () {
+test('admin can update status to dikirim with manual tracking number and selesai', function () {
+    $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
     $admin = User::factory()->admin()->create();
     $customer = User::factory()->create();
 
@@ -191,24 +203,125 @@ test('admin can update status to dikirim and selesai', function () {
         'total_amount' => 450000,
     ]);
 
-    // Update to dikirim
+    // Update to dikirim with manual tracking number
     $this->actingAs($admin)
-        ->patch("/admin/orders/{$order->order_number}/status", [
+        ->patch("http://{$adminDomain}/manajemen-pesanan/{$order->order_number}/status", [
             'status' => 'dikirim',
-            'notes' => 'Resi JNE: VIP-00192837',
+            'shipping_mode' => 'manual',
+            'tracking_number' => 'JNE1234567890',
+            'notes' => 'Resi JNE Manual',
         ])
         ->assertRedirect();
 
     $order->refresh();
-    expect($order->status)->toBe('dikirim');
+    expect($order->status)->toBe('dikirim')
+        ->and($order->tracking_number)->toBe('JNE1234567890');
 
     // Update to selesai
     $this->actingAs($admin)
-        ->patch("/admin/orders/{$order->order_number}/status", [
+        ->patch("http://{$adminDomain}/manajemen-pesanan/{$order->order_number}/status", [
             'status' => 'selesai',
         ])
         ->assertRedirect();
 
     $order->refresh();
     expect($order->status)->toBe('selesai');
+});
+
+test('admin can ship order with kiriminaja automatic tracking number', function () {
+    $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
+    $admin = User::factory()->admin()->create();
+    $customer = User::factory()->create();
+
+    $order = Order::create([
+        'order_number' => 'AP-KIRIMIN-'.uniqid(),
+        'user_id' => $customer->id,
+        'delivery_type' => 'delivery',
+        'recipient_name' => 'Citra Kirana',
+        'recipient_phone' => '081234567897',
+        'shipping_address' => 'Jl. Senopati No. 20',
+        'city' => 'Jakarta Selatan',
+        'courier' => 'JNE Express Reguler',
+        'shipping_cost' => 18000,
+        'payment_method' => 'qris',
+        'payment_status' => 'paid',
+        'status' => 'diproses',
+        'subtotal' => 350000,
+        'discount_amount' => 0,
+        'total_amount' => 368000,
+    ]);
+
+    // Mock KiriminAjaService
+    $mockService = Mockery::mock(KiriminAjaService::class);
+    $mockService->shouldReceive('requestPickupForOrder')
+        ->once()
+        ->with(Mockery::on(fn ($o) => $o->id === $order->id))
+        ->andReturn([
+            'success' => true,
+            'tracking_number' => 'XID-9998887776',
+            'courier' => 'JNE Express Reguler',
+            'source' => 'kiriminaja_live',
+            'message' => 'Resi otomatis KiriminAja berhasil diterbitkan (XID-9998887776).',
+        ]);
+    $this->app->instance(KiriminAjaService::class, $mockService);
+
+    $response = $this->actingAs($admin)
+        ->patch("http://{$adminDomain}/manajemen-pesanan/{$order->order_number}/status", [
+            'status' => 'dikirim',
+            'shipping_mode' => 'kiriminaja',
+        ]);
+
+    $response->assertRedirect();
+    $order->refresh();
+    expect($order->status)->toBe('dikirim')
+        ->and($order->tracking_number)->toBe('XID-9998887776');
+});
+
+test('admin receives flash error when kiriminaja request pickup fails', function () {
+    $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
+    $admin = User::factory()->admin()->create();
+    $customer = User::factory()->create();
+
+    $order = Order::create([
+        'order_number' => 'AP-FAIL-'.uniqid(),
+        'user_id' => $customer->id,
+        'delivery_type' => 'delivery',
+        'recipient_name' => 'Citra Kirana',
+        'recipient_phone' => '081234567897',
+        'shipping_address' => 'Jl. Senopati No. 20',
+        'city' => 'Jakarta Selatan',
+        'courier' => 'JNE Express Reguler',
+        'shipping_cost' => 18000,
+        'payment_method' => 'qris',
+        'payment_status' => 'paid',
+        'status' => 'diproses',
+        'subtotal' => 350000,
+        'discount_amount' => 0,
+        'total_amount' => 368000,
+    ]);
+
+    // Mock failure
+    $mockService = Mockery::mock(KiriminAjaService::class);
+    $mockService->shouldReceive('requestPickupForOrder')
+        ->once()
+        ->andReturn([
+            'success' => false,
+            'tracking_number' => '',
+            'courier' => 'JNE Express Reguler',
+            'source' => 'kiriminaja_error',
+            'message' => 'Saldo KiriminAja tidak mencukupi untuk biaya pengiriman.',
+        ]);
+    $this->app->instance(KiriminAjaService::class, $mockService);
+
+    $response = $this->actingAs($admin)
+        ->patch("http://{$adminDomain}/manajemen-pesanan/{$order->order_number}/status", [
+            'status' => 'dikirim',
+            'shipping_mode' => 'kiriminaja',
+        ]);
+
+    $response->assertSessionHas('error');
+    $order->refresh();
+    // Status must remain diproses, not changed to dikirim!
+    expect($order->status)->toBe('diproses')
+        ->and($order->tracking_number)->toBeNull();
 });

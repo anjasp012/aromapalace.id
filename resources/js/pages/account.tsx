@@ -1255,8 +1255,8 @@ export default function AccountPage({
             />
             {/* MODAL PENGATURAN NOTIFIKASI */}
             <Dialog open={notifModalOpen} onOpenChange={setNotifModalOpen}>
-                <DialogContent className="max-w-md p-6 rounded-3xl">
-                    <DialogHeader className="space-y-1.5 pb-2 border-b border-border/60">
+                <DialogContent className="w-[calc(100vw-32px)] max-w-sm p-5 sm:p-6 rounded-2xl">
+                    <DialogHeader className="space-y-1.5 pb-2 border-b border-border/60 text-left">
                         <div className="flex items-center gap-2.5">
                             <div className="w-9 h-9 rounded-2xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
                                 <Bell className="w-5 h-5" />
@@ -1272,7 +1272,7 @@ export default function AccountPage({
                         </div>
                     </DialogHeader>
 
-                    <div className="py-2 space-y-3">
+                    <div className="py-1">
                         {/* Toggle Row */}
                         <div className="flex items-center justify-between p-3.5 rounded-2xl bg-muted/40 border border-border/80">
                             <div className="space-y-0.5 pr-3 min-w-0">
@@ -1294,21 +1294,6 @@ export default function AccountPage({
                                 )}
                             </div>
                         </div>
-
-                        {/* Petunjuk khusus jika izin dinonaktifkan di iPhone */}
-                        {notificationStatus === 'denied' && (
-                            <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-foreground space-y-1.5">
-                                <div className="font-semibold flex items-center gap-1.5 text-amber-800 dark:text-amber-300">
-                                    <Info className="w-4 h-4 shrink-0 text-amber-600" />
-                                    <span>Izin dinonaktifkan di Pengaturan iPhone:</span>
-                                </div>
-                                <ol className="list-decimal list-inside space-y-1 text-muted-foreground text-[11px] pl-1">
-                                    <li>Buka aplikasi <strong>Pengaturan (Settings)</strong> iPhone.</li>
-                                    <li>Pilih <strong>Aroma Palace</strong> ➔ <strong>Pemberitahuan</strong>.</li>
-                                    <li>Nyalakan <strong>Izinkan Pemberitahuan</strong>.</li>
-                                </ol>
-                            </div>
-                        )}
                     </div>
                 </DialogContent>
             </Dialog>

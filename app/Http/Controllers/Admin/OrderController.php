@@ -162,6 +162,13 @@ class OrderController extends Controller
 
             if ($shippingMode === 'kiriminaja') {
                 $kirimResult = app(KiriminAjaService::class)->requestPickupForOrder($orderModel);
+
+                if (! ($kirimResult['success'] ?? false) || empty($kirimResult['tracking_number'])) {
+                    $errMsg = $kirimResult['message'] ?? 'Gagal membuat request pickup di KiriminAja.';
+
+                    return back()->with('error', "Gagal menerbitkan Resi Otomatis KiriminAja: {$errMsg}. Silakan periksa data pesanan atau gunakan Resi Manual.");
+                }
+
                 $orderModel->tracking_number = $kirimResult['tracking_number'];
                 if (! empty($kirimResult['courier']) && empty($orderModel->courier)) {
                     $orderModel->courier = $kirimResult['courier'];
