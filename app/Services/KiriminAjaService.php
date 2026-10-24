@@ -29,9 +29,11 @@ class KiriminAjaService
         ])
           ->post('https://tdev.kiriminaja.com/api/mitra/province');
 
-dd([
+ dd([
     'status' => $response->status(),
-    'body' => $response->json(),
+    'successful' => $response->successful(),
+    'body' => $response->body(),
+    'json' => $response->json(),
 ]);
         try {
             $res = KiriminAja::getProvince();
