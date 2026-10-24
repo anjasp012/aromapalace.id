@@ -15,7 +15,9 @@ use KiriminAja\Services\KiriminAja;
 class KiriminAjaService
 {
     protected string $mode;
+
     protected string $apiKey;
+
     protected int $origin;
 
     public function __construct()
@@ -42,7 +44,7 @@ class KiriminAjaService
      */
     public function getProvinces(): array
     {
-        $cached = Cache::get('kiriminaja:provinces');
+        $cached = Cache::get('kiriminaja:provinces:v2');
         if (is_array($cached) && ! empty($cached)) {
             return $cached;
         }
@@ -50,9 +52,20 @@ class KiriminAjaService
         try {
             $res = KiriminAja::getProvince();
             if ($res->status && is_array($res->data) && ! empty($res->data)) {
-                Cache::put('kiriminaja:provinces', $res->data, now()->addDays(30));
+                $items = array_values(array_map(function ($item) {
+                    $arr = (array) $item;
+                    $name = (string) ($arr['provinsi_name'] ?? ($arr['name'] ?? ''));
 
-                return $res->data;
+                    return [
+                        'id' => (int) $arr['id'],
+                        'name' => $name,
+                        'provinsi_name' => $name,
+                    ];
+                }, $res->data));
+
+                Cache::put('kiriminaja:provinces:v2', $items, now()->addDays(30));
+
+                return $items;
             }
 
             return [];
@@ -70,7 +83,7 @@ class KiriminAjaService
      */
     public function getCities(int $provinceId): array
     {
-        $cacheKey = "kiriminaja:cities:{$provinceId}";
+        $cacheKey = "kiriminaja:cities:v2:{$provinceId}";
         $cached = Cache::get($cacheKey);
         if (is_array($cached) && ! empty($cached)) {
             return $cached;
@@ -79,13 +92,27 @@ class KiriminAjaService
         try {
             $res = KiriminAja::getCity($provinceId);
             if ($res->status && is_array($res->data)) {
-                $items = $res->data['datas'] ?? ($res->data['results'] ?? $res->data);
-                $list = is_array($items) ? $items : [];
-                if (! empty($list)) {
-                    Cache::put($cacheKey, $list, now()->addDays(30));
-                }
+                $raw = $res->data['datas'] ?? ($res->data['results'] ?? $res->data);
+                if (is_array($raw) && ! empty($raw)) {
+                    $items = array_values(array_map(function ($item) use ($provinceId) {
+                        $arr = (array) $item;
+                        $name = (string) ($arr['kabupaten_name'] ?? ($arr['name'] ?? ''));
 
-                return $list;
+                        return [
+                            'id' => (int) $arr['id'],
+                            'province_id' => (int) ($arr['provinsi_id'] ?? $provinceId),
+                            'provinsi_id' => (int) ($arr['provinsi_id'] ?? $provinceId),
+                            'name' => $name,
+                            'kabupaten_name' => $name,
+                            'type' => (string) ($arr['type'] ?? ''),
+                            'postal_code' => (string) ($arr['postal_code'] ?? ''),
+                        ];
+                    }, $raw));
+
+                    Cache::put($cacheKey, $items, now()->addDays(30));
+
+                    return $items;
+                }
             }
 
             return [];
@@ -103,7 +130,7 @@ class KiriminAjaService
      */
     public function getDistricts(int $cityId): array
     {
-        $cacheKey = "kiriminaja:districts:{$cityId}";
+        $cacheKey = "kiriminaja:districts:v2:{$cityId}";
         $cached = Cache::get($cacheKey);
         if (is_array($cached) && ! empty($cached)) {
             return $cached;
@@ -112,13 +139,26 @@ class KiriminAjaService
         try {
             $res = KiriminAja::getDistrict($cityId);
             if ($res->status && is_array($res->data)) {
-                $items = $res->data['datas'] ?? ($res->data['results'] ?? $res->data);
-                $list = is_array($items) ? $items : [];
-                if (! empty($list)) {
-                    Cache::put($cacheKey, $list, now()->addDays(30));
-                }
+                $raw = $res->data['datas'] ?? ($res->data['results'] ?? $res->data);
+                if (is_array($raw) && ! empty($raw)) {
+                    $items = array_values(array_map(function ($item) use ($cityId) {
+                        $arr = (array) $item;
+                        $name = (string) ($arr['kecamatan_name'] ?? ($arr['name'] ?? ''));
 
-                return $list;
+                        return [
+                            'id' => (int) $arr['id'],
+                            'city_id' => (int) ($arr['kabupaten_id'] ?? $cityId),
+                            'kabupaten_id' => (int) ($arr['kabupaten_id'] ?? $cityId),
+                            'name' => $name,
+                            'kecamatan_name' => $name,
+                            'postal_code' => (string) ($arr['postal_code'] ?? ''),
+                        ];
+                    }, $raw));
+
+                    Cache::put($cacheKey, $items, now()->addDays(30));
+
+                    return $items;
+                }
             }
 
             return [];
@@ -136,7 +176,7 @@ class KiriminAjaService
      */
     public function getSubdistricts(int $districtId): array
     {
-        $cacheKey = "kiriminaja:subdistricts:{$districtId}";
+        $cacheKey = "kiriminaja:subdistricts:v2:{$districtId}";
         $cached = Cache::get($cacheKey);
         if (is_array($cached) && ! empty($cached)) {
             return $cached;
@@ -145,13 +185,26 @@ class KiriminAjaService
         try {
             $res = KiriminAja::getSubDistrict($districtId);
             if ($res->status && is_array($res->data)) {
-                $items = $res->data['results'] ?? ($res->data['datas'] ?? $res->data);
-                $list = is_array($items) ? $items : [];
-                if (! empty($list)) {
-                    Cache::put($cacheKey, $list, now()->addDays(30));
-                }
+                $raw = $res->data['results'] ?? ($res->data['datas'] ?? $res->data);
+                if (is_array($raw) && ! empty($raw)) {
+                    $items = array_values(array_map(function ($item) use ($districtId) {
+                        $arr = (array) $item;
+                        $name = (string) ($arr['kelurahan_name'] ?? ($arr['name'] ?? ''));
 
-                return $list;
+                        return [
+                            'id' => (int) $arr['id'],
+                            'district_id' => (int) ($arr['kecamatan_id'] ?? $districtId),
+                            'kecamatan_id' => (int) ($arr['kecamatan_id'] ?? $districtId),
+                            'name' => $name,
+                            'kelurahan_name' => $name,
+                            'postal_code' => (string) ($arr['postal_code'] ?? ''),
+                        ];
+                    }, $raw));
+
+                    Cache::put($cacheKey, $items, now()->addDays(30));
+
+                    return $items;
+                }
             }
 
             return [];
@@ -221,7 +274,7 @@ class KiriminAjaService
         }
 
         try {
-            $data = new ShippingFullPriceData();
+            $data = new ShippingFullPriceData;
             $data->origin = $origin;
             $data->destination = $destination;
             $data->weight = $weight;

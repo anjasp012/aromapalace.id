@@ -46,13 +46,19 @@ export default function SearchableSelect({
         return options.find((opt) => String(opt.id) === String(value)) || null;
     }, [options, value]);
 
+    const getOptionLabel = (opt?: SearchableOption | null): string => {
+        if (!opt) return '';
+        return opt.name || opt.provinsi_name || opt.kabupaten_name || opt.kecamatan_name || opt.kelurahan_name || '';
+    };
+
     // Filter options based on search query
     const filteredOptions = useMemo(() => {
         const query = search.trim().toLowerCase();
         if (!query) return options;
 
         return options.filter((opt) => {
-            const nameMatch = opt.name?.toLowerCase().includes(query);
+            const label = getOptionLabel(opt);
+            const nameMatch = label.toLowerCase().includes(query);
             const typeMatch = opt.type?.toLowerCase().includes(query);
             const postalMatch = opt.postal_code?.toLowerCase().includes(query);
             return nameMatch || typeMatch || postalMatch;
@@ -92,7 +98,7 @@ export default function SearchableSelect({
                         ) : selectedOption ? (
                             <span className="font-medium text-foreground">
                                 {selectedOption.type ? `${selectedOption.type} ` : ''}
-                                {selectedOption.name}
+                                {getOptionLabel(selectedOption)}
                                 {selectedOption.postal_code ? (
                                     <span className="text-muted-foreground ml-1.5 text-[11px]">
                                         ({selectedOption.postal_code})
@@ -164,7 +170,7 @@ export default function SearchableSelect({
                                     <div className="truncate flex-1">
                                         <span>
                                             {opt.type ? `${opt.type} ` : ''}
-                                            {opt.name}
+                                            {getOptionLabel(opt)}
                                         </span>
                                         {opt.postal_code && (
                                             <span className="text-[10.5px] text-muted-foreground ml-1.5 font-normal">
