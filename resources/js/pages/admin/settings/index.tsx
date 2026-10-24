@@ -10,6 +10,7 @@ import {
     Truck,
     Save,
     AlertCircle,
+    CheckCircle2,
     Sparkles,
     ShieldCheck,
     Store,
