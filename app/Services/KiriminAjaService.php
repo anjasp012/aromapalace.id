@@ -12,6 +12,12 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use KiriminAja\Base\Config\KiriminAjaConfig;
+use KiriminAja\Models\PackageData;
+use KiriminAja\Models\PackageItemData;
+use KiriminAja\Models\RequestPickupData;
+use KiriminAja\Models\RequestPickupDataList;
+use KiriminAja\Models\ShippingFullPriceData;
+use KiriminAja\Models\ShippingPriceData;
 use KiriminAja\Services\KiriminAja;
 
 class KiriminAjaService
