@@ -10,8 +10,6 @@ import {
     Truck,
     Save,
     AlertCircle,
-    CheckCircle2,
-    Info,
     Sparkles,
     ShieldCheck,
     Store,
@@ -19,7 +17,6 @@ import {
     Key,
     Eye,
     EyeOff,
-    RefreshCw,
     ExternalLink,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
@@ -45,9 +42,6 @@ export default function SettingsIndex({ settings = {} }: SettingsIndexProps) {
         // Integrasi KiriminAja (Kredensial & Logistik)
         kiriminaja_mode: settings.kiriminaja_mode || 'staging',
         kiriminaja_api_key: settings.kiriminaja_api_key || '',
-        kiriminaja_prefix: settings.kiriminaja_prefix || 'ARPL',
-        kiriminaja_base_url: settings.kiriminaja_base_url || '',
-
         // Alamat Origin Pengiriman & KiriminAja
         shipping_sender_name: settings.shipping_sender_name || '',
         shipping_sender_phone: settings.shipping_sender_phone || '',
@@ -63,45 +57,7 @@ export default function SettingsIndex({ settings = {} }: SettingsIndexProps) {
         shipping_postal_code: settings.shipping_postal_code || '',
     });
 
-    // KiriminAja test connection state
     const [showApiKey, setShowApiKey] = useState(false);
-    const [testingKiriminAja, setTestingKiriminAja] = useState(false);
-    const [testResult, setTestResult] = useState<{
-        success: boolean;
-        message: string;
-        mode?: string;
-        token_preview?: string;
-    } | null>(null);
-
-    const handleTestKiriminAja = async () => {
-        setTestingKiriminAja(true);
-        setTestResult(null);
-        try {
-            const csrfToken = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '';
-            const res = await fetch('/pengaturan/test-kiriminaja', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                },
-                body: JSON.stringify({
-                    mode: data.kiriminaja_mode,
-                    api_key: data.kiriminaja_api_key,
-                    base_url: data.kiriminaja_base_url || undefined,
-                }),
-            });
-            const json = await res.json();
-            setTestResult(json);
-        } catch (err: any) {
-            setTestResult({
-                success: false,
-                message: 'Gagal menghubungi server untuk menguji koneksi: ' + (err?.message || err),
-            });
-        } finally {
-            setTestingKiriminAja(false);
-        }
-    };
 
     // Coverage hierarchy lists
     const [provinces, setProvinces] = useState<SearchableOption[]>([]);
@@ -279,7 +235,7 @@ export default function SettingsIndex({ settings = {} }: SettingsIndexProps) {
         >
             <Head title="Pengaturan Toko & Pengiriman - Admin Aroma Palace" />
 
-            <form onSubmit={handleSubmit} className="max-w-6xl space-y-6 pb-12">
+            <form onSubmit={handleSubmit} className="w-full space-y-6 pb-12">
                 {/* Header Action Bar */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card p-4 sm:p-6 rounded-2xl border shadow-xs">
                     <div className="space-y-1">
@@ -562,91 +518,8 @@ export default function SettingsIndex({ settings = {} }: SettingsIndexProps) {
                                     )}
                                 </div>
 
-                                {/* Custom Base URL (Opsional / Boleh Null) */}
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-foreground flex items-center justify-between">
-                                        <span>Custom Base URL (Opsional)</span>
-                                        <span className="text-[10px] text-muted-foreground font-mono">Boleh kosong (default SDK)</span>
-                                    </label>
-                                    <Input
-                                        type="text"
-                                        placeholder={data.kiriminaja_mode === 'production' ? 'https://client.kiriminaja.com (default)' : 'https://tdev.kiriminaja.com (default)'}
-                                        value={data.kiriminaja_base_url}
-                                        onChange={(e) => setData('kiriminaja_base_url', e.target.value)}
-                                        className="h-9 text-xs font-mono"
-                                    />
-                                    <p className="text-[11px] text-muted-foreground">
-                                        Biarkan kosong agar SDK otomatis menggunakan endpoint resmi sesuai mode. Hanya diisi jika Anda menggunakan reverse proxy / endpoint khusus.
-                                    </p>
-                                    {errors.kiriminaja_base_url && (
-                                        <p className="text-xs text-destructive">{errors.kiriminaja_base_url}</p>
-                                    )}
-                                </div>
-
-                                {/* Test Connection Button & Result */}
-                                <div className="pt-2 border-t border-border/60 space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-xs text-muted-foreground">
-                                            Uji kredensial sebelum menyimpan:
-                                        </span>
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={handleTestKiriminAja}
-                                            disabled={testingKiriminAja || !data.kiriminaja_api_key}
-                                            className="h-8 text-xs gap-1.5 font-medium border-[#4A070B]/30 hover:bg-[#4A070B]/10 hover:text-[#4A070B] dark:hover:text-red-300"
-                                        >
-                                            <RefreshCw className={`size-3.5 ${testingKiriminAja ? 'animate-spin' : ''}`} />
-                                            <span>{testingKiriminAja ? 'Menguji Koneksi...' : 'Uji Koneksi KiriminAja'}</span>
-                                        </Button>
-                                    </div>
-
-                                    {testResult && (
-                                        <div
-                                            className={`p-3 rounded-xl border text-xs space-y-1.5 ${
-                                                testResult.success
-                                                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-900 dark:text-emerald-200'
-                                                    : 'bg-destructive/10 border-destructive/30 text-destructive dark:text-red-300'
-                                            }`}
-                                        >
-                                            <div className="flex items-center gap-1.5 font-bold">
-                                                {testResult.success ? (
-                                                    <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
-                                                ) : (
-                                                    <AlertCircle className="size-4 text-destructive shrink-0" />
-                                                )}
-                                                <span>{testResult.success ? 'Koneksi Berhasil' : 'Koneksi Ditolak (401)'}</span>
-                                                {testResult.mode && (
-                                                    <span className="ml-auto text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-background/60 border">
-                                                        Mode: {testResult.mode}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <p className="leading-relaxed pl-5.5 text-[11px]">
-                                                {testResult.message}
-                                            </p>
-                                            {testResult.token_preview && (
-                                                <div className="pl-5.5 text-[10px] font-mono text-muted-foreground">
-                                                    Token diuji: <code>{testResult.token_preview}</code>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
                             </CardContent>
                         </Card>
-
-                        {/* Info Badge KiriminAja Origin Helper */}
-                        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-200 space-y-2">
-                            <div className="flex items-center gap-2 font-semibold text-xs">
-                                <Info className="size-4 shrink-0 text-amber-600" />
-                                <span>Bagaimana KiriminAja Menggunakan Pengaturan Ini?</span>
-                            </div>
-                            <p className="text-xs leading-relaxed text-muted-foreground dark:text-amber-300/80">
-                                Saat admin menekan tombol <strong>Kirim dengan Resi Otomatis</strong> pada pesanan, sistem akan menghubungi endpoint KiriminAja (<code className="text-foreground">{data.kiriminaja_mode === 'production' ? 'https://client.kiriminaja.com' : 'https://tdev.kiriminaja.com'}</code>) untuk menjadwalkan pickup kurir dan menerbitkan nomor AWB/Resi asli.
-                            </p>
-                        </div>
                     </div>
 
                     {/* BAGIAN 2: ALAMAT ASAL & ORIGIN KIRIMINAJA */}
