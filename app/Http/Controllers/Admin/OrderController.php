@@ -109,9 +109,43 @@ class OrderController extends Controller
             ->with(['items', 'store', 'user', 'voucher'])
             ->firstOrFail();
 
+        // Jika resi masih berupa kode sementara KiriminAja (PUP- / ARPL- / KJ-), coba sinkronkan AWB resmi otomatis
+        if (
+            $orderModel->status === 'dikirim' &&
+            ! empty($orderModel->tracking_number) &&
+            (str_starts_with($orderModel->tracking_number, 'PUP-') ||
+             str_starts_with($orderModel->tracking_number, 'ARPL-') ||
+             str_starts_with($orderModel->tracking_number, 'KJ-'))
+        ) {
+            try {
+                app(KiriminAjaService::class)->syncTrackingNumber($orderModel);
+                $orderModel->refresh();
+            } catch (\Throwable $e) {
+                // ignore
+            }
+        }
+
         return Inertia::render('admin/orders/show', [
             'order' => $this->mapOrderDetail($orderModel),
         ]);
+    }
+
+    /**
+     * Sinkronkan nomor resi (AWB) dan status pengiriman resmi langsung dari KiriminAja.
+     */
+    public function syncResi(Request $request, string $order): RedirectResponse
+    {
+        $orderModel = Order::where(function ($q) use ($order) {
+            $q->where('order_number', $order)->orWhere('id', $order);
+        })->firstOrFail();
+
+        $result = app(KiriminAjaService::class)->syncTrackingNumber($orderModel);
+
+        if ($result['success'] ?? false) {
+            return back()->with('success', $result['message']);
+        }
+
+        return back()->with('error', $result['message'] ?? 'Nomor resi resmi belum dapat disinkronkan dari KiriminAja.');
     }
 
     /**
@@ -170,8 +204,11 @@ class OrderController extends Controller
                 }
 
                 $orderModel->tracking_number = $kirimResult['tracking_number'];
-                if (! empty($kirimResult['courier']) && empty($orderModel->courier)) {
+                if (! empty($kirimResult['courier'])) {
                     $orderModel->courier = $kirimResult['courier'];
+                }
+                if (! empty($kirimResult['shipping_cost'])) {
+                    $orderModel->shipping_cost = (int) $kirimResult['shipping_cost'];
                 }
                 $customFlash = "Pesanan #{$orderModel->order_number} berhasil dikirim dengan Resi Otomatis KiriminAja: {$orderModel->tracking_number}.";
             } elseif (! empty($validated['tracking_number'])) {

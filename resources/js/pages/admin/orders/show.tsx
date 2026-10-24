@@ -22,6 +22,7 @@ import {
     Sparkles,
     Copy,
     Edit2,
+    RefreshCw,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -128,6 +129,7 @@ export default function AdminOrderShow({ order }: OrderShowProps) {
     const [manualCourier, setManualCourier] = useState(order.courier || '');
     const [manualError, setManualError] = useState('');
     const [copiedTracking, setCopiedTracking] = useState(false);
+    const [isSyncingResi, setIsSyncingResi] = useState(false);
 
     React.useEffect(() => {
         setManualTrackingNumber(order.tracking_number || '');
@@ -209,6 +211,18 @@ export default function AdminOrderShow({ order }: OrderShowProps) {
         navigator.clipboard.writeText(order.tracking_number);
         setCopiedTracking(true);
         setTimeout(() => setCopiedTracking(false), 2000);
+    };
+
+    const handleSyncResi = () => {
+        setIsSyncingResi(true);
+        router.post(
+            `/manajemen-pesanan/${order.order_number}/sync-resi`,
+            {},
+            {
+                preserveScroll: true,
+                onFinish: () => setIsSyncingResi(false),
+            }
+        );
     };
 
     const renderPaymentStatusBadge = () => {
@@ -552,6 +566,18 @@ export default function AdminOrderShow({ order }: OrderShowProps) {
                                                                     <span>Salin</span>
                                                                 </>
                                                             )}
+                                                        </Button>
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={handleSyncResi}
+                                                            disabled={isSyncingResi}
+                                                            title="Sinkronkan nomor resi & ongkir terbaru langsung dari KiriminAja"
+                                                            className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                                                        >
+                                                            <RefreshCw className={`size-3 mr-1 ${isSyncingResi ? 'animate-spin' : ''}`} />
+                                                            <span>{isSyncingResi ? 'Sinkron...' : 'Sync Resi'}</span>
                                                         </Button>
                                                         <Button
                                                             type="button"

@@ -40,6 +40,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/manajemen-pesanan', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/manajemen-pesanan/{order}', [OrderController::class, 'show'])->name('orders.show');
     Route::patch('/manajemen-pesanan/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
+    Route::post('/manajemen-pesanan/{order}/sync-resi', [OrderController::class, 'syncResi'])->name('orders.sync-resi');
 
     // Product & Variant Management
     Route::get('/manajemen-produk', [ProductController::class, 'index'])->name('products.index');

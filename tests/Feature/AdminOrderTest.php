@@ -383,3 +383,50 @@ test('kiriminaja service sends insurance_amount as 0 without insurance fee', fun
             && strlen($package['order_id']) <= 20;
     });
 });
+
+test('admin can sync tracking number and shipping cost from kiriminaja', function () {
+    $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
+    $admin = User::factory()->admin()->create();
+    $customer = User::factory()->create();
+
+    $order = Order::create([
+        'order_number' => 'AP-SYNC-'.uniqid(),
+        'user_id' => $customer->id,
+        'delivery_type' => 'delivery',
+        'recipient_name' => 'Citra Kirana',
+        'recipient_phone' => '081234567897',
+        'shipping_address' => 'Jl. Senopati No. 20',
+        'city' => 'Jakarta Selatan',
+        'courier' => 'JNE Express Reguler',
+        'tracking_number' => 'PUP-TEMP-12345',
+        'shipping_cost' => 18000,
+        'payment_method' => 'qris',
+        'payment_status' => 'paid',
+        'status' => 'dikirim',
+        'subtotal' => 350000,
+        'discount_amount' => 0,
+        'total_amount' => 368000,
+    ]);
+
+    Http::fake([
+        '*/api/mitra/tracking' => Http::response([
+            'status' => true,
+            'details' => [
+                'awb' => 'AWB-REAL-999888',
+                'service' => 'JNE',
+                'service_type' => 'CTC23',
+                'shipping_cost' => 10000,
+            ],
+        ], 200),
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->post("http://{$adminDomain}/manajemen-pesanan/{$order->order_number}/sync-resi");
+
+    $response->assertRedirect();
+    $order->refresh();
+
+    expect($order->tracking_number)->toBe('AWB-REAL-999888')
+        ->and($order->shipping_cost)->toBe(10000)
+        ->and($order->courier)->toBe('JNE (CTC23)');
+});
