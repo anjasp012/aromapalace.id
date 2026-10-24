@@ -53,7 +53,23 @@ class KiriminAjaService
     public function getProvinces(): array
     {
         $res = KiriminAja::getProvince();
-        dd($res);
+
+        $vpsIp = null;
+        try {
+            $vpsIp = Http::timeout(3)->get('https://api.ipify.org')->body();
+        } catch (\Throwable $e) {
+            $vpsIp = $e->getMessage();
+        }
+
+        dd([
+            'response' => $res,
+            'api_key_filled' => !empty($this->apiKey),
+            'api_key_preview' => !empty($this->apiKey) ? substr($this->apiKey, 0, 12) . '...' : '(KOSONG DI VPS)',
+            'mode' => $this->mode,
+            'baseUrl' => $this->baseUrl,
+            'vps_outbound_ip' => $vpsIp,
+            'catatan' => 'Jika api_key_preview KOSONG, isi di CMS Settings atau .env VPS. Jika api_key sudah ada tapi response 401, daftarkan vps_outbound_ip ke IP Whitelist Dashboard KiriminAja.',
+        ]);
 
         try {
             return ($res->status && is_array($res->data)) ? $res->data : [];
