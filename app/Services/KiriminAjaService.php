@@ -214,6 +214,7 @@ class KiriminAjaService
         try {
             $this->applyConfig();
             $response = KiriminAja::getProvince();
+            dd($response);
 
             if ($response && ($response->status ?? false) && ! empty($response->data)) {
                 $items = $this->extractDataItems($response->data);
