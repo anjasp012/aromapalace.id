@@ -19,7 +19,6 @@ class CoverageAreaController extends Controller
     {
         
         $provinces = $this->kiriminAjaService->getProvinces();
-        dd($provinces);
 
         return response()->json([
             'status' => true,
