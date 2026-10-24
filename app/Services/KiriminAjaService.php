@@ -53,7 +53,7 @@ class KiriminAjaService
     public function getProvinces(): array
     {
         $res = KiriminAja::getProvince();
-        dd($res);
+        dd($this->baseUrl, $this->apiKey, $this->senderName, $this->senderPhone, $this->senderAddress, $this->senderCityId, $this->pin);
         try {
             return ($res->status && is_array($res->data)) ? $res->data : [];
         } catch (\Throwable $e) {
