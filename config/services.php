@@ -45,7 +45,7 @@ return [
     'kiriminaja' => [
         'mode' => env('KIRIMINAJA_MODE', 'staging'),
         'api_key' => env('KIRIMINAJA_API_KEY', ''),
-        'base_url' => env('KIRIMINAJA_BASE_URL'),
+        'base_url' => env('KIRIMINAJA_BASE_URL', 'https://tdev.kiriminaja.com'),
         'cache_store' => env('KIRIMINAJA_CACHE_STORE', 'laravel'),
         'cache_prefix' => env('KIRIMINAJA_CACHE_PREFIX', 'kiriminaja:'),
     ],
