@@ -17,6 +17,32 @@ use KiriminAja\Services\KiriminAja;
 
 class KiriminAjaService
 {
+    protected string $mode;
+    protected ?string $baseUrl;
+    protected string $apiKey;
+    protected int $origin;
+
+    public function __construct()
+    {
+        $this->mode = (string) Setting::get('kiriminaja_mode', config('services.kiriminaja.mode', 'staging'));
+        $this->baseUrl = Setting::get('kiriminaja_base_url') ?: null;
+        $this->apiKey = (string) Setting::get('kiriminaja_api_key', config('services.kiriminaja.api_key', ''));
+        $this->origin = (int) Setting::get('shipping_district_id', 2101); // ID Kecamatan Asal Pengiriman dari Database
+
+        // Inisialisasi konfigurasi SDK KiriminAja
+        try {
+            KiriminAjaConfig::setMode($this->mode);
+            if (!empty($this->apiKey)) {
+                KiriminAjaConfig::setApiTokenKey($this->apiKey);
+            }
+            if (!empty($this->baseUrl)) {
+                KiriminAjaConfig::setBaseUrl($this->baseUrl);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('KiriminAjaConfig initialization note: ' . $e->getMessage());
+        }
+    }
+
     public function getProvinces(): array
     {
         try {
@@ -28,33 +54,59 @@ class KiriminAjaService
         }
     }
 
-    public function getCities($provinceId) : Returntype {
+    public function getCities(int $provinceId): array
+    {
         try {
-            $res = KiriminAja::getCities($provinceId);
-            return ($res->status && is_array($res->data)) ? $res->data : [];
+            $res = KiriminAja::getCity($provinceId);
+            if ($res->status && is_array($res->data)) {
+                $items = $res->data['datas'] ?? ($res->data['results'] ?? $res->data);
+                return is_array($items) ? $items : [];
+            }
+            return [];
         } catch (\Throwable $e) {
             Log::warning('KiriminAja getCities error: ' . $e->getMessage());
             return [];
         }
     }
 
-    public function getDistricts($cityId) : Returntype {
+    public function getDistricts(int $cityId): array
+    {
         try {
-            $res = KiriminAja::getDistricts($cityId);
-            return ($res->status && is_array($res->data)) ? $res->data : [];
+            $res = KiriminAja::getDistrict($cityId);
+            if ($res->status && is_array($res->data)) {
+                $items = $res->data['datas'] ?? ($res->data['results'] ?? $res->data);
+                return is_array($items) ? $items : [];
+            }
+            return [];
         } catch (\Throwable $e) {
             Log::warning('KiriminAja getDistricts error: ' . $e->getMessage());
             return [];
         }
     }
 
-    public function getSubDistricts($districtId) : Returntype {
+    public function getSubDistricts(int $districtId): array
+    {
         try {
-            $res = KiriminAja::getSubDistricts($districtId);
-            return ($res->status && is_array($res->data)) ? $res->data : [];
+            $res = KiriminAja::getSubDistrict($districtId);
+            if ($res->status && is_array($res->data)) {
+                $items = $res->data['results'] ?? ($res->data['datas'] ?? $res->data);
+                return is_array($items) ? $items : [];
+            }
+            return [];
         } catch (\Throwable $e) {
             Log::warning('KiriminAja getSubDistricts error: ' . $e->getMessage());
             return [];
         }
+    }
+
+    public function getAllCouriers(int $subDistrictId, int $weight = 1000)
+    {
+        $data = new ShippingFullPriceData();
+        $data->origin = $this->origin; // Ambil origin dari database settings (shipping_district_id)
+        $data->destination = $subDistrictId;
+        $data->weight = max(100, $weight);
+
+        $pricess = KiriminAja::fullShippingPrice($data);
+        dd($pricess);
     }
 }
