@@ -227,7 +227,7 @@ class UserController extends Controller
                 'total_points_out' => $totalPointsOut,
                 'total_points_out_formatted' => number_format($totalPointsOut, 0, ',', '.'),
             ] : null,
-            'point_histories' => Inertia::defer(fn () => $membership
+            'point_histories' => $membership
                 ? $membership->pointHistories()
                     ->latest()
                     ->take(30)
@@ -247,9 +247,8 @@ class UserController extends Controller
                         'is_positive' => $h->points > 0,
                     ])
                     ->all()
-                : []
-            ),
-            'recent_orders' => Inertia::defer(fn () => $user->orders()
+                : [],
+            'recent_orders' => $user->orders()
                 ->latest()
                 ->take(10)
                 ->get()
@@ -261,8 +260,7 @@ class UserController extends Controller
                     'payment_status' => $o->payment_status,
                     'created_at' => $o->created_at?->format('d M Y'),
                 ])
-                ->all()
-            ),
+                ->all(),
         ]);
     }
 

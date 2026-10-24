@@ -206,8 +206,6 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
 
                         <Link
                             href="/dashboard"
-                            prefetch="hover"
-                            cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
                             className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
                                 isDashboard
@@ -221,8 +219,6 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
 
                         <Link
                             href="/manajemen-pesanan"
-                            prefetch="hover"
-                            cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
                             className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
                                 isOrders
@@ -236,8 +232,6 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
 
                         <Link
                             href="/manajemen-pengguna"
-                            prefetch="hover"
-                            cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
                             className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
                                 isUsers
@@ -257,8 +251,6 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
 
                         <Link
                             href="/manajemen-produk"
-                            prefetch="hover"
-                            cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
                             className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
                                 isProducts
@@ -272,8 +264,6 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
 
                         <Link
                             href="/manajemen-kategori"
-                            prefetch="hover"
-                            cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
                             className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
                                 isCategories
@@ -287,8 +277,6 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
 
                         <Link
                             href="/manajemen-brand"
-                            prefetch="hover"
-                            cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
                             className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
                                 isBrands
@@ -308,8 +296,6 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
 
                         <Link
                             href="/manajemen-voucher"
-                            prefetch="hover"
-                            cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
                             className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
                                 isVouchers
@@ -323,8 +309,6 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
 
                         <Link
                             href="/manajemen-artikel"
-                            prefetch="hover"
-                            cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
                             className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
                                 isArticles
@@ -338,8 +322,6 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
 
                         <Link
                             href="/manajemen-slider-promo"
-                            prefetch="hover"
-                            cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
                             className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
                                 isSliderPromos
@@ -359,8 +341,6 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
 
                         <Link
                             href="/manajemen-butik"
-                            prefetch="hover"
-                            cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
                             className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
                                 isStores
@@ -374,8 +354,6 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
 
                         <Link
                             href="/manajemen-pembayaran"
-                            prefetch="hover"
-                            cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
                             className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
                                 isPaymentMethods
@@ -389,8 +367,6 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
 
                         <Link
                             href="/pengaturan"
-                            prefetch="hover"
-                            cacheFor={['30s', '1m']}
                             onClick={() => setSidebarOpen(false)}
                             className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
                                 isSettings
