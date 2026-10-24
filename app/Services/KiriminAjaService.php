@@ -24,10 +24,10 @@ class KiriminAjaService
 
     public function __construct()
     {
-        $this->mode = (string) Setting::get('kiriminaja_mode', config('services.kiriminaja.mode', 'staging'));
+        $this->mode = (string) Setting::get('kiriminaja_mode');
         $this->baseUrl = Setting::get('kiriminaja_base_url') ?: null;
-        $this->apiKey = (string) Setting::get('kiriminaja_api_key', config('services.kiriminaja.api_key', ''));
-        $this->origin = (int) Setting::get('shipping_district_id', 2101); // ID Kecamatan Asal Pengiriman dari Database
+        $this->apiKey = (string) Setting::get('kiriminaja_api_key');
+        $this->origin = (int) Setting::get('shipping_district_id'); // ID Kecamatan Asal Pengiriman dari Database
 
         // Inisialisasi konfigurasi SDK KiriminAja
         try {
