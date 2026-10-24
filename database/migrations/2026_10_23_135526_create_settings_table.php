@@ -50,7 +50,6 @@ return new class extends Migration
             ['key' => 'kiriminaja_api_key', 'value' => 'v4.local.4SJhuA3f8eNSoRjtlkJRMcGpjEELOLzSIWl8HaJ7vnYVVHUe8-NHIU-gEE7BiowIF6GYKQP_FBodo0rJw1eNXa9DvDA0xNs-RzVZN8JarOkS3ZROhXYezDbTgRQknMnNyna9E8hXdagBB6gz6MsWj9OAeKaVIzYiARCbfPQs', 'group' => 'shipping', 'type' => 'string'],
             ['key' => 'kiriminaja_prefix', 'value' => 'ARPL', 'group' => 'shipping', 'type' => 'string'],
             ['key' => 'kiriminaja_pin', 'value' => '123456', 'group' => 'shipping', 'type' => 'string'],
-            ['key' => 'kiriminaja_base_url', 'value' => '', 'group' => 'shipping', 'type' => 'string'],
         ];
 
         foreach ($defaults as $item) {
