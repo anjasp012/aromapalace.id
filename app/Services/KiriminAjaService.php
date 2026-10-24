@@ -49,7 +49,6 @@ class KiriminAjaService
 
         try {
             $res = KiriminAja::getProvince();
-            dd($res);
             if ($res->status && is_array($res->data) && ! empty($res->data)) {
                 Cache::put('kiriminaja:provinces', $res->data, now()->addDays(30));
 
@@ -250,7 +249,7 @@ class KiriminAjaService
             $response = KiriminAja::fullShippingPrice($data);
 
             if ($response->status && ! empty($response->data)) {
-                $raw = is_array($response->data) ? ($response->data['pricing'] ?? $response->data) : [];
+                $raw = is_array($response->data) ? ($response->data['results'] ?? ($response->data['pricing'] ?? $response->data)) : [];
                 $results = [];
 
                 foreach ($raw as $item) {
