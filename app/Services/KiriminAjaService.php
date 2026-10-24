@@ -1031,6 +1031,9 @@ class KiriminAjaService
      */
     public function getProvinces(): array
     {
+         $res = KiriminAja::getProvince();
+         dd($res);
+            return ($res->status && is_array($res->data)) ? $res->data : [];
         $cacheKey = 'kiriminaja:provinces:sdk_live';
         $cached = Cache::get($cacheKey);
         if (is_array($cached) && ! empty($cached)) {
