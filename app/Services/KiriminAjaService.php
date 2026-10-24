@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\Order;
 use App\Models\Setting;
 use App\Models\UserAddress;
-use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use KiriminAja\Base\Config\Cache\Mode;
@@ -37,6 +36,31 @@ class KiriminAjaService
         if (! empty($baseUrl)) {
             KiriminAjaConfig::setBaseUrl($baseUrl);
         }
+    }
+
+    /**
+     * Extract array list from KiriminAja SDK response data.
+     */
+    protected function extractDataItems(mixed $raw): array
+    {
+        if (! is_array($raw)) {
+            return [];
+        }
+
+        if (isset($raw['datas']) && is_array($raw['datas'])) {
+            return $raw['datas'];
+        }
+        if (isset($raw['results']) && is_array($raw['results'])) {
+            return $raw['results'];
+        }
+        if (isset($raw['schedules']) && is_array($raw['schedules'])) {
+            return $raw['schedules'];
+        }
+        if (array_is_list($raw) || isset($raw[0])) {
+            return $raw;
+        }
+
+        return [];
     }
 
     /**
@@ -174,185 +198,232 @@ class KiriminAjaService
     }
 
     /**
-     * Get list of provinces from KiriminAja SDK with fallback.
+     * Get list of provinces directly from KiriminAja SDK.
      *
      * @return array<int, array{id: int, name: string}>
      */
     public function getProvinces(): array
     {
-        return Cache::remember('kiriminaja:provinces:v3', now()->addDays(7), function () {
-            try {
-                $response = KiriminAja::getProvince();
-                if ($response->status && ! empty($response->data)) {
-                    $raw = $response->data;
-                    $items = isset($raw['datas']) ? $raw['datas'] : (isset($raw['results']) ? $raw['results'] : (is_array($raw) ? $raw : []));
+        $cacheKey = 'kiriminaja:provinces:sdk_live';
+        $cached = Cache::get($cacheKey);
+        if (is_array($cached) && ! empty($cached)) {
+            return $cached;
+        }
 
-                    if (! empty($items) && is_array($items)) {
-                        return array_map(function ($item) {
-                            $arr = (array) $item;
+        try {
+            $this->applyConfig();
+            $response = KiriminAja::getProvince();
 
-                            return [
-                                'id' => (int) ($arr['id'] ?? $arr['provinsi_id'] ?? 0),
-                                'name' => (string) ($arr['provinsi_name'] ?? $arr['name'] ?? ''),
-                            ];
-                        }, $items);
-                    }
+            if ($response && ($response->status ?? false) && ! empty($response->data)) {
+                $items = $this->extractDataItems($response->data);
+
+                if (! empty($items)) {
+                    $result = array_values(array_map(function ($item) {
+                        $arr = (array) $item;
+
+                        return [
+                            'id' => (int) ($arr['id'] ?? $arr['provinsi_id'] ?? 0),
+                            'name' => (string) ($arr['provinsi_name'] ?? $arr['name'] ?? ''),
+                        ];
+                    }, $items));
+
+                    Cache::put($cacheKey, $result, now()->addDays(7));
+
+                    return $result;
                 }
-            } catch (Exception $e) {
-                Log::warning('KiriminAja getProvince error: '.$e->getMessage());
             }
+        } catch (\Throwable $e) {
+            Log::warning('KiriminAja getProvince error: '.$e->getMessage());
+        }
 
-            return KiriminAjaFallbackData::provinces();
-        });
+        return [];
     }
 
     /**
-     * Get list of cities by province ID from KiriminAja SDK with fallback.
+     * Get list of cities by province ID directly from KiriminAja SDK.
      *
      * @return array<int, array{id: int, province_id: int, name: string, type: string, postal_code: string}>
      */
     public function getCities(int $provinceId): array
     {
-        return Cache::remember("kiriminaja:cities:prov_{$provinceId}:v3", now()->addDays(7), function () use ($provinceId) {
-            try {
-                $response = KiriminAja::getCity($provinceId);
-                if ($response->status && ! empty($response->data)) {
-                    $raw = $response->data;
-                    $items = isset($raw['datas']) ? $raw['datas'] : (isset($raw['results']) ? $raw['results'] : (is_array($raw) ? $raw : []));
+        $cacheKey = "kiriminaja:cities:prov_{$provinceId}:sdk_live";
+        $cached = Cache::get($cacheKey);
+        if (is_array($cached) && ! empty($cached)) {
+            return $cached;
+        }
 
-                    if (! empty($items) && is_array($items)) {
-                        return array_map(function ($item) use ($provinceId) {
-                            $arr = (array) $item;
+        try {
+            $this->applyConfig();
+            $response = KiriminAja::getCity($provinceId);
 
-                            return [
-                                'id' => (int) ($arr['id'] ?? $arr['kabupaten_id'] ?? 0),
-                                'province_id' => (int) ($arr['provinsi_id'] ?? $provinceId),
-                                'name' => (string) ($arr['kabupaten_name'] ?? $arr['name'] ?? ''),
-                                'type' => (string) ($arr['type'] ?? 'Kota/Kabupaten'),
-                                'postal_code' => (string) ($arr['postal_code'] ?? ''),
-                            ];
-                        }, $items);
-                    }
+            if ($response && ($response->status ?? false) && ! empty($response->data)) {
+                $items = $this->extractDataItems($response->data);
+
+                if (! empty($items)) {
+                    $result = array_values(array_map(function ($item) use ($provinceId) {
+                        $arr = (array) $item;
+
+                        return [
+                            'id' => (int) ($arr['id'] ?? $arr['kabupaten_id'] ?? 0),
+                            'province_id' => (int) ($arr['provinsi_id'] ?? $provinceId),
+                            'name' => (string) ($arr['kabupaten_name'] ?? $arr['name'] ?? ''),
+                            'type' => (string) ($arr['type'] ?? 'Kota/Kabupaten'),
+                            'postal_code' => (string) ($arr['postal_code'] ?? ''),
+                        ];
+                    }, $items));
+
+                    Cache::put($cacheKey, $result, now()->addDays(7));
+
+                    return $result;
                 }
-            } catch (Exception $e) {
-                Log::warning("KiriminAja getCity({$provinceId}) error: ".$e->getMessage());
             }
+        } catch (\Throwable $e) {
+            Log::warning("KiriminAja getCity({$provinceId}) error: ".$e->getMessage());
+        }
 
-            return KiriminAjaFallbackData::cities($provinceId);
-        });
+        return [];
     }
 
     /**
-     * Get list of districts (kecamatan) by city ID from KiriminAja SDK with fallback.
+     * Get list of districts (kecamatan) by city ID directly from KiriminAja SDK.
      *
      * @return array<int, array{id: int, city_id: int, name: string, postal_code: string}>
      */
     public function getDistricts(int $cityId): array
     {
-        return Cache::remember("kiriminaja:districts:city_{$cityId}:v3", now()->addDays(7), function () use ($cityId) {
-            try {
-                $response = KiriminAja::getDistrict($cityId);
-                if ($response->status && ! empty($response->data)) {
-                    $raw = $response->data;
-                    $items = isset($raw['datas']) ? $raw['datas'] : (isset($raw['results']) ? $raw['results'] : (is_array($raw) ? $raw : []));
+        $cacheKey = "kiriminaja:districts:city_{$cityId}:sdk_live";
+        $cached = Cache::get($cacheKey);
+        if (is_array($cached) && ! empty($cached)) {
+            return $cached;
+        }
 
-                    if (! empty($items) && is_array($items)) {
-                        return array_map(function ($item) use ($cityId) {
-                            $arr = (array) $item;
+        try {
+            $this->applyConfig();
+            $response = KiriminAja::getDistrict($cityId);
 
-                            return [
-                                'id' => (int) ($arr['id'] ?? $arr['kecamatan_id'] ?? 0),
-                                'city_id' => (int) ($arr['kabupaten_id'] ?? $cityId),
-                                'name' => (string) ($arr['kecamatan_name'] ?? $arr['name'] ?? ''),
-                                'postal_code' => (string) ($arr['postal_code'] ?? ''),
-                            ];
-                        }, $items);
-                    }
+            if ($response && ($response->status ?? false) && ! empty($response->data)) {
+                $items = $this->extractDataItems($response->data);
+
+                if (! empty($items)) {
+                    $result = array_values(array_map(function ($item) use ($cityId) {
+                        $arr = (array) $item;
+
+                        return [
+                            'id' => (int) ($arr['id'] ?? $arr['kecamatan_id'] ?? 0),
+                            'city_id' => (int) ($arr['kabupaten_id'] ?? $cityId),
+                            'name' => (string) ($arr['kecamatan_name'] ?? $arr['name'] ?? ''),
+                            'postal_code' => (string) ($arr['postal_code'] ?? ''),
+                        ];
+                    }, $items));
+
+                    Cache::put($cacheKey, $result, now()->addDays(7));
+
+                    return $result;
                 }
-            } catch (Exception $e) {
-                Log::warning("KiriminAja getDistrict({$cityId}) error: ".$e->getMessage());
             }
+        } catch (\Throwable $e) {
+            Log::warning("KiriminAja getDistrict({$cityId}) error: ".$e->getMessage());
+        }
 
-            return KiriminAjaFallbackData::districts($cityId);
-        });
+        return [];
     }
 
     /**
-     * Get list of subdistricts (kelurahan) by district ID from KiriminAja SDK with fallback.
+     * Get list of subdistricts (kelurahan) by district ID directly from KiriminAja SDK.
      *
      * @return array<int, array{id: int, district_id: int, name: string, postal_code: string}>
      */
     public function getSubdistricts(int $districtId): array
     {
-        return Cache::remember("kiriminaja:subdistricts:district_{$districtId}:v3", now()->addDays(7), function () use ($districtId) {
-            try {
-                $response = KiriminAja::getSubDistrict($districtId);
-                if ($response->status && ! empty($response->data)) {
-                    $raw = $response->data;
-                    $items = isset($raw['results']) ? $raw['results'] : (isset($raw['datas']) ? $raw['datas'] : (is_array($raw) ? $raw : []));
+        $cacheKey = "kiriminaja:subdistricts:district_{$districtId}:sdk_live";
+        $cached = Cache::get($cacheKey);
+        if (is_array($cached) && ! empty($cached)) {
+            return $cached;
+        }
 
-                    if (! empty($items) && is_array($items)) {
-                        return array_map(function ($item) use ($districtId) {
-                            $arr = (array) $item;
+        try {
+            $this->applyConfig();
+            $response = KiriminAja::getSubDistrict($districtId);
 
-                            return [
-                                'id' => (int) ($arr['id'] ?? $arr['kelurahan_id'] ?? 0),
-                                'district_id' => (int) ($arr['kecamatan_id'] ?? $districtId),
-                                'name' => (string) ($arr['kelurahan_name'] ?? $arr['name'] ?? ''),
-                                'postal_code' => (string) ($arr['postal_code'] ?? ''),
-                            ];
-                        }, $items);
-                    }
+            if ($response && ($response->status ?? false) && ! empty($response->data)) {
+                $items = $this->extractDataItems($response->data);
+
+                if (! empty($items)) {
+                    $result = array_values(array_map(function ($item) use ($districtId) {
+                        $arr = (array) $item;
+
+                        return [
+                            'id' => (int) ($arr['id'] ?? $arr['kelurahan_id'] ?? 0),
+                            'district_id' => (int) ($arr['kecamatan_id'] ?? $districtId),
+                            'name' => (string) ($arr['kelurahan_name'] ?? $arr['name'] ?? ''),
+                            'postal_code' => (string) ($arr['postal_code'] ?? ''),
+                        ];
+                    }, $items));
+
+                    Cache::put($cacheKey, $result, now()->addDays(7));
+
+                    return $result;
                 }
-            } catch (Exception $e) {
-                Log::warning("KiriminAja getSubDistrict({$districtId}) error: ".$e->getMessage());
             }
+        } catch (\Throwable $e) {
+            Log::warning("KiriminAja getSubDistrict({$districtId}) error: ".$e->getMessage());
+        }
 
-            return KiriminAjaFallbackData::subdistricts($districtId);
-        });
+        return [];
     }
 
     /**
-     * Get list of available domestic couriers from KiriminAja SDK.
+     * Get list of available domestic couriers directly from KiriminAja SDK.
      *
      * @return array<int, array{code: string, name: string, region: string, type: string}>
      */
     public function getCouriers(): array
     {
-        return Cache::remember('kiriminaja:couriers:v3', now()->addDay(), function () {
-            try {
-                $response = KiriminAja::getCouriers();
-                if ($response->status && ! empty($response->data)) {
-                    $items = is_array($response->data) ? $response->data : [];
-                    $domestic = array_values(array_filter($items, function ($item) {
-                        $arr = (array) $item;
+        $cacheKey = 'kiriminaja:couriers:sdk_live';
+        $cached = Cache::get($cacheKey);
+        if (is_array($cached) && ! empty($cached)) {
+            return $cached;
+        }
 
-                        return ($arr['region'] ?? '') === 'DOMESTIC';
-                    }));
+        try {
+            $this->applyConfig();
+            $response = KiriminAja::getCouriers();
 
-                    if (! empty($domestic)) {
-                        return array_map(function ($item) {
-                            $arr = (array) $item;
+            if ($response && ($response->status ?? false) && ! empty($response->data)) {
+                $items = $this->extractDataItems($response->data);
 
-                            return [
-                                'code' => (string) ($arr['code'] ?? ''),
-                                'name' => (string) ($arr['name'] ?? ''),
-                                'region' => (string) ($arr['region'] ?? 'DOMESTIC'),
-                                'type' => (string) ($arr['type'] ?? 'Express'),
-                            ];
-                        }, $domestic);
-                    }
+                $domestic = array_values(array_filter($items, function ($item) {
+                    $arr = (array) $item;
+
+                    return ($arr['region'] ?? '') === 'DOMESTIC';
+                }));
+
+                $result = array_values(array_map(function ($item) {
+                    $arr = (array) $item;
+
+                    return [
+                        'code' => (string) ($arr['code'] ?? ''),
+                        'name' => (string) ($arr['name'] ?? ''),
+                        'region' => (string) ($arr['region'] ?? 'DOMESTIC'),
+                        'type' => (string) ($arr['type'] ?? 'Express'),
+                    ];
+                }, $domestic));
+
+                if (! empty($result)) {
+                    Cache::put($cacheKey, $result, now()->addDay());
+
+                    return $result;
                 }
-            } catch (Exception $e) {
-                Log::warning('KiriminAja getCouriers failed: '.$e->getMessage());
             }
+        } catch (\Throwable $e) {
+            Log::warning('KiriminAja getCouriers error: '.$e->getMessage());
+        }
 
-            return KiriminAjaFallbackData::couriers();
-        });
+        return [];
     }
 
     /**
-     * Get shipping rates for one or more couriers between two districts.
+     * Get shipping rates for one or more couriers between two districts directly from KiriminAja SDK.
      *
      * @param  int  $originDistrictId  Origin kecamatan ID
      * @param  int  $destinationDistrictId  Destination kecamatan ID
@@ -362,95 +433,105 @@ class KiriminAjaService
      */
     public function getShippingRates(int $originDistrictId, int $destinationDistrictId, int $weightGrams = 500, ?array $couriers = null): array
     {
-        $cacheKey = "kiriminaja:rates:o{$originDistrictId}:d{$destinationDistrictId}:w{$weightGrams}:v3";
+        $cacheKey = "kiriminaja:rates:o{$originDistrictId}:d{$destinationDistrictId}:w{$weightGrams}:sdk_live";
+        $cached = Cache::get($cacheKey);
+        if (is_array($cached) && ! empty($cached)) {
+            if ($couriers !== null && ! empty($couriers)) {
+                $courierLower = array_map('strtolower', $couriers);
 
-        return Cache::remember($cacheKey, now()->addHours(2), function () use ($originDistrictId, $destinationDistrictId, $weightGrams, $couriers) {
-            $brandMap = [
-                'jne' => 'JNE',
-                'jnt' => 'J&T',
-                'jtcargo' => 'J&T Cargo',
-                'sicepat' => 'SiCepat',
-                'anteraja' => 'AnterAja',
-                'lion' => 'Lion Parcel',
-                'tiki' => 'Tiki',
-                'sap' => 'SAP',
-                'idx' => 'ID Express',
-                'spx' => 'SPX',
-                'ninja' => 'Ninja Express',
-                'pos' => 'Pos Indonesia',
-                'posindonesia' => 'Pos Indonesia',
-            ];
-
-            try {
-                $this->applyConfig();
-
-                $data = new ShippingFullPriceData;
-                $data->origin = $originDistrictId;
-                $data->destination = $destinationDistrictId;
-                $data->weight = max(100, $weightGrams);
-
-                $response = KiriminAja::fullShippingPrice($data);
-
-                if (($response->status ?? false) && ! empty($response->data)) {
-                    $raw = (array) $response->data;
-                    $items = $raw['results'] ?? $raw['datas'] ?? (isset($raw[0]) ? $raw : []);
-
-                    $results = [];
-                    foreach ($items as $item) {
-                        $arr = (array) $item;
-                        $courierCode = strtolower((string) ($arr['service'] ?? $arr['courier_code'] ?? $arr['code'] ?? ''));
-                        $serviceType = (string) ($arr['service_type'] ?? $arr['service_code'] ?? $arr['group'] ?? 'Regular');
-                        $serviceName = (string) ($arr['service_name'] ?? $serviceType);
-                        $price = (int) ($arr['cost'] ?? $arr['price'] ?? $arr['finalRate'] ?? 0);
-                        $rawEtd = trim((string) ($arr['etd'] ?? $arr['estimated_day'] ?? ''));
-                        $etd = ! empty($rawEtd) ? "Estimasi {$rawEtd} Hari" : 'Estimasi 1-3 Hari';
-
-                        $brand = $brandMap[$courierCode] ?? strtoupper($courierCode);
-                        $displayName = $serviceName;
-                        if (! empty($brand) && ! str_starts_with(strtolower($displayName), strtolower(explode(' ', $brand)[0]))) {
-                            $displayName = $brand.' '.$serviceName;
-                        }
-
-                        $code = strtolower($courierCode.'_'.preg_replace('/[^a-zA-Z0-9]/', '', $serviceType ?: $serviceName));
-
-                        $results[] = [
-                            'code' => $code,
-                            'courier_code' => $courierCode,
-                            'name' => $displayName,
-                            'service' => $serviceType,
-                            'price' => $price,
-                            'price_formatted' => $price === 0 ? 'Gratis' : 'Rp '.number_format($price, 0, ',', '.'),
-                            'etd' => $etd,
-                        ];
-                    }
-
-                    if (! empty($results)) {
-                        if ($couriers !== null && ! empty($couriers)) {
-                            $courierLower = array_map('strtolower', $couriers);
-                            $results = array_values(array_filter($results, fn ($r) => in_array($r['courier_code'], $courierLower)));
-                        }
-
-                        usort($results, fn ($a, $b) => $a['price'] <=> $b['price']);
-
-                        return $results;
-                    }
-                }
-            } catch (Exception $e) {
-                Log::warning('KiriminAja fullShippingPrice failed: '.$e->getMessage());
+                return array_values(array_filter($cached, fn ($r) => in_array($r['courier_code'], $courierLower)));
             }
 
-            return KiriminAjaFallbackData::shippingRates();
-        });
+            return $cached;
+        }
+
+        $brandMap = [
+            'jne' => 'JNE',
+            'jnt' => 'J&T',
+            'jtcargo' => 'J&T Cargo',
+            'sicepat' => 'SiCepat',
+            'anteraja' => 'AnterAja',
+            'lion' => 'Lion Parcel',
+            'tiki' => 'Tiki',
+            'sap' => 'SAP',
+            'idx' => 'ID Express',
+            'spx' => 'SPX',
+            'ninja' => 'Ninja Express',
+            'pos' => 'Pos Indonesia',
+            'posindonesia' => 'Pos Indonesia',
+        ];
+
+        try {
+            $this->applyConfig();
+
+            $data = new ShippingFullPriceData;
+            $data->origin = $originDistrictId;
+            $data->destination = $destinationDistrictId;
+            $data->weight = max(100, $weightGrams);
+
+            $response = KiriminAja::fullShippingPrice($data);
+
+            if ($response && ($response->status ?? false) && ! empty($response->data)) {
+                $raw = (array) $response->data;
+                $items = $raw['results'] ?? $raw['datas'] ?? (isset($raw[0]) ? $raw : []);
+
+                $results = [];
+                foreach ($items as $item) {
+                    $arr = (array) $item;
+                    $courierCode = strtolower((string) ($arr['service'] ?? $arr['courier_code'] ?? $arr['code'] ?? ''));
+                    $serviceType = (string) ($arr['service_type'] ?? $arr['service_code'] ?? $arr['group'] ?? 'Regular');
+                    $serviceName = (string) ($arr['service_name'] ?? $serviceType);
+                    $price = (int) ($arr['cost'] ?? $arr['price'] ?? $arr['finalRate'] ?? 0);
+                    $rawEtd = trim((string) ($arr['etd'] ?? $arr['estimated_day'] ?? ''));
+                    $etd = ! empty($rawEtd) ? "Estimasi {$rawEtd} Hari" : 'Estimasi 1-3 Hari';
+
+                    $brand = $brandMap[$courierCode] ?? strtoupper($courierCode);
+                    $displayName = $serviceName;
+                    if (! empty($brand) && ! str_starts_with(strtolower($displayName), strtolower(explode(' ', $brand)[0]))) {
+                        $displayName = $brand.' '.$serviceName;
+                    }
+
+                    $code = strtolower($courierCode.'_'.preg_replace('/[^a-zA-Z0-9]/', '', $serviceType ?: $serviceName));
+
+                    $results[] = [
+                        'code' => $code,
+                        'courier_code' => $courierCode,
+                        'name' => $displayName,
+                        'service' => $serviceType,
+                        'price' => $price,
+                        'price_formatted' => $price === 0 ? 'Gratis' : 'Rp '.number_format($price, 0, ',', '.'),
+                        'etd' => $etd,
+                    ];
+                }
+
+                if (! empty($results)) {
+                    usort($results, fn ($a, $b) => $a['price'] <=> $b['price']);
+                    Cache::put($cacheKey, $results, now()->addHours(2));
+
+                    if ($couriers !== null && ! empty($couriers)) {
+                        $courierLower = array_map('strtolower', $couriers);
+
+                        return array_values(array_filter($results, fn ($r) => in_array($r['courier_code'], $courierLower)));
+                    }
+
+                    return $results;
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning('KiriminAja fullShippingPrice failed: '.$e->getMessage());
+        }
+
+        return [];
     }
 
     /**
-     * Fallback shipping rates proxy.
+     * Fallback shipping rates proxy (returns empty array).
      *
-     * @return array<int, array{code: string, courier_code: string, name: string, service: string, price: int, price_formatted: string, etd: string}>
+     * @return array<int, mixed>
      */
     public function fallbackShippingRates(): array
     {
-        return KiriminAjaFallbackData::shippingRates();
+        return [];
     }
 
     /**
@@ -517,15 +598,16 @@ class KiriminAjaService
         }
         if (! $destinationDistrictId && ! empty($order->district_name)) {
             try {
+                $this->applyConfig();
                 $resp = KiriminAja::getDistrictByName($order->district_name);
-                if ($resp->status && ! empty($resp->data)) {
+                if ($resp && ($resp->status ?? false) && ! empty($resp->data)) {
                     $first = is_array($resp->data) ? ($resp->data[0] ?? null) : null;
                     if ($first && ! empty($first['id'])) {
                         $destinationDistrictId = (int) $first['id'];
                     }
                 }
             } catch (\Throwable) {
-                // Fallback handled below
+                // Ignore and use default
             }
         }
         if (! $destinationDistrictId) {
@@ -568,7 +650,7 @@ class KiriminAjaService
         $pickupSchedule = null;
         try {
             $schedRes = KiriminAja::getSchedules();
-            if ($schedRes->status && ! empty($schedRes->data)) {
+            if ($schedRes && ($schedRes->status ?? false) && ! empty($schedRes->data)) {
                 $schedules = is_array($schedRes->data) ? $schedRes->data : [];
                 foreach ($schedules as $slot) {
                     $slotArr = (array) $slot;

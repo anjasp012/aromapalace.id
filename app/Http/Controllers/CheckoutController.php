@@ -218,7 +218,7 @@ class CheckoutController extends Controller
 
         $rates = $destinationId > 0
             ? $this->kiriminAjaService->getShippingRates($originId, $destinationId, $weight)
-            : $this->kiriminAjaService->fallbackShippingRates();
+            : [];
 
         return response()->json([
             'status' => true,
