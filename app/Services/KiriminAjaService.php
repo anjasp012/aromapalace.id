@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use KiriminAja\Base\Config\Cache\Mode;
 use KiriminAja\Base\Config\KiriminAjaConfig;
-use KiriminAja\Models\ShippingPriceData;
+use KiriminAja\Models\ShippingFullPriceData;
 use KiriminAja\Services\KiriminAja;
 
 class KiriminAjaService
@@ -441,15 +441,12 @@ class KiriminAjaService
             ];
 
             try {
-                $data = new ShippingPriceData;
+                $data = new ShippingFullPriceData;
                 $data->origin = $originDistrictId;
                 $data->destination = $destinationDistrictId;
-                $data->weight = $weightGrams;
-                if ($couriers !== null) {
-                    $data->courier = $couriers;
-                }
+                $data->weight = max(100, $weightGrams);
 
-                $response = KiriminAja::getPrice($data);
+                $response = KiriminAja::fullShippingPrice($data);
 
                 if (($response->status ?? false) && ! empty($response->data)) {
                     $raw = (array) $response->data;
@@ -518,11 +515,18 @@ class KiriminAjaService
                     }
 
                     if (! empty($results)) {
+                        if ($couriers !== null && ! empty($couriers)) {
+                            $courierLower = array_map('strtolower', $couriers);
+                            $results = array_values(array_filter($results, fn ($r) => in_array($r['courier_code'], $courierLower)));
+                        }
+
+                        usort($results, fn ($a, $b) => $a['price'] <=> $b['price']);
+
                         return $results;
                     }
                 }
             } catch (Exception $e) {
-                Log::warning('KiriminAja getShippingRates failed: '.$e->getMessage());
+                Log::warning('KiriminAja fullShippingPrice failed: '.$e->getMessage());
             }
 
             return $this->fallbackShippingRates();

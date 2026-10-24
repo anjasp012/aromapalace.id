@@ -420,7 +420,18 @@ export default function CheckoutPage({
     const [showCourierModal, setShowCourierModal] = useState(false);
     const [showStoreModal, setShowStoreModal] = useState(false);
 
-    // Fetch live shipping rates whenever selected address changes
+    // Calculate package weight (minimum 1000g / 1kg standard for KiriminAja)
+    const totalWeight = useMemo(() => {
+        let w = 0;
+        items.forEach((item) => {
+            const volNum = parseInt(item.volume || '100', 10);
+            const itemWeight = Math.max(250, (isNaN(volNum) ? 100 : volNum) * 3);
+            w += itemWeight * (item.quantity || 1);
+        });
+        return Math.max(1000, w);
+    }, [items]);
+
+    // Fetch live shipping rates from KiriminAja via SDK fullShippingPrice whenever selected address changes
     useEffect(() => {
         const districtId = selectedAddress?.district_id ?? (selectedAddress as any)?.kecamatan_id ?? null;
         const subdistrictId = selectedAddress?.subdistrict_id ?? null;
@@ -432,6 +443,7 @@ export default function CheckoutPage({
 
         let cancelled = false;
         setLoadingRates(true);
+        setShippingRates([]);
 
         const csrfMeta = document.querySelector('meta[name="csrf-token"]');
         const csrfToken = csrfMeta ? (csrfMeta as HTMLMetaElement).content : '';
@@ -448,7 +460,7 @@ export default function CheckoutPage({
                 destination_district_id: districtId,
                 destination_subdistrict_id: subdistrictId,
                 address_id: selectedAddress?.id ?? null,
-                weight: 500,
+                weight: totalWeight,
             }),
         })
             .then((res) => res.json())
@@ -468,7 +480,7 @@ export default function CheckoutPage({
             .finally(() => { if (!cancelled) setLoadingRates(false); });
 
         return () => { cancelled = true; };
-    }, [selectedAddress, deliveryType]);
+    }, [selectedAddress?.id, selectedAddress?.district_id, selectedAddress?.subdistrict_id, deliveryType, totalWeight]);
 
     // Payment methods view toggle
     const [showAllPayments, setShowAllPayments] = useState(false);

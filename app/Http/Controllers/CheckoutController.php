@@ -203,7 +203,14 @@ class CheckoutController extends Controller
             }
         }
 
-        $weight = (int) ($validated['weight'] ?? 500);
+        if ($destinationId <= 0 && $request->user()) {
+            $addr = $request->user()->primaryAddress ?: $request->user()->addresses()->first();
+            if ($addr?->district_id) {
+                $destinationId = (int) $addr->district_id;
+            }
+        }
+
+        $weight = max(100, (int) ($validated['weight'] ?? 1000));
 
         // Origin district ID from database settings or fallback to config / 4712
         $originId = (int) Setting::get('shipping_district_id', config('services.kiriminaja.origin_district_id', 4712));
