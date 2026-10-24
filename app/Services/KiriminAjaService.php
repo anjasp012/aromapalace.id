@@ -16,11 +16,11 @@ use KiriminAja\Services\KiriminAja;
 
 class KiriminAjaService
 {
+
     public function getProvinces(): array
     {
-        $res = KiriminAja::getProvince();
-        dd($res);
         try {
+            $res = KiriminAja::getProvince();
             return ($res->status && is_array($res->data)) ? $res->data : [];
         } catch (\Throwable $e) {
             Log::warning('KiriminAja getProvince error: ' . $e->getMessage());
