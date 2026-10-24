@@ -21,6 +21,7 @@ class PaymentMethodFactory extends Factory
             'code' => fake()->unique()->slug(2).'_va',
             'name' => fake()->company().' VA',
             'icon' => 'bank',
+            'is_active' => true,
         ];
     }
 }

@@ -794,7 +794,7 @@ export default function CheckoutPage({
     };
 
     const activePaymentMethods = useMemo(() => {
-        if (payment_methods && payment_methods.length > 0) {
+        if (Array.isArray(payment_methods)) {
             return payment_methods.map((pm) => {
                 const meta = getPaymentMeta(pm.code, pm.icon || undefined);
                 return {
@@ -816,6 +816,16 @@ export default function CheckoutPage({
         }
         return DEFAULT_PAYMENT_METHODS;
     }, [payment_methods]);
+
+    // Ensure selected payment method is valid among active payment methods
+    useEffect(() => {
+        if (activePaymentMethods.length > 0) {
+            const exists = activePaymentMethods.some((pm) => pm.id === data.payment_method);
+            if (!exists) {
+                setData('payment_method', activePaymentMethods[0].id);
+            }
+        }
+    }, [activePaymentMethods, data.payment_method]);
 
     const sortedPayments = useMemo(() => {
         const selected = activePaymentMethods.find((pm) => pm.id === data.payment_method);
@@ -1313,7 +1323,12 @@ export default function CheckoutPage({
 
                                 {/* Payment Method Radio Cards */}
                                 <div className="space-y-2.5">
-                                    {displayedPayments.map((pm) => {
+                                    {displayedPayments.length === 0 ? (
+                                        <div className="rounded-md p-4 text-center text-xs text-muted-foreground border border-dashed">
+                                            Tidak ada metode pembayaran aktif yang tersedia saat ini.
+                                        </div>
+                                    ) : (
+                                        displayedPayments.map((pm) => {
                                         const isSelected = data.payment_method === pm.id;
                                         return (
                                             <div
@@ -1374,7 +1389,7 @@ export default function CheckoutPage({
                                                 </div>
                                             </div>
                                         );
-                                    })}
+                                    }))}
                                     {errors.payment_method && (
                                         <p className="text-xs text-destructive font-medium mt-1">
                                             {errors.payment_method}

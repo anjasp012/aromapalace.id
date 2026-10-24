@@ -12,12 +12,14 @@ import {
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 
 interface PaymentMethodData {
     id: number;
     name: string;
     code: string;
     icon?: string | null;
+    is_active?: boolean;
 }
 
 interface AdminPaymentMethodEditProps {
@@ -34,11 +36,13 @@ export default function AdminPaymentMethodEdit({ paymentMethod }: AdminPaymentMe
         code: string;
         icon: File | null;
         remove_icon: boolean;
+        is_active: boolean;
     }>({
         name: paymentMethod.name || '',
         code: paymentMethod.code || '',
         icon: null,
         remove_icon: false,
+        is_active: paymentMethod.is_active ?? true,
     });
 
     const slugifyCode = (text: string) => {
@@ -290,6 +294,37 @@ export default function AdminPaymentMethodEdit({ paymentMethod }: AdminPaymentMe
                             {errors.code && (
                                 <p className="text-xs text-destructive font-medium">{errors.code}</p>
                             )}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* 3. Status Visibilitas */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-base">Status &amp; Visibilitas Metode</CardTitle>
+                        <CardDescription>
+                            Tentukan apakah metode pembayaran ini aktif dan tampil di halaman checkout untuk pelanggan.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+                            <div className="space-y-0.5">
+                                <div className="text-sm font-semibold text-foreground flex items-center gap-2">
+                                    <span>{data.is_active ? 'Metode Pembayaran Aktif' : 'Metode Pembayaran Nonaktif'}</span>
+                                    <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${data.is_active ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-muted text-muted-foreground'}`}>
+                                        {data.is_active ? 'Tampil di Checkout' : 'Disembunyikan'}
+                                    </span>
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                    {data.is_active
+                                        ? 'Pelanggan dapat memilih opsi metode pembayaran ini saat checkout pesanan.'
+                                        : 'Metode ini tidak akan tampil di formulir checkout pelanggan.'}
+                                </div>
+                            </div>
+                            <Switch
+                                checked={data.is_active}
+                                onCheckedChange={(checked) => setData('is_active', checked)}
+                            />
                         </div>
                     </CardContent>
                 </Card>

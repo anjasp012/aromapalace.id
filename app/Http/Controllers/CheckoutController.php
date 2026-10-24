@@ -125,7 +125,8 @@ class CheckoutController extends Controller
             'gmaps_link' => $s->gmaps_link,
         ])->values()->all();
 
-        $paymentMethods = PaymentMethod::all()
+        $paymentMethods = PaymentMethod::where('is_active', true)
+            ->get()
             ->map(fn (PaymentMethod $pm) => [
                 'id' => $pm->code,
                 'code' => $pm->code,
@@ -248,7 +249,7 @@ class CheckoutController extends Controller
             'payment_method' => [
                 'required',
                 'string',
-                Rule::exists('payment_methods', 'code'),
+                Rule::exists('payment_methods', 'code')->where('is_active', true),
             ],
             'voucher_code' => ['nullable', 'string', 'max:50'],
             'insurance' => ['nullable', 'boolean'],
@@ -311,7 +312,7 @@ class CheckoutController extends Controller
             $totalAmount = max(0, $subtotal - $discountAmount + $shippingCost + $insuranceCost);
 
             $paymentMethod = $validated['payment_method'];
-            $pm = PaymentMethod::where('code', $paymentMethod)->first();
+            $pm = PaymentMethod::where('code', $paymentMethod)->where('is_active', true)->first();
 
             $channelName = $pm ? $pm->name : 'Virtual Account';
             $paymentChannel = match ($paymentMethod) {

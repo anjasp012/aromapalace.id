@@ -98,6 +98,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/manajemen-pembayaran/create', [PaymentMethodController::class, 'create'])->name('payment-methods.create');
     Route::post('/manajemen-pembayaran', [PaymentMethodController::class, 'store'])->name('payment-methods.store');
     Route::get('/manajemen-pembayaran/{payment_method}/edit', [PaymentMethodController::class, 'edit'])->name('payment-methods.edit');
+    Route::patch('/manajemen-pembayaran/{payment_method}/toggle', [PaymentMethodController::class, 'toggleStatus'])->name('payment-methods.toggle');
     Route::match(['put', 'patch', 'post'], '/manajemen-pembayaran/{payment_method}', [PaymentMethodController::class, 'update'])->name('payment-methods.update');
     Route::delete('/manajemen-pembayaran/{payment_method}', [PaymentMethodController::class, 'destroy'])->name('payment-methods.destroy');
 

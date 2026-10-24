@@ -19,6 +19,7 @@ class PaymentMethodController extends Controller
     public function index(Request $request): Response
     {
         $search = $request->string('search')->trim()->value();
+        $status = $request->string('status')->trim()->value();
 
         $methodsQuery = PaymentMethod::query()
             ->when($search, function ($query, $search) {
@@ -27,18 +28,23 @@ class PaymentMethodController extends Controller
                         ->orWhere('code', 'like', "%{$search}%");
                 });
             })
+            ->when($status === 'active', fn ($query) => $query->where('is_active', true))
+            ->when($status === 'inactive', fn ($query) => $query->where('is_active', false))
             ->latest('id');
 
         $paymentMethods = $methodsQuery->paginate(15)->withQueryString();
 
         $metrics = [
             'total_methods' => PaymentMethod::count(),
+            'active_methods' => PaymentMethod::where('is_active', true)->count(),
+            'inactive_methods' => PaymentMethod::where('is_active', false)->count(),
         ];
 
         return Inertia::render('admin/payment-methods/index', [
             'paymentMethods' => $paymentMethods,
             'filters' => [
                 'search' => $search,
+                'status' => $status,
             ],
             'metrics' => $metrics,
         ]);
@@ -55,6 +61,7 @@ class PaymentMethodController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'code' => ['required', 'string', 'max:255', 'unique:payment_methods,code'],
             'icon' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp,svg', 'max:2048'],
+            'is_active' => ['nullable', 'boolean'],
         ]);
 
         $code = Str::slug($validated['code'], '_');
@@ -72,6 +79,7 @@ class PaymentMethodController extends Controller
             'name' => $validated['name'],
             'code' => $code,
             'icon' => $icon,
+            'is_active' => $request->has('is_active') ? $request->boolean('is_active') : true,
         ]);
 
         return redirect()->route('admin.payment-methods.index')
@@ -92,6 +100,7 @@ class PaymentMethodController extends Controller
             'code' => ['required', 'string', 'max:255', Rule::unique('payment_methods', 'code')->ignore($paymentMethod->id)],
             'icon' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp,svg', 'max:2048'],
             'remove_icon' => ['nullable', 'boolean'],
+            'is_active' => ['nullable', 'boolean'],
         ]);
 
         $code = Str::slug($validated['code'], '_');
@@ -111,10 +120,22 @@ class PaymentMethodController extends Controller
             'name' => $validated['name'],
             'code' => $code,
             'icon' => $icon,
+            'is_active' => $request->has('is_active') ? $request->boolean('is_active') : $paymentMethod->is_active,
         ]);
 
         return redirect()->route('admin.payment-methods.index')
             ->with('success', "Metode pembayaran '{$paymentMethod->name}' berhasil diperbarui.");
+    }
+
+    public function toggleStatus(PaymentMethod $paymentMethod): RedirectResponse
+    {
+        $paymentMethod->update([
+            'is_active' => ! $paymentMethod->is_active,
+        ]);
+
+        $statusText = $paymentMethod->is_active ? 'diaktifkan' : 'dinonaktifkan';
+
+        return back()->with('success', "Metode pembayaran '{$paymentMethod->name}' berhasil {$statusText}.");
     }
 
     public function destroy(PaymentMethod $paymentMethod): RedirectResponse
