@@ -122,7 +122,8 @@ class KiriminAjaService
                 'token_preview' => $tokenPreview,
             ];
         }
-
+        $provinces = KiriminAja::getProvince();
+        dd($provinces);
         try {
             $this->applyConfig($token, $activeMode, $baseUrl);
 
@@ -132,7 +133,6 @@ class KiriminAjaService
             $data->weight = 1000;
 
             $response = KiriminAja::fullShippingPrice($data);
-            dd($data);
 
             if ($response && ($response->status ?? false)) {
                 return [
