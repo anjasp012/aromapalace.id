@@ -32,10 +32,12 @@ import {
     Plus,
     Edit2,
     Camera,
+    Bell,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 import type { UserAddress } from '@/types/address';
 import AddressModal from '@/components/AddressModal';
+import { enablePushNotifications, getNotificationPermission } from '@/lib/push-notification';
 
 interface UserData {
     id: number;
@@ -112,6 +114,35 @@ export default function AccountPage({
     const [addressManagerOpen, setAddressManagerOpen] = useState(false);
     const [addressModalOpen, setAddressModalOpen] = useState(false);
     const [editingAddress, setEditingAddress] = useState<UserAddress | null>(null);
+
+    // Notification state
+    const [notificationStatus, setNotificationStatus] = useState<string>('checking');
+    const [isEnablingNotif, setIsEnablingNotif] = useState(false);
+    const [notifHelpModalOpen, setNotifHelpModalOpen] = useState(false);
+
+    useEffect(() => {
+        getNotificationPermission()
+            .then((status) => setNotificationStatus(status))
+            .catch(() => setNotificationStatus('prompt'));
+    }, []);
+
+    const handleToggleNotifications = async () => {
+        setIsEnablingNotif(true);
+        try {
+            const res = await enablePushNotifications();
+            const updated = await getNotificationPermission();
+            setNotificationStatus(updated);
+            if (res.success) {
+                window.showPromoToast?.('Notifikasi pesanan & promo berhasil diaktifkan!');
+            } else if (updated === 'denied') {
+                setNotifHelpModalOpen(true);
+            }
+        } catch {
+            setNotifHelpModalOpen(true);
+        } finally {
+            setIsEnablingNotif(false);
+        }
+    };
 
     useEffect(() => {
         setLocalAddresses(propAddresses || []);
@@ -563,6 +594,44 @@ export default function AccountPage({
                                     </span>
                                 </div>
                                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                            </button>
+
+                            {/* Notifikasi Pesanan & Promo (User Gesture Trigger untuk iOS & Web) */}
+                            <button
+                                type="button"
+                                onClick={handleToggleNotifications}
+                                disabled={isEnablingNotif}
+                                className="w-full flex items-center justify-between p-3.5 hover:bg-muted/40 transition cursor-pointer text-left"
+                            >
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <div className="w-7 h-7 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                                        <Bell className="w-4 h-4" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <span className="block text-xs sm:text-sm font-semibold text-foreground">
+                                            Notifikasi Pesanan &amp; Promo
+                                        </span>
+                                        <span className="block text-[11px] text-muted-foreground truncate">
+                                            {notificationStatus === 'granted'
+                                                ? 'Izin aktif: pemberitahuan resi & promo langsung dikirim'
+                                                : 'Klik untuk mengaktifkan izin notifikasi di perangkat ini'}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                    {isEnablingNotif ? (
+                                        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                                    ) : notificationStatus === 'granted' ? (
+                                        <Badge className="bg-emerald-600/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 text-[10px] px-2 py-0.5">
+                                            Aktif
+                                        </Badge>
+                                    ) : (
+                                        <Badge variant="outline" className="border-amber-500/50 text-amber-700 dark:text-amber-400 bg-amber-500/10 text-[10px] px-2 py-0.5 font-medium">
+                                            Aktifkan
+                                        </Badge>
+                                    )}
+                                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                                </div>
                             </button>
 
                             {/* WhatsApp VIP Concierge */}
@@ -1189,6 +1258,48 @@ export default function AccountPage({
                     router.reload({ only: ['addresses'] });
                 }}
             />
+            {/* MODAL BANTUAN AKTIFKAN NOTIFIKASI DI IPHONE / BROWSER */}
+            <Dialog open={notifHelpModalOpen} onOpenChange={setNotifHelpModalOpen}>
+                <DialogContent className="max-w-md p-6 rounded-3xl">
+                    <DialogHeader className="space-y-2">
+                        <div className="w-12 h-12 rounded-2xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-1">
+                            <Bell className="w-6 h-6" />
+                        </div>
+                        <DialogTitle className="text-center text-lg font-bold">
+                            Izin Notifikasi iPhone / Browser
+                        </DialogTitle>
+                        <DialogDescription className="text-center text-xs text-muted-foreground">
+                            Izin notifikasi saat ini belum aktif atau sebelumnya dinonaktifkan di pengaturan perangkat Anda.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-3 py-2 text-xs text-foreground bg-muted/40 p-4 rounded-2xl border border-border/80">
+                        <div className="font-semibold text-foreground flex items-center gap-1.5">
+                            <Info className="w-4 h-4 text-amber-600 shrink-0" />
+                            <span>Cara Mengaktifkan di iPhone (iOS):</span>
+                        </div>
+                        <ol className="list-decimal list-inside space-y-1.5 text-muted-foreground pl-1">
+                            <li>Buka aplikasi <strong className="text-foreground">Pengaturan (Settings)</strong> di iPhone Anda.</li>
+                            <li>Gulir ke bawah dan cari aplikasi <strong className="text-foreground">Aroma Palace</strong>.</li>
+                            <li>Pilih menu <strong className="text-foreground">Pemberitahuan (Notifications)</strong>.</li>
+                            <li>Aktifkan toggle <strong className="text-foreground">Izinkan Pemberitahuan (Allow Notifications)</strong>.</li>
+                        </ol>
+                        <p className="text-[11px] text-muted-foreground pt-1 border-t border-border/60">
+                            *Jika menggunakan Safari web, pastikan website telah ditambahkan ke Layar Utama (*Add to Home Screen*) terlebih dahulu.
+                        </p>
+                    </div>
+
+                    <DialogFooter className="sm:justify-center pt-2">
+                        <Button
+                            type="button"
+                            onClick={() => setNotifHelpModalOpen(false)}
+                            className="w-full bg-[#4A070B] hover:bg-[#380508] text-white rounded-xl"
+                        >
+                            Saya Mengerti
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </Layout>
     );
 }

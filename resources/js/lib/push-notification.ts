@@ -221,19 +221,20 @@ export async function enablePushNotifications(csrfToken?: string): Promise<{ suc
     // A. Native Mobile App Flow
     if (isNative) {
         try {
-            let perm = await PushNotifications.checkPermissions();
-            if (perm.receive === 'prompt' || perm.receive === 'prompt-with-rationale') {
-                perm = await PushNotifications.requestPermissions();
+            setupNativePushListeners(csrfToken);
+
+            let perm = await PushNotifications.requestPermissions();
+            if (perm.receive !== 'granted') {
+                perm = await PushNotifications.checkPermissions();
             }
 
             if (perm.receive !== 'granted') {
                 return {
                     success: false,
-                    message: 'Izin notifikasi tidak diberikan di perangkat ini.',
+                    message: 'Izin notifikasi belum diaktifkan di iPhone Anda. Silakan buka Pengaturan iPhone > Aroma Palace > Pemberitahuan.',
                 };
             }
 
-            setupNativePushListeners(csrfToken);
             await PushNotifications.register();
 
             return {
@@ -504,8 +505,14 @@ export async function autoRequestNotificationPermission(csrfToken?: string): Pro
     if (isNative) {
         try {
             const perm = await PushNotifications.checkPermissions();
-            if (perm.receive === 'granted' || perm.receive === 'prompt') {
-                await enablePushNotifications(csrfToken);
+            if (perm.receive === 'granted') {
+                setupNativePushListeners(csrfToken);
+                await PushNotifications.register();
+            } else if (perm.receive === 'prompt') {
+                // Give native splash screen 1.5s to completely finish and reveal WebView
+                setTimeout(() => {
+                    enablePushNotifications(csrfToken).catch(() => {});
+                }, 1500);
             }
         } catch (err) {
             console.warn('[Native Push] Auto request error:', err);
@@ -515,7 +522,8 @@ export async function autoRequestNotificationPermission(csrfToken?: string): Pro
 
     try {
         const currentPermission = Notification.permission;
-        if (currentPermission === 'default' || currentPermission === 'granted') {
+        // On web/Safari, only auto-register if already granted; never auto-prompt without user gesture
+        if (currentPermission === 'granted') {
             await enablePushNotifications(csrfToken);
         }
     } catch (err) {
