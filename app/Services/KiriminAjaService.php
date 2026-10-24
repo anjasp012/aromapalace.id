@@ -104,6 +104,8 @@ class KiriminAjaService
         $token = $apiKey !== null ? trim(trim($apiKey), "\"'") : $this->getApiKey();
         $tokenPreview = strlen($token) > 10 ? substr($token, 0, 8).'...'.substr($token, -6) : '(kosong)';
 
+        dd($activeMode);
+
         if (empty($token)) {
             return [
                 'success' => false,
