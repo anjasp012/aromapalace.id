@@ -49,6 +49,7 @@ class KiriminAjaService
 
         try {
             $res = KiriminAja::getProvince();
+            dd($res);
             if ($res->status && is_array($res->data) && ! empty($res->data)) {
                 Cache::put('kiriminaja:provinces', $res->data, now()->addDays(30));
 
