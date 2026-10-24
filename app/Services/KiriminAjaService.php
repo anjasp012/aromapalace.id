@@ -24,7 +24,7 @@ class KiriminAjaService
           'Authorization' => 'Bearer v4.local.4SJhuA3f8eNSoRjtlkJRMcGpjEELOLzSIWl8HaJ7vnYVVHUe8-NHIU-gEE7BiowIF6GYKQP_FBodo0rJw1eNXa9DvDA0xNs-RzVZN8JarOkS3ZROhXYezDbTgRQknMnNyna9E8hXdagBB6gz6MsWj9OAeKaVIzYiARCbfPQs'
         ])
           ->post('https://tdev.kiriminaja.com/api/mitra/province');
-          dd($response);
+          dd($response->result);
         try {
             $res = KiriminAja::getProvince();
             return ($res->status && is_array($res->data)) ? $res->data : [];
