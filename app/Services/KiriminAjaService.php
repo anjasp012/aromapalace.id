@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use KiriminAja\Base\Config\KiriminAjaConfig;
+use KiriminAja\Models\ShippingFullPriceData;
 use KiriminAja\Services\KiriminAja;
 
 class KiriminAjaService
