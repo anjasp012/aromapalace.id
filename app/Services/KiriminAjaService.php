@@ -12,19 +12,31 @@ use KiriminAja\Base\Config\KiriminAjaConfig;
 use KiriminAja\Models\PackageData;
 use KiriminAja\Models\RequestPickupData;
 use KiriminAja\Models\ShippingFullPriceData;
+use KiriminAja\Models\ShippingPriceData;
+use KiriminAja\Responses\ServiceResponse;
 use KiriminAja\Services\KiriminAja;
 
+/**
+ * KiriminAja Service
+ *
+ * Clean Laravel wrapper adhering directly to the official KiriminAja PHP SDK:
+ * https://github.com/kiriminaja/php
+ */
 class KiriminAjaService
 {
     public function __construct()
     {
-        $this->applyConfig($this->getApiKey(), $this->getMode());
+        $this->applyConfig();
     }
 
+    /* -------------------------------------------------------------------------
+     * 1. CONFIGURATION & SDK BOOTSTRAP
+     * ------------------------------------------------------------------------- */
+
     /**
-     * Apply configuration into the official KiriminAja SDK singleton.
+     * Apply active configuration to the KiriminAjaConfig SDK singleton.
      */
-    protected function applyConfig(?string $apiKey = null, ?string $mode = null): void
+    public function applyConfig(?string $apiKey = null, ?string $mode = null): void
     {
         $activeMode = $mode ?: $this->getMode();
         $rawToken = $apiKey !== null && trim($apiKey) !== '' ? $apiKey : $this->getApiKey();
@@ -40,32 +52,7 @@ class KiriminAjaService
     }
 
     /**
-     * Extract array list from KiriminAja SDK response data.
-     */
-    protected function extractDataItems(mixed $raw): array
-    {
-        if (! is_array($raw)) {
-            return [];
-        }
-
-        if (isset($raw['datas']) && is_array($raw['datas'])) {
-            return $raw['datas'];
-        }
-        if (isset($raw['results']) && is_array($raw['results'])) {
-            return $raw['results'];
-        }
-        if (isset($raw['schedules']) && is_array($raw['schedules'])) {
-            return $raw['schedules'];
-        }
-        if (array_is_list($raw) || isset($raw[0])) {
-            return $raw;
-        }
-
-        return [];
-    }
-
-    /**
-     * Get active KiriminAja API key from Setting (database) or config fallback.
+     * Get active KiriminAja API key from database Setting or config fallback.
      */
     public function getApiKey(): string
     {
@@ -199,6 +186,30 @@ class KiriminAjaService
     }
 
     /**
+     * Extract array list from KiriminAja SDK response data.
+     */
+    protected function extractData(mixed $raw): array
+    {
+        if (! is_array($raw)) {
+            return [];
+        }
+
+        if (isset($raw['datas']) && is_array($raw['datas'])) {
+            return $raw['datas'];
+        }
+
+        if (isset($raw['results']) && is_array($raw['results'])) {
+            return $raw['results'];
+        }
+
+        return array_is_list($raw) || isset($raw[0]) ? $raw : [];
+    }
+
+    /* -------------------------------------------------------------------------
+     * 2. ADDRESS SERVICES (SDK: KiriminAja::getProvince, getCity, getDistrict, getSubDistrict, getDistrictByName)
+     * ------------------------------------------------------------------------- */
+
+    /**
      * Get list of provinces directly from KiriminAja SDK.
      *
      * @return array<int, array{id: int, name: string}>
@@ -214,10 +225,9 @@ class KiriminAjaService
         try {
             $this->applyConfig();
             $response = KiriminAja::getProvince();
-            dd($response);
 
             if ($response && ($response->status ?? false) && ! empty($response->data)) {
-                $items = $this->extractDataItems($response->data);
+                $items = $this->extractData($response->data);
 
                 if (! empty($items)) {
                     $result = array_values(array_map(function ($item) {
@@ -259,7 +269,7 @@ class KiriminAjaService
             $response = KiriminAja::getCity($provinceId);
 
             if ($response && ($response->status ?? false) && ! empty($response->data)) {
-                $items = $this->extractDataItems($response->data);
+                $items = $this->extractData($response->data);
 
                 if (! empty($items)) {
                     $result = array_values(array_map(function ($item) use ($provinceId) {
@@ -304,7 +314,7 @@ class KiriminAjaService
             $response = KiriminAja::getDistrict($cityId);
 
             if ($response && ($response->status ?? false) && ! empty($response->data)) {
-                $items = $this->extractDataItems($response->data);
+                $items = $this->extractData($response->data);
 
                 if (! empty($items)) {
                     $result = array_values(array_map(function ($item) use ($cityId) {
@@ -348,7 +358,7 @@ class KiriminAjaService
             $response = KiriminAja::getSubDistrict($districtId);
 
             if ($response && ($response->status ?? false) && ! empty($response->data)) {
-                $items = $this->extractDataItems($response->data);
+                $items = $this->extractData($response->data);
 
                 if (! empty($items)) {
                     $result = array_values(array_map(function ($item) use ($districtId) {
@@ -375,6 +385,31 @@ class KiriminAjaService
     }
 
     /**
+     * Search districts by name directly from KiriminAja SDK.
+     *
+     * @return array<int, mixed>
+     */
+    public function getDistrictByName(string $name): array
+    {
+        try {
+            $this->applyConfig();
+            $response = KiriminAja::getDistrictByName($name);
+
+            if ($response && ($response->status ?? false) && ! empty($response->data)) {
+                return $this->extractData($response->data);
+            }
+        } catch (\Throwable $e) {
+            Log::warning("KiriminAja getDistrictByName({$name}) error: ".$e->getMessage());
+        }
+
+        return [];
+    }
+
+    /* -------------------------------------------------------------------------
+     * 3. COURIER SERVICES (SDK: KiriminAja::getCouriers, getCourierGroups, getCourierDetail)
+     * ------------------------------------------------------------------------- */
+
+    /**
      * Get list of available domestic couriers directly from KiriminAja SDK.
      *
      * @return array<int, array{code: string, name: string, region: string, type: string}>
@@ -392,7 +427,7 @@ class KiriminAjaService
             $response = KiriminAja::getCouriers();
 
             if ($response && ($response->status ?? false) && ! empty($response->data)) {
-                $items = $this->extractDataItems($response->data);
+                $items = $this->extractData($response->data);
 
                 $domestic = array_values(array_filter($items, function ($item) {
                     $arr = (array) $item;
@@ -425,12 +460,74 @@ class KiriminAjaService
     }
 
     /**
-     * Get shipping rates for one or more couriers between two districts directly from KiriminAja SDK.
+     * Get courier groups directly from KiriminAja SDK.
+     *
+     * @return array<int, mixed>
+     */
+    public function getCourierGroups(): array
+    {
+        try {
+            $this->applyConfig();
+            $response = KiriminAja::getCourierGroups();
+
+            return (array) ($response->data ?? []);
+        } catch (\Throwable $e) {
+            Log::warning('KiriminAja getCourierGroups error: '.$e->getMessage());
+
+            return [];
+        }
+    }
+
+    /**
+     * Get courier detail by code directly from KiriminAja SDK.
+     *
+     * @return array<string, mixed>
+     */
+    public function getCourierDetail(string $code): array
+    {
+        try {
+            $this->applyConfig();
+            $response = KiriminAja::getCourierDetail($code);
+
+            return (array) ($response->data ?? []);
+        } catch (\Throwable $e) {
+            Log::warning("KiriminAja getCourierDetail({$code}) error: ".$e->getMessage());
+
+            return [];
+        }
+    }
+
+    /* -------------------------------------------------------------------------
+     * 4. COVERAGE AREA & PRICING SERVICES (SDK: KiriminAja::fullShippingPrice, getPrice)
+     * ------------------------------------------------------------------------- */
+
+    /**
+     * Direct SDK call: Full shipping price for all available couriers.
+     */
+    public function fullShippingPrice(ShippingFullPriceData $data): ServiceResponse
+    {
+        $this->applyConfig();
+
+        return KiriminAja::fullShippingPrice($data);
+    }
+
+    /**
+     * Direct SDK call: Shipping price for specific couriers.
+     */
+    public function getPrice(ShippingPriceData $data): ServiceResponse
+    {
+        $this->applyConfig();
+
+        return KiriminAja::getPrice($data);
+    }
+
+    /**
+     * Get formatted shipping rates between two districts directly from KiriminAja SDK.
      *
      * @param  int  $originDistrictId  Origin kecamatan ID
      * @param  int  $destinationDistrictId  Destination kecamatan ID
      * @param  int  $weightGrams  Package weight in grams
-     * @param  string[]|null  $couriers  Optional specific courier codes to query
+     * @param  string[]|null  $couriers  Optional specific courier codes to filter
      * @return array<int, array{code: string, courier_code: string, name: string, service: string, price: int, price_formatted: string, etd: string}>
      */
     public function getShippingRates(int $originDistrictId, int $destinationDistrictId, int $weightGrams = 500, ?array $couriers = null): array
@@ -536,8 +633,81 @@ class KiriminAjaService
         return [];
     }
 
+    /* -------------------------------------------------------------------------
+     * 5. ORDER & PICKUP SERVICES (SDK: KiriminAja::requestPickup, getSchedules, getTracking, cancelShipment)
+     * ------------------------------------------------------------------------- */
+
     /**
-     * Request pickup and obtain automatic AWB / tracking number from KiriminAja via SDK.
+     * Direct SDK call: Fetch available pickup schedules.
+     *
+     * @return array<int, mixed>
+     */
+    public function getSchedules(): array
+    {
+        try {
+            $this->applyConfig();
+            $response = KiriminAja::getSchedules();
+
+            if ($response && ($response->status ?? false) && ! empty($response->data)) {
+                return (array) $response->data;
+            }
+        } catch (\Throwable $e) {
+            Log::warning('KiriminAja getSchedules error: '.$e->getMessage());
+        }
+
+        return [];
+    }
+
+    /**
+     * Direct SDK call: Request express pickup.
+     */
+    public function requestPickup(RequestPickupData $pickup): ServiceResponse
+    {
+        $this->applyConfig();
+
+        return KiriminAja::requestPickup($pickup);
+    }
+
+    /**
+     * Direct SDK call: Track express shipment by order ID.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function getTracking(string $orderId): ?array
+    {
+        try {
+            $this->applyConfig();
+            $response = KiriminAja::getTracking($orderId);
+
+            if ($response && ($response->status ?? false) && ! empty($response->data)) {
+                return (array) $response->data;
+            }
+        } catch (\Throwable $e) {
+            Log::warning("KiriminAja getTracking({$orderId}) error: ".$e->getMessage());
+        }
+
+        return null;
+    }
+
+    /**
+     * Direct SDK call: Cancel express shipment by AWB.
+     */
+    public function cancelShipment(string $awb, string $reason = 'Pembatalan pesanan'): bool
+    {
+        try {
+            $this->applyConfig();
+            $response = KiriminAja::cancelShipment($awb, $reason);
+
+            return (bool) ($response->status ?? false);
+        } catch (\Throwable $e) {
+            Log::warning("KiriminAja cancelShipment({$awb}) error: ".$e->getMessage());
+
+            return false;
+        }
+    }
+
+    /**
+     * Request pickup and obtain automatic AWB / tracking number for an Order via KiriminAja SDK.
      *
      * @return array{success: bool, tracking_number: string, courier: string, source: string, message: string}
      */
@@ -599,24 +769,16 @@ class KiriminAjaService
             }
         }
         if (! $destinationDistrictId && ! empty($order->district_name)) {
-            try {
-                $this->applyConfig();
-                $resp = KiriminAja::getDistrictByName($order->district_name);
-                if ($resp && ($resp->status ?? false) && ! empty($resp->data)) {
-                    $first = is_array($resp->data) ? ($resp->data[0] ?? null) : null;
-                    if ($first && ! empty($first['id'])) {
-                        $destinationDistrictId = (int) $first['id'];
-                    }
-                }
-            } catch (\Throwable) {
-                // Ignore and use default
+            $matchedDistricts = $this->getDistrictByName($order->district_name);
+            if (! empty($matchedDistricts[0]['id'])) {
+                $destinationDistrictId = (int) $matchedDistricts[0]['id'];
             }
         }
         if (! $destinationDistrictId) {
             $destinationDistrictId = 2101; // Default to Setiabudi, Jakarta Selatan
         }
 
-        // Sender details
+        // Store sender details
         $senderName = (string) Setting::get('shipping_sender_name', Setting::get('store_name', 'Aroma Palace Official'));
         $senderPhone = (string) Setting::get('shipping_sender_phone', Setting::get('store_phone', '081288889999'));
         $senderAddress = (string) Setting::get('shipping_address', Setting::get('store_address', 'Jl. Kemang Raya No. 10, Jakarta Selatan'));
@@ -650,22 +812,14 @@ class KiriminAjaService
 
         // Fetch pickup schedule from SDK
         $pickupSchedule = null;
-        try {
-            $schedRes = KiriminAja::getSchedules();
-            if ($schedRes && ($schedRes->status ?? false) && ! empty($schedRes->data)) {
-                $schedules = is_array($schedRes->data) ? $schedRes->data : [];
-                foreach ($schedules as $slot) {
-                    $slotArr = (array) $slot;
-                    if (empty($slotArr['libur']) && ! empty($slotArr['clock'])) {
-                        $pickupSchedule = (string) $slotArr['clock'];
-                        break;
-                    }
-                }
+        $schedules = $this->getSchedules();
+        foreach ($schedules as $slot) {
+            $slotArr = (array) $slot;
+            if (empty($slotArr['libur']) && ! empty($slotArr['clock'])) {
+                $pickupSchedule = (string) $slotArr['clock'];
+                break;
             }
-        } catch (\Throwable $e) {
-            Log::warning('KiriminAja schedule fetch error: '.$e->getMessage());
         }
-
         if (! $pickupSchedule) {
             $pickupSchedule = now()->addDay()->format('Y-m-d 14:00:00');
         }
@@ -780,6 +934,68 @@ class KiriminAjaService
                 'source' => 'kiriminaja_exception',
                 'message' => 'Koneksi ke KiriminAja bermasalah: '.$e->getMessage(),
             ];
+        }
+    }
+
+    /* -------------------------------------------------------------------------
+     * 6. CREDIT, AWB & PREFERENCE (SDK: KiriminAja::getCreditBalance, printAWB, setCallback)
+     * ------------------------------------------------------------------------- */
+
+    /**
+     * Direct SDK call: Get current KiriminAja credit balance.
+     */
+    public function getCreditBalance(): ?int
+    {
+        try {
+            $this->applyConfig();
+            $response = KiriminAja::getCreditBalance();
+
+            if ($response && ($response->status ?? false) && isset($response->data['balance'])) {
+                return (int) $response->data['balance'];
+            }
+        } catch (\Throwable $e) {
+            Log::warning('KiriminAja getCreditBalance error: '.$e->getMessage());
+        }
+
+        return null;
+    }
+
+    /**
+     * Direct SDK call: Print shipping label / waybill by AWB numbers.
+     *
+     * @param  string[]  $awbList
+     * @return string|null PDF download URL
+     */
+    public function printAWB(array $awbList): ?string
+    {
+        try {
+            $this->applyConfig();
+            $response = KiriminAja::printAWB(['awb' => $awbList]);
+
+            if ($response && ($response->status ?? false) && ! empty($response->data['data']['url'])) {
+                return (string) $response->data['data']['url'];
+            }
+        } catch (\Throwable $e) {
+            Log::warning('KiriminAja printAWB error: '.$e->getMessage());
+        }
+
+        return null;
+    }
+
+    /**
+     * Direct SDK call: Register webhook callback URL in KiriminAja.
+     */
+    public function setCallback(string $url): bool
+    {
+        try {
+            $this->applyConfig();
+            $response = KiriminAja::setCallback($url);
+
+            return (bool) ($response->status ?? false);
+        } catch (\Throwable $e) {
+            Log::warning("KiriminAja setCallback({$url}) error: ".$e->getMessage());
+
+            return false;
         }
     }
 }
