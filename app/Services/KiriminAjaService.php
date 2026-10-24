@@ -132,7 +132,7 @@ class KiriminAjaService
             $data->weight = 1000;
 
             $response = KiriminAja::fullShippingPrice($data);
-            dd($response);
+            dd(KiriminAja::getConfig());
 
             if ($response && ($response->status ?? false)) {
                 return [
