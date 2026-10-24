@@ -52,47 +52,8 @@ class KiriminAjaService
 
     public function getProvinces(): array
     {
-        // 1. Panggilan via SDK
-        $sdkRes = KiriminAja::getProvince();
-
-        // 2. Panggilan langsung via HTTP untuk membaca respon asli server KiriminAja
-        $rawResBody = null;
-        $rawResStatus = null;
         try {
-            $raw = Http::timeout(5)->withHeaders([
-                'Authorization' => 'Bearer ' . $this->apiKey,
-                'Accept' => 'application/json',
-            ])->post(rtrim($this->baseUrl, '/') . '/api/mitra/province', []);
-
-            $rawResStatus = $raw->status();
-            $rawResBody = $raw->json() ?: $raw->body();
-        } catch (\Throwable $e) {
-            $rawResBody = 'Curl error: ' . $e->getMessage();
-        }
-
-        // 3. Cek IP yang digunakan VPS
-        $ipv4 = null;
-        $ipv6or4 = null;
-        try {
-            $ipv4 = Http::timeout(3)->get('https://api.ipify.org')->body();
-        } catch (\Throwable $e) {}
-
-        try {
-            $ipv6or4 = Http::timeout(3)->get('https://api64.ipify.org')->body();
-        } catch (\Throwable $e) {}
-
-        dd([
-            'sdk_result' => $sdkRes,
-            'kiriminaja_raw_status' => $rawResStatus,
-            'kiriminaja_raw_response' => $rawResBody,
-            'vps_ipv4' => $ipv4,
-            'vps_default_ip' => $ipv6or4,
-            'apakah_vps_default_ipv6' => str_contains($ipv6or4 ?? '', ':'),
-            'api_key_digunakan' => substr($this->apiKey, 0, 15) . '...',
-            'base_url' => $this->baseUrl,
-        ]);
-
-        try {
+            $res = KiriminAja::getProvince();
             return ($res->status && is_array($res->data)) ? $res->data : [];
         } catch (\Throwable $e) {
             Log::warning('KiriminAja getProvince error: ' . $e->getMessage());
