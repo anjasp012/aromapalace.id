@@ -8,7 +8,6 @@ use App\Models\UserAddress;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use KiriminAja\Base\Config\KiriminAjaConfig;
 use KiriminAja\Models\ShippingFullPriceData;
 use KiriminAja\Services\KiriminAja;
@@ -43,17 +42,25 @@ class KiriminAjaService
      */
     public function getProvinces(): array
     {
-        return Cache::remember('kiriminaja:provinces', now()->addDays(30), function () {
-            try {
-                $res = KiriminAja::getProvince();
+        $cached = Cache::get('kiriminaja:provinces');
+        if (is_array($cached) && ! empty($cached)) {
+            return $cached;
+        }
 
-                return ($res->status && is_array($res->data)) ? $res->data : [];
-            } catch (\Throwable $e) {
-                Log::warning('KiriminAja getProvince error: '.$e->getMessage());
+        try {
+            $res = KiriminAja::getProvince();
+            if ($res->status && is_array($res->data) && ! empty($res->data)) {
+                Cache::put('kiriminaja:provinces', $res->data, now()->addDays(30));
 
-                return [];
+                return $res->data;
             }
-        });
+
+            return [];
+        } catch (\Throwable $e) {
+            Log::warning('KiriminAja getProvince error: '.$e->getMessage());
+
+            return [];
+        }
     }
 
     /**
@@ -63,22 +70,30 @@ class KiriminAjaService
      */
     public function getCities(int $provinceId): array
     {
-        return Cache::remember("kiriminaja:cities:{$provinceId}", now()->addDays(30), function () use ($provinceId) {
-            try {
-                $res = KiriminAja::getCity($provinceId);
-                if ($res->status && is_array($res->data)) {
-                    $items = $res->data['datas'] ?? ($res->data['results'] ?? $res->data);
+        $cacheKey = "kiriminaja:cities:{$provinceId}";
+        $cached = Cache::get($cacheKey);
+        if (is_array($cached) && ! empty($cached)) {
+            return $cached;
+        }
 
-                    return is_array($items) ? $items : [];
+        try {
+            $res = KiriminAja::getCity($provinceId);
+            if ($res->status && is_array($res->data)) {
+                $items = $res->data['datas'] ?? ($res->data['results'] ?? $res->data);
+                $list = is_array($items) ? $items : [];
+                if (! empty($list)) {
+                    Cache::put($cacheKey, $list, now()->addDays(30));
                 }
 
-                return [];
-            } catch (\Throwable $e) {
-                Log::warning("KiriminAja getCities ({$provinceId}) error: ".$e->getMessage());
-
-                return [];
+                return $list;
             }
-        });
+
+            return [];
+        } catch (\Throwable $e) {
+            Log::warning("KiriminAja getCities ({$provinceId}) error: ".$e->getMessage());
+
+            return [];
+        }
     }
 
     /**
@@ -88,22 +103,30 @@ class KiriminAjaService
      */
     public function getDistricts(int $cityId): array
     {
-        return Cache::remember("kiriminaja:districts:{$cityId}", now()->addDays(30), function () use ($cityId) {
-            try {
-                $res = KiriminAja::getDistrict($cityId);
-                if ($res->status && is_array($res->data)) {
-                    $items = $res->data['datas'] ?? ($res->data['results'] ?? $res->data);
+        $cacheKey = "kiriminaja:districts:{$cityId}";
+        $cached = Cache::get($cacheKey);
+        if (is_array($cached) && ! empty($cached)) {
+            return $cached;
+        }
 
-                    return is_array($items) ? $items : [];
+        try {
+            $res = KiriminAja::getDistrict($cityId);
+            if ($res->status && is_array($res->data)) {
+                $items = $res->data['datas'] ?? ($res->data['results'] ?? $res->data);
+                $list = is_array($items) ? $items : [];
+                if (! empty($list)) {
+                    Cache::put($cacheKey, $list, now()->addDays(30));
                 }
 
-                return [];
-            } catch (\Throwable $e) {
-                Log::warning("KiriminAja getDistricts ({$cityId}) error: ".$e->getMessage());
-
-                return [];
+                return $list;
             }
-        });
+
+            return [];
+        } catch (\Throwable $e) {
+            Log::warning("KiriminAja getDistricts ({$cityId}) error: ".$e->getMessage());
+
+            return [];
+        }
     }
 
     /**
@@ -113,24 +136,31 @@ class KiriminAjaService
      */
     public function getSubdistricts(int $districtId): array
     {
-        return Cache::remember("kiriminaja:subdistricts:{$districtId}", now()->addDays(30), function () use ($districtId) {
-            try {
-                $res = KiriminAja::getSubDistrict($districtId);
-                if ($res->status && is_array($res->data)) {
-                    $items = $res->data['results'] ?? ($res->data['datas'] ?? $res->data);
+        $cacheKey = "kiriminaja:subdistricts:{$districtId}";
+        $cached = Cache::get($cacheKey);
+        if (is_array($cached) && ! empty($cached)) {
+            return $cached;
+        }
 
-                    return is_array($items) ? $items : [];
+        try {
+            $res = KiriminAja::getSubDistrict($districtId);
+            if ($res->status && is_array($res->data)) {
+                $items = $res->data['results'] ?? ($res->data['datas'] ?? $res->data);
+                $list = is_array($items) ? $items : [];
+                if (! empty($list)) {
+                    Cache::put($cacheKey, $list, now()->addDays(30));
                 }
 
-                return [];
-            } catch (\Throwable $e) {
-                Log::warning("KiriminAja getSubdistricts ({$districtId}) error: ".$e->getMessage());
-
-                return [];
+                return $list;
             }
-        });
-    }
 
+            return [];
+        } catch (\Throwable $e) {
+            Log::warning("KiriminAja getSubdistricts ({$districtId}) error: ".$e->getMessage());
+
+            return [];
+        }
+    }
 
     /**
      * Dapatkan daftar kurir yang tersedia (di-cache 7 hari).
@@ -205,49 +235,57 @@ class KiriminAjaService
         $weight = max(100, $weightGrams);
 
         $cacheKey = "kiriminaja:rates:o{$origin}:d{$destination}:w{$weight}";
+        $cached = Cache::get($cacheKey);
+        if (is_array($cached) && ! empty($cached)) {
+            return $cached;
+        }
 
-        return Cache::remember($cacheKey, now()->addHours(2), function () use ($origin, $destination, $weight) {
-            try {
-                $data = new ShippingFullPriceData();
-                $data->origin = $origin;
-                $data->destination = $destination;
-                $data->weight = $weight;
+        try {
+            $data = new ShippingFullPriceData();
+            $data->origin = $origin;
+            $data->destination = $destination;
+            $data->weight = $weight;
 
-                $response = KiriminAja::fullShippingPrice($data);
+            $response = KiriminAja::fullShippingPrice($data);
 
-                if ($response->status && ! empty($response->data)) {
-                    $raw = is_array($response->data) ? $response->data : [];
-                    $results = [];
+            if ($response->status && ! empty($response->data)) {
+                $raw = is_array($response->data) ? ($response->data['pricing'] ?? $response->data) : [];
+                $results = [];
 
-                    foreach ($raw as $item) {
-                        $arr = (array) $item;
-                        $serviceCode = strtolower((string) ($arr['service'] ?? ''));
-                        $serviceName = (string) ($arr['service_name'] ?? strtoupper($serviceCode));
-                        $serviceType = (string) ($arr['service_type'] ?? 'REG');
-                        $cost = (int) ($arr['cost'] ?? 0);
-                        $etd = (string) ($arr['etd'] ?? '');
-
-                        $results[] = [
-                            'code' => $serviceCode.'_'.strtolower($serviceType),
-                            'courier_code' => $serviceCode,
-                            'name' => $serviceName,
-                            'service' => $serviceType,
-                            'price' => $cost,
-                            'price_formatted' => $cost === 0 ? 'Gratis' : 'Rp '.number_format($cost, 0, ',', '.'),
-                            'etd' => ! empty($etd) ? 'Estimasi '.$etd.' Hari' : '1-3 Hari',
-                        ];
+                foreach ($raw as $item) {
+                    $arr = (array) $item;
+                    $serviceCode = strtolower((string) ($arr['service'] ?? ''));
+                    if (empty($serviceCode)) {
+                        continue;
                     }
 
-                    if (! empty($results)) {
-                        return $results;
-                    }
+                    $serviceName = (string) ($arr['service_name'] ?? strtoupper($serviceCode));
+                    $serviceType = (string) ($arr['service_type'] ?? 'REG');
+                    $cost = (int) ($arr['cost'] ?? 0);
+                    $etd = (string) ($arr['etd'] ?? '');
+
+                    $results[] = [
+                        'code' => $serviceCode.'_'.strtolower($serviceType),
+                        'courier_code' => $serviceCode,
+                        'name' => $serviceName,
+                        'service' => $serviceType,
+                        'price' => $cost,
+                        'price_formatted' => $cost === 0 ? 'Gratis' : 'Rp '.number_format($cost, 0, ',', '.'),
+                        'etd' => ! empty($etd) ? 'Estimasi '.$etd.' Hari' : '1-3 Hari',
+                    ];
                 }
-            } catch (\Throwable $e) {
-                Log::warning("KiriminAja getShippingRates (origin: {$origin}, dest: {$destination}) error: ".$e->getMessage());
-            }
 
-            return [];
-        });
+                if (! empty($results)) {
+                    Cache::put($cacheKey, $results, now()->addHours(2));
+
+                    return $results;
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning("KiriminAja getShippingRates (origin: {$origin}, dest: {$destination}) error: ".$e->getMessage());
+        }
+
+        return [];
     }
 
     /**
