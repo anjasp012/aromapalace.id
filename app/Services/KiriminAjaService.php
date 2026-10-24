@@ -131,15 +131,6 @@ class KiriminAjaService
         });
     }
 
-    /**
-     * Alias dengan huruf kapital untuk kompatibilitas.
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    public function getSubDistricts(int $districtId): array
-    {
-        return $this->getSubdistricts($districtId);
-    }
 
     /**
      * Dapatkan daftar kurir yang tersedia (di-cache 7 hari).
