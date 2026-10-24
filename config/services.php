@@ -41,9 +41,4 @@ return [
         'webhook_secret' => env('PAKASIR_WEBHOOK_SECRET'),
         'base_url' => env('PAKASIR_BASE_URL', 'https://app.pakasir.com'),
     ],
-
-    'kiriminaja' => [
-        'cache_store' => env('KIRIMINAJA_CACHE_STORE', 'laravel'),
-        'cache_prefix' => env('KIRIMINAJA_CACHE_PREFIX', 'kiriminaja:'),
-    ],
 ];

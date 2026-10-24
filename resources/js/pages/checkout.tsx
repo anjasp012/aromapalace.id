@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
-import { Truck, Store as StoreIcon, MapPin, ExternalLink, Clock, ShieldCheck, Loader2, Plus, Edit2, Check } from 'lucide-react';
+import { Truck, Store as StoreIcon, MapPin, ExternalLink, Clock, ShieldCheck, Loader2, Plus, Edit2, Check, AlertCircle } from 'lucide-react';
 import type { UserAddress } from '@/types/address';
 import AddressModal from '@/components/AddressModal';
 import AddressSelectorModal from '@/components/AddressSelectorModal';
