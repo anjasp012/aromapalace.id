@@ -44,6 +44,11 @@ return new class extends Migration
             ['key' => 'shipping_subdistrict_id', 'value' => '1004', 'group' => 'shipping', 'type' => 'integer'],
             ['key' => 'shipping_subdistrict_name', 'value' => 'Kramat Pela', 'group' => 'shipping', 'type' => 'string'],
             ['key' => 'shipping_postal_code', 'value' => '12130', 'group' => 'shipping', 'type' => 'string'],
+
+            // KiriminAja API Integration
+            ['key' => 'kiriminaja_mode', 'value' => 'staging', 'group' => 'shipping', 'type' => 'string'],
+            ['key' => 'kiriminaja_api_key', 'value' => 'v4.local.4SJhuA3f8eNSoRjtlkJRMcGpjEELOLzSIWl8HaJ7vnYVVHUe8-NHIU-gEE7BiowIF6GYKQP_FBodo0rJw1eNXa9DvDA0xNs-RzVZN8JarOkS3ZROhXYezDbTgRQknMnNyna9E8hXdagBB6gz6MsWj9OAeKaVIzYiARCbfPQs', 'group' => 'shipping', 'type' => 'string'],
+            ['key' => 'kiriminaja_prefix', 'value' => 'ARPL', 'group' => 'shipping', 'type' => 'string'],
         ];
 
         foreach ($defaults as $item) {
