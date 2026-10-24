@@ -719,8 +719,8 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
                                     aria-label={isEn ? 'Switch Language' : 'Ganti Bahasa'}
                                 >
                                     <Globe className="w-3 h-3 text-[#E5A844] shrink-0" />
-                                    <span className="font-semibold text-[10.5px] tracking-wide">
-                                        {isEn ? '🇬🇧 EN' : '🇮🇩 ID'}
+                                    <span className="font-semibold text-[10.5px] tracking-wider uppercase">
+                                        {isEn ? 'EN' : 'ID'}
                                     </span>
                                     <ChevronDown className="w-2.5 h-2.5 text-white/60 group-hover:text-white transition-transform duration-200" />
                                 </button>
@@ -728,7 +728,7 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
                             <DropdownMenuContent
                                 align="end"
                                 sideOffset={6}
-                                className="w-48 p-1.5 rounded-xl bg-[#2A0306] border border-[#E5A844]/30 shadow-2xl text-white z-[60]"
+                                className="w-44 p-1.5 rounded-xl bg-[#2A0306] border border-[#E5A844]/30 shadow-2xl text-white z-[60]"
                             >
                                 <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#E5A844] border-b border-white/10 mb-1 flex items-center justify-between">
                                     <span>{isEn ? 'Select Language' : 'Pilih Bahasa'}</span>
@@ -741,12 +741,9 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
                                         : 'text-white/90 hover:bg-white/10 hover:text-white focus:bg-white/10 focus:text-white'
                                         }`}
                                 >
-                                    <div className="flex items-center gap-2.5">
-                                        <span className="text-base leading-none">🇮🇩</span>
-                                        <div className="flex flex-col text-left">
-                                            <span className="leading-tight font-medium">Bahasa Indonesia</span>
-                                            <span className="text-[10px] text-white/60 font-normal">ID &bull; Indonesia</span>
-                                        </div>
+                                    <div className="flex flex-col text-left">
+                                        <span className="leading-tight font-medium">Bahasa Indonesia</span>
+                                        <span className="text-[10px] text-white/60 font-normal">Indonesia</span>
                                     </div>
                                     {isId && <Check className="w-4 h-4 text-[#E5A844] shrink-0 ml-2" />}
                                 </DropdownMenuItem>
@@ -757,12 +754,9 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
                                         : 'text-white/90 hover:bg-white/10 hover:text-white focus:bg-white/10 focus:text-white'
                                         }`}
                                 >
-                                    <div className="flex items-center gap-2.5">
-                                        <span className="text-base leading-none">🇬🇧</span>
-                                        <div className="flex flex-col text-left">
-                                            <span className="leading-tight font-medium">English</span>
-                                            <span className="text-[10px] text-white/60 font-normal">EN &bull; International</span>
-                                        </div>
+                                    <div className="flex flex-col text-left">
+                                        <span className="leading-tight font-medium">English</span>
+                                        <span className="text-[10px] text-white/60 font-normal">International</span>
                                     </div>
                                     {isEn && <Check className="w-4 h-4 text-[#E5A844] shrink-0 ml-2" />}
                                 </DropdownMenuItem>
