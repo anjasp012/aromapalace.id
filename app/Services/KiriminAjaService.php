@@ -17,18 +17,8 @@ use KiriminAja\Services\KiriminAja;
 
 class KiriminAjaService
 {
-  
-
     public function getProvinces(): array
     {
-        $data = new ShippingFullPriceData();
-        $data->origin = 1;
-        $data->destination = 2;
-        $data->weight = 1000;
-
-        $pricess= KiriminAja::fullShippingPrice($data);
-        dd($pricess);
-
         try {
             $res = KiriminAja::getProvince();
             return ($res->status && is_array($res->data)) ? $res->data : [];
@@ -38,4 +28,33 @@ class KiriminAjaService
         }
     }
 
+    public function getCities($provinceId) : Returntype {
+        try {
+            $res = KiriminAja::getCities($provinceId);
+            return ($res->status && is_array($res->data)) ? $res->data : [];
+        } catch (\Throwable $e) {
+            Log::warning('KiriminAja getCities error: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function getDistricts($cityId) : Returntype {
+        try {
+            $res = KiriminAja::getDistricts($cityId);
+            return ($res->status && is_array($res->data)) ? $res->data : [];
+        } catch (\Throwable $e) {
+            Log::warning('KiriminAja getDistricts error: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function getSubDistricts($districtId) : Returntype {
+        try {
+            $res = KiriminAja::getSubDistricts($districtId);
+            return ($res->status && is_array($res->data)) ? $res->data : [];
+        } catch (\Throwable $e) {
+            Log::warning('KiriminAja getSubDistricts error: ' . $e->getMessage());
+            return [];
+        }
+    }
 }
