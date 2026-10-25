@@ -242,6 +242,7 @@ class KiriminAjaService
         ]);
         $json = $response->json();
         $raw = $json['data'] ?? ($json['datas'] ?? ($json['results'] ?? []));
+        dd($json);
         if (is_array($raw) && ! empty($raw)) {
             $items = array_values(array_map(function ($item) {
                 $arr = (array) $item;
