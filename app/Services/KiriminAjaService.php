@@ -186,4 +186,12 @@ class KiriminAjaService
 
         return [];
     }
+
+    public function getShippingRates($origin, ) {
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->apiKey
+        ])->post($this->baseUrl . '/api/mitra/couriers/');
+         $json = $response->json();
+         dd($json);
+    }
 }
