@@ -236,149 +236,181 @@ export default function TrackingModal({
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent
-                showCloseButton={true}
-                className="max-w-2xl sm:max-w-3xl w-full p-6 sm:p-7 gap-5 rounded-2xl bg-background border-border shadow-xl max-h-[92vh] overflow-y-auto"
+                showCloseButton={false}
+                className="max-w-3xl w-full h-[90vh] sm:h-[85vh] max-h-[90vh] sm:max-h-[85vh] p-0 gap-0 rounded-2xl bg-card text-card-foreground border border-border/80 shadow-2xl flex flex-col overflow-hidden outline-none"
             >
-                <DialogHeader className="p-0 pb-1 border-none text-left">
-                    <DialogTitle className="text-xl sm:text-2xl font-black tracking-tight text-foreground">
+                {/* Modal Header */}
+                <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-border/80 shrink-0 bg-card">
+                    <DialogTitle className="font-extrabold text-base sm:text-lg text-foreground tracking-tight m-0 p-0">
                         Lacak Pesanan
                     </DialogTitle>
-                </DialogHeader>
+                    <button
+                        type="button"
+                        onClick={() => onOpenChange(false)}
+                        className="text-muted-foreground hover:text-foreground p-1.5 rounded-lg hover:bg-muted/70 transition-colors cursor-pointer"
+                        aria-label="Tutup"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
 
-                {error && histories.length === 0 ? (
-                    <div className="p-5 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm flex items-start gap-3">
-                        <AlertCircle className="size-5 shrink-0 mt-0.5" />
-                        <div className="space-y-1">
-                            <div className="font-bold">Informasi Pelacakan Belum Tersedia</div>
-                            <div className="text-xs opacity-90">{error}</div>
+                {/* Modal Body */}
+                <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-6 p-5 sm:p-6 overflow-y-auto md:overflow-hidden">
+                    {/* LEFT COLUMN: COURIER, AWB, SENDER & RECIPIENT */}
+                    <div className="w-full md:w-72 shrink-0 rounded-lg border border-border/80 bg-card/60 backdrop-blur-xs p-5 sm:p-6 space-y-4 h-fit shadow-none text-left">
+                        {/* Courier Information */}
+                        <div className="space-y-2.5 text-xs">
+                            <div className="font-bold text-xs text-foreground">
+                                Pengiriman
+                            </div>
+                            <div className="space-y-0.5">
+                                <div className="font-bold text-foreground flex items-center gap-1.5">
+                                    <Truck className="w-3.5 h-3.5 text-[#4A070B] dark:text-[#E8D0BA] shrink-0" />
+                                    <span>{displayCourier}</span>
+                                </div>
+                                <div className="text-muted-foreground text-[11px]">
+                                    {data?.courier_service || initialData?.courier_service || 'Express Delivery (1 - 3 Hari)'}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Nomor Resi / AWB */}
+                        <div className="pt-4 border-t border-border/80 space-y-1.5 text-xs">
+                            <div className="flex items-center justify-between gap-2">
+                                <span className="text-muted-foreground">Nomor Resi / AWB</span>
+                                <button
+                                    type="button"
+                                    onClick={handleCopy}
+                                    className="inline-flex font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer items-center gap-1 text-xs py-0.5 px-1 rounded hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors"
+                                    title="Salin nomor resi"
+                                >
+                                    {copied ? (
+                                        <>
+                                            <Check className="w-3 h-3 text-emerald-600" />
+                                            <span className="text-emerald-600">Tersalin</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Copy className="w-3 h-3" />
+                                            <span>Salin</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                            <div className="font-mono text-xs font-bold text-foreground break-all bg-muted/40 dark:bg-muted/20 px-2.5 py-1.5 rounded border border-border/60">
+                                {displayAwb}
+                            </div>
+                        </div>
+
+                        {/* Pengirim */}
+                        <div className="pt-4 border-t border-border/80 space-y-1 text-xs">
+                            <div className="font-bold text-foreground">
+                                Pengirim
+                            </div>
+                            <div className="font-medium text-foreground">
+                                {displaySenderName}
+                            </div>
+                        </div>
+
+                        {/* Penerima & Alamat Pengiriman */}
+                        <div className="pt-4 border-t border-border/80 space-y-1 text-xs">
+                            <div className="font-bold text-foreground">
+                                Alamat Pengiriman
+                            </div>
+                            <div className="font-medium text-foreground">
+                                {displayRecipientName} {displayRecipientPhone ? `(${displayRecipientPhone})` : ''}
+                            </div>
+                            {displayRecipientAddress && (
+                                <div className="text-muted-foreground leading-relaxed text-[11px] pt-0.5">
+                                    {displayRecipientAddress}
+                                </div>
+                            )}
                         </div>
                     </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-[260px_1fr] gap-5 items-start">
-                        {/* LEFT COLUMN: COURIER & RECIPIENT INFO CARD */}
-                        <div className="rounded-2xl border border-border/80 bg-muted/40 dark:bg-muted/15 p-4 sm:p-5 space-y-4 text-left">
-                            {/* Courier Brand Header */}
-                            <CourierLogo courier={displayCourier} />
 
-                            {/* No. Resi with Copy Button */}
-                            <div className="space-y-1 pt-1 border-t border-border/60">
-                                <div className="text-xs text-muted-foreground font-medium">No. Resi</div>
-                                <div className="flex items-center justify-between gap-1">
-                                    <span className="font-mono text-sm sm:text-base font-bold text-foreground truncate">
-                                        {displayAwb}
+                    {/* RIGHT COLUMN: TIMELINE RIWAYAT */}
+                    <div className="flex-1 min-w-0 w-full h-full rounded-lg border border-border/80 bg-card/60 backdrop-blur-xs overflow-hidden flex flex-col shadow-none">
+                        <div className="p-5 sm:p-6 space-y-4 no-scrollbar h-full overflow-y-auto">
+                            <div className="flex items-center justify-between pb-3 border-b border-border/80">
+                                <span className="font-bold text-xs text-foreground">Riwayat Perjalanan</span>
+                                {histories.length > 0 && (
+                                    <span className="text-[11px] text-muted-foreground">
+                                        {histories.length} Titik Perjalanan
                                     </span>
-                                    <button
-                                        type="button"
-                                        onClick={handleCopy}
-                                        title="Salin nomor resi"
-                                        className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition cursor-pointer shrink-0"
-                                    >
-                                        {copied ? (
-                                            <Check className="size-4 text-emerald-600" />
-                                        ) : (
-                                            <Copy className="size-4" />
-                                        )}
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Penjual */}
-                            <div className="space-y-0.5 pt-1 border-t border-border/60">
-                                <div className="text-xs text-muted-foreground font-medium">Penjual</div>
-                                <div className="text-xs sm:text-sm font-bold text-foreground">
-                                    {displaySenderName}
-                                </div>
-                            </div>
-
-                            {/* Penerima */}
-                            <div className="space-y-0.5 pt-1 border-t border-border/60">
-                                <div className="text-xs text-muted-foreground font-medium">Penerima</div>
-                                <div className="text-xs sm:text-sm font-bold text-foreground">
-                                    {displayRecipientName}
-                                    {displayRecipientPhone ? ` (${displayRecipientPhone})` : ''}
-                                </div>
-                                {displayRecipientAddress && (
-                                    <div className="text-xs text-muted-foreground mt-0.5 leading-relaxed break-words">
-                                        {displayRecipientAddress}
-                                    </div>
                                 )}
                             </div>
-                        </div>
 
-                        {/* RIGHT COLUMN: TIMELINE */}
-                        <div className="min-w-0">
                             {loading && histories.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-3">
-                                    <Loader2 className="size-6 animate-spin text-blue-600" />
+                                    <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
                                     <span className="text-xs font-medium">Memuat riwayat pelacakan...</span>
                                 </div>
+                            ) : error && histories.length === 0 ? (
+                                <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs space-y-1">
+                                    <div className="font-bold flex items-center gap-1.5">
+                                        <AlertCircle className="w-4 h-4 shrink-0" />
+                                        <span>Informasi Pelacakan Belum Tersedia</span>
+                                    </div>
+                                    <div className="text-[11px] opacity-90 pl-5.5">{error}</div>
+                                </div>
                             ) : histories.length === 0 ? (
-                                <div className="rounded-xl border border-dashed border-border p-8 text-center space-y-2">
-                                    <PackageCheck className="size-8 mx-auto text-muted-foreground opacity-60" />
-                                    <div className="font-semibold text-sm text-foreground">
+                                <div className="rounded-lg border border-dashed border-border/80 p-8 text-center space-y-2">
+                                    <PackageCheck className="w-8 h-8 mx-auto text-muted-foreground opacity-60" />
+                                    <div className="font-semibold text-xs text-foreground">
                                         Belum Ada Riwayat Perjalanan
                                     </div>
-                                    <p className="text-xs text-muted-foreground max-w-sm mx-auto leading-relaxed">
+                                    <p className="text-[11px] text-muted-foreground max-w-sm mx-auto leading-relaxed">
                                         Paket sedang disiapkan. Riwayat pelacakan akan otomatis muncul begitu kurir memindai paket Anda.
                                     </p>
                                 </div>
                             ) : (
-                                <div className="max-h-[380px] sm:max-h-[420px] overflow-y-auto pr-3 space-y-0">
+                                <div className="space-y-0 pt-1">
                                     {histories.map((item, index) => {
                                         const isLatest = index === 0;
                                         const isLast = index === histories.length - 1;
 
-                                        // Check if this item has image or if latest item has podImages
                                         const itemImages = item.image
                                             ? (Array.isArray(item.image) ? item.image : [item.image])
                                             : (isLatest && podImages.length > 0 ? podImages : []);
 
                                         return (
-                                            <div key={index} className="flex items-start gap-3 relative pb-6 last:pb-0">
+                                            <div key={index} className="flex items-start gap-3 relative pb-5 last:pb-0">
                                                 {/* Left Column: Timeline Line & Node */}
-                                                <div className="flex flex-col items-center self-stretch shrink-0 relative w-5">
-                                                    {/* Dashed vertical line */}
+                                                <div className="flex flex-col items-center self-stretch shrink-0 relative w-4 pt-1">
                                                     {!isLast && (
-                                                        <div className="absolute top-3 bottom-0 w-0 border-l-2 border-dashed border-blue-500/80 dark:border-blue-400/80 -translate-x-[0.5px]" />
+                                                        <div className="absolute top-3.5 bottom-0 w-0 border-l-2 border-dashed border-blue-500/70 dark:border-blue-400/70 -translate-x-[0.5px]" />
                                                     )}
 
-                                                    {/* Node Circle */}
                                                     <div
-                                                        className={`size-4 rounded-full border-2 bg-background z-10 flex items-center justify-center ${
+                                                        className={`w-3.5 h-3.5 rounded-full border-2 bg-background z-10 flex items-center justify-center shrink-0 ${
                                                             isLatest
                                                                 ? 'border-blue-600 ring-4 ring-blue-100 dark:ring-blue-950/60'
-                                                                : 'border-blue-500 dark:border-blue-400'
+                                                                : 'border-muted-foreground/40'
                                                         }`}
                                                     >
-                                                        {isLatest ? (
-                                                            <div className="size-1.5 rounded-full bg-blue-600" />
-                                                        ) : (
-                                                            <div className="size-1 rounded-full bg-blue-500/60" />
-                                                        )}
+                                                        {isLatest && <div className="w-1.5 h-1.5 rounded-full bg-blue-600" />}
                                                     </div>
                                                 </div>
 
                                                 {/* Right Column: Milestone Note, Link, and Timestamp */}
-                                                <div className="min-w-0 flex-1 pt-0.5 space-y-1 text-left">
-                                                    <div className="text-xs sm:text-sm font-medium text-foreground leading-snug">
+                                                <div className="min-w-0 flex-1 space-y-1 text-left">
+                                                    <div className={`text-xs leading-relaxed ${isLatest ? 'font-bold text-foreground' : 'text-foreground/90 font-normal'}`}>
                                                         {item.note}
                                                     </div>
 
-                                                    {/* Proof of Delivery (POD) Link */}
                                                     {itemImages.length > 0 && (
                                                         <button
                                                             type="button"
                                                             onClick={() => setPreviewImage(itemImages[0])}
-                                                            className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 hover:underline cursor-pointer pt-0.5"
+                                                            className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 hover:underline cursor-pointer pt-0.5"
                                                         >
-                                                            <ImageIcon className="size-3" />
+                                                            <ImageIcon className="w-3.5 h-3.5" />
                                                             <span>Lihat Bukti Pengiriman</span>
                                                         </button>
                                                     )}
 
-                                                    {/* Timestamp */}
                                                     {item.time && (
-                                                        <div className="text-[11px] text-muted-foreground font-medium pt-0.5">
+                                                        <div className="text-[11px] text-muted-foreground font-normal">
                                                             {formatDateIndo(item.time)}
                                                         </div>
                                                     )}
@@ -390,44 +422,44 @@ export default function TrackingModal({
                             )}
                         </div>
                     </div>
-                )}
+                </div>
             </DialogContent>
 
             {/* LIGHTBOX FOR PROOF OF DELIVERY IMAGE */}
             {previewImage && (
                 <div
-                    className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in"
+                    className="fixed inset-0 z-[80] bg-black/80 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in"
                     onClick={() => setPreviewImage(null)}
                 >
                     <div
-                        className="relative max-w-lg w-full bg-background rounded-2xl overflow-hidden shadow-2xl border border-border"
+                        className="relative max-w-lg w-full bg-card text-card-foreground rounded-2xl overflow-hidden shadow-2xl border border-border/80"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="p-3.5 border-b border-border flex items-center justify-between">
-                            <span className="font-bold text-sm text-foreground">Bukti Pengiriman (POD)</span>
+                        <div className="px-5 py-3.5 border-b border-border/80 flex items-center justify-between">
+                            <span className="font-extrabold text-sm text-foreground tracking-tight">Bukti Pengiriman (POD)</span>
                             <button
                                 type="button"
                                 onClick={() => setPreviewImage(null)}
-                                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer"
+                                className="text-muted-foreground hover:text-foreground p-1.5 rounded-lg hover:bg-muted/70 transition-colors cursor-pointer"
                             >
-                                <X className="size-4" />
+                                <X className="w-4 h-4" />
                             </button>
                         </div>
-                        <div className="p-4 bg-muted/30 flex items-center justify-center max-h-[70vh] overflow-hidden">
+                        <div className="p-4 bg-muted/20 flex items-center justify-center max-h-[70vh] overflow-hidden">
                             <img
                                 src={previewImage}
                                 alt="Bukti Pengiriman"
                                 className="max-w-full max-h-[65vh] object-contain rounded-lg"
                             />
                         </div>
-                        <div className="p-3 border-t border-border flex justify-end">
+                        <div className="p-3.5 border-t border-border/80 flex justify-end">
                             <a
                                 href={previewImage}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition"
+                                className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-md bg-[#4A070B] hover:bg-[#360407] text-white shadow-xs transition"
                             >
-                                <ExternalLink className="size-3.5" />
+                                <ExternalLink className="w-3.5 h-3.5" />
                                 <span>Buka Gambar Asli</span>
                             </a>
                         </div>

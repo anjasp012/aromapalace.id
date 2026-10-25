@@ -114,10 +114,13 @@ test('kiriminaja webhook updates status to selesai on finished_packages event', 
         ->assertJson(['status' => true]);
 
     $order->refresh();
-    expect($order->status)->toBe('selesai');
+    // Order status is NOT immediately 'selesai', waiting for 3-day grace period
+    expect($order->status)->toBe('dikirim');
 
     $shipping = $order->shipping;
-    expect($shipping->text)->toContain('diterima');
+    expect($shipping->delivered_at)->not->toBeNull()
+        ->and($shipping->auto_completes_at)->not->toBeNull()
+        ->and($shipping->text)->toContain('diterima');
 });
 
 test('kiriminaja webhook rejects invalid bearer token', function () {

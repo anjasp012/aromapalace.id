@@ -1238,6 +1238,27 @@ export default function OrdersPage({
                                             )}
                                         </Button>
                                     )}
+
+                                    {/* Konfirmasi Pesanan Selesai button when delivered */}
+                                    {hasDelivered && effectiveStatus !== 'selesai' && (
+                                        <Button
+                                            disabled={completingOrderId === selectedOrder.id}
+                                            onClick={() => handleCompleteOrder(selectedOrder.id)}
+                                            className="w-full bg-[#4A070B] hover:bg-[#360407] text-white font-semibold rounded-md h-11 text-xs sm:text-sm shadow-none transition active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
+                                        >
+                                            {completingOrderId === selectedOrder.id ? (
+                                                <>
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                    <span>{isEn ? 'Completing Order...' : 'Menyelesaikan Pesanan...'}</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <CheckCircle2 className="w-4 h-4" />
+                                                    <span>{isEn ? 'Confirm Order Received' : 'Konfirmasi Pesanan Selesai'}</span>
+                                                </>
+                                            )}
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
                         </div>
