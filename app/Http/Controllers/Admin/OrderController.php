@@ -193,18 +193,18 @@ class OrderController extends Controller
                     $kirimResult = ['success' => false, 'message' => 'Layanan request pickup KiriminAja belum tersedia.'];
                 }
 
-                if (! ($kirimResult['success'] ?? false) || empty($kirimResult['pickup_number'])) {
+                if (! ($kirimResult['success'] ?? false) || empty($kirimResult['awb'])) {
                     $errMsg = $kirimResult['message'] ?? 'Gagal membuat request pickup di KiriminAja.';
 
                     return back()->with('error', "Gagal menerbitkan Resi Otomatis KiriminAja: {$errMsg}. Silakan periksa data pesanan atau gunakan Resi Manual.");
                 }
 
-                $awb = $kirimResult['awb'] ?? ($kirimResult['awb'] ?? null);
+                $awb = $kirimResult['awb'] ?? ($kirimResult['awb'] ?? "Menunggu...");
 
                 $orderModel->shipping()->updateOrCreate(
                     ['order_id' => $orderModel->id],
                     [
-                        'awb' => "Menunggu...",
+                        'awb' => $awb,
                         'text' => $kirimResult['text'] ?? null,
                         'image' => $kirimResult['image'] ?? [],
                         'origin' => $kirimResult['origin'] ?? [],
