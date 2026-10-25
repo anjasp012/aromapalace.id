@@ -13,6 +13,8 @@ import {
     Globe,
 } from 'lucide-react';
 
+import { clearUserClientCache } from '@/lib/cache-cleanup';
+
 interface LoginProps {
     status?: string;
     notice?: string;
@@ -30,6 +32,7 @@ export default function Login({ status, notice }: LoginProps) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        clearUserClientCache();
         post('/login');
     };
 

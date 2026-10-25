@@ -54,6 +54,7 @@ import {
     Check,
 } from 'lucide-react';
 import { autoRequestNotificationPermission, initFirebaseForegroundListener } from '@/lib/push-notification';
+import { clearUserClientCache } from '@/lib/cache-cleanup';
 import { playMenuTapSound } from '@/lib/sound-effects';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
@@ -562,6 +563,15 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
         };
     }, [user?.id]);
 
+    // Clear stale user client cache if user session switches
+    const prevUserIdRef = useRef<number | undefined>(user?.id);
+    useEffect(() => {
+        if (prevUserIdRef.current !== undefined && prevUserIdRef.current !== user?.id) {
+            clearUserClientCache();
+        }
+        prevUserIdRef.current = user?.id;
+    }, [user?.id]);
+
     // Watch for backend flash messages
     useEffect(() => {
         if (props?.flash?.success) {
@@ -916,6 +926,10 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
                                                     <Link
                                                         href="/logout"
                                                         method="post"
+                                                        data={{
+                                                            device_token: typeof localStorage !== 'undefined' ? (localStorage.getItem('aromapalace_fcm_token') || '') : '',
+                                                        }}
+                                                        onClick={() => clearUserClientCache()}
                                                         as="button"
                                                         className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium text-destructive cursor-pointer hover:bg-destructive/10"
                                                     >

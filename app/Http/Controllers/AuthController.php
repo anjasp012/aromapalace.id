@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DeviceToken;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -9,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class AuthController extends Controller
 {
@@ -58,7 +60,7 @@ class AuthController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function authenticate(Request $request): RedirectResponse
+    public function authenticate(Request $request): SymfonyResponse
     {
         // Support one-click demo login for rapid showcase and testing
         if ($request->boolean('demo')) {
@@ -74,7 +76,7 @@ class AuthController extends Controller
             Auth::login($user, true);
             $request->session()->regenerate();
 
-            return redirect()->intended(route('home'));
+            return Inertia::location(route('home'));
         }
 
         $credentials = $request->validate([
@@ -101,7 +103,9 @@ class AuthController extends Controller
 
             $request->session()->regenerate();
 
-            return redirect()->intended(route('home'));
+            $intended = redirect()->getIntendedUrl() ?: route('home');
+
+            return Inertia::location($intended);
         }
 
         return back()->withErrors([
@@ -112,7 +116,7 @@ class AuthController extends Controller
     /**
      * Handle an incoming registration request.
      */
-    public function register(Request $request): RedirectResponse
+    public function register(Request $request): SymfonyResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -130,23 +134,27 @@ class AuthController extends Controller
         Auth::login($user, true);
         $request->session()->regenerate();
 
-        $statusMessage = app()->getLocale() === 'en'
-            ? "Welcome to Aroma Palace, {$user->name}!"
-            : "Selamat datang di Aroma Palace, {$user->name}!";
-
-        return redirect()->intended(route('products.index'))->with('status', $statusMessage);
+        return Inertia::location(route('products.index'));
     }
 
     /**
      * Destroy an authenticated session.
      */
-    public function logout(Request $request): RedirectResponse
+    public function logout(Request $request): SymfonyResponse
     {
+        $deviceToken = $request->input('device_token') ?: $request->header('X-Device-Token');
+        if ($deviceToken) {
+            DeviceToken::where('token', $deviceToken)->update(['user_id' => null]);
+        }
+
         Auth::logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('home');
+        $response = Inertia::location(route('home'));
+        $response->headers->set('Clear-Site-Data', '"cache"');
+
+        return $response;
     }
 }

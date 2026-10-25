@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\DeviceToken;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -83,19 +84,27 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->route('admin.dashboard');
+        return Inertia::location(route('admin.dashboard'));
     }
 
     /**
      * Terminate the administrator session.
      */
-    public function logout(Request $request): RedirectResponse
+    public function logout(Request $request): \Symfony\Component\HttpFoundation\Response
     {
+        $deviceToken = $request->input('device_token') ?: $request->header('X-Device-Token');
+        if ($deviceToken) {
+            DeviceToken::where('token', $deviceToken)->update(['user_id' => null]);
+        }
+
         Auth::logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('admin.login')->with('status', 'Anda telah berhasil keluar dari sesi panel admin.');
+        $response = Inertia::location(route('admin.login'));
+        $response->headers->set('Clear-Site-Data', '"cache"');
+
+        return $response;
     }
 }

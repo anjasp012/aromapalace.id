@@ -13,4 +13,3 @@ Schedule::command('orders:cancel-expired')->everyTenMinutes();
 
 // Auto complete delivered orders older than 3 days
 Schedule::command('orders:auto-complete')->everyTenMinutes();
-

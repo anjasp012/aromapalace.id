@@ -1,4 +1,4 @@
-import React, { useState, useEffect, type ReactNode } from 'react';
+import React, { useState, useEffect, useRef, type ReactNode } from 'react';
 import { Head, Link, usePage, router } from '@inertiajs/react';
 import {
     LayoutDashboard,
@@ -35,6 +35,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAdminOrderNotifier } from '@/lib/use-admin-notifications';
 import { autoRequestNotificationPermission } from '@/lib/push-notification';
+import { clearUserClientCache } from '@/lib/cache-cleanup';
 
 interface AdminLayoutProps {
     title: string;
@@ -140,7 +141,16 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
     // Automatically sync admin device token with backend for FCM notifications
     useEffect(() => {
         autoRequestNotificationPermission().catch(() => {});
-    }, []);
+    }, [user?.id]);
+
+    // Clear stale user client cache if user session switches
+    const prevUserIdRef = useRef<number | undefined>(user?.id);
+    useEffect(() => {
+        if (prevUserIdRef.current !== undefined && prevUserIdRef.current !== user?.id) {
+            clearUserClientCache();
+        }
+        prevUserIdRef.current = user?.id;
+    }, [user?.id]);
 
     const isDashboard = url === '/' || url === '/dashboard' || url === '/admin' || url.startsWith('/admin/dashboard') || url.startsWith('/dashboard');
     const isOrders = url.startsWith('/manajemen-pesanan');
@@ -157,7 +167,10 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
     const isNotifications = url.startsWith('/manajemen-notifikasi');
 
     const handleLogout = () => {
-        router.post('/logout');
+        clearUserClientCache();
+        router.post('/logout', {
+            device_token: typeof localStorage !== 'undefined' ? (localStorage.getItem('aromapalace_fcm_token') || '') : '',
+        });
     };
 
     return (

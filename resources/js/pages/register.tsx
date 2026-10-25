@@ -13,6 +13,8 @@ import {
     Globe,
 } from 'lucide-react';
 
+import { clearUserClientCache } from '@/lib/cache-cleanup';
+
 interface RegisterProps {
     status?: string;
 }
@@ -29,6 +31,7 @@ export default function Register({ status }: RegisterProps) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        clearUserClientCache();
         post('/register');
     };
 

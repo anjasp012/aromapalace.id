@@ -16,6 +16,8 @@ import {
     LockKeyhole,
 } from 'lucide-react';
 
+import { clearUserClientCache } from '@/lib/cache-cleanup';
+
 interface AdminLoginProps {
     status?: string | null;
     storefront_url?: string;
@@ -32,6 +34,7 @@ export default function AdminLogin({ status, storefront_url = 'https://aromapala
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        clearUserClientCache();
         post('/login');
     };
 

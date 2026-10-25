@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DeviceToken;
 use App\Models\Order;
 use App\Services\MembershipService;
 use Illuminate\Http\RedirectResponse;
@@ -185,6 +186,8 @@ class AccountController extends Controller
                 'password' => Hash::make(Str::random(40)),
                 'remember_token' => null,
             ])->save();
+
+            DeviceToken::where('user_id', $user->id)->delete();
         });
 
         Auth::logout();

@@ -39,6 +39,7 @@ import type { UserAddress } from '@/types/address';
 import AddressModal from '@/components/AddressModal';
 import AddressSelectorModal from '@/components/AddressSelectorModal';
 import { enablePushNotifications, disablePushNotifications, getNotificationPermission } from '@/lib/push-notification';
+import { clearUserClientCache } from '@/lib/cache-cleanup';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 
@@ -1019,7 +1020,10 @@ export default function AccountPage({
                             size="sm"
                             variant="destructive"
                             onClick={() => {
-                                router.post('/logout');
+                                clearUserClientCache();
+                                router.post('/logout', {
+                                    device_token: typeof localStorage !== 'undefined' ? (localStorage.getItem('aromapalace_fcm_token') || '') : '',
+                                });
                             }}
                             className="cursor-pointer rounded-lg"
                         >

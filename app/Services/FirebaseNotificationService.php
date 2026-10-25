@@ -202,18 +202,6 @@ class FirebaseNotificationService
         $userId = $user instanceof User ? $user->id : $user;
         $tokens = DeviceToken::where('user_id', $userId)->pluck('token')->unique()->all();
 
-        // Fallback: If no tokens linked to user_id, search active customer tokens from the last 30 days
-        if (empty($tokens)) {
-            $tokens = DeviceToken::where(function ($q) {
-                $q->whereNull('role')->orWhere('role', 'customer');
-            })
-                ->where('last_used_at', '>=', now()->subDays(30))
-                ->latest('last_used_at')
-                ->pluck('token')
-                ->unique()
-                ->all();
-        }
-
         // Filter out dummy/empty tokens
         $tokens = array_values(array_filter($tokens, fn ($t) => ! empty($t) && ! str_starts_with($t, 'fcm_web_')));
 
