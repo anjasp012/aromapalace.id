@@ -52,10 +52,34 @@ class KiriminAjaService
 
     public function getProvinces()
     {
+        $cached = Cache::get('kiriminaja:provinces');
+        dd($cached);
+        if (is_array($cached) && ! empty($cached)) {
+            return $cached;
+        }
+
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $this->apiKey
         ])->post($this->baseUrl . '/api/mitra/province');
 
-        return $response->json();
+        $json = $response->json();
+        $raw = $json['data'] ?? ($json['datas'] ?? ($json['results'] ?? []));
+
+        if (is_array($raw) && ! empty($raw)) {
+            $items = array_values(array_map(function ($item) {
+                $arr = (array) $item;
+                $name = (string) ($arr['provinsi_name'] ?? ($arr['name'] ?? ''));
+
+                return [
+                    'id' => (int) $arr['id'],
+                    'name' => $name,
+                    'provinsi_name' => $name,
+                ];
+            }, $raw));
+
+            return $items;
+        }
+
+        return [];
     }
 }
