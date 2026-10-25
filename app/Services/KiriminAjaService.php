@@ -193,7 +193,7 @@ class KiriminAjaService
         ])->post($this->baseUrl . '/api/mitra/couriers');
         $json = $response->json();
         $raw = $json['data'] ?? ($json['datas'] ?? ($json['results'] ?? []));
-        dd($json);
+        dd($raw);
         if (is_array($raw) && ! empty($raw)) {
             $items = array_values(array_map(function ($item) {
                 $arr = (array) $item;
