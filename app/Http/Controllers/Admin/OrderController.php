@@ -109,7 +109,7 @@ class OrderController extends Controller
         })
             ->with(['items', 'store', 'user', 'voucher'])
             ->firstOrFail();
-
+                dd($order->shipping);
         return Inertia::render('admin/orders/show', [
             'order' => $this->mapOrderDetail($orderModel),
             'pickupSchedules' => fn () => app(KiriminAjaService::class)->getPickupSchedules(),
@@ -275,7 +275,6 @@ class OrderController extends Controller
      */
     protected function mapOrderSummary(Order $order): array
     {
-        dd($order->shipping);
         $orderStatus = $order->status ?: match ($order->payment_status) {
             'paid' => 'diproses',
             'cancelled' => 'dibatalkan',

@@ -5,8 +5,6 @@ use App\Models\OrderItem;
 use App\Models\Store;
 use App\Models\User;
 use App\Services\KiriminAjaService;
-use Illuminate\Http\Client\Request;
-use Illuminate\Support\Facades\Http;
 
 test('guest cannot access admin routes and is redirected to login', function () {
     $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));

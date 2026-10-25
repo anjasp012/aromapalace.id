@@ -261,18 +261,6 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
         setTimeout(() => setCopiedTracking(false), 2000);
     };
 
-    const handleSyncResi = () => {
-        setIsSyncingResi(true);
-        router.post(
-            `/manajemen-pesanan/${order.order_number}/sync-resi`,
-            {},
-            {
-                preserveScroll: true,
-                onFinish: () => setIsSyncingResi(false),
-            }
-        );
-    };
-
     const renderPaymentStatusBadge = () => {
         if (order.payment_status === 'paid') {
             return <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-200"><CheckCircle2 className="size-3 mr-1" /> Lunas</Badge>;
@@ -617,18 +605,6 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
                                                                     <span>Salin</span>
                                                                 </>
                                                             )}
-                                                        </Button>
-                                                        <Button
-                                                            type="button"
-                                                            variant="outline"
-                                                            size="sm"
-                                                            onClick={handleSyncResi}
-                                                            disabled={isSyncingResi}
-                                                            title="Sinkronkan nomor resi & ongkir terbaru langsung dari KiriminAja"
-                                                            className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
-                                                        >
-                                                            <RefreshCw className={`size-3 mr-1 ${isSyncingResi ? 'animate-spin' : ''}`} />
-                                                            <span>{isSyncingResi ? 'Sinkron...' : 'Sync Resi'}</span>
                                                         </Button>
                                                         <Button
                                                             type="button"
