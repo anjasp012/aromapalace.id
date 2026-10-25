@@ -102,6 +102,7 @@ Route::middleware('auth')->group(function () {
         Route::patch('/account/password', [AccountController::class, 'updatePassword'])->name('account.password.update');
         Route::delete('/account', [AccountController::class, 'destroy'])->name('account.destroy');
         Route::get('/account/orders', [OrderController::class, 'index'])->name('account.orders');
+        Route::post('/account/orders/{order}/complete', [OrderController::class, 'complete'])->name('account.orders.complete');
         Route::post('/membership/join', [MembershipController::class, 'join'])->name('membership.join');
         Route::post('/membership/redeem/{reward}', [MembershipController::class, 'redeem'])->name('membership.redeem');
 

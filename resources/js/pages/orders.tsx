@@ -105,6 +105,10 @@ interface OrderData {
     total_amount_formatted: string;
     items_count: number;
     items: OrderItemData[];
+    delivered_at?: string | null;
+    auto_completes_at?: string | null;
+    auto_completes_at_formatted?: string | null;
+    auto_completes_at_time?: string | null;
     shipping?: any;
 }
 
@@ -152,6 +156,8 @@ export default function OrdersPage({
     const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
     const { isEn } = useTranslation();
 
+    const [completingOrderId, setCompletingOrderId] = useState<number | null>(null);
+
     const handleOpenTracking = (order: OrderData) => {
         setTrackingOrder(order);
         setIsTrackingModalOpen(true);
@@ -162,6 +168,19 @@ export default function OrdersPage({
         router.visit(`/payment/${orderNumber}`, {
             onFinish: () => setNavigatingOrderNumber(null),
         });
+    };
+
+    const handleCompleteOrder = (orderId: number) => {
+        if (confirm('Konfirmasi bahwa pesanan ini telah diterima dengan baik dan diselesaikan?')) {
+            setCompletingOrderId(orderId);
+            router.post(`/account/orders/${orderId}/complete`, {}, {
+                preserveScroll: true,
+                onFinish: () => {
+                    setCompletingOrderId(null);
+                    setSelectedOrder(null);
+                },
+            });
+        }
     };
 
     // Lock body scroll and close on Escape when modal is open
@@ -870,36 +889,15 @@ export default function OrdersPage({
                                                         Express Delivery (1 - 3 Hari)
                                                     </div>
                                                     {selectedOrder.tracking_number && (
-                                                        <div className="mt-2.5 p-2.5 rounded-lg bg-[#4A070B]/5 dark:bg-[#E8D0BA]/10 border border-[#4A070B]/20 dark:border-[#E8D0BA]/20 flex items-center justify-between gap-2">
-                                                            <div className="min-w-0">
-                                                                <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                                                                    Nomor Resi / AWB
-                                                                </div>
-                                                                <div className="font-mono text-xs sm:text-sm font-extrabold text-foreground truncate">
-                                                                    {selectedOrder.tracking_number}
-                                                                </div>
-                                                            </div>
-                                                            <div className="flex items-center gap-1.5 shrink-0">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        navigator.clipboard.writeText(selectedOrder.tracking_number!);
-                                                                        setCopiedCode(true);
-                                                                        setTimeout(() => setCopiedCode(false), 2000);
-                                                                    }}
-                                                                    className="px-2.5 py-1 text-xs font-semibold rounded-md border border-border/80 bg-background hover:bg-muted text-foreground transition-colors shrink-0 cursor-pointer shadow-none"
-                                                                >
-                                                                    {copiedCode ? 'Tersalin' : 'Salin'}
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => handleOpenTracking(selectedOrder)}
-                                                                    className="px-2.5 py-1 text-xs font-bold rounded-md bg-blue-600 hover:bg-blue-700 text-white transition-colors cursor-pointer shadow-sm flex items-center gap-1"
-                                                                >
-                                                                    <Truck className="size-3" />
-                                                                    <span>Lacak</span>
-                                                                </button>
-                                                            </div>
+                                                        <div className="pt-2">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleOpenTracking(selectedOrder)}
+                                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition-colors cursor-pointer shadow-sm"
+                                                            >
+                                                                <Truck className="size-3.5" />
+                                                                <span>Lacak</span>
+                                                            </button>
                                                         </div>
                                                     )}
                                                 </div>
@@ -1056,21 +1054,7 @@ export default function OrdersPage({
                                                                         <span>Ambil di Butik →</span>
                                                                     </span>
                                                                 )
-                                                            ) : (
-                                                                selectedOrder.tracking_number ? (
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => handleOpenTracking(selectedOrder)}
-                                                                        className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline pt-0.5 cursor-pointer"
-                                                                    >
-                                                                        <span>Lacak Pesanan →</span>
-                                                                    </button>
-                                                                ) : (
-                                                                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 cursor-default pt-0.5">
-                                                                        <span>Lacak Pesanan →</span>
-                                                                    </span>
-                                                                )
-                                                            )}
+                                                            ) : null}
                                                         </div>
                                                     </div>
                                                 )}

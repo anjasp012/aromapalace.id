@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\Setting;
 use App\Models\Shipping;
+use App\Services\FirebaseNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -154,7 +155,15 @@ class KiriminAjaWebhookController extends Controller
                 $shippingData['image'] = is_array($image) ? $image : [$image];
             }
 
-            $order->shipping()->updateOrCreate(
+            // If shipping has finished (delivered), set delivered_at and 3-day grace period auto_completes_at on shipping table
+            if ($method === 'finished_packages') {
+                $now = now();
+                $existingShipping = $order->shipping;
+                $shippingData['delivered_at'] = $existingShipping?->delivered_at ?: $now;
+                $shippingData['auto_completes_at'] = $existingShipping?->auto_completes_at ?: $now->copy()->addDays(3);
+            }
+
+            $shipping = $order->shipping()->updateOrCreate(
                 ['order_id' => $order->id],
                 $shippingData
             );
@@ -166,7 +175,8 @@ class KiriminAjaWebhookController extends Controller
                 }
             } elseif ($method === 'finished_packages') {
                 if ($order->status !== 'selesai') {
-                    $order->update(['status' => 'selesai']);
+                    // Do not immediately finish order; keep status as-is and notify customer of the 3-day window
+                    app(FirebaseNotificationService::class)->notifyOrderDelivered($order, $shipping);
                 }
             } elseif ($method === 'canceled_packages') {
                 if ($order->status !== 'dibatalkan') {

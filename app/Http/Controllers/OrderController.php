@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Services\CatalogService;
+use App\Services\OrderService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -156,6 +157,10 @@ class OrderController extends Controller
                 'courier' => $order->courier,
                 'tracking_number' => $order->shipping?->awb,
                 'awb' => $order->shipping?->awb,
+                'delivered_at' => $order->shipping?->delivered_at?->format('d/m/Y, H:i').' WIB',
+                'auto_completes_at' => $order->shipping?->auto_completes_at?->toIso8601String(),
+                'auto_completes_at_formatted' => $order->shipping?->auto_completes_at?->format('d/m/Y'),
+                'auto_completes_at_time' => $order->shipping?->auto_completes_at?->format('d/m/Y, H:i').' WIB',
                 'shipping' => $order->shipping ? [
                     'id' => $order->shipping->id,
                     'awb' => $order->shipping->awb,
@@ -164,6 +169,10 @@ class OrderController extends Controller
                     'origin' => $order->shipping->origin,
                     'destination' => $order->shipping->destination,
                     'histories' => $order->shipping->histories,
+                    'delivered_at' => $order->shipping->delivered_at?->format('d/m/Y, H:i').' WIB',
+                    'auto_completes_at' => $order->shipping->auto_completes_at?->toIso8601String(),
+                    'auto_completes_at_formatted' => $order->shipping->auto_completes_at?->format('d/m/Y'),
+                    'auto_completes_at_time' => $order->shipping->auto_completes_at?->format('d/m/Y, H:i').' WIB',
                 ] : null,
                 'shipping_cost' => $order->shipping_cost,
                 'shipping_cost_formatted' => $order->shipping_cost > 0 ? 'Rp '.number_format($order->shipping_cost, 0, ',', '.') : 'Gratis',
@@ -412,5 +421,28 @@ class OrderController extends Controller
             ]);
 
         return $pdf->download($fileName);
+    }
+
+    /**
+     * Mark order as completed by customer manually.
+     */
+    public function complete(Request $request, Order $order): RedirectResponse
+    {
+        $user = $request->user();
+        if (! $user || $order->user_id !== $user->id) {
+            abort(403);
+        }
+
+        if ($order->status === 'selesai') {
+            return back()->with('info', 'Pesanan ini sudah selesai.');
+        }
+
+        if ($order->status === 'dibatalkan') {
+            return back()->with('error', 'Pesanan yang telah dibatalkan tidak dapat diselesaikan.');
+        }
+
+        app(OrderService::class)->completeOrder($order, 'Pesanan dikonfirmasi selesai oleh pelanggan.');
+
+        return back()->with('success', 'Terima kasih! Pesanan Anda telah berhasil diselesaikan.');
     }
 }

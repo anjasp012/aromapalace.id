@@ -81,4 +81,63 @@ class OrderService
 
         return $canceledCount;
     }
+
+    /**
+     * Mark an order as completed, award membership loyalty points, and notify user via FCM.
+     */
+    public function completeOrder(Order $order, string $reason = 'Pesanan telah selesai.'): bool
+    {
+        return DB::transaction(function () use ($order, $reason) {
+            $lockedOrder = Order::where('id', $order->id)->lockForUpdate()->first();
+
+            if (! $lockedOrder || $lockedOrder->status === 'selesai' || $lockedOrder->status === 'dibatalkan') {
+                return false;
+            }
+
+            $lockedOrder->update([
+                'status' => 'selesai',
+            ]);
+
+            // Award loyalty points for completed order
+            try {
+                app(MembershipService::class)->awardOrderPoints($lockedOrder);
+            } catch (\Throwable $e) {
+                Log::warning("Failed to award membership points for #{$lockedOrder->order_number}: ".$e->getMessage());
+            }
+
+            // Send FCM Push Notification to Customer
+            try {
+                $this->notificationService->notifyOrderCompleted($lockedOrder);
+            } catch (\Throwable $e) {
+                Log::warning("Failed to send order completed notification for #{$lockedOrder->order_number}: ".$e->getMessage());
+            }
+
+            Log::info("Order #{$lockedOrder->order_number} has been completed. Reason: {$reason}");
+
+            return true;
+        });
+    }
+
+    /**
+     * Auto-complete delivered orders whose 3-day grace period (auto_completes_at) has passed.
+     */
+    public function autoCompleteDeliveredOrders(): int
+    {
+        $orders = Order::where('status', '!=', 'selesai')
+            ->where('status', '!=', 'dibatalkan')
+            ->whereHas('shipping', function ($q) {
+                $q->whereNotNull('auto_completes_at')
+                    ->where('auto_completes_at', '<=', now());
+            })
+            ->get();
+
+        $completedCount = 0;
+        foreach ($orders as $order) {
+            if ($this->completeOrder($order, 'Pesanan diselesaikan otomatis oleh sistem setelah 3 hari barang sampai di tujuan.')) {
+                $completedCount++;
+            }
+        }
+
+        return $completedCount;
+    }
 }

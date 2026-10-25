@@ -17,6 +17,8 @@ use Illuminate\Support\Carbon;
  * @property array|null $origin
  * @property array|null $destination
  * @property array|null $histories
+ * @property Carbon|null $delivered_at
+ * @property Carbon|null $auto_completes_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Order $order
@@ -42,6 +44,8 @@ class Shipping extends Model
         'origin',
         'destination',
         'histories',
+        'delivered_at',
+        'auto_completes_at',
     ];
 
     /**
@@ -55,6 +59,8 @@ class Shipping extends Model
             'origin' => 'array',
             'destination' => 'array',
             'histories' => 'array',
+            'delivered_at' => 'datetime',
+            'auto_completes_at' => 'datetime',
         ];
     }
 

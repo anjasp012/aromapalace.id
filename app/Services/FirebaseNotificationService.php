@@ -7,6 +7,7 @@ use App\Events\OrderPaid;
 use App\Models\DeviceToken;
 use App\Models\Notification;
 use App\Models\Order;
+use App\Models\Shipping;
 use App\Models\User;
 use App\Models\Voucher;
 use Illuminate\Support\Facades\Cache;
@@ -499,6 +500,70 @@ class FirebaseNotificationService
                 'order_id' => (string) $order->id,
                 'order_number' => (string) $order->order_number,
                 'type' => 'admin_order_canceled',
+            ]
+        );
+    }
+
+    /**
+     * 8. Notifikasi Paket Sampai di Tujuan (Jeda 3 hari sebelum selesai otomatis):
+     * - Ke Customer: "Pesanan Telah Sampai!"
+     */
+    public function notifyOrderDelivered(Order $order, ?Shipping $shipping = null): void
+    {
+        if (! $order->user_id) {
+            return;
+        }
+
+        $cacheKey = "fcm_order_delivered_sent_{$order->id}";
+        if (Cache::has($cacheKey)) {
+            return;
+        }
+        Cache::put($cacheKey, true, now()->addMinutes(30));
+
+        $shippingModel = $shipping ?? $order->shipping;
+        $autoCompleteDate = $shippingModel?->auto_completes_at
+            ? $shippingModel->auto_completes_at->format('d/m/Y')
+            : now()->addDays(3)->format('d/m/Y');
+
+        $this->sendToUser(
+            user: $order->user_id,
+            title: 'Pesanan Telah Sampai! #'.$order->order_number,
+            body: "Paket pesanan #{$order->order_number} telah sampai di tujuan. Pesanan otomatis selesai pada {$autoCompleteDate}. Silakan periksa produk Anda.",
+            url: url('/account/orders'),
+            data: [
+                'order_id' => (string) $order->id,
+                'order_number' => (string) $order->order_number,
+                'auto_completes_at' => (string) ($shippingModel?->auto_completes_at?->toIso8601String() ?? now()->addDays(3)->toIso8601String()),
+                'type' => 'order_delivered',
+            ]
+        );
+    }
+
+    /**
+     * 9. Notifikasi Pesanan Selesai:
+     * - Ke Customer: "Pesanan Selesai!"
+     */
+    public function notifyOrderCompleted(Order $order): void
+    {
+        if (! $order->user_id) {
+            return;
+        }
+
+        $cacheKey = "fcm_order_completed_sent_{$order->id}";
+        if (Cache::has($cacheKey)) {
+            return;
+        }
+        Cache::put($cacheKey, true, now()->addMinutes(30));
+
+        $this->sendToUser(
+            user: $order->user_id,
+            title: 'Pesanan Selesai! #'.$order->order_number,
+            body: "Pesanan wewangian mewah #{$order->order_number} telah selesai. Terima kasih telah berbelanja di Aroma Palace!",
+            url: url('/account/orders'),
+            data: [
+                'order_id' => (string) $order->id,
+                'order_number' => (string) $order->order_number,
+                'type' => 'order_completed',
             ]
         );
     }

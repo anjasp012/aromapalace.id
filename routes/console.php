@@ -10,3 +10,7 @@ Artisan::command('inspire', function () {
 
 // Auto cancel pending orders older than 24 hours, restore stock, and push FCM notification
 Schedule::command('orders:cancel-expired')->everyTenMinutes();
+
+// Auto complete delivered orders older than 3 days
+Schedule::command('orders:auto-complete')->everyTenMinutes();
+
