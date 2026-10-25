@@ -87,6 +87,8 @@ export interface ParsedCourierOption {
     id: string;
     code: string;
     courierBrand: string;
+    courierService: string;
+    courierServiceType: string;
     name: string;
     fullName: string;
     type: string;
@@ -158,10 +160,15 @@ const parseShippingRate = (r: ShippingRate | any, idx: number): ParsedCourierOpt
         ? (serviceName.toUpperCase().startsWith(courierBrand.toUpperCase()) ? serviceName : `${courierBrand} - ${serviceName}`)
         : (serviceName || courierBrand || '');
 
+    const courierService = String(r?.service || r?.courier_code || r?.code || courierBrand || '').toLowerCase();
+    const courierServiceType = String(serviceType || r?.code || '').trim();
+
     return {
         id: `${courierBrand}-${serviceType || serviceName}-${idx}`,
         code: r?.code || courierBrand,
         courierBrand,
+        courierService,
+        courierServiceType,
         name: serviceName,
         fullName,
         type: displayType,
@@ -429,6 +436,8 @@ export default function CheckoutPage({
                     setData((prev) => ({
                         ...prev,
                         courier: firstCourier.fullName,
+                        courier_service: firstCourier.courierService,
+                        courier_service_type: firstCourier.courierServiceType,
                         shipping_cost: firstCourier.price,
                     }));
                 } else if (!cancelled) {
@@ -436,6 +445,8 @@ export default function CheckoutPage({
                     setData((prev) => ({
                         ...prev,
                         courier: '',
+                        courier_service: '',
+                        courier_service_type: '',
                         shipping_cost: 0,
                     }));
                 }
@@ -537,6 +548,8 @@ export default function CheckoutPage({
         city: initialSelectedAddress?.city_name || user?.city || '',
         postal_code: initialSelectedAddress?.postal_code || user?.postal_code || '',
         courier: initialCourier?.fullName || '',
+        courier_service: initialCourier?.courierService || '',
+        courier_service_type: initialCourier?.courierServiceType || '',
         shipping_cost: initialCourier?.price || 0,
         payment_method: (payment_methods && payment_methods.length > 0 ? payment_methods[0].code : ''),
         voucher_code: initial_voucher,
@@ -564,6 +577,8 @@ export default function CheckoutPage({
             city: addr.city_name,
             postal_code: addr.postal_code,
             courier: '',
+            courier_service: '',
+            courier_service_type: '',
             shipping_cost: 0,
         }));
     };
@@ -591,6 +606,8 @@ export default function CheckoutPage({
             delivery_type: type,
             store_id: type === 'pickup' ? (prev.store_id || defaultStoreId) : prev.store_id,
             courier: type === 'pickup' ? '' : (selectedCourier?.fullName || prev.courier),
+            courier_service: type === 'pickup' ? 'pickup' : (selectedCourier?.courierService || prev.courier_service),
+            courier_service_type: type === 'pickup' ? 'pickup' : (selectedCourier?.courierServiceType || prev.courier_service_type),
             shipping_cost: type === 'pickup' ? 0 : (selectedCourier?.price || 0),
         }));
     };
@@ -693,6 +710,8 @@ export default function CheckoutPage({
             setData((prev) => ({
                 ...prev,
                 courier: chosen.fullName,
+                courier_service: chosen.courierService,
+                courier_service_type: chosen.courierServiceType,
                 shipping_cost: chosen.price,
             }));
         }
@@ -752,6 +771,8 @@ export default function CheckoutPage({
                     city: activeAddress.city_name || prev.city,
                     postal_code: activeAddress.postal_code || prev.postal_code,
                     courier: selectedCourier?.fullName || prev.courier || '',
+                    courier_service: selectedCourier?.courierService || prev.courier_service || '',
+                    courier_service_type: selectedCourier?.courierServiceType || prev.courier_service_type || '',
                     shipping_cost: currentShippingCost,
                 }));
             }

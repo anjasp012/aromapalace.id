@@ -97,6 +97,8 @@ interface OrderDetail {
     city?: string;
     postal_code?: string;
     courier?: string;
+    courier_service?: string;
+    courier_service_type?: string;
     tracking_number?: string | null;
     shipping_cost: number;
     shipping_cost_formatted: string;

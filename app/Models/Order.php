@@ -29,7 +29,9 @@ use Illuminate\Support\Carbon;
  * @property string|null $postal_code
  * @property float|null $latitude
  * @property float|null $longitude
- * @property string $courier
+ * @property string|null $courier_service
+ * @property string|null $courier_service_type
+ * @property string|null $courier
  * @property int $shipping_cost
  * @property string $payment_method
  * @property string|null $payment_channel
@@ -49,6 +51,7 @@ use Illuminate\Support\Carbon;
  * @property-read User $user
  * @property-read Shipping|null $shipping
  * @property-read Collection<int, OrderItem> $items
+ * @property-read Collection<int, OrderItem> $orderItems
  * @property-read Voucher|null $voucher
  * @property-read Store|null $store
  */
@@ -72,6 +75,8 @@ use Illuminate\Support\Carbon;
     'latitude',
     'longitude',
     'courier',
+    'courier_service',
+    'courier_service_type',
     'shipping_cost',
     'payment_method',
     'payment_channel',
@@ -156,5 +161,48 @@ class Order extends Model
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    /**
+     * Alias for items relation to support $order->orderItems.
+     *
+     * @return HasMany<OrderItem, $this>
+     */
+    public function orderItems(): HasMany
+    {
+        return $this->items();
+    }
+
+    /**
+     * Get formatted courier display string.
+     */
+    public function getCourierAttribute(): ?string
+    {
+        $service = $this->attributes['courier_service'] ?? null;
+        $type = $this->attributes['courier_service_type'] ?? null;
+
+        if ($service && $type) {
+            return "{$service} {$type}";
+        }
+
+        return $service ?: ($type ?: null);
+    }
+
+    /**
+     * Set courier attributes safely when a combined courier string is passed.
+     */
+    public function setCourierAttribute($value): void
+    {
+        if (empty($value)) {
+            return;
+        }
+
+        if (is_string($value) && str_contains($value, ' - ')) {
+            [$service, $type] = explode(' - ', $value, 2);
+            $this->attributes['courier_service'] = trim($service);
+            $this->attributes['courier_service_type'] = trim($type);
+        } else {
+            $this->attributes['courier_service'] = $value;
+        }
     }
 }

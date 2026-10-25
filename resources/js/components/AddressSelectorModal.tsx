@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Plus, Check, Edit2 } from 'lucide-react';
+import { MapPin, Plus, Check, Edit2, Trash2 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 import type { UserAddress } from '@/types/address';
 
@@ -17,9 +17,11 @@ interface AddressSelectorModalProps {
     onOpenChange: (open: boolean) => void;
     addresses: UserAddress[];
     selectedAddressId?: number | null;
-    onSelectAddress: (address: UserAddress) => void;
+    onSelectAddress?: (address: UserAddress) => void;
     onAddNewAddress: () => void;
     onEditAddress: (address: UserAddress) => void;
+    onSetPrimary?: (addressId: number) => void;
+    onDeleteAddress?: (addressId: number) => void;
 }
 
 export default function AddressSelectorModal({
@@ -30,6 +32,8 @@ export default function AddressSelectorModal({
     onSelectAddress,
     onAddNewAddress,
     onEditAddress,
+    onSetPrimary,
+    onDeleteAddress,
 }: AddressSelectorModalProps) {
     const { isEn } = useTranslation();
 
@@ -84,17 +88,19 @@ export default function AddressSelectorModal({
                                 <div
                                     key={addr.id}
                                     onClick={() => {
-                                        onSelectAddress(addr);
-                                        onOpenChange(false);
+                                        if (onSelectAddress) {
+                                            onSelectAddress(addr);
+                                            onOpenChange(false);
+                                        }
                                     }}
-                                    className={`p-3.5 rounded-lg border transition cursor-pointer relative ${
+                                    className={`p-3.5 rounded-lg border transition ${onSelectAddress ? 'cursor-pointer' : ''} relative ${
                                         isSelected
                                             ? 'border-[#4A070B] bg-[#4A070B]/5 shadow-xs'
                                             : 'border-border/80 hover:border-[#4A070B]/50 bg-card/60'
                                     }`}
                                 >
                                     <div className="flex items-start justify-between gap-2">
-                                        <div className="space-y-1 text-xs">
+                                        <div className="space-y-1 text-xs flex-1 min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
                                                 <Badge
                                                     variant="secondary"
@@ -119,7 +125,7 @@ export default function AddressSelectorModal({
                                                 {addr.recipient_name} • <span className="text-muted-foreground font-medium">{addr.recipient_phone}</span>
                                             </p>
 
-                                            <p className="text-muted-foreground leading-relaxed">
+                                            <p className="text-muted-foreground leading-relaxed break-words">
                                                 {addr.address}
                                             </p>
 
@@ -134,6 +140,41 @@ export default function AddressSelectorModal({
                                                     .filter(Boolean)
                                                     .join(', ')}
                                             </p>
+
+                                            {(onSetPrimary || onDeleteAddress) && (
+                                                <div className="pt-2 mt-1 border-t border-border/60 flex items-center justify-between gap-2 text-xs">
+                                                    <div>
+                                                        {!addr.is_primary && onSetPrimary && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    onSetPrimary(addr.id);
+                                                                }}
+                                                                className="text-[11px] font-semibold text-[#4A070B] dark:text-[#E8D0BA] hover:underline cursor-pointer"
+                                                            >
+                                                                {isEn ? 'Set as Primary' : 'Jadikan Alamat Utama'}
+                                                            </button>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="flex items-center gap-2">
+                                                        {onDeleteAddress && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    onDeleteAddress(addr.id);
+                                                                }}
+                                                                className="text-[11px] font-medium text-destructive hover:bg-destructive/10 flex items-center gap-1 px-2 py-0.5 rounded transition cursor-pointer"
+                                                            >
+                                                                <Trash2 className="w-3 h-3" />
+                                                                <span>{isEn ? 'Delete' : 'Hapus'}</span>
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
 
                                         <button

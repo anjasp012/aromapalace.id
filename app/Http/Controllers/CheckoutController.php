@@ -150,10 +150,8 @@ class CheckoutController extends Controller
         }
         $totalWeight = max(1000, $totalWeight);
 
-        // Ambil tarif pengiriman riil KiriminAja jika alamat utama memiliki district_id
-        $originId = (int) Setting::get('shipping_district_id', 2101);
         $initialShippingRates = ($primaryAddress && $primaryAddress->district_id)
-            ? $this->kiriminAjaService->getShippingPrices($originId, (int) $primaryAddress->district_id, $totalWeight)
+            ? $this->kiriminAjaService->getShippingPrices((int) $primaryAddress->district_id, $totalWeight)
             : [];
 
         $initialShippingCost = (! empty($initialShippingRates) && isset($initialShippingRates[0]['price']))
@@ -229,11 +227,8 @@ class CheckoutController extends Controller
 
         $weight = max(100, (int) ($validated['weight'] ?? 1000));
 
-        // Origin district ID from database settings (defaults to 2101 - Jakarta Selatan)
-        $originId = (int) Setting::get('shipping_district_id', 2101);
-
         $rates = $destinationId > 0
-            ? $this->kiriminAjaService->getShippingPrices($originId, $destinationId, $weight)
+            ? $this->kiriminAjaService->getShippingPrices($destinationId, $weight)
             : [];
 
         return response()->json([
@@ -265,6 +260,8 @@ class CheckoutController extends Controller
             'city' => ['required_if:delivery_type,delivery', 'nullable', 'string', 'max:100'],
             'postal_code' => ['nullable', 'string', 'max:15'],
             'courier' => ['nullable', 'string', 'max:150'],
+            'courier_service' => ['nullable', 'string', 'max:100'],
+            'courier_service_type' => ['nullable', 'string', 'max:100'],
             'shipping_cost' => ['nullable', 'integer', 'min:0'],
             'payment_method' => [
                 'required',
@@ -401,7 +398,8 @@ class CheckoutController extends Controller
                 $districtName = null;
                 $subdistrictId = null;
                 $subdistrictName = null;
-                $courier = 'Ambil Mandiri di Butik ('.$storeName.')';
+                $courierService = 'pickup';
+                $courierServiceType = 'Ambil Mandiri ('.$storeName.')';
                 $shippingCost = 0;
             } else {
                 $orderAddress = $validated['address'] ?? ($address?->formatted_address ?: ($address?->address ?? '-'));
@@ -413,7 +411,20 @@ class CheckoutController extends Controller
                 $districtName = $validated['district_name'] ?? ($address?->district_name ?? null);
                 $subdistrictId = ! empty($validated['subdistrict_id']) ? (int) $validated['subdistrict_id'] : ($address?->subdistrict_id ?? null);
                 $subdistrictName = $validated['subdistrict_name'] ?? ($address?->subdistrict_name ?? null);
-                $courier = $validated['courier'] ?? 'JNE Express Reguler';
+
+                $courierService = $validated['courier_service'] ?? null;
+                $courierServiceType = $validated['courier_service_type'] ?? null;
+                if (empty($courierService) && ! empty($validated['courier'])) {
+                    if (str_contains($validated['courier'], ' - ')) {
+                        [$s, $t] = explode(' - ', $validated['courier'], 2);
+                        $courierService = trim($s);
+                        $courierServiceType = trim($t);
+                    } else {
+                        $courierService = $validated['courier'];
+                    }
+                }
+                $courierService = $courierService ?: 'JNE';
+                $courierServiceType = $courierServiceType ?: 'REG';
             }
 
             $order = DB::transaction(function () use (
@@ -432,7 +443,8 @@ class CheckoutController extends Controller
                 $subdistrictId,
                 $subdistrictName,
                 $address,
-                $courier,
+                $courierService,
+                $courierServiceType,
                 $shippingCost,
                 $paymentMethod,
                 $paymentChannel,
@@ -504,7 +516,8 @@ class CheckoutController extends Controller
                     'postal_code' => $validated['postal_code'] ?? ($address?->postal_code ?? null),
                     'latitude' => $address?->latitude !== null ? (float) $address->latitude : null,
                     'longitude' => $address?->longitude !== null ? (float) $address->longitude : null,
-                    'courier' => $courier,
+                    'courier_service' => $courierService,
+                    'courier_service_type' => $courierServiceType,
                     'shipping_cost' => $shippingCost,
                     'payment_method' => $paymentMethod,
                     'payment_channel' => $paymentChannel,
