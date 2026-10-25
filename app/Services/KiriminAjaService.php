@@ -326,7 +326,6 @@ class KiriminAjaService
     }
 
     public function requestPickup($orderModel, $pickupSchedule) {
-        dd($this->senderLatitude, $this->senderLongitude, (float)$orderModel->latitude, (float)$orderModel->longitude);
         $items = $orderModel->orderItems->map(function ($item) {
             return [
                 'name' => $item->product_name,
@@ -349,8 +348,8 @@ class KiriminAjaService
             'kelurahan_id' => $this->senderSubdistrictId,
             'payment_method' => 'credit',
             'pin' => $this->pin,
-            'latitude' => $this->senderLatitude,
-            'longitude' => $this->senderLongitude,
+            'latitude' => (float)$this->senderLatitude,
+            'longitude' => (float)$this->senderLongitude,
             'platform_name' => $this->storeName,
             'name' => $this->senderName,
             'zipcode' => $this->senderZipcode,
