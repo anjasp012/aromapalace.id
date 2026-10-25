@@ -33,6 +33,7 @@ export interface TrackingData {
     order_number?: string;
     courier?: string;
     courier_service?: string;
+    courier_logo?: string;
     sender?: {
         name?: string;
         phone?: string;
@@ -88,77 +89,43 @@ function formatDateIndo(dateStr?: string | null): string {
     }
 }
 
-function CourierLogo({ courier = '' }: { courier?: string }) {
-    const lower = courier.toLowerCase();
-
-    if (lower.includes('lion')) {
-        return (
-            <div className="space-y-1">
-                <div className="inline-flex items-center gap-1 font-black text-red-600 text-sm tracking-tight">
-                    <span className="italic">Lion</span>
-                    <span className="bg-red-600 text-white text-[10px] px-1 py-0.5 rounded italic font-bold">parcel</span>
-                </div>
-                <div className="text-xs font-semibold text-muted-foreground">Lion</div>
-            </div>
-        );
+function getCourierLogo(logo?: string, courierName?: string): string | null {
+    if (logo) return logo;
+    if (!courierName) return null;
+    const clean = courierName.toLowerCase().replace(/[\s\-_&]/g, '');
+    const courierMap: Record<string, string> = {
+        jtcargo: 'jtcargo',
+        jnt: 'jnt',
+        jt: 'jnt',
+        jne: 'jne',
+        sicepat: 'sicepat',
+        shopee: 'spx',
+        spx: 'spx',
+        anteraja: 'anteraja',
+        lion: 'lion',
+        ninja: 'ninja',
+        sap: 'sap',
+        idexpress: 'idx',
+        idx: 'idx',
+        tiki: 'tiki',
+        posindonesia: 'posindonesia',
+        posindo: 'posindonesia',
+        pos: 'posindonesia',
+        rpx: 'rpx',
+        sentral: 'sentral',
+        ncs: 'ncs',
+        borzo: 'borzo',
+        gosend: 'gosend',
+        gojek: 'gosend',
+        grab: 'grab',
+        paxel: 'paxel',
+    };
+    for (const [key, code] of Object.entries(courierMap)) {
+        if (clean.includes(key)) {
+            return `https://storage.googleapis.com/tprt0ezsggqjornc7nf1wwluvgulhr/assets/courier-logo/${code}.png`;
+        }
     }
-
-    if (lower.includes('jne')) {
-        return (
-            <div className="space-y-1">
-                <div className="inline-flex items-center gap-1 font-black text-blue-600 text-sm tracking-tight">
-                    <span className="text-red-600">JNE</span>
-                    <span className="text-blue-700 text-xs font-bold">EXPRESS</span>
-                </div>
-                <div className="text-xs font-semibold text-muted-foreground">{courier || 'JNE'}</div>
-            </div>
-        );
-    }
-
-    if (lower.includes('sicepat')) {
-        return (
-            <div className="space-y-1">
-                <div className="inline-flex items-center gap-1 font-black text-red-600 text-sm tracking-tight">
-                    <span>SICEPAT</span>
-                    <span className="text-[10px] text-zinc-900 dark:text-zinc-100 font-bold">EKSPRES</span>
-                </div>
-                <div className="text-xs font-semibold text-muted-foreground">{courier || 'SiCepat'}</div>
-            </div>
-        );
-    }
-
-    if (lower.includes('j&t') || lower.includes('jnt')) {
-        return (
-            <div className="space-y-1">
-                <div className="inline-flex items-center gap-1 font-black text-red-600 text-sm tracking-tight">
-                    <span>J&T</span>
-                    <span className="text-xs font-bold text-red-500">EXPRESS</span>
-                </div>
-                <div className="text-xs font-semibold text-muted-foreground">{courier || 'J&T'}</div>
-            </div>
-        );
-    }
-
-    if (lower.includes('anteraja')) {
-        return (
-            <div className="space-y-1">
-                <div className="inline-flex items-center gap-1 font-black text-pink-600 text-sm tracking-tight">
-                    <span>anteraja</span>
-                </div>
-                <div className="text-xs font-semibold text-muted-foreground">{courier || 'Anteraja'}</div>
-            </div>
-        );
-    }
-
-    return (
-        <div className="space-y-1">
-            <div className="inline-flex items-center gap-1.5 font-bold text-[#4A070B] dark:text-[#E8D0BA] text-sm">
-                <Truck className="size-4" />
-                <span>{courier || 'Ekspedisi Pengiriman'}</span>
-            </div>
-            <div className="text-xs font-semibold text-muted-foreground">Kurir Rekanan</div>
-        </div>
-    );
+    return null;
 }
 
 export default function TrackingModal({
@@ -183,12 +150,13 @@ export default function TrackingModal({
         }
 
         // Preload from initialData if provided
-        if (initialData && (initialData.awb || initialData.histories)) {
+        if (initialData && (initialData.awb || initialData.histories || initialData.courier || initialData.courier_logo)) {
             setData({
                 awb: initialData.awb || lookupCode || '',
                 order_number: initialData.order_number,
                 courier: initialData.courier || 'Kurir Pengiriman',
                 courier_service: initialData.courier_service,
+                courier_logo: initialData.courier_logo,
                 sender: initialData.sender || { name: 'Aroma Palace Official' },
                 recipient: initialData.recipient,
                 text: initialData.text,
@@ -322,19 +290,25 @@ export default function TrackingModal({
                 <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-6 p-5 sm:p-6 overflow-y-auto md:overflow-hidden">
                     {/* LEFT COLUMN: COURIER, AWB, SENDER & RECIPIENT */}
                     <div className="w-full md:w-80 lg:w-84 shrink-0 rounded-lg border border-border/80 bg-card/60 backdrop-blur-xs p-5 sm:p-6 space-y-4 h-fit shadow-none text-left">
-                        {/* Courier Information */}
-                        <div className="space-y-2.5 text-xs">
+                        {/* Courier Information - HANYA LOGO (tanpa teks ongkir/layanan) */}
+                        <div className="space-y-2 text-xs">
                             <div className="font-bold text-xs text-foreground">
                                 Pengiriman
                             </div>
-                            <div className="space-y-0.5">
-                                <div className="font-bold text-foreground flex items-center gap-1.5">
-                                    <Truck className="w-3.5 h-3.5 text-[#4A070B] dark:text-[#E8D0BA] shrink-0" />
-                                    <span>{displayCourier}</span>
-                                </div>
-                                <div className="text-muted-foreground text-[11px]">
-                                    {data?.courier_service || initialData?.courier_service || 'Express Delivery (1 - 3 Hari)'}
-                                </div>
+                            <div className="pt-0.5">
+                                {courierLogoUrl ? (
+                                    <div className="h-9 w-24 px-2 py-1 rounded-md bg-white border border-border/80 shadow-2xs flex items-center justify-center">
+                                        <img
+                                            src={courierLogoUrl}
+                                            alt={displayCourier || 'Kurir'}
+                                            className="h-full w-full object-contain"
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="h-8 w-20 px-2 py-1 rounded-md bg-white border border-border/80 flex items-center justify-center text-muted-foreground">
+                                        <Truck className="size-5 text-[#4A070B] dark:text-[#E8D0BA]" />
+                                    </div>
+                                )}
                             </div>
                         </div>
 

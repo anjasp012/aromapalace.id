@@ -137,45 +137,6 @@ const TABS = [
     { key: 'selesai', label: 'Selesai' },
 ] as const;
 
-function getCourierLogo(logo?: string, courierName?: string): string | null {
-    if (logo) return logo;
-    if (!courierName) return null;
-    const clean = courierName.toLowerCase().replace(/[\s\-_&]/g, '');
-    const courierMap: Record<string, string> = {
-        jtcargo: 'jtcargo',
-        jnt: 'jnt',
-        jt: 'jnt',
-        jne: 'jne',
-        sicepat: 'sicepat',
-        shopee: 'spx',
-        spx: 'spx',
-        anteraja: 'anteraja',
-        lion: 'lion',
-        ninja: 'ninja',
-        sap: 'sap',
-        idexpress: 'idx',
-        idx: 'idx',
-        tiki: 'tiki',
-        posindonesia: 'posindonesia',
-        posindo: 'posindonesia',
-        pos: 'posindonesia',
-        rpx: 'rpx',
-        sentral: 'sentral',
-        ncs: 'ncs',
-        borzo: 'borzo',
-        gosend: 'gosend',
-        gojek: 'gosend',
-        grab: 'grab',
-        paxel: 'paxel',
-    };
-    for (const [key, code] of Object.entries(courierMap)) {
-        if (clean.includes(key)) {
-            return `https://storage.googleapis.com/tprt0ezsggqjornc7nf1wwluvgulhr/assets/courier-logo/${code}.png`;
-        }
-    }
-    return null;
-}
-
 export default function OrdersPage({
     orders = [],
     active_tab = 'all',
@@ -738,23 +699,6 @@ export default function OrdersPage({
                                             </span>
                                             <span className="hidden sm:inline text-muted-foreground">•</span>
                                             <span className="text-muted-foreground">{order.created_at}</span>
-                                            {order.courier && order.delivery_type !== 'pickup' && (
-                                                <>
-                                                    <span className="hidden sm:inline text-muted-foreground">•</span>
-                                                    <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
-                                                        {(order.courier_logo || getCourierLogo(order.courier_logo, order.courier)) && (
-                                                            <span className="h-5 w-12 px-1 py-0.5 rounded bg-white border border-border/70 shadow-2xs inline-flex items-center justify-center shrink-0">
-                                                                <img
-                                                                    src={(order.courier_logo || getCourierLogo(order.courier_logo, order.courier))!}
-                                                                    alt={order.courier}
-                                                                    className="h-full w-full object-contain"
-                                                                />
-                                                            </span>
-                                                        )}
-                                                        <span className="truncate max-w-[120px]">{order.courier}</span>
-                                                    </span>
-                                                </>
-                                            )}
                                         </div>
 
                                         <div className="shrink-0">
@@ -1039,23 +983,12 @@ export default function OrdersPage({
                                                     )}
                                                 </div>
                                             ) : (
-                                                <div className="flex items-center gap-3">
-                                                    {(selectedOrder.courier_logo || getCourierLogo(selectedOrder.courier_logo, selectedOrder.courier)) && (
-                                                        <div className="h-8 w-16 px-1.5 py-0.5 rounded-md bg-white border border-border/80 shadow-2xs flex items-center justify-center shrink-0">
-                                                            <img
-                                                                src={(selectedOrder.courier_logo || getCourierLogo(selectedOrder.courier_logo, selectedOrder.courier))!}
-                                                                alt={selectedOrder.courier || 'Kurir'}
-                                                                className="h-full w-full object-contain"
-                                                            />
-                                                        </div>
-                                                    )}
-                                                    <div className="space-y-0.5">
-                                                        <div className="font-bold text-foreground">
-                                                            {selectedOrder.courier || 'JNE Express VIP (Bebas Ongkir)'}
-                                                        </div>
-                                                        <div className="text-muted-foreground text-[11px]">
-                                                            Express Delivery (1 - 3 Hari)
-                                                        </div>
+                                                <div className="space-y-0.5">
+                                                    <div className="font-bold text-foreground">
+                                                        {selectedOrder.courier || 'JNE Express VIP (Bebas Ongkir)'}
+                                                    </div>
+                                                    <div className="text-muted-foreground text-[11px]">
+                                                        Express Delivery (1 - 3 Hari)
                                                     </div>
                                                 </div>
                                             )}
@@ -1474,7 +1407,12 @@ export default function OrdersPage({
                 onOpenChange={setIsTrackingModalOpen}
                 awb={trackingOrder?.tracking_number}
                 orderNumber={trackingOrder?.order_number}
-                initialData={trackingOrder?.shipping}
+                initialData={trackingOrder ? {
+                    ...trackingOrder.shipping,
+                    courier: trackingOrder.courier,
+                    courier_service: trackingOrder.courier_service,
+                    courier_logo: trackingOrder.courier_logo,
+                } : null}
             />
         </Layout>
     );

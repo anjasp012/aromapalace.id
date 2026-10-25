@@ -1215,7 +1215,12 @@ export default function AdminOrderShow({ order, pickupSchedules }: OrderShowProp
                 onOpenChange={setIsTrackingModalOpen}
                 awb={order.tracking_number}
                 orderNumber={order.order_number}
-                initialData={order.shipping}
+                initialData={order ? {
+                    ...order.shipping,
+                    courier: order.courier,
+                    courier_service: order.courier_service,
+                    courier_logo: order.courier_logo,
+                } : null}
             />
         </AdminLayout>
     );
