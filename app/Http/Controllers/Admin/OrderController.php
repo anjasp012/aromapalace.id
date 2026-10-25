@@ -195,7 +195,7 @@ class OrderController extends Controller
             $shippingMode = $validated['shipping_mode'] ?? null;
 
             if ($shippingMode === 'kiriminaja') {
-                $kirimResult = app(KiriminAjaService::class)->createShipment($orderModel);
+                $kirimResult = app(KiriminAjaService::class)->requestPickupForOrder($orderModel);
 
                 if (! ($kirimResult['success'] ?? false) || empty($kirimResult['tracking_number'])) {
                     $errMsg = $kirimResult['message'] ?? 'Gagal membuat request pickup di KiriminAja.';
