@@ -225,7 +225,7 @@ class KiriminAjaService
                 return [
                     'service' => strtoupper($arr['service']),
                     'name' => $arr['service_name'],
-                    'type' => $arr['service_type'],
+                    'code' => $arr['service_type'],
                     'price' => $arr['cost'],
                     'price_formatted' => number_format($arr['cost'], 0, ',', '.'),
                     'etd' => $arr['etd'],
