@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Setting;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class KiriminAjaService
 {
@@ -322,27 +323,96 @@ class KiriminAjaService
         return $shippingPriceExpresss;
     }
 
-    public function getPickupSchedules()
+    /**
+     * Retrieve available pickup schedules from KiriminAja API,
+     * or provide fallback schedule slots if external carrier API is closed/empty.
+     *
+     * @return array<int, array{clock: string, until: string, is_fallback: bool}>
+     */
+    public function getPickupSchedules(): array
     {
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer '.$this->apiKey,
-        ])->post($this->baseUrl.'/api/mitra/v2/schedules');
-        $json = $response->json();
-        $raw = $json['data'] ?? ($json['datas'] ?? ($json['schedules'] ?? []));
-        if (is_array($raw) && ! empty($raw)) {
-            $items = array_values(array_map(function ($item) {
-                $arr = (array) $item;
+        try {
+            $response = Http::timeout(6)->withHeaders([
+                'Authorization' => 'Bearer '.$this->apiKey,
+            ])->post($this->baseUrl.'/api/mitra/v2/schedules');
 
-                return $arr['libur'] == false ? [
-                    'clock' => $arr['clock'],
-                    'until' => $arr['until'],
-                ] : null;
-            }, $raw));
+            if ($response->successful()) {
+                $json = $response->json();
+                $raw = $json['data'] ?? ($json['datas'] ?? ($json['schedules'] ?? []));
 
-            return $items;
+                if (is_array($raw) && ! empty($raw)) {
+                    $items = array_values(array_filter(array_map(function ($item) {
+                        $arr = (array) $item;
+                        if (! empty($arr['libur'])) {
+                            return null;
+                        }
+
+                        $clock = $arr['clock'] ?? null;
+                        if (! $clock) {
+                            return null;
+                        }
+
+                        return [
+                            'clock' => (string) $clock,
+                            'until' => (string) ($arr['until'] ?? '22:00'),
+                            'is_fallback' => false,
+                        ];
+                    }, $raw)));
+
+                    if (! empty($items)) {
+                        return $items;
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed fetching KiriminAja pickup schedules: '.$e->getMessage());
         }
 
-        return [];
+        return $this->getFallbackPickupSchedules();
+    }
+
+    /**
+     * Generate standard fallback pickup schedules when external carrier schedules are empty or outside hours.
+     *
+     * @return array<int, array{clock: string, until: string, is_fallback: bool}>
+     */
+    public function getFallbackPickupSchedules(): array
+    {
+        $now = now();
+        $dates = [];
+
+        // If currently before 14:00, allow today's afternoon slot
+        if ((int) $now->format('H') < 14) {
+            $dates[] = $now->copy();
+        }
+
+        // Include tomorrow and the day after
+        $dates[] = $now->copy()->addDay();
+        $dates[] = $now->copy()->addDays(2);
+
+        $slots = [];
+        $slotHours = [
+            ['time' => '09:00:00', 'until' => '12:00'],
+            ['time' => '11:00:00', 'until' => '14:00'],
+            ['time' => '14:00:00', 'until' => '17:00'],
+            ['time' => '16:00:00', 'until' => '20:00'],
+        ];
+
+        foreach ($dates as $date) {
+            $dateStr = $date->format('Y-m-d');
+            foreach ($slotHours as $slot) {
+                $clockStr = "{$dateStr} {$slot['time']}";
+                if (strtotime($clockStr) > time()) {
+                    $slots[] = [
+                        'clock' => $clockStr,
+                        'until' => $slot['until'],
+                        'is_fallback' => true,
+                    ];
+                }
+            }
+        }
+
+        return array_slice($slots, 0, 8);
     }
 
     public function requestPickup($orderModel, $pickupSchedule)

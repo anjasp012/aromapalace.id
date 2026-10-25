@@ -136,6 +136,7 @@ interface OrderDetail {
 export interface PickupSchedule {
     clock: string;
     until: string;
+    is_fallback?: boolean;
 }
 
 interface OrderShowProps {
@@ -143,16 +144,33 @@ interface OrderShowProps {
     pickupSchedules?: (PickupSchedule | null)[];
 }
 
-export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderShowProps) {
+export default function AdminOrderShow({ order, pickupSchedules }: OrderShowProps) {
     const isPickup = order.delivery_type === 'pickup';
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
     const [isManualModalOpen, setIsManualModalOpen] = useState(false);
     const [isAutomaticModalOpen, setIsAutomaticModalOpen] = useState(false);
 
+    const isSchedulesLoaded = pickupSchedules !== undefined;
     const validSchedules = React.useMemo(() => {
         if (!Array.isArray(pickupSchedules)) return [];
         return pickupSchedules.filter((s): s is PickupSchedule => Boolean(s && typeof s === 'object' && s.clock));
     }, [pickupSchedules]);
+
+    const formatScheduleDate = (clockStr: string) => {
+        try {
+            const parts = clockStr.split(' ');
+            if (parts.length < 2) return clockStr;
+            const [datePart, timePart] = parts;
+            const [y, m, d] = datePart.split('-').map(Number);
+            const date = new Date(y, m - 1, d);
+            const dayName = new Intl.DateTimeFormat('id-ID', { weekday: 'long' }).format(date);
+            const monthName = new Intl.DateTimeFormat('id-ID', { month: 'short' }).format(date);
+            const timeFormatted = timePart.substring(0, 5);
+            return `${dayName}, ${d} ${monthName} ${y} • ${timeFormatted} WIB`;
+        } catch {
+            return clockStr;
+        }
+    };
 
     const [selectedSchedule, setSelectedSchedule] = useState<string>('');
     const [isRefreshingSchedules, setIsRefreshingSchedules] = useState(false);
@@ -185,10 +203,10 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
 
     // Muat jadwal pickup hanya ketika modal dibuka jika belum ada jadwal
     React.useEffect(() => {
-        if (isAutomaticModalOpen && validSchedules.length === 0 && !isRefreshingSchedules) {
+        if (isAutomaticModalOpen && !isSchedulesLoaded && !isRefreshingSchedules) {
             handleRefreshSchedules();
         }
-    }, [isAutomaticModalOpen]);
+    }, [isAutomaticModalOpen, isSchedulesLoaded, isRefreshingSchedules, handleRefreshSchedules]);
 
     const [manualTrackingNumber, setManualTrackingNumber] = useState(order.tracking_number || '');
     const [manualCourier, setManualCourier] = useState(order.courier || '');
@@ -1019,17 +1037,51 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
                                 </Button>
                             </div>
 
-                            {isRefreshingSchedules && validSchedules.length === 0 ? (
-                                <div className="py-8 text-center text-xs text-muted-foreground border border-dashed border-border/80 rounded-lg flex flex-col items-center justify-center gap-2 bg-muted/20">
-                                    <RefreshCw className="size-4 animate-spin text-muted-foreground/70" />
-                                    <span>Memuat jadwal pickup dari KiriminAja...</span>
+                            {(!isSchedulesLoaded || isRefreshingSchedules) && validSchedules.length === 0 ? (
+                                <div className="py-8 text-center text-xs text-muted-foreground border border-dashed border-border/80 rounded-lg flex flex-col items-center justify-center gap-2.5 bg-muted/20">
+                                    <RefreshCw className="size-4 animate-spin text-[#4A070B] dark:text-[#E8D0BA]" />
+                                    <div className="space-y-0.5">
+                                        <p className="font-medium text-foreground">Memeriksa ketersediaan jadwal pickup...</p>
+                                        <p className="text-[11px] text-muted-foreground">Menghubungkan ke sistem ekspedisi KiriminAja</p>
+                                    </div>
                                 </div>
                             ) : validSchedules.length === 0 ? (
-                                <div className="py-6 text-center text-xs text-muted-foreground border border-dashed border-border/80 rounded-lg p-4 bg-muted/20 space-y-1">
-                                    <p className="font-medium text-foreground">Tidak ada jadwal pickup tersedia saat ini</p>
-                                    <p className="text-[11px] text-muted-foreground">
-                                        Klik tombol Refresh Jadwal di atas jika ingin mencoba memeriksa kembali slot dari ekspedisi.
-                                    </p>
+                                <div className="py-5 px-4 text-center text-xs border border-dashed border-amber-500/40 rounded-lg bg-amber-500/5 dark:bg-amber-500/10 space-y-3">
+                                    <div className="space-y-1">
+                                        <p className="font-semibold text-foreground">Tidak ada jadwal pickup tersedia saat ini</p>
+                                        <p className="text-[11px] text-muted-foreground max-w-sm mx-auto leading-relaxed">
+                                            Ekspedisi belum membuka slot penjemputan atau sedang di luar jam operasional pickup. Anda dapat mencoba refresh kembali atau beralih ke Resi Manual jika paket diantar langsung ke counter kurir.
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center justify-center gap-2 pt-1">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleRefreshSchedules()}
+                                            disabled={isRefreshingSchedules || isUpdatingStatus}
+                                            className="h-7 text-xs flex items-center gap-1.5"
+                                        >
+                                            <RefreshCw className={`size-3 ${isRefreshingSchedules ? 'animate-spin' : ''}`} />
+                                            <span>{isRefreshingSchedules ? 'Memeriksa...' : 'Coba Refresh Jadwal'}</span>
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="secondary"
+                                            size="sm"
+                                            onClick={() => {
+                                                setIsAutomaticModalOpen(false);
+                                                setManualTrackingNumber(order.tracking_number || '');
+                                                setManualCourier(order.courier || '');
+                                                setManualError('');
+                                                setIsManualModalOpen(true);
+                                            }}
+                                            className="h-7 text-xs flex items-center gap-1.5"
+                                        >
+                                            <FileText className="size-3" />
+                                            <span>Gunakan Resi Manual</span>
+                                        </Button>
+                                    </div>
                                 </div>
                             ) : (
                                 <div className="space-y-2 max-h-64 overflow-y-auto pr-0.5">
@@ -1054,15 +1106,24 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
                                                         <Clock className="size-4" />
                                                     </div>
                                                     <div className="min-w-0">
-                                                        <div className="text-xs font-bold text-foreground flex items-center gap-2">
-                                                            <span>Waktu Pickup:</span>
-                                                            <span className="font-mono">{schedule.clock}</span>
+                                                        <div className="text-xs font-bold text-foreground flex items-center gap-2 flex-wrap">
+                                                            <span>{formatScheduleDate(schedule.clock)}</span>
+                                                            {schedule.is_fallback ? (
+                                                                <span className="text-[9.5px] px-1.5 py-0.5 rounded font-medium bg-amber-500/15 text-amber-800 dark:text-amber-300">
+                                                                    Estimasi Slot
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-[9.5px] px-1.5 py-0.5 rounded font-medium bg-emerald-500/15 text-emerald-800 dark:text-emerald-300">
+                                                                    Slot Resmi
+                                                                </span>
+                                                            )}
                                                         </div>
-                                                        {schedule.until && (
-                                                            <div className="text-[11px] text-muted-foreground">
-                                                                Batas Penjemputan: {schedule.until}
-                                                            </div>
-                                                        )}
+                                                        <div className="text-[11px] text-muted-foreground flex items-center gap-2 mt-0.5">
+                                                            <span className="font-mono text-[10.5px]">{schedule.clock}</span>
+                                                            {schedule.until && (
+                                                                <span>• Batas: {schedule.until}</span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
 
@@ -1090,25 +1151,45 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
                             )}
                         </div>
 
-                        <DialogFooter className="pt-3 gap-3 sm:gap-3 flex-row items-center justify-end">
+                        <DialogFooter className="pt-3 gap-2 flex-row items-center justify-between">
                             <Button
                                 type="button"
-                                variant="outline"
+                                variant="ghost"
                                 size="sm"
-                                onClick={() => setIsAutomaticModalOpen(false)}
+                                onClick={() => {
+                                    setIsAutomaticModalOpen(false);
+                                    setManualTrackingNumber(order.tracking_number || '');
+                                    setManualCourier(order.courier || '');
+                                    setManualError('');
+                                    setIsManualModalOpen(true);
+                                }}
                                 disabled={isUpdatingStatus}
+                                className="text-xs text-muted-foreground hover:text-foreground h-8 px-2 flex items-center gap-1.5"
                             >
-                                Batal
+                                <FileText className="size-3.5" />
+                                <span className="hidden sm:inline">Ganti ke</span> Resi Manual
                             </Button>
-                            <Button
-                                type="button"
-                                size="sm"
-                                onClick={() => handleShipAutomatic()}
-                                disabled={isUpdatingStatus || isRefreshingSchedules || !selectedSchedule}
-                                className="bg-[#4A070B] hover:bg-[#360407] text-[#E8D0BA] dark:bg-[#E8D0BA] dark:text-[#4A070B] dark:hover:bg-[#dfc4ab] disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {isUpdatingStatus ? 'Memproses Resi...' : 'Terbitkan Resi Otomatis'}
-                            </Button>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setIsAutomaticModalOpen(false)}
+                                    disabled={isUpdatingStatus}
+                                    className="h-8 text-xs"
+                                >
+                                    Batal
+                                </Button>
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    onClick={() => handleShipAutomatic()}
+                                    disabled={isUpdatingStatus || isRefreshingSchedules || !selectedSchedule}
+                                    className="h-8 text-xs bg-[#4A070B] hover:bg-[#360407] text-[#E8D0BA] dark:bg-[#E8D0BA] dark:text-[#4A070B] dark:hover:bg-[#dfc4ab] disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isUpdatingStatus ? 'Memproses Resi...' : 'Terbitkan Resi Otomatis'}
+                                </Button>
+                            </div>
                         </DialogFooter>
                     </div>
                 </DialogContent>
