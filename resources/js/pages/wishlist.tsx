@@ -16,7 +16,7 @@ interface FragranceProduct extends ProductItem {
     brand: string;
     family: string;
     category: string;
-    volume: string;
+    volume: string | number;
     concentration?: string;
     price: string;
     originalPrice?: string;
@@ -63,7 +63,7 @@ export default function WishlistPage({ items = [] }: WishlistPageProps) {
             {
                 product_id: product.id,
                 quantity: 1,
-                volume: product.volume || '50ml',
+                volume: product.volume || 50,
             },
             {
                 preserveScroll: true,
@@ -200,7 +200,7 @@ export default function WishlistPage({ items = [] }: WishlistPageProps) {
                         {
                             product_id: prod.id,
                             quantity: qty,
-                            volume: prod.volume || '50ml',
+                            volume: prod.volume || 50,
                         },
                         { preserveScroll: true }
                     );
