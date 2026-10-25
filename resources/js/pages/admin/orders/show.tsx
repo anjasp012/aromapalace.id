@@ -126,6 +126,11 @@ interface OrderDetail {
     notes?: string | null;
     items_count: number;
     items: OrderItemDetail[];
+    shipping?: any;
+    sender?: any;
+    weight_formatted?: string;
+    total_qty?: number;
+    is_cod?: boolean;
 }
 
 export interface PickupSchedule {
@@ -175,6 +180,7 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
     const [manualError, setManualError] = useState('');
     const [copiedTracking, setCopiedTracking] = useState(false);
     const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
+    const isWaitingTracking = !order.tracking_number || order.tracking_number.toLowerCase().includes('menunggu');
 
     React.useEffect(() => {
         setManualTrackingNumber(order.tracking_number || '');
@@ -299,8 +305,6 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
             }
         );
     };
-
-    const isWaitingTracking = !order.tracking_number || order.tracking_number.toLowerCase().includes('menunggu');
 
     const handleCopyTracking = () => {
         if (isWaitingTracking || !order.tracking_number) return;
