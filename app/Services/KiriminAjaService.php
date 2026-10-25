@@ -326,7 +326,6 @@ class KiriminAjaService
     }
 
     public function requestPickup($orderModel, $pickupSchedule) {
-        dd($this->senderLatitude, $this->senderLongitude);
         $items = $orderModel->orderItems->map(function ($item) {
             return [
                 'name' => $item->product_name,

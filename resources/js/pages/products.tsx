@@ -37,7 +37,7 @@ export interface Fragrance {
     brand?: string;
     category?: string;
     family: string;
-    volume: string;
+    volume: string | number;
     concentration: string;
     price: string;
     originalPrice?: string;
@@ -421,7 +421,7 @@ export default function Products({
             {
                 product_id: item.id,
                 quantity: 1,
-                volume: item.volume || '50ml',
+                volume: item.volume || 50,
             },
             {
                 preserveScroll: true,
@@ -1110,7 +1110,7 @@ export default function Products({
                         {
                             product_id: prod.id,
                             quantity: qty,
-                            volume: prod.volume || '50ml',
+                            volume: prod.volume || 50,
                         },
                         {
                             preserveScroll: true,
