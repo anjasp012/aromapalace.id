@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { router } from '@inertiajs/react';
 import {
     Dialog,
@@ -21,6 +21,7 @@ import type {
 } from '@/types/address';
 import SearchableSelect, { SearchableOption } from '@/components/ui/searchable-select';
 import AddressMapPicker from '@/components/AddressMapPicker';
+import { fetchCoverageUntilNotEmpty } from '@/lib/coverage-fetcher';
 
 interface AddressModalProps {
     open: boolean;
@@ -90,20 +91,36 @@ export default function AddressModal({
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-    // Initial load of provinces
+    // Abort controller refs for auto-retrying requests
+    const provincesAbortRef = useRef<AbortController | null>(null);
+    const citiesAbortRef = useRef<AbortController | null>(null);
+    const districtsAbortRef = useRef<AbortController | null>(null);
+    const subdistrictsAbortRef = useRef<AbortController | null>(null);
+
+    // Initial load of provinces (auto-retries continuously until non-empty)
     useEffect(() => {
         if (!open) return;
 
+        provincesAbortRef.current?.abort();
+        const controller = new AbortController();
+        provincesAbortRef.current = controller;
+
         setLoadingProvinces(true);
-        fetch('/api/coverage/provinces')
-            .then((res) => res.json())
-            .then((json) => {
-                if (json.status && Array.isArray(json.data)) {
-                    setProvinces(json.data);
-                }
-            })
-            .catch(() => {})
-            .finally(() => setLoadingProvinces(false));
+        fetchCoverageUntilNotEmpty<ProvinceOption>(
+            '/api/coverage/provinces',
+            (data) => {
+                setProvinces(data);
+                setLoadingProvinces(false);
+            },
+            controller.signal
+        );
+
+        return () => {
+            provincesAbortRef.current?.abort();
+            citiesAbortRef.current?.abort();
+            districtsAbortRef.current?.abort();
+            subdistrictsAbortRef.current?.abort();
+        };
     }, [open]);
 
     // Populate or reset form when modal opens
@@ -133,21 +150,48 @@ export default function AddressModal({
             setSelectedSubdistrictId(addressToEdit.subdistrict_id || '');
             setSelectedSubdistrictName(addressToEdit.subdistrict_name || '');
 
-            // Pre-fetch dependent dropdowns if editing
+            // Pre-fetch dependent dropdowns if editing (auto-retries continuously until non-empty)
             if (addressToEdit.province_id) {
-                fetch(`/api/coverage/cities?province_id=${addressToEdit.province_id}`)
-                    .then((r) => r.json())
-                    .then((j) => j.status && setCities(j.data));
+                citiesAbortRef.current?.abort();
+                const controller = new AbortController();
+                citiesAbortRef.current = controller;
+                setLoadingCities(true);
+                fetchCoverageUntilNotEmpty<CityOption>(
+                    `/api/coverage/cities?province_id=${addressToEdit.province_id}`,
+                    (data) => {
+                        setCities(data);
+                        setLoadingCities(false);
+                    },
+                    controller.signal
+                );
             }
             if (addressToEdit.city_id) {
-                fetch(`/api/coverage/districts?city_id=${addressToEdit.city_id}`)
-                    .then((r) => r.json())
-                    .then((j) => j.status && setDistricts(j.data));
+                districtsAbortRef.current?.abort();
+                const controller = new AbortController();
+                districtsAbortRef.current = controller;
+                setLoadingDistricts(true);
+                fetchCoverageUntilNotEmpty<DistrictOption>(
+                    `/api/coverage/districts?city_id=${addressToEdit.city_id}`,
+                    (data) => {
+                        setDistricts(data);
+                        setLoadingDistricts(false);
+                    },
+                    controller.signal
+                );
             }
             if (addressToEdit.district_id) {
-                fetch(`/api/coverage/subdistricts?district_id=${addressToEdit.district_id}`)
-                    .then((r) => r.json())
-                    .then((j) => j.status && setSubdistricts(j.data));
+                subdistrictsAbortRef.current?.abort();
+                const controller = new AbortController();
+                subdistrictsAbortRef.current = controller;
+                setLoadingSubdistricts(true);
+                fetchCoverageUntilNotEmpty<SubdistrictOption>(
+                    `/api/coverage/subdistricts?district_id=${addressToEdit.district_id}`,
+                    (data) => {
+                        setSubdistricts(data);
+                        setLoadingSubdistricts(false);
+                    },
+                    controller.signal
+                );
             }
         } else {
             // New Address defaults
@@ -185,6 +229,11 @@ export default function AddressModal({
         const provName = found ? found.name : '';
         setSelectedProvinceName(provName);
 
+        // Abort previous dependent requests
+        citiesAbortRef.current?.abort();
+        districtsAbortRef.current?.abort();
+        subdistrictsAbortRef.current?.abort();
+
         // Reset lower cascade
         setSelectedCityId('');
         setSelectedCityName('');
@@ -201,16 +250,18 @@ export default function AddressModal({
         }
 
         if (val) {
+            citiesAbortRef.current?.abort();
+            const controller = new AbortController();
+            citiesAbortRef.current = controller;
             setLoadingCities(true);
-            fetch(`/api/coverage/cities?province_id=${val}`)
-                .then((res) => res.json())
-                .then((json) => {
-                    if (json.status && Array.isArray(json.data)) {
-                        setCities(json.data);
-                    }
-                })
-                .catch(() => {})
-                .finally(() => setLoadingCities(false));
+            fetchCoverageUntilNotEmpty<CityOption>(
+                `/api/coverage/cities?province_id=${val}`,
+                (data) => {
+                    setCities(data);
+                    setLoadingCities(false);
+                },
+                controller.signal
+            );
         }
     };
 
@@ -225,6 +276,10 @@ export default function AddressModal({
             setPostalCode(found.postal_code);
         }
 
+        // Abort previous dependent requests
+        districtsAbortRef.current?.abort();
+        subdistrictsAbortRef.current?.abort();
+
         // Reset lower cascade
         setSelectedDistrictId('');
         setSelectedDistrictName('');
@@ -238,16 +293,18 @@ export default function AddressModal({
         }
 
         if (val) {
+            districtsAbortRef.current?.abort();
+            const controller = new AbortController();
+            districtsAbortRef.current = controller;
             setLoadingDistricts(true);
-            fetch(`/api/coverage/districts?city_id=${val}`)
-                .then((res) => res.json())
-                .then((json) => {
-                    if (json.status && Array.isArray(json.data)) {
-                        setDistricts(json.data);
-                    }
-                })
-                .catch(() => {})
-                .finally(() => setLoadingDistricts(false));
+            fetchCoverageUntilNotEmpty<DistrictOption>(
+                `/api/coverage/districts?city_id=${val}`,
+                (data) => {
+                    setDistricts(data);
+                    setLoadingDistricts(false);
+                },
+                controller.signal
+            );
         }
     };
 
@@ -262,6 +319,9 @@ export default function AddressModal({
             setPostalCode(found.postal_code);
         }
 
+        // Abort previous dependent requests
+        subdistrictsAbortRef.current?.abort();
+
         // Reset subdistrict
         setSelectedSubdistrictId('');
         setSelectedSubdistrictName('');
@@ -272,16 +332,18 @@ export default function AddressModal({
         }
 
         if (val) {
+            subdistrictsAbortRef.current?.abort();
+            const controller = new AbortController();
+            subdistrictsAbortRef.current = controller;
             setLoadingSubdistricts(true);
-            fetch(`/api/coverage/subdistricts?district_id=${val}`)
-                .then((res) => res.json())
-                .then((json) => {
-                    if (json.status && Array.isArray(json.data)) {
-                        setSubdistricts(json.data);
-                    }
-                })
-                .catch(() => {})
-                .finally(() => setLoadingSubdistricts(false));
+            fetchCoverageUntilNotEmpty<SubdistrictOption>(
+                `/api/coverage/subdistricts?district_id=${val}`,
+                (data) => {
+                    setSubdistricts(data);
+                    setLoadingSubdistricts(false);
+                },
+                controller.signal
+            );
         }
     };
 

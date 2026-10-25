@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Head, useForm } from '@inertiajs/react';
 import AdminLayout from '@/layouts/AdminLayout';
 import {
@@ -28,6 +28,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import SearchableSelect, { SearchableOption } from '@/components/ui/searchable-select';
 import AddressMapPicker from '@/components/AddressMapPicker';
+import { fetchCoverageUntilNotEmpty } from '@/lib/coverage-fetcher';
 
 interface SettingsIndexProps {
     settings: Record<string, any>;
@@ -116,53 +117,83 @@ export default function SettingsIndex({
     const [loadingDistricts, setLoadingDistricts] = useState(false);
     const [loadingSubdistricts, setLoadingSubdistricts] = useState(false);
 
+    // Abort controller refs for auto-retrying coverage requests
+    const provincesAbortRef = useRef<AbortController | null>(null);
+    const citiesAbortRef = useRef<AbortController | null>(null);
+    const districtsAbortRef = useRef<AbortController | null>(null);
+    const subdistrictsAbortRef = useRef<AbortController | null>(null);
+
     // Initial load of provinces & dependent hierarchy if already configured
     useEffect(() => {
         if (provinces.length <= 1) {
+            provincesAbortRef.current?.abort();
+            const controller = new AbortController();
+            provincesAbortRef.current = controller;
             setLoadingProvinces(true);
-            fetch('/api/coverage/provinces')
-                .then((res) => res.json())
-                .then((json) => {
-                    if (json.status && Array.isArray(json.data)) {
-                        setProvinces(json.data);
-                    }
-                })
-                .catch((err) => console.error('Error fetching provinces:', err))
-                .finally(() => setLoadingProvinces(false));
+            fetchCoverageUntilNotEmpty<SearchableOption>(
+                '/api/coverage/provinces',
+                (data) => {
+                    setProvinces(data);
+                    setLoadingProvinces(false);
+                },
+                controller.signal
+            );
         }
 
         // Pre-fill cities if province exists and full list not yet loaded
         if (data.shipping_province_id && cities.length <= 1) {
+            citiesAbortRef.current?.abort();
+            const controller = new AbortController();
+            citiesAbortRef.current = controller;
             setLoadingCities(true);
-            fetch(`/api/coverage/cities?province_id=${data.shipping_province_id}`)
-                .then((r) => r.json())
-                .then((j) => {
-                    if (j.status && Array.isArray(j.data)) setCities(j.data);
-                })
-                .finally(() => setLoadingCities(false));
+            fetchCoverageUntilNotEmpty<SearchableOption>(
+                `/api/coverage/cities?province_id=${data.shipping_province_id}`,
+                (data) => {
+                    setCities(data);
+                    setLoadingCities(false);
+                },
+                controller.signal
+            );
         }
 
         // Pre-fill districts if city exists and full list not yet loaded
         if (data.shipping_city_id && districts.length <= 1) {
+            districtsAbortRef.current?.abort();
+            const controller = new AbortController();
+            districtsAbortRef.current = controller;
             setLoadingDistricts(true);
-            fetch(`/api/coverage/districts?city_id=${data.shipping_city_id}`)
-                .then((r) => r.json())
-                .then((j) => {
-                    if (j.status && Array.isArray(j.data)) setDistricts(j.data);
-                })
-                .finally(() => setLoadingDistricts(false));
+            fetchCoverageUntilNotEmpty<SearchableOption>(
+                `/api/coverage/districts?city_id=${data.shipping_city_id}`,
+                (data) => {
+                    setDistricts(data);
+                    setLoadingDistricts(false);
+                },
+                controller.signal
+            );
         }
 
         // Pre-fill subdistricts if district exists and full list not yet loaded
         if (data.shipping_district_id && subdistricts.length <= 1) {
+            subdistrictsAbortRef.current?.abort();
+            const controller = new AbortController();
+            subdistrictsAbortRef.current = controller;
             setLoadingSubdistricts(true);
-            fetch(`/api/coverage/subdistricts?district_id=${data.shipping_district_id}`)
-                .then((r) => r.json())
-                .then((j) => {
-                    if (j.status && Array.isArray(j.data)) setSubdistricts(j.data);
-                })
-                .finally(() => setLoadingSubdistricts(false));
+            fetchCoverageUntilNotEmpty<SearchableOption>(
+                `/api/coverage/subdistricts?district_id=${data.shipping_district_id}`,
+                (data) => {
+                    setSubdistricts(data);
+                    setLoadingSubdistricts(false);
+                },
+                controller.signal
+            );
         }
+
+        return () => {
+            provincesAbortRef.current?.abort();
+            citiesAbortRef.current?.abort();
+            districtsAbortRef.current?.abort();
+            subdistrictsAbortRef.current?.abort();
+        };
     }, []);
 
     // Handlers for cascaded regional selection
@@ -181,21 +212,27 @@ export default function SettingsIndex({
             shipping_postal_code: '',
         }));
 
+        citiesAbortRef.current?.abort();
+        districtsAbortRef.current?.abort();
+        subdistrictsAbortRef.current?.abort();
+
         setCities([]);
         setDistricts([]);
         setSubdistricts([]);
 
         if (idNum) {
+            citiesAbortRef.current?.abort();
+            const controller = new AbortController();
+            citiesAbortRef.current = controller;
             setLoadingCities(true);
-            fetch(`/api/coverage/cities?province_id=${idNum}`)
-                .then((res) => res.json())
-                .then((json) => {
-                    if (json.status && Array.isArray(json.data)) {
-                        setCities(json.data);
-                    }
-                })
-                .catch((err) => console.error(err))
-                .finally(() => setLoadingCities(false));
+            fetchCoverageUntilNotEmpty<SearchableOption>(
+                `/api/coverage/cities?province_id=${idNum}`,
+                (data) => {
+                    setCities(data);
+                    setLoadingCities(false);
+                },
+                controller.signal
+            );
         }
     };
 
@@ -214,20 +251,25 @@ export default function SettingsIndex({
             shipping_postal_code: '',
         }));
 
+        districtsAbortRef.current?.abort();
+        subdistrictsAbortRef.current?.abort();
+
         setDistricts([]);
         setSubdistricts([]);
 
         if (idNum) {
+            districtsAbortRef.current?.abort();
+            const controller = new AbortController();
+            districtsAbortRef.current = controller;
             setLoadingDistricts(true);
-            fetch(`/api/coverage/districts?city_id=${idNum}`)
-                .then((res) => res.json())
-                .then((json) => {
-                    if (json.status && Array.isArray(json.data)) {
-                        setDistricts(json.data);
-                    }
-                })
-                .catch((err) => console.error(err))
-                .finally(() => setLoadingDistricts(false));
+            fetchCoverageUntilNotEmpty<SearchableOption>(
+                `/api/coverage/districts?city_id=${idNum}`,
+                (data) => {
+                    setDistricts(data);
+                    setLoadingDistricts(false);
+                },
+                controller.signal
+            );
         }
     };
 
@@ -242,19 +284,23 @@ export default function SettingsIndex({
             shipping_postal_code: '',
         }));
 
+        subdistrictsAbortRef.current?.abort();
+
         setSubdistricts([]);
 
         if (idNum) {
+            subdistrictsAbortRef.current?.abort();
+            const controller = new AbortController();
+            subdistrictsAbortRef.current = controller;
             setLoadingSubdistricts(true);
-            fetch(`/api/coverage/subdistricts?district_id=${idNum}`)
-                .then((res) => res.json())
-                .then((json) => {
-                    if (json.status && Array.isArray(json.data)) {
-                        setSubdistricts(json.data);
-                    }
-                })
-                .catch((err) => console.error(err))
-                .finally(() => setLoadingSubdistricts(false));
+            fetchCoverageUntilNotEmpty<SearchableOption>(
+                `/api/coverage/subdistricts?district_id=${idNum}`,
+                (data) => {
+                    setSubdistricts(data);
+                    setLoadingSubdistricts(false);
+                },
+                controller.signal
+            );
         }
     };
 

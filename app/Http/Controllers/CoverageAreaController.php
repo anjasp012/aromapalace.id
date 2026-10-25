@@ -15,21 +15,20 @@ class CoverageAreaController extends Controller
     ) {}
 
     /**
-     * Get list of provinces.
+     * Get list of provinces with automatic retry if empty.
      */
     public function provinces(): JsonResponse
     {
-
-        $provinces = $this->kiriminAjaService->getProvinces();
+        $provinces = $this->fetchWithRetry(fn () => $this->kiriminAjaService->getProvinces());
 
         return response()->json([
-            'status' => true,
+            'status' => ! empty($provinces),
             'data' => $provinces,
         ]);
     }
 
     /**
-     * Get list of cities by province ID.
+     * Get list of cities by province ID with automatic retry if empty.
      */
     public function cities(Request $request): JsonResponse
     {
@@ -42,16 +41,16 @@ class CoverageAreaController extends Controller
             ], 422);
         }
 
-        $cities = $this->kiriminAjaService->getCities($provinceId);
+        $cities = $this->fetchWithRetry(fn () => $this->kiriminAjaService->getCities($provinceId));
 
         return response()->json([
-            'status' => true,
+            'status' => ! empty($cities),
             'data' => $cities,
         ]);
     }
 
     /**
-     * Get list of districts (kecamatan) by city ID.
+     * Get list of districts (kecamatan) by city ID with automatic retry if empty.
      */
     public function districts(Request $request): JsonResponse
     {
@@ -64,16 +63,16 @@ class CoverageAreaController extends Controller
             ], 422);
         }
 
-        $districts = $this->kiriminAjaService->getDistricts($cityId);
+        $districts = $this->fetchWithRetry(fn () => $this->kiriminAjaService->getDistricts($cityId));
 
         return response()->json([
-            'status' => true,
+            'status' => ! empty($districts),
             'data' => $districts,
         ]);
     }
 
     /**
-     * Get list of subdistricts (kelurahan) by district ID.
+     * Get list of subdistricts (kelurahan) by district ID with automatic retry if empty.
      */
     public function subdistricts(Request $request): JsonResponse
     {
@@ -86,12 +85,35 @@ class CoverageAreaController extends Controller
             ], 422);
         }
 
-        $subdistricts = $this->kiriminAjaService->getSubdistricts($districtId);
+        $subdistricts = $this->fetchWithRetry(fn () => $this->kiriminAjaService->getSubdistricts($districtId));
 
         return response()->json([
-            'status' => true,
+            'status' => ! empty($subdistricts),
             'data' => $subdistricts,
         ]);
+    }
+
+    /**
+     * Retry callback up to $maxRetries if the result is empty.
+     *
+     * @param  callable(): array  $callback
+     */
+    protected function fetchWithRetry(callable $callback, int $maxRetries = 2, int $sleepUs = 300000): array
+    {
+        $result = $callback();
+        if (! empty($result) && is_array($result)) {
+            return $result;
+        }
+
+        for ($i = 0; $i < $maxRetries; $i++) {
+            usleep($sleepUs);
+            $result = $callback();
+            if (! empty($result) && is_array($result)) {
+                return $result;
+            }
+        }
+
+        return is_array($result) ? $result : [];
     }
 
     /**

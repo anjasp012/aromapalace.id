@@ -31,16 +31,32 @@ class SettingController extends Controller
         $settings['longitude'] = $settings['shipping_longitude'];
 
         $kiriminAja = app(KiriminAjaService::class);
-        $initialProvinces = $kiriminAja->getProvinces();
+        $fetchWithRetry = function (callable $callback): array {
+            $res = $callback();
+            if (! empty($res) && is_array($res)) {
+                return $res;
+            }
+            for ($i = 0; $i < 2; $i++) {
+                usleep(300000);
+                $res = $callback();
+                if (! empty($res) && is_array($res)) {
+                    return $res;
+                }
+            }
+
+            return is_array($res) ? $res : [];
+        };
+
+        $initialProvinces = $fetchWithRetry(fn () => $kiriminAja->getProvinces());
 
         $provinceId = (int) ($settings['shipping_province_id'] ?? 0);
-        $initialCities = $provinceId > 0 ? $kiriminAja->getCities($provinceId) : [];
+        $initialCities = $provinceId > 0 ? $fetchWithRetry(fn () => $kiriminAja->getCities($provinceId)) : [];
 
         $cityId = (int) ($settings['shipping_city_id'] ?? 0);
-        $initialDistricts = $cityId > 0 ? $kiriminAja->getDistricts($cityId) : [];
+        $initialDistricts = $cityId > 0 ? $fetchWithRetry(fn () => $kiriminAja->getDistricts($cityId)) : [];
 
         $districtId = (int) ($settings['shipping_district_id'] ?? 0);
-        $initialSubdistricts = $districtId > 0 ? $kiriminAja->getSubDistricts($districtId) : [];
+        $initialSubdistricts = $districtId > 0 ? $fetchWithRetry(fn () => $kiriminAja->getSubdistricts($districtId)) : [];
 
         return Inertia::render('admin/settings/index', [
             'settings' => $settings,
