@@ -2,14 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\Order;
 use App\Models\Setting;
-use App\Models\UserAddress;
-use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class KiriminAjaService
 {
@@ -24,9 +19,9 @@ class KiriminAjaService
     protected string $storeName;
 
     protected string $senderName;
-    
+
     protected string $senderPhone;
- 
+
     protected int $senderProvinceId;
 
     protected int $senderCityId;
@@ -56,7 +51,7 @@ class KiriminAjaService
         $this->senderPhone = (string) Setting::get('shipping_sender_phone');
         $this->senderProvinceId = (int) Setting::get('shipping_province_id');
         $this->senderCityId = (int) Setting::get('shipping_city_id');
-        $this->senderDistrictId = (int) Setting::get('shipping_district_id'); //origin
+        $this->senderDistrictId = (int) Setting::get('shipping_district_id'); // origin
         $this->senderSubdistrictId = (int) Setting::get('shipping_subdistrict_id');
         $this->senderAddress = (string) Setting::get('shipping_address');
         $this->senderZipcode = (string) Setting::get('shipping_postal_code');
@@ -76,8 +71,8 @@ class KiriminAjaService
         }
 
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->apiKey
-        ])->post($this->baseUrl . '/api/mitra/province');
+            'Authorization' => 'Bearer '.$this->apiKey,
+        ])->post($this->baseUrl.'/api/mitra/province');
 
         $json = $response->json();
         $raw = $json['data'] ?? ($json['datas'] ?? ($json['results'] ?? []));
@@ -94,12 +89,12 @@ class KiriminAjaService
                 ];
             }, $raw));
             Cache::put('kiriminaja:provinces', $items, now()->addDays(30));
+
             return $items;
         }
 
         return [];
     }
-
 
     public function getCities($province_id)
     {
@@ -109,9 +104,9 @@ class KiriminAjaService
         }
 
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->apiKey
-        ])->post($this->baseUrl . '/api/mitra/city/', [
-            'provinsi_id' => $province_id
+            'Authorization' => 'Bearer '.$this->apiKey,
+        ])->post($this->baseUrl.'/api/mitra/city/', [
+            'provinsi_id' => $province_id,
         ]);
 
         $json = $response->json();
@@ -131,11 +126,13 @@ class KiriminAjaService
                 ];
             }, $raw));
             Cache::put('kiriminaja:cities:'.$province_id, $items, now()->addDays(30));
+
             return $items;
         }
 
         return [];
     }
+
     public function getDistricts($city_id)
     {
         $cached = Cache::get('kiriminaja:districts:'.$city_id);
@@ -144,9 +141,9 @@ class KiriminAjaService
         }
 
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->apiKey
-        ])->post($this->baseUrl . '/api/mitra/kecamatan/', [
-            'kabupaten_id' => $city_id
+            'Authorization' => 'Bearer '.$this->apiKey,
+        ])->post($this->baseUrl.'/api/mitra/kecamatan/', [
+            'kabupaten_id' => $city_id,
         ]);
 
         $json = $response->json();
@@ -161,15 +158,17 @@ class KiriminAjaService
                     'id' => (int) $arr['id'],
                     'name' => $name,
                     'kecamatan_name' => $name,
-                    'postal_code' => $arr['postal_code']
+                    'postal_code' => $arr['postal_code'],
                 ];
             }, $raw));
             Cache::put('kiriminaja:districts:'.$city_id, $items, now()->addDays(30));
+
             return $items;
         }
 
         return [];
     }
+
     public function getSubDistricts($district_id)
     {
         $cached = Cache::get('kiriminaja:subdistricts:'.$district_id);
@@ -178,9 +177,9 @@ class KiriminAjaService
         }
 
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->apiKey
-        ])->post($this->baseUrl . '/api/mitra/kelurahan/', [
-            'kecamatan_id' => $district_id
+            'Authorization' => 'Bearer '.$this->apiKey,
+        ])->post($this->baseUrl.'/api/mitra/kelurahan/', [
+            'kecamatan_id' => $district_id,
         ]);
 
         $json = $response->json();
@@ -195,25 +194,28 @@ class KiriminAjaService
                     'id' => (int) $arr['id'],
                     'name' => $name,
                     'kelurahan_name' => $name,
-                    'postal_code' => $arr['postal_code']
+                    'postal_code' => $arr['postal_code'],
                 ];
             }, $raw));
             Cache::put('kiriminaja:subdistricts:'.$district_id, $items, now()->addDays(30));
+
             return $items;
         }
 
         return [];
     }
 
-    public function getActiveCouriers() {
+    public function getActiveCouriers()
+    {
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->apiKey
-        ])->post($this->baseUrl . '/api/mitra/couriers');
+            'Authorization' => 'Bearer '.$this->apiKey,
+        ])->post($this->baseUrl.'/api/mitra/couriers');
         $json = $response->json();
         $raw = $json['data'] ?? ($json['datas'] ?? ($json['results'] ?? []));
         if (is_array($raw) && ! empty($raw)) {
             $items = array_values(array_map(function ($item) {
                 $arr = (array) $item;
+
                 return [
                     'code' => $arr['code'],
                     'name' => $arr['name'],
@@ -221,15 +223,18 @@ class KiriminAjaService
                     'type' => $arr['type'],
                 ];
             }, $raw));
+
             return $items;
         }
+
         return [];
     }
 
-    public function shippingPriceExpresss($destination, $weight, $services = []) {
+    public function shippingPriceExpresss($destination, $weight, $services = [])
+    {
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->apiKey
-        ])->post($this->baseUrl . '/api/mitra/v6.1/shipping_price', [
+            'Authorization' => 'Bearer '.$this->apiKey,
+        ])->post($this->baseUrl.'/api/mitra/v6.1/shipping_price', [
             'service' => $services,
             'origin' => $this->senderDistrictId,
             'destination' => $destination,
@@ -240,6 +245,7 @@ class KiriminAjaService
         if (is_array($raw) && ! empty($raw)) {
             $items = array_values(array_map(function ($item) {
                 $arr = (array) $item;
+
                 return [
                     'service' => strtoupper($arr['service']),
                     'name' => $arr['service_name'],
@@ -250,14 +256,18 @@ class KiriminAjaService
                     'insurance' => number_format($arr['insurance'], 0, ',', '.'),
                 ];
             }, $raw));
+
             return $items;
         }
+
         return [];
     }
-    public function shippingPriceInstants($destination, $weight, $services = []) {
+
+    public function shippingPriceInstants($destination, $weight, $services = [])
+    {
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->apiKey
-        ])->post($this->baseUrl . '/api/mitra/v4/instant/pricing', [
+            'Authorization' => 'Bearer '.$this->apiKey,
+        ])->post($this->baseUrl.'/api/mitra/v4/instant/pricing', [
             'services' => $services,
             'origin' => $this->senderDistrictId,
             'destination' => $destination,
@@ -265,91 +275,131 @@ class KiriminAjaService
         ]);
         $json = $response->json();
         $raw = $json['data'] ?? ($json['datas'] ?? ($json['results'] ?? []));
-         if (is_array($raw) && ! empty($raw)) {
+        if (is_array($raw) && ! empty($raw)) {
             $items = array_values(array_map(function ($item) {
                 $arr = (array) $item;
+
                 return [
                     'name' => $arr['name'],
                     'etd' => $arr['costs']['estimation'],
                     'cost' => $arr['costs']['price']['total_price'],
                 ];
             }, $raw));
+
             return $items;
         }
+
         return [];
     }
 
-
-    public function getShippingPrices($destination, $weight){
+    public function getShippingPrices($destination, $weight)
+    {
         $activeCouriers = $this->getActiveCouriers();
         $shippingPrices = [];
         $expressCouriers = [];
         $instantCouriers = [];
         foreach ($activeCouriers as $courier) {
-            if($courier['type'] == 'Express'){
+            if ($courier['type'] == 'Express') {
                 $expressCouriers[] = [
                     'code' => $courier['code'],
                     'name' => $courier['name'],
                 ];
+
                 continue;
             }
-            if($courier['type'] == 'Instant'){
+            if ($courier['type'] == 'Instant') {
                 $instantCouriers[] = [
                     'code' => $courier['code'],
                     'name' => $courier['name'],
                 ];
+
                 continue;
             }
         }
         $shippingPriceExpresss = $this->shippingPriceExpresss($destination, $weight, $expressCouriers);
         $shippingPriceInstants = $this->shippingPriceInstants($destination, $weight, $instantCouriers);
+
         return $shippingPriceExpresss;
     }
 
-    public function getPickupSchedules() {
+    public function getPickupSchedules()
+    {
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->apiKey
-        ])->post($this->baseUrl . '/api/mitra/v2/schedules');
+            'Authorization' => 'Bearer '.$this->apiKey,
+        ])->post($this->baseUrl.'/api/mitra/v2/schedules');
         $json = $response->json();
         $raw = $json['data'] ?? ($json['datas'] ?? ($json['schedules'] ?? []));
         if (is_array($raw) && ! empty($raw)) {
             $items = array_values(array_map(function ($item) {
                 $arr = (array) $item;
+
                 return $arr['libur'] == false ? [
                     'clock' => $arr['clock'],
-                    'until' => $arr['until']
+                    'until' => $arr['until'],
                 ] : null;
             }, $raw));
+
             return $items;
         }
+
         return [];
     }
 
-    public function requestPickup($orderModel, $pickupSchedule) {
+    public function requestPickup($orderModel, $pickupSchedule)
+    {
+        // 1. Calculate package weight consistently with checkout rate inquiry (minimum 1000g)
+        $packageWeight = 0;
+        foreach ($orderModel->orderItems as $item) {
+            $vol = (int) ($item->volume ?: 100);
+            $itemWeight = max(250, $vol * 3);
+            $packageWeight += $itemWeight * (int) ($item->quantity ?: 1);
+        }
+        $packageWeight = max(1000, $packageWeight);
+
+        // 2. Prepare items with realistic dimensions (in cm)
         $items = $orderModel->orderItems->map(function ($item) {
+            $vol = (int) ($item->volume ?: 100);
+            $weight = max(250, $vol * 3);
+
             return [
-                'name' => $item->product_name,
-                'price' => $item->price,
-                'weight' => $item->volume,
-                'width' => 100,
-                'height' => 100,
-                'length' => 100,
-                'qty' => $item->quantity,
+                'name' => (string) ($item->product_name ?: 'Parfum'),
+                'price' => (int) $item->price,
+                'weight' => $weight,
+                'width' => 10,
+                'height' => 10,
+                'length' => 10,
+                'qty' => (int) ($item->quantity ?: 1),
             ];
-        });
-        $response = Http::withHeaders([
-        'Content-Type' => 'application/json',
-        'Authorization' => 'Bearer ' . $this->apiKey
-        ])
-        ->post($this->baseUrl . '/api/mitra/v6.2/request_pickup', [
+        })->values()->all();
+
+        // 3. Normalize courier code to lowercase standard (e.g. 'jne', 'jnt', 'sicepat')
+        $courierRaw = strtolower(trim((string) ($orderModel->courier_service ?: $orderModel->courier)));
+        $courierMap = [
+            'j&t' => 'jnt',
+            'j&t express' => 'jnt',
+            'jne express' => 'jne',
+            'sicepat express' => 'sicepat',
+            'id express' => 'idx',
+            'idexpress' => 'idx',
+            'pos indonesia' => 'posindonesia',
+            'pos' => 'posindonesia',
+        ];
+        $courierCode = $courierMap[$courierRaw] ?? $courierRaw;
+
+        // 4. Safe access for item name and order notes
+        $firstItemName = $orderModel->orderItems->first()?->product_name ?? 'Parfum Aroma Palace';
+        $totalQty = (int) $orderModel->orderItems->sum('quantity');
+        $totalItemValue = (int) $orderModel->orderItems->sum('total_price');
+
+        $payload = [
             'address' => $this->senderAddress,
             'phone' => $this->senderPhone,
             'kecamatan_id' => $this->senderDistrictId,
             'kelurahan_id' => $this->senderSubdistrictId,
             'payment_method' => 'credit',
             'pin' => $this->pin,
-            'latitude' => (float)$this->senderLatitude,
-            'longitude' => (float)$this->senderLongitude,
+            'latitude' => (float) $this->senderLatitude,
+            'longitude' => (float) $this->senderLongitude,
             'platform_name' => $this->storeName,
             'name' => $this->senderName,
             'zipcode' => (string) $this->senderZipcode,
@@ -360,31 +410,53 @@ class KiriminAjaService
                     'destination_name' => $orderModel->recipient_name,
                     'destination_phone' => $orderModel->recipient_phone,
                     'destination_address' => $orderModel->address,
-                    'destination_kecamatan_id' => $orderModel->district_id,
-                    'destination_kelurahan_id' => $orderModel->subdistrict_id,
+                    'destination_kecamatan_id' => (int) $orderModel->district_id,
+                    'destination_kelurahan_id' => (int) $orderModel->subdistrict_id,
                     'destination_zipcode' => (string) $orderModel->postal_code,
-                    'destination_latitude' => (float) $orderModel->latitude,
-                    'destination_longitude' => (float) $orderModel->longitude,
-                    'weight' => $orderModel->orderItems->sum('volume'),
-                    'width' => 100* $orderModel->orderItems->sum('quantity'),
-                    'height' => 100* $orderModel->orderItems->sum('quantity'),
-                    'length' => 100* $orderModel->orderItems->sum('quantity'),
-                    'qty' => $orderModel->orderItems->sum('quantity'),
-                    'item_value' => $orderModel->orderItems->sum('total_price'),
-                    'shipping_cost' => (float) $orderModel->shipping_cost,
-                    'service' => $orderModel->courier_service,
+                    'destination_latitude' => $orderModel->latitude ? (float) $orderModel->latitude : null,
+                    'destination_longitude' => $orderModel->longitude ? (float) $orderModel->longitude : null,
+                    'weight' => $packageWeight,
+                    'width' => 10,
+                    'height' => 10,
+                    'length' => 10,
+                    'qty' => max(1, $totalQty),
+                    'item_value' => $totalItemValue,
+                    'shipping_cost' => (int) $orderModel->shipping_cost,
+                    'service' => $courierCode,
                     'insurance_amount' => 0,
                     'service_type' => $orderModel->courier_service_type,
                     'cod' => 0,
-                    'package_type_id' => 7,
-                    'item_name' => $orderModel->orderItems->first()->name,
+                    'package_type_id' => 1,
+                    'item_name' => $firstItemName,
                     'drop' => false,
-                    'note' => $orderModel->note,
-                    'items' => $items   
-                ]
-            ]
-        ]);
-        $json = $response->json();
-        dd($response);        
+                    'note' => $orderModel->notes ?? $orderModel->note,
+                    'items' => $items,
+                ],
+            ],
+        ];
+
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+            'Authorization' => 'Bearer '.$this->apiKey,
+        ])->post($this->baseUrl.'/api/mitra/v6.2/request_pickup', $payload);
+
+        $json = $response->json() ?? [];
+        $isSuccess = $response->successful() && ! empty($json['status']);
+        $firstDetail = $json['details'][0] ?? [];
+
+        $trackingNumber = ! empty($firstDetail['awb'])
+            ? $firstDetail['awb']
+            : ($json['pickup_number'] ?? ($firstDetail['kj_order_id'] ?? ($firstDetail['order_id'] ?? null)));
+
+        return [
+            'success' => $isSuccess,
+            'tracking_number' => $trackingNumber,
+            'awb' => $firstDetail['awb'] ?? null,
+            'pickup_number' => $json['pickup_number'] ?? null,
+            'courier' => $orderModel->courier_service,
+            'shipping_cost' => (int) $orderModel->shipping_cost,
+            'message' => $json['text'] ?? ($json['message'] ?? ($isSuccess ? 'Pickup berhasil dijadwalkan' : 'Gagal request pickup')),
+            'raw' => $json,
+        ];
     }
 }
