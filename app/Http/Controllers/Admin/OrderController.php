@@ -103,6 +103,9 @@ class OrderController extends Controller
      */
     public function show(Request $request, string $order): Response
     {
+        $pickupSchedules = app(KiriminAjaService::class)->getPickupSchedules();
+        dd($pickupSchedules);
+
         $orderModel = Order::where(function ($q) use ($order) {
             $q->where('order_number', $order)->orWhere('id', $order);
         })
