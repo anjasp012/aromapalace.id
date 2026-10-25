@@ -59,7 +59,7 @@ class KiriminAjaService
         $this->senderDistrictId = (int) Setting::get('shipping_district_id'); //origin
         $this->senderSubdistrictId = (int) Setting::get('shipping_subdistrict_id');
         $this->senderAddress = (string) Setting::get('shipping_address');
-        $this->senderZipcode = (float) Setting::get('shipping_postal_code');
+        $this->senderZipcode = (string) Setting::get('shipping_postal_code');
         $this->senderLatitude = (float) Setting::get('shipping_latitude');
         $this->senderLongitude = (float) Setting::get('shipping_longitude');
         $this->prefix = strtoupper(trim((string) Setting::get('kiriminaja_prefix')));
@@ -352,7 +352,7 @@ class KiriminAjaService
             'longitude' => (float)$this->senderLongitude,
             'platform_name' => $this->storeName,
             'name' => $this->senderName,
-            'zipcode' => (float) $this->senderZipcode,
+            'zipcode' => (string) $this->senderZipcode,
             'schedule' => $pickupSchedule,
             'packages' => [
                 [
@@ -362,7 +362,7 @@ class KiriminAjaService
                     'destination_address' => $orderModel->address,
                     'destination_kecamatan_id' => $orderModel->district_id,
                     'destination_kelurahan_id' => $orderModel->subdistrict_id,
-                    'destination_zipcode' => (float) $orderModel->postal_code,
+                    'destination_zipcode' => (string) $orderModel->postal_code,
                     'destination_latitude' => (float) $orderModel->latitude,
                     'destination_longitude' => (float) $orderModel->longitude,
                     'weight' => $orderModel->orderItems->sum('volume'),
