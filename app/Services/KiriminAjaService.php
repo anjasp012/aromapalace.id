@@ -307,6 +307,7 @@ class KiriminAjaService
     }
 
     public function getPickupSchedules() {
+        dd($this->senderLatitude, $this->senderLongitude);
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $this->apiKey
         ])->post($this->baseUrl . '/api/mitra/v2/schedules');
