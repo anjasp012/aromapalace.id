@@ -823,7 +823,7 @@ export default function OrdersPage({
                 const payBeforeFormatted = selectedOrder.pay_before || (() => {
                     if (selectedOrder.created_at_raw) {
                         const d = new Date(new Date(selectedOrder.created_at_raw).getTime() + 24 * 3600 * 1000);
-                        return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) + ', ' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+                        return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Jakarta' }) + ', ' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' }) + ' WIB';
                     }
                     return null;
                 })();

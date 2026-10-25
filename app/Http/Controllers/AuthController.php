@@ -76,7 +76,7 @@ class AuthController extends Controller
             Auth::login($user, true);
             $request->session()->regenerate();
 
-            return Inertia::location(route('home'));
+            return Inertia::location(route('products.index'));
         }
 
         $credentials = $request->validate([

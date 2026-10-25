@@ -64,16 +64,25 @@ const MONTHS_ID = [
 function formatDateIndo(dateStr?: string | null): string {
     if (!dateStr) return '';
     try {
-        const d = new Date(dateStr.replace(' ', 'T'));
+        // Support both ISO strings ("2026-10-25T11:30:00Z") and KiriminAja timestamps ("2026-08-07 13:49")
+        const hasOffset = dateStr.includes('Z') || /[+-]\d{2}:\d{2}$/.test(dateStr);
+        const parsedDate = new Date(hasOffset ? dateStr : (dateStr.includes('T') ? `${dateStr}+07:00` : `${dateStr.replace(' ', 'T')}+07:00`));
+        const d = isNaN(parsedDate.getTime()) ? new Date(dateStr.replace(' ', 'T')) : parsedDate;
         if (isNaN(d.getTime())) return dateStr;
 
-        const day = String(d.getDate()).padStart(2, '0');
-        const month = MONTHS_ID[d.getMonth()] || '';
-        const year = d.getFullYear();
-        const hours = String(d.getHours()).padStart(2, '0');
-        const minutes = String(d.getMinutes()).padStart(2, '0');
+        const datePart = d.toLocaleDateString('id-ID', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
+            timeZone: 'Asia/Jakarta',
+        });
+        const timePart = d.toLocaleTimeString('id-ID', {
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZone: 'Asia/Jakarta',
+        });
 
-        return `${day} ${month} ${year} ${hours}:${minutes}`;
+        return `${datePart} ${timePart} WIB`;
     } catch {
         return dateStr;
     }
