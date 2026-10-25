@@ -133,7 +133,42 @@ Route::any('/admin/{path?}', function (Request $request, ?string $path = null) {
     $scheme = $request->getScheme();
     $port = $request->getPort();
     $portSuffix = ($port && ! in_array($port, [80, 443])) ? ":{$port}" : '';
-    $cleanPath = $path ? '/'.ltrim($path, '/') : '';
 
-    return redirect("{$scheme}://{$adminDomain}{$portSuffix}{$cleanPath}");
+    $rawPath = $path ? trim($path, '/') : '';
+
+    // Map common English paths to localized admin route paths
+    if ($rawPath === '' || $rawPath === 'admin') {
+        $cleanPath = 'dashboard';
+    } elseif (str_starts_with($rawPath, 'products/')) {
+        $cleanPath = 'manajemen-'.preg_replace('/^products\//', 'produk/', $rawPath);
+    } elseif ($rawPath === 'products') {
+        $cleanPath = 'manajemen-produk';
+    } elseif (str_starts_with($rawPath, 'categories/')) {
+        $cleanPath = 'manajemen-'.preg_replace('/^categories\//', 'kategori/', $rawPath);
+    } elseif ($rawPath === 'categories') {
+        $cleanPath = 'manajemen-kategori';
+    } elseif (str_starts_with($rawPath, 'brands/')) {
+        $cleanPath = 'manajemen-'.preg_replace('/^brands\//', 'brand/', $rawPath);
+    } elseif ($rawPath === 'brands') {
+        $cleanPath = 'manajemen-brand';
+    } elseif (str_starts_with($rawPath, 'articles/')) {
+        $cleanPath = 'manajemen-'.preg_replace('/^articles\//', 'artikel/', $rawPath);
+    } elseif ($rawPath === 'articles') {
+        $cleanPath = 'manajemen-artikel';
+    } elseif (str_starts_with($rawPath, 'orders/')) {
+        $cleanPath = 'manajemen-'.preg_replace('/^orders\//', 'pesanan/', $rawPath);
+    } elseif ($rawPath === 'orders') {
+        $cleanPath = 'manajemen-pesanan';
+    } else {
+        $cleanPath = $rawPath;
+    }
+
+    $targetUrl = "{$scheme}://{$adminDomain}{$portSuffix}/{$cleanPath}";
+
+    if ($request->header('X-Inertia')) {
+        return \Inertia\Inertia::location($targetUrl);
+    }
+
+    return redirect($targetUrl);
 })->where('path', '.*');
+

@@ -133,4 +133,12 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/pengaturan', [SettingController::class, 'index'])->name('settings.index');
     Route::post('/pengaturan', [SettingController::class, 'update'])->name('settings.update');
     Route::post('/pengaturan/test-kiriminaja', [SettingController::class, 'testKiriminAja'])->name('settings.test-kiriminaja');
+
+    // Convenient Aliases
+    Route::get('/admin', fn () => redirect()->route('admin.dashboard'));
+    Route::get('/admin/dashboard', fn () => redirect()->route('admin.dashboard'));
+    Route::get('/products/{product}/edit', fn ($product) => redirect()->route('admin.products.edit', $product));
+    Route::get('/categories/{category}/edit', fn ($category) => redirect()->route('admin.categories.edit', $category));
+    Route::get('/brands/{brand}/edit', fn ($brand) => redirect()->route('admin.brands.edit', $brand));
+    Route::get('/articles/{article}/edit', fn ($article) => redirect()->route('admin.articles.edit', $article));
 });

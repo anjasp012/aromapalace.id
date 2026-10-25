@@ -41,3 +41,63 @@ export function resolveComponentForUrl(pathname: string): string | null {
 
     return null;
 }
+
+/**
+ * Returns the fully qualified URL to the Admin CMS subdomain (e.g. https://admin.aromapalace.id/dashboard)
+ */
+export function getAdminUrl(path = '/dashboard', serverPropUrl?: string): string {
+    const cleanPath = path ? (path.startsWith('/') ? path : `/${path}`) : '';
+
+    if (serverPropUrl) {
+        return `${serverPropUrl.replace(/\/+$/, '')}${cleanPath}`;
+    }
+
+    if (typeof window !== 'undefined') {
+        const host = window.location.hostname;
+        const port = window.location.port ? `:${window.location.port}` : '';
+        const protocol = window.location.protocol;
+
+        if (host === 'localhost' || host === '127.0.0.1' || host.endsWith('.test')) {
+            return `${protocol}//admin.aromapalace.id${port}${cleanPath}`;
+        }
+
+        if (host === 'aromapalace.id' || host === 'www.aromapalace.id') {
+            return `https://admin.aromapalace.id${cleanPath}`;
+        }
+
+        if (!host.startsWith('admin.')) {
+            return `${protocol}//admin.${host}${port}${cleanPath}`;
+        }
+    }
+
+    return `https://admin.aromapalace.id${cleanPath}`;
+}
+
+/**
+ * Returns the fully qualified URL to the customer Storefront (e.g. https://aromapalace.id/)
+ */
+export function getStorefrontUrl(path = '/', serverPropUrl?: string): string {
+    const cleanPath = path ? (path.startsWith('/') ? path : `/${path}`) : '';
+
+    if (serverPropUrl) {
+        return `${serverPropUrl.replace(/\/+$/, '')}${cleanPath}`;
+    }
+
+    if (typeof window !== 'undefined') {
+        const host = window.location.hostname;
+        const port = window.location.port ? `:${window.location.port}` : '';
+        const protocol = window.location.protocol;
+
+        if (host === 'localhost' || host === '127.0.0.1' || host.endsWith('.test')) {
+            return `${protocol}//localhost${port}${cleanPath}`;
+        }
+
+        if (host.startsWith('admin.')) {
+            const cleanHost = host.replace(/^admin\./, '');
+            return `https://${cleanHost}${cleanPath}`;
+        }
+    }
+
+    return `https://aromapalace.id${cleanPath}`;
+}
+

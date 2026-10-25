@@ -57,6 +57,33 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'admin_url' => function () use ($request) {
+                $host = $request->getHost();
+                $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
+                $port = $request->getPort();
+                $portSuffix = ($port && ! in_array($port, [80, 443])) ? ":{$port}" : '';
+                $scheme = $request->getScheme();
+
+                if ($host === 'localhost' || $host === '127.0.0.1' || str_ends_with($host, '.test')) {
+                    return "{$scheme}://{$adminDomain}{$portSuffix}";
+                }
+
+                return rtrim(config('app.admin_url', "https://{$adminDomain}"), '/');
+            },
+            'storefront_url' => function () use ($request) {
+                $host = $request->getHost();
+                $port = $request->getPort();
+                $portSuffix = ($port && ! in_array($port, [80, 443])) ? ":{$port}" : '';
+                $scheme = $request->getScheme();
+
+                if ($host === 'localhost' || $host === '127.0.0.1' || str_ends_with($host, '.test')) {
+                    $cleanHost = preg_replace('/^admin\./', '', $host);
+
+                    return "{$scheme}://{$cleanHost}{$portSuffix}";
+                }
+
+                return rtrim(config('app.url', 'https://aromapalace.id'), '/');
+            },
             'locale' => fn () => app()->getLocale(),
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
