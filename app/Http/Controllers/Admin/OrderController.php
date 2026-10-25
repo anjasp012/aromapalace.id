@@ -197,7 +197,7 @@ class OrderController extends Controller
                     return back()->with('error', "Gagal menerbitkan Resi Otomatis KiriminAja: {$errMsg}. Silakan periksa data pesanan atau gunakan Resi Manual.");
                 }
 
-                $orderModel->tracking_number = $kirimResult['tracking_number'];
+                $awb = $kirimResult['tracking_number'] ?? ($kirimResult['awb'] ?? null);
                 if (! empty($kirimResult['courier'])) {
                     $orderModel->courier = $kirimResult['courier'];
                 }
@@ -208,7 +208,7 @@ class OrderController extends Controller
                 $orderModel->shipping()->updateOrCreate(
                     ['order_id' => $orderModel->id],
                     [
-                        'awb' => $kirimResult['tracking_number'] ?? ($kirimResult['awb'] ?? null),
+                        'awb' => $awb,
                         'text' => $kirimResult['text'] ?? null,
                         'image' => $kirimResult['image'] ?? null,
                         'origin' => $kirimResult['origin'] ?? null,
@@ -217,9 +217,9 @@ class OrderController extends Controller
                     ]
                 );
 
-                $customFlash = "Pesanan #{$orderModel->order_number} berhasil dikirim dengan Resi Otomatis KiriminAja: {$orderModel->tracking_number}.";
+                $customFlash = "Pesanan #{$orderModel->order_number} berhasil dikirim dengan Resi Otomatis KiriminAja: {$awb}.";
             } elseif (! empty($validated['tracking_number'])) {
-                $orderModel->tracking_number = trim($validated['tracking_number']);
+                $manualAwb = trim($validated['tracking_number']);
                 if (! empty($validated['courier'])) {
                     $orderModel->courier = trim($validated['courier']);
                 }
@@ -227,14 +227,14 @@ class OrderController extends Controller
                 $orderModel->shipping()->updateOrCreate(
                     ['order_id' => $orderModel->id],
                     [
-                        'awb' => trim($validated['tracking_number']),
+                        'awb' => $manualAwb,
                     ]
                 );
 
-                $customFlash = "Pesanan #{$orderModel->order_number} berhasil dikirim dengan Resi Manual: {$orderModel->tracking_number}.";
+                $customFlash = "Pesanan #{$orderModel->order_number} berhasil dikirim dengan Resi Manual: {$manualAwb}.";
             }
         } elseif (! empty($validated['tracking_number'])) {
-            $orderModel->tracking_number = trim($validated['tracking_number']);
+            $manualAwb = trim($validated['tracking_number']);
             if (! empty($validated['courier'])) {
                 $orderModel->courier = trim($validated['courier']);
             }
@@ -242,7 +242,7 @@ class OrderController extends Controller
             $orderModel->shipping()->updateOrCreate(
                 ['order_id' => $orderModel->id],
                 [
-                    'awb' => trim($validated['tracking_number']),
+                    'awb' => $manualAwb,
                 ]
             );
         }
@@ -309,8 +309,8 @@ class OrderController extends Controller
             'store_id' => $order->store_id,
             'store_name' => $order->store?->name,
             'courier' => $order->courier,
-            'tracking_number' => $order->tracking_number,
-            'city' => $order->city,
+            'tracking_number' => $order->shipping?->awb,
+            'city' => $order->city_name,
             'total_amount' => $order->total_amount,
             'total_amount_formatted' => 'Rp '.number_format($order->total_amount, 0, ',', '.'),
             'payment_method' => $order->payment_method,
@@ -399,7 +399,6 @@ class OrderController extends Controller
             'recipient_name' => $order->recipient_name,
             'recipient_phone' => $order->recipient_phone,
             'address' => $order->address,
-            'shipping_address' => $order->address,
             'province_name' => $order->province_name,
             'city_name' => $order->city_name,
             'district_name' => $order->district_name,
@@ -409,7 +408,7 @@ class OrderController extends Controller
             'latitude' => $order->latitude,
             'longitude' => $order->longitude,
             'courier' => $order->courier,
-            'tracking_number' => $order->shipping?->awb ?? $order->tracking_number,
+            'tracking_number' => $order->shipping?->awb,
             'shipping' => $order->shipping ? [
                 'id' => $order->shipping->id,
                 'awb' => $order->shipping->awb,

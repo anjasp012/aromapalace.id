@@ -94,6 +94,7 @@ test('kiriminaja webhook populates shipping table', function () {
         'delivery_type' => 'delivery',
         'recipient_name' => 'Andi',
         'recipient_phone' => '081234567890',
+        'address' => 'Jl. Ir H Djuanda No. 123',
         'courier' => 'JNE Express',
         'shipping_cost' => 15000,
         'payment_method' => 'qris',

@@ -10,6 +10,7 @@ use Illuminate\Support\Carbon;
 /**
  * @property int $id
  * @property int $order_id
+ * @property string|null $shipping_payment_code
  * @property string|null $awb
  * @property string|null $text
  * @property array|null $image
@@ -34,6 +35,7 @@ class Shipping extends Model
      */
     protected $fillable = [
         'order_id',
+        'shipping_payment_code',
         'awb',
         'text',
         'image',

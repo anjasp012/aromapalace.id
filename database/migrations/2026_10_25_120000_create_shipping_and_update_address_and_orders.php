@@ -33,9 +33,23 @@ return new class extends Migration
 
         // 3. Update orders table: rename shipping_address to address (nullable), add latitude & longitude, drop tracking_number
         Schema::table('orders', function (Blueprint $table) {
-            $table->double('latitude')->nullable()->after('postal_code');
-            $table->double('longitude')->nullable()->after('latitude');
-            $table->dropColumn('tracking_number');
+            if (Schema::hasColumn('orders', 'shipping_address') && ! Schema::hasColumn('orders', 'address')) {
+                $table->renameColumn('shipping_address', 'address');
+            } elseif (! Schema::hasColumn('orders', 'address')) {
+                $table->text('address')->nullable()->after('recipient_phone');
+            }
+
+            if (! Schema::hasColumn('orders', 'latitude')) {
+                $table->double('latitude')->nullable()->after('postal_code');
+            }
+
+            if (! Schema::hasColumn('orders', 'longitude')) {
+                $table->double('longitude')->nullable()->after('latitude');
+            }
+
+            if (Schema::hasColumn('orders', 'tracking_number')) {
+                $table->dropColumn('tracking_number');
+            }
         });
     }
 
@@ -46,9 +60,24 @@ return new class extends Migration
     {
         // 1. Restore orders table
         Schema::table('orders', function (Blueprint $table) {
-            $table->string('tracking_number', 100)->nullable()->after('courier');
-            $table->dropColumn(['latitude', 'longitude']);
-            $table->renameColumn('address', 'shipping_address');
+            if (Schema::hasColumn('orders', 'address') && ! Schema::hasColumn('orders', 'shipping_address')) {
+                $table->renameColumn('address', 'shipping_address');
+            }
+
+            if (! Schema::hasColumn('orders', 'tracking_number')) {
+                $table->string('tracking_number', 100)->nullable()->after('courier');
+            }
+
+            $columnsToDrop = [];
+            if (Schema::hasColumn('orders', 'latitude')) {
+                $columnsToDrop[] = 'latitude';
+            }
+            if (Schema::hasColumn('orders', 'longitude')) {
+                $columnsToDrop[] = 'longitude';
+            }
+            if (! empty($columnsToDrop)) {
+                $table->dropColumn($columnsToDrop);
+            }
         });
 
         // 2. Drop shipping table

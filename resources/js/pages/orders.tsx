@@ -82,7 +82,7 @@ interface OrderData {
     payment_code: string;
     recipient_name?: string;
     recipient_phone?: string;
-    shipping_address?: string;
+    address?: string;
     city?: string;
     postal_code?: string;
     courier?: string;
@@ -884,7 +884,7 @@ export default function OrdersPage({
                                                 </div>
                                                 {!isPickup && (
                                                     <div className="text-muted-foreground leading-relaxed text-[11px]">
-                                                        {selectedOrder.shipping_address || '-'}
+                                                        {selectedOrder.address || '-'}
                                                         {selectedOrder.city ? `, ${selectedOrder.city}` : ''}
                                                         {selectedOrder.postal_code ? ` ${selectedOrder.postal_code}` : ''}
                                                     </div>

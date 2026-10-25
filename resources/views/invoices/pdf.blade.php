@@ -335,7 +335,7 @@
                         {{ $order['recipient_name'] }} ({{ $order['recipient_phone'] }})
                     </div>
                     <div style="color: #4b5563; font-size: 10px; margin-top: 2px;">
-                        {{ $order['shipping_address'] }}{{ !empty($order['city']) ? ', '.$order['city'] : '' }}{{ !empty($order['postal_code']) ? ', '.$order['postal_code'] : '' }}
+                        {{ $order['address'] ?? ($order['shipping_address'] ?? '') }}{{ !empty($order['city']) ? ', '.$order['city'] : '' }}{{ !empty($order['postal_code']) ? ', '.$order['postal_code'] : '' }}
                     </div>
                 </td>
             </tr>

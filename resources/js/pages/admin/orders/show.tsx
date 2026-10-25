@@ -85,7 +85,7 @@ interface OrderDetail {
     } | null;
     recipient_name?: string;
     recipient_phone?: string;
-    shipping_address?: string;
+    address?: string;
     province_name?: string | null;
     city_name?: string | null;
     district_name?: string | null;
@@ -656,7 +656,7 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
                                         <div className="space-y-1 text-xs">
                                             <div className="text-muted-foreground font-medium">Alamat Tujuan:</div>
                                             <div className="rounded-lg border p-3 bg-muted/30 space-y-1">
-                                            <div className="text-foreground">{order.shipping_address || '-'}</div>
+                                            <div className="text-foreground">{order.address || '-'}</div>
                                             <div className="font-medium text-foreground">
                                                 {[
                                                     order.subdistrict_name ? `Kel. ${order.subdistrict_name}` : null,
@@ -897,7 +897,7 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
                             <div className="flex items-center justify-between text-muted-foreground">
                                 <span>Tujuan:</span>
                                 <span className="font-medium text-foreground truncate max-w-[200px]">
-                                    {[order.district_name, order.city_name || order.city].filter(Boolean).join(', ') || order.shipping_address}
+                                    {[order.district_name, order.city_name || order.city].filter(Boolean).join(', ') || order.address}
                                 </span>
                             </div>
                         </div>

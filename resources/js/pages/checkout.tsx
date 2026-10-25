@@ -350,7 +350,7 @@ export default function CheckoutPage({
                 address_id: activeAddr.id,
                 recipient_name: prev.recipient_name || activeAddr.recipient_name || user?.name || '',
                 recipient_phone: activeAddr.recipient_phone || prev.recipient_phone || user?.phone || '',
-                shipping_address: activeAddr.formatted_address || activeAddr.address || prev.shipping_address,
+                address: activeAddr.formatted_address || activeAddr.address || prev.address,
                 province_name: activeAddr.province_name || '',
                 city_name: activeAddr.city_name || '',
                 district_name: activeAddr.district_name || '',
@@ -521,7 +521,7 @@ export default function CheckoutPage({
         address_id: initialSelectedAddress?.id || null,
         recipient_name: initialSelectedAddress?.recipient_name || user?.name || '',
         recipient_phone: initialSelectedAddress?.recipient_phone || user?.phone || '',
-        shipping_address: initialSelectedAddress?.formatted_address || initialSelectedAddress?.address || user?.address || '',
+        address: initialSelectedAddress?.formatted_address || initialSelectedAddress?.address || user?.address || '',
         province_name: initialSelectedAddress?.province_name || '',
         city_name: initialSelectedAddress?.city_name || '',
         district_name: initialSelectedAddress?.district_name || '',
@@ -544,7 +544,7 @@ export default function CheckoutPage({
             address_id: addr.id,
             recipient_name: addr.recipient_name,
             recipient_phone: addr.recipient_phone,
-            shipping_address: addr.formatted_address || addr.address,
+            address: addr.formatted_address || addr.address,
             province_name: addr.province_name || '',
             city_name: addr.city_name || '',
             district_name: addr.district_name || '',
@@ -710,10 +710,10 @@ export default function CheckoutPage({
         e.preventDefault();
         if (deliveryType === 'delivery') {
             const activeAddress = selectedAddress || initialSelectedAddress;
-            const shippingAddr = activeAddress?.formatted_address || activeAddress?.address || data.shipping_address;
+            const orderAddr = activeAddress?.formatted_address || activeAddress?.address || data.address;
             const recipientPhone = activeAddress?.recipient_phone || data.recipient_phone;
 
-            if (!shippingAddr?.trim() || !recipientPhone?.trim()) {
+            if (!orderAddr?.trim() || !recipientPhone?.trim()) {
                 setEditingAddress(null);
                 setAddressModalOpen(true);
                 alert(isEn
@@ -728,7 +728,7 @@ export default function CheckoutPage({
                     address_id: activeAddress.id,
                     recipient_name: activeAddress.recipient_name || prev.recipient_name,
                     recipient_phone: recipientPhone,
-                    shipping_address: shippingAddr,
+                    address: orderAddr,
                     province_name: activeAddress.province_name || '',
                     city_name: activeAddress.city_name || '',
                     district_name: activeAddress.district_name || '',
@@ -1734,8 +1734,8 @@ export default function CheckoutPage({
                                 <>
                                     <div className="flex items-start justify-between gap-2">
                                         <span className="text-muted-foreground shrink-0">{isEn ? 'Address' : 'Alamat'}</span>
-                                        <span className="font-medium text-foreground text-right max-w-[220px] truncate" title={data.shipping_address}>
-                                            {data.shipping_address}
+                                        <span className="font-medium text-foreground text-right max-w-[220px] truncate" title={data.address}>
+                                            {data.address}
                                         </span>
                                     </div>
                                     <div className="flex items-start justify-between gap-2">

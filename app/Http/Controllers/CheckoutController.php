@@ -253,7 +253,7 @@ class CheckoutController extends Controller
             'address_id' => ['nullable', 'integer', 'exists:user_addresses,id'],
             'recipient_name' => ['required', 'string', 'max:120'],
             'recipient_phone' => ['required', 'string', 'max:25'],
-            'shipping_address' => ['required_if:delivery_type,delivery', 'nullable', 'string', 'max:500'],
+            'address' => ['required_if:delivery_type,delivery', 'nullable', 'string', 'max:500'],
             'province_name' => ['nullable', 'string', 'max:100'],
             'city_name' => ['nullable', 'string', 'max:100'],
             'district_name' => ['nullable', 'string', 'max:100'],
@@ -388,7 +388,7 @@ class CheckoutController extends Controller
                 $store = ! empty($validated['store_id']) ? Store::find($validated['store_id']) : Store::first();
                 $storeId = $store?->id;
                 $storeName = $store ? $store->name : 'Butik Resmi Aroma Palace';
-                $shippingAddress = 'Ambil di butik: '.($store ? $store->name.' - '.$store->description : 'Butik Resmi Aroma Palace');
+                $orderAddress = 'Ambil di butik: '.($store ? $store->name.' - '.$store->description : 'Butik Resmi Aroma Palace');
                 $provinceName = null;
                 $cityName = 'Ambil di Butik';
                 $districtName = null;
@@ -396,7 +396,7 @@ class CheckoutController extends Controller
                 $courier = 'Ambil Mandiri di Butik ('.$storeName.')';
                 $shippingCost = 0;
             } else {
-                $shippingAddress = $validated['shipping_address'] ?? ($address?->formatted_address ?: ($address?->address ?? '-'));
+                $orderAddress = $validated['address'] ?? ($address?->formatted_address ?: ($address?->address ?? '-'));
                 $provinceName = $validated['province_name'] ?? ($address?->province_name ?? null);
                 $cityName = $validated['city_name'] ?? ($address?->city_name ?? ($validated['city'] ?? null));
                 $districtName = $validated['district_name'] ?? ($address?->district_name ?? null);
@@ -410,7 +410,7 @@ class CheckoutController extends Controller
                 $deliveryType,
                 $storeId,
                 $validated,
-                $shippingAddress,
+                $orderAddress,
                 $provinceName,
                 $cityName,
                 $districtName,
@@ -476,7 +476,7 @@ class CheckoutController extends Controller
                     'store_id' => $storeId,
                     'recipient_name' => $validated['recipient_name'],
                     'recipient_phone' => $validated['recipient_phone'],
-                    'address' => $shippingAddress,
+                    'address' => $orderAddress,
                     'province_name' => $provinceName,
                     'city_name' => $cityName,
                     'district_name' => $districtName,

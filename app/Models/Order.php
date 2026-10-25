@@ -47,9 +47,6 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, OrderItem> $items
  * @property-read Voucher|null $voucher
  * @property-read Store|null $store
- * @property-read string|null $shipping_address
- * @property-read string|null $city
- * @property-read string|null $tracking_number
  */
 #[Fillable([
     'order_number',
@@ -59,17 +56,14 @@ use Illuminate\Support\Carbon;
     'recipient_name',
     'recipient_phone',
     'address',
-    'shipping_address',
     'province_name',
     'city_name',
     'district_name',
     'subdistrict_name',
     'postal_code',
-    'city',
     'latitude',
     'longitude',
     'courier',
-    'tracking_number',
     'shipping_cost',
     'payment_method',
     'payment_channel',
@@ -91,61 +85,6 @@ class Order extends Model
      * @var array<int, string>
      */
     protected $with = ['shipping'];
-
-    /**
-     * Temporary holder for tracking_number when set directly.
-     */
-    protected ?string $temporaryTrackingNumber = null;
-
-    /**
-     * Map virtual/alias keys to their corresponding database columns.
-     */
-    public function setAttribute($key, $value)
-    {
-        if ($key === 'shipping_address') {
-            $this->attributes['address'] = $value;
-
-            return $this;
-        }
-
-        if ($key === 'city') {
-            $this->attributes['city_name'] = $value;
-
-            return $this;
-        }
-
-        if ($key === 'tracking_number') {
-            $this->temporaryTrackingNumber = $value;
-
-            return $this;
-        }
-
-        return parent::setAttribute($key, $value);
-    }
-
-    /**
-     * Backward-compatible accessor for shipping_address -> address.
-     */
-    public function getShippingAddressAttribute(): ?string
-    {
-        return $this->attributes['address'] ?? null;
-    }
-
-    /**
-     * Backward-compatible accessor for city -> city_name.
-     */
-    public function getCityAttribute(): ?string
-    {
-        return $this->attributes['city_name'] ?? null;
-    }
-
-    /**
-     * Backward-compatible accessor for tracking_number -> shipping.awb.
-     */
-    public function getTrackingNumberAttribute(): ?string
-    {
-        return $this->shipping?->awb ?? $this->temporaryTrackingNumber;
-    }
 
     /**
      * @return array<string, string>

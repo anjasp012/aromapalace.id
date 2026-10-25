@@ -24,7 +24,7 @@ interface InvoiceProps {
         delivery_type: string;
         recipient_name: string;
         recipient_phone: string;
-        shipping_address: string;
+        address: string;
         city: string;
         postal_code?: string | null;
         courier: string;
@@ -374,7 +374,7 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
                                         {order.recipient_name} ({order.recipient_phone})
                                     </div>
                                     <div className="text-gray-600 leading-relaxed text-[10px] sm:text-[11px]">
-                                        {order.shipping_address}{order.city ? `, ${order.city}` : ''}{order.postal_code ? `, ${order.postal_code}` : ''}
+                                        {order.address}{order.city ? `, ${order.city}` : ''}{order.postal_code ? `, ${order.postal_code}` : ''}
                                     </div>
                                 </div>
                             </div>
