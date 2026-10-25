@@ -152,7 +152,7 @@ class CheckoutController extends Controller
 
         // Ambil tarif pengiriman riil KiriminAja jika alamat utama memiliki district_id
         $originId = (int) Setting::get('shipping_district_id', 2101);
-        dd($this->kiriminAjaService->getShippingPrices());
+        dd($this->kiriminAjaService->getShippingPrices($originId, (int) $primaryAddress->district_id, $totalWeight));
         $initialShippingRates = ($primaryAddress && $primaryAddress->district_id)
             ? $this->kiriminAjaService->getShippingRates($originId, (int) $primaryAddress->district_id, $totalWeight)
             : [];
