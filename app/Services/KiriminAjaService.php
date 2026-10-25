@@ -224,8 +224,8 @@ class KiriminAjaService
                 $arr = (array) $item;
                 return [
                     'service' => $arr['service'],
-                    'service_name' => $arr['service_name'],
-                    'service_type' => $arr['service_type'],
+                    'name' => $arr['service_name'],
+                    'type' => $arr['service_type'],
                     'price' => $arr['cost'],
                     'etd' => $arr['etd'],
                     'insurance' => $arr['insurance'],
