@@ -41,7 +41,7 @@ class KiriminAjaService
         $this->baseUrl = $this->mode === 'production' ? 'https://client.kiriminaja.com' : 'https://tdev.kiriminaja.com';
         $this->pin = trim((string) Setting::get('kiriminaja_pin', '123456'));
         $this->senderName = (string) Setting::get('shipping_sender_name', Setting::get('store_name', 'Aroma Palace Official'));
-        $this->senderPhone = (string) Setting::get('shipping_sender_phone', Setting::get('store_phone', '081288889999'));
+        $this->senderPhone = $this->formatPhoneNumber((string) Setting::get('shipping_sender_phone', Setting::get('store_phone', '081288889999')));
         $this->senderAddress = (string) Setting::get('shipping_address', Setting::get('store_address', 'Jl. Kemang Raya No. 10, Jakarta Selatan'));
         $this->senderZipcode = (string) Setting::get('shipping_postal_code', '12130');
         $this->prefix = strtoupper(trim((string) Setting::get('kiriminaja_prefix', config('services.kiriminaja.order_prefix', 'ARPL'))));
@@ -61,6 +61,62 @@ class KiriminAjaService
             ->acceptJson()
             ->asJson()
             ->timeout(20);
+    }
+
+    /**
+     * Format dan standardisasi nomor telepon sesuai validasi ketat KiriminAja.
+     * Harus dimulai dengan 08, 628, +628, atau 02 dan hanya berisi digit angka.
+     */
+    public function formatPhoneNumber(?string $phone): string
+    {
+        if (empty($phone)) {
+            return '081234567890';
+        }
+
+        // Hapus semua spasi, strip, kurung, dan karakter non-digit
+        $digits = preg_replace('/[^0-9]/', '', (string) $phone);
+
+        if (empty($digits)) {
+            return '081234567890';
+        }
+
+        // 1. Jika diawali 628 -> ubah ke 08...
+        if (str_starts_with($digits, '628')) {
+            $digits = '08'.substr($digits, 3);
+        }
+        // 2. Jika diawali 622 -> ubah ke 02...
+        elseif (str_starts_with($digits, '622')) {
+            $digits = '02'.substr($digits, 3);
+        }
+        // 3. Jika diawali 62 (misal 628xxx tanpa tanda + tapi terlewat)
+        elseif (str_starts_with($digits, '62')) {
+            $digits = '0'.substr($digits, 2);
+        }
+        // 4. Jika user hanya memasukkan angka 8 (misal 81234567890) -> tambahkan 0 di depan
+        elseif (str_starts_with($digits, '8')) {
+            $digits = '0'.$digits;
+        }
+
+        // 5. Pastikan diawali dengan 08 atau 02 (sesuai pesan validasi KiriminAja)
+        if (! str_starts_with($digits, '08') && ! str_starts_with($digits, '02')) {
+            if (str_starts_with($digits, '0')) {
+                $digits = '08'.substr($digits, 1);
+            } else {
+                $digits = '08'.$digits;
+            }
+        }
+
+        // 6. Jika terlalu pendek (kurang dari 8 digit), fallback ke default
+        if (strlen($digits) < 8) {
+            return '081234567890';
+        }
+
+        // 7. Batasi maksimal 15 digit (standar E.164)
+        if (strlen($digits) > 15) {
+            $digits = substr($digits, 0, 15);
+        }
+
+        return $digits;
     }
 
     /**
@@ -526,9 +582,15 @@ class KiriminAjaService
 
         // 3. Data Penerima
         $recipientName = trim($order->recipient_name ?: ($order->user?->name ?: 'Pelanggan Aroma Palace'));
-        $recipientPhone = trim($order->recipient_phone ?: '081234567890');
+        $recipientPhone = $this->formatPhoneNumber((string) ($order->recipient_phone ?: ($order->user?->phone ?? '')));
+        $senderPhone = $this->formatPhoneNumber((string) $this->senderPhone);
         $destAddress = trim($order->shipping_address ?: ($order->city ?: 'Alamat Pemesan'));
         $destZipcode = trim($order->postal_code ?: '12130');
+
+        if (! empty($recipientPhone) && $order->recipient_phone !== $recipientPhone) {
+            $order->recipient_phone = $recipientPhone;
+            $order->save();
+        }
 
         // 4. Hitung Berat & Nilai Barang
         $weight = 0;
@@ -606,7 +668,7 @@ class KiriminAjaService
         // 8. Payload Request Pickup resmi KiriminAja v6.2
         $payload = [
             'address' => $this->senderAddress,
-            'phone' => $this->senderPhone,
+            'phone' => $senderPhone,
             'name' => $this->senderName,
             'zipcode' => $this->senderZipcode,
             'kecamatan_id' => $this->origin,

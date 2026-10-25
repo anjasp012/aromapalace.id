@@ -430,3 +430,14 @@ test('admin can sync tracking number and shipping cost from kiriminaja', functio
         ->and($order->shipping_cost)->toBe(10000)
         ->and($order->courier)->toBe('JNE (CTC23)');
 });
+
+test('kiriminaja service formats and sanitizes various phone number formats correctly', function () {
+    $service = app(KiriminAjaService::class);
+
+    expect($service->formatPhoneNumber('81234567890'))->toBe('081234567890')
+        ->and($service->formatPhoneNumber('+62812-3456-7890'))->toBe('081234567890')
+        ->and($service->formatPhoneNumber('62812 3456 7890'))->toBe('081234567890')
+        ->and($service->formatPhoneNumber('0812-3456-7890'))->toBe('081234567890')
+        ->and($service->formatPhoneNumber('021-5551234'))->toBe('0215551234')
+        ->and($service->formatPhoneNumber('+6221-5551234'))->toBe('0215551234');
+});
