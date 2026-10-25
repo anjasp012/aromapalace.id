@@ -190,8 +190,8 @@ class KiriminAjaService
     public function getShippingRates($origin, ) {
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $this->apiKey
-        ])->post($this->baseUrl . '/api/mitra/couriers/');
+        ])->post($this->baseUrl . '/api/mitra/couriers');
          $json = $response->json();
-         dd($json);
+         dd($json, $response);
     }
 }
