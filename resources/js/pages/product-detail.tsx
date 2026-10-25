@@ -31,7 +31,7 @@ export interface ProductVariantItem {
     id: number;
     product_id: number;
     name: string;
-    volume: string;
+    volume: string | number;
     price: string;
     raw_price: number;
     original_price?: string;
@@ -47,7 +47,7 @@ export interface FragranceDetail {
     brand?: string;
     category?: string;
     family: string;
-    volume: string;
+    volume: string | number;
     concentration: string;
     price: string;
     originalPrice?: string;
@@ -203,7 +203,8 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
         if (product.variants && product.variants.length > 0) {
             return product.variants.map((v) => ({
                 id: v.id,
-                label: v.volume,
+                label: formatVolume(v.volume),
+                rawVolume: v.volume,
                 title: v.name,
                 price: v.price,
                 rawPrice: v.raw_price,
@@ -215,8 +216,9 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
         return [
             {
                 id: null,
-                label: product.volume || '50ml',
-                title: `${product.volume || '50ml'} (${isEn ? 'Signature Product' : 'Signature Produk'})`,
+                label: formatVolume(product.volume || 50),
+                rawVolume: product.volume || 50,
+                title: `${formatVolume(product.volume || 50)} (${isEn ? 'Signature Product' : 'Signature Produk'})`,
                 price: product.price,
                 rawPrice: product.raw_price,
                 originalPrice: product.originalPrice,
@@ -234,7 +236,7 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
             originalPrice: selected.originalPrice || null,
             rawPrice: selected.rawPrice,
             variantId: selected.id,
-            volume: selected.label,
+            volume: selected.rawVolume ?? selected.label,
             title: selected.title,
         };
     }, [availableSizes, selectedSizeIndex]);

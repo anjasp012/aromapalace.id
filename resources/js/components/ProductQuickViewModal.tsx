@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { type ProductItem } from '@/components/ProductCard';
 import { useTranslation, formatCategoryName } from '@/lib/i18n';
 import { Check, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatVolume } from '@/lib/utils';
 
 interface ProductQuickViewModalProps {
     product: ProductItem | null;
@@ -78,7 +78,7 @@ export default function ProductQuickViewModal({
                 {
                     product_id: product.id,
                     quantity: quantity,
-                    volume: product.volume || '50ml',
+                    volume: product.volume || 50,
                 },
                 {
                     preserveScroll: true,
@@ -163,7 +163,7 @@ export default function ProductQuickViewModal({
                                 {product.name}
                             </DialogTitle>
                             <DialogDescription className="text-xs">
-                                {t('catalog.concentration')}: {product.concentration || 'Eau de Parfum'} &bull; {product.volume || '100ml'}
+                                {t('catalog.concentration')}: {product.concentration || 'Eau de Parfum'} &bull; {formatVolume(product.volume || 50)}
                             </DialogDescription>
                         </DialogHeader>
 
