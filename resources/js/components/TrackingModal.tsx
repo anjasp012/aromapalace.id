@@ -237,7 +237,7 @@ export default function TrackingModal({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent
                 showCloseButton={false}
-                className="max-w-3xl w-full h-[90vh] sm:h-[85vh] max-h-[90vh] sm:max-h-[85vh] p-0 gap-0 rounded-2xl bg-card text-card-foreground border border-border/80 shadow-2xl flex flex-col overflow-hidden outline-none"
+                className="max-w-4xl lg:max-w-5xl w-full h-[90vh] sm:h-[85vh] max-h-[90vh] sm:max-h-[85vh] p-0 gap-0 rounded-2xl bg-card text-card-foreground border border-border/80 shadow-2xl flex flex-col overflow-hidden outline-none"
             >
                 {/* Modal Header */}
                 <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-border/80 shrink-0 bg-card">
@@ -257,7 +257,7 @@ export default function TrackingModal({
                 {/* Modal Body */}
                 <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-6 p-5 sm:p-6 overflow-y-auto md:overflow-hidden">
                     {/* LEFT COLUMN: COURIER, AWB, SENDER & RECIPIENT */}
-                    <div className="w-full md:w-72 shrink-0 rounded-lg border border-border/80 bg-card/60 backdrop-blur-xs p-5 sm:p-6 space-y-4 h-fit shadow-none text-left">
+                    <div className="w-full md:w-80 lg:w-84 shrink-0 rounded-lg border border-border/80 bg-card/60 backdrop-blur-xs p-5 sm:p-6 space-y-4 h-fit shadow-none text-left">
                         {/* Courier Information */}
                         <div className="space-y-2.5 text-xs">
                             <div className="font-bold text-xs text-foreground">

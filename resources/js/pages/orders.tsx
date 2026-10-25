@@ -621,26 +621,7 @@ export default function OrdersPage({
                                                 #{order.order_number}
                                             </span>
                                             <span className="hidden sm:inline text-muted-foreground">•</span>
-                                            <span className="hidden sm:inline text-muted-foreground">{order.created_at}</span>
-                                            <span className="hidden sm:inline text-muted-foreground">•</span>
-                                            <span className="hidden sm:inline text-muted-foreground">{order.payment_channel}</span>
-                                            {order.tracking_number && (
-                                                <>
-                                                    <span className="hidden sm:inline text-muted-foreground">•</span>
-                                                    <button
-                                                        type="button"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleOpenTracking(order);
-                                                        }}
-                                                        title="Klik untuk melacak paket"
-                                                        className="inline-flex items-center gap-1 font-mono text-[11px] font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800 transition cursor-pointer"
-                                                    >
-                                                        <Truck className="w-3 h-3 shrink-0" />
-                                                        <span>Resi: {order.tracking_number}</span>
-                                                    </button>
-                                                </>
-                                            )}
+                                            <span className="text-muted-foreground">{order.created_at}</span>
                                         </div>
 
                                         <div className="shrink-0">
