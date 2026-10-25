@@ -17,6 +17,14 @@ use Illuminate\Support\Carbon;
  * @property int $user_id
  * @property string $recipient_name
  * @property string $recipient_phone
+ * @property string|null $address
+ * @property string|null $province_name
+ * @property string|null $city_name
+ * @property string|null $district_name
+ * @property string|null $subdistrict_name
+ * @property string|null $postal_code
+ * @property float|null $latitude
+ * @property float|null $longitude
  * @property string $courier
  * @property int $shipping_cost
  * @property string $payment_method
@@ -40,12 +48,7 @@ use Illuminate\Support\Carbon;
  * @property-read Voucher|null $voucher
  * @property-read Store|null $store
  * @property-read string|null $shipping_address
- * @property-read string|null $province_name
- * @property-read string|null $city_name
- * @property-read string|null $district_name
- * @property-read string|null $subdistrict_name
  * @property-read string|null $city
- * @property-read string|null $postal_code
  * @property-read string|null $tracking_number
  */
 #[Fillable([
@@ -55,6 +58,7 @@ use Illuminate\Support\Carbon;
     'store_id',
     'recipient_name',
     'recipient_phone',
+    'address',
     'shipping_address',
     'province_name',
     'city_name',
@@ -62,6 +66,8 @@ use Illuminate\Support\Carbon;
     'subdistrict_name',
     'postal_code',
     'city',
+    'latitude',
+    'longitude',
     'courier',
     'tracking_number',
     'shipping_cost',
@@ -87,30 +93,29 @@ class Order extends Model
     protected $with = ['shipping'];
 
     /**
-     * In-memory cache for temporary attributes if set in tests or legacy callers.
-     *
-     * @var array<string, mixed>
+     * Temporary holder for tracking_number when set directly.
      */
-    public array $temporaryShippingData = [];
+    protected ?string $temporaryTrackingNumber = null;
 
     /**
-     * Intercept setting of address and tracking attributes to prevent unknown column errors.
+     * Map virtual/alias keys to their corresponding database columns.
      */
     public function setAttribute($key, $value)
     {
-        $shippingKeys = [
-            'shipping_address',
-            'province_name',
-            'city_name',
-            'district_name',
-            'subdistrict_name',
-            'postal_code',
-            'tracking_number',
-            'city',
-        ];
+        if ($key === 'shipping_address') {
+            $this->attributes['address'] = $value;
 
-        if (in_array($key, $shippingKeys)) {
-            $this->temporaryShippingData[$key] = $value;
+            return $this;
+        }
+
+        if ($key === 'city') {
+            $this->attributes['city_name'] = $value;
+
+            return $this;
+        }
+
+        if ($key === 'tracking_number') {
+            $this->temporaryTrackingNumber = $value;
 
             return $this;
         }
@@ -119,35 +124,11 @@ class Order extends Model
     }
 
     /**
-     * Backward-compatible accessor for tracking_number -> shipping.awb.
-     */
-    public function getTrackingNumberAttribute(): ?string
-    {
-        return $this->shipping?->awb ?? ($this->temporaryShippingData['tracking_number'] ?? null);
-    }
-
-    /**
-     * Backward-compatible accessor for shipping_address -> shipping.destination.address.
+     * Backward-compatible accessor for shipping_address -> address.
      */
     public function getShippingAddressAttribute(): ?string
     {
-        return $this->shipping?->destination['address'] ?? ($this->temporaryShippingData['shipping_address'] ?? null);
-    }
-
-    /**
-     * Backward-compatible accessor for province_name.
-     */
-    public function getProvinceNameAttribute(): ?string
-    {
-        return $this->shipping?->destination['province_name'] ?? ($this->temporaryShippingData['province_name'] ?? null);
-    }
-
-    /**
-     * Backward-compatible accessor for city_name.
-     */
-    public function getCityNameAttribute(): ?string
-    {
-        return $this->shipping?->destination['city_name'] ?? ($this->temporaryShippingData['city_name'] ?? ($this->temporaryShippingData['city'] ?? null));
+        return $this->attributes['address'] ?? null;
     }
 
     /**
@@ -155,31 +136,15 @@ class Order extends Model
      */
     public function getCityAttribute(): ?string
     {
-        return $this->city_name;
+        return $this->attributes['city_name'] ?? null;
     }
 
     /**
-     * Backward-compatible accessor for district_name.
+     * Backward-compatible accessor for tracking_number -> shipping.awb.
      */
-    public function getDistrictNameAttribute(): ?string
+    public function getTrackingNumberAttribute(): ?string
     {
-        return $this->shipping?->destination['district_name'] ?? ($this->temporaryShippingData['district_name'] ?? null);
-    }
-
-    /**
-     * Backward-compatible accessor for subdistrict_name.
-     */
-    public function getSubdistrictNameAttribute(): ?string
-    {
-        return $this->shipping?->destination['subdistrict_name'] ?? ($this->temporaryShippingData['subdistrict_name'] ?? null);
-    }
-
-    /**
-     * Backward-compatible accessor for postal_code.
-     */
-    public function getPostalCodeAttribute(): ?string
-    {
-        return $this->shipping?->destination['postal_code'] ?? ($this->temporaryShippingData['postal_code'] ?? null);
+        return $this->shipping?->awb ?? $this->temporaryTrackingNumber;
     }
 
     /**
@@ -195,6 +160,8 @@ class Order extends Model
             'discount_amount' => 'integer',
             'voucher_id' => 'integer',
             'total_amount' => 'integer',
+            'latitude' => 'float',
+            'longitude' => 'float',
         ];
     }
 
@@ -207,6 +174,8 @@ class Order extends Model
     }
 
     /**
+     * Relation to Shipping table (populated from KiriminAja callback/response).
+     *
      * @return HasOne<Shipping, $this>
      */
     public function shipping(): HasOne
