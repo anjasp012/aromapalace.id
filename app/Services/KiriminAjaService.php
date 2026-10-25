@@ -422,23 +422,9 @@ class KiriminAjaService
             'Authorization' => 'Bearer '.$this->apiKey,
         ])->post($this->baseUrl.'/api/mitra/v6.2/request_pickup', $payload);
 
-        $json = $response->json() ?? [];
-        $isSuccess = $response->successful() && ! empty($json['status']);
-        $firstDetail = $json['details'][0] ?? [];
+         $json = $response->json();
+         dd($json);
 
-        $trackingNumber = ! empty($firstDetail['awb'])
-            ? $firstDetail['awb']
-            : ($json['pickup_number'] ?? ($firstDetail['kj_order_id'] ?? ($firstDetail['order_id'] ?? null)));
-
-        return [
-            'success' => $isSuccess,
-            'tracking_number' => $trackingNumber,
-            'awb' => $firstDetail['awb'] ?? null,
-            'pickup_number' => $json['pickup_number'] ?? null,
-            'courier' => $orderModel->courier_service,
-            'shipping_cost' => (int) $orderModel->shipping_cost,
-            'message' => $json['text'] ?? ($json['message'] ?? ($isSuccess ? 'Pickup berhasil dijadwalkan' : 'Gagal request pickup')),
-            'raw' => $json,
-        ];
+        
     }
 }
