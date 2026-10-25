@@ -156,6 +156,8 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
 
     const [selectedSchedule, setSelectedSchedule] = useState<string>('');
     const [isRefreshingSchedules, setIsRefreshingSchedules] = useState(false);
+    const [autoRetryCount, setAutoRetryCount] = useState(0);
+    const autoRefreshTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
     React.useEffect(() => {
         if (selectedSchedule && !validSchedules.some((s) => s.clock === selectedSchedule)) {
@@ -163,7 +165,15 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
         }
     }, [validSchedules, selectedSchedule]);
 
-    const handleRefreshSchedules = () => {
+    // Otomatis pilih slot pertama begitu daftar jadwal tersedia
+    React.useEffect(() => {
+        if (!selectedSchedule && validSchedules.length > 0) {
+            setSelectedSchedule(validSchedules[0].clock);
+        }
+    }, [validSchedules, selectedSchedule]);
+
+    const handleRefreshSchedules = React.useCallback((isAuto = false) => {
+        if (isRefreshingSchedules) return;
         setIsRefreshingSchedules(true);
         router.reload({
             only: ['pickupSchedules'],
@@ -171,9 +181,46 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
             preserveState: true,
             onFinish: () => {
                 setIsRefreshingSchedules(false);
+                if (isAuto) {
+                    setAutoRetryCount((prev) => prev + 1);
+                }
             },
         });
-    };
+    }, [isRefreshingSchedules]);
+
+    // Otomatis refresh terus saat modal pickup dibuka dan jadwal masih kosong sampai ada isinya
+    React.useEffect(() => {
+        if (!isAutomaticModalOpen) {
+            if (autoRefreshTimerRef.current) {
+                clearTimeout(autoRefreshTimerRef.current);
+                autoRefreshTimerRef.current = null;
+            }
+            setAutoRetryCount(0);
+            return;
+        }
+
+        if (validSchedules.length === 0) {
+            if (!isRefreshingSchedules) {
+                const delay = autoRetryCount === 0 ? 300 : 2500;
+                autoRefreshTimerRef.current = setTimeout(() => {
+                    handleRefreshSchedules(true);
+                }, delay);
+            }
+        } else {
+            // Jadwal sudah didapat, hentikan auto-refresh
+            if (autoRefreshTimerRef.current) {
+                clearTimeout(autoRefreshTimerRef.current);
+                autoRefreshTimerRef.current = null;
+            }
+        }
+
+        return () => {
+            if (autoRefreshTimerRef.current) {
+                clearTimeout(autoRefreshTimerRef.current);
+                autoRefreshTimerRef.current = null;
+            }
+        };
+    }, [isAutomaticModalOpen, validSchedules.length, isRefreshingSchedules, autoRetryCount, handleRefreshSchedules]);
 
     const [manualTrackingNumber, setManualTrackingNumber] = useState(order.tracking_number || '');
     const [manualCourier, setManualCourier] = useState(order.courier || '');
@@ -994,7 +1041,7 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
                                     type="button"
                                     variant="outline"
                                     size="sm"
-                                    onClick={handleRefreshSchedules}
+                                    onClick={() => handleRefreshSchedules(false)}
                                     disabled={isRefreshingSchedules || isUpdatingStatus}
                                     className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground border-border/80 flex items-center gap-1.5 transition-colors"
                                     title="Perbarui daftar jadwal pickup dari KiriminAja"
@@ -1005,25 +1052,48 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
                             </div>
 
                             {validSchedules.length === 0 ? (
-                                <div className="p-3.5 rounded-lg border border-dashed border-amber-500/40 bg-amber-500/5 text-xs text-amber-800 dark:text-amber-200 flex items-start gap-2.5">
-                                    <Clock className="size-4 text-amber-600 shrink-0 mt-0.5" />
-                                    <div className="flex-1 space-y-2">
-                                        <div>
-                                            <p className="font-semibold">Tidak ada jadwal pickup terjadwal saat ini</p>
-                                            <p className="text-[11px] text-muted-foreground mt-0.5">
-                                                Ekspedisi belum membuka slot penjemputan atau sedang di luar jam operasional pickup. Silakan klik tombol <strong>Refresh Jadwal</strong> untuk memeriksa kembali ketersediaan slot.
-                                            </p>
+                                <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 dark:bg-amber-500/5 text-xs space-y-3">
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-8 h-8 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0 mt-0.5">
+                                            <RefreshCw className={`size-4 text-amber-600 dark:text-amber-400 ${isRefreshingSchedules ? 'animate-spin' : ''}`} />
                                         </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <p className="font-semibold text-foreground">
+                                                    Mencari Jadwal Pickup Otomatis...
+                                                </p>
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/20 text-amber-800 dark:text-amber-300 animate-pulse">
+                                                    Auto-refresh aktif
+                                                </span>
+                                            </div>
+                                            <p className="text-[11px] text-muted-foreground mt-1">
+                                                Sistem terus memperbarui jadwal secara otomatis sampai slot dari ekspedisi tersedia. Anda tidak perlu repot menekan tombol refresh.
+                                            </p>
+                                            {autoRetryCount > 0 && (
+                                                <p className="text-[10.5px] font-mono text-amber-700 dark:text-amber-400 mt-1.5 flex items-center gap-1.5">
+                                                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+                                                    <span>
+                                                        Pemeriksaan ke-{autoRetryCount}
+                                                        {isRefreshingSchedules ? ' • Sedang memeriksa slot...' : ' • Menunggu siklus berikutnya...'}
+                                                    </span>
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center justify-between pt-2 border-t border-amber-500/20 text-[11px]">
+                                        <span className="text-muted-foreground text-[10.5px]">
+                                            Ingin cek seketika?
+                                        </span>
                                         <Button
                                             type="button"
                                             variant="outline"
                                             size="sm"
-                                            onClick={handleRefreshSchedules}
+                                            onClick={() => handleRefreshSchedules(false)}
                                             disabled={isRefreshingSchedules || isUpdatingStatus}
-                                            className="h-7 text-xs flex items-center gap-1.5 bg-background shadow-xs"
+                                            className="h-6 px-2 text-[11px] flex items-center gap-1 bg-background shadow-xs hover:bg-muted"
                                         >
-                                            <RefreshCw className={`size-3 ${isRefreshingSchedules ? 'animate-spin text-amber-600' : ''}`} />
-                                            <span>{isRefreshingSchedules ? 'Memuat slot...' : 'Coba Refresh Jadwal'}</span>
+                                            <RefreshCw className={`size-2.5 ${isRefreshingSchedules ? 'animate-spin text-amber-600' : ''}`} />
+                                            <span>{isRefreshingSchedules ? 'Memeriksa...' : 'Refresh Sekarang'}</span>
                                         </Button>
                                     </div>
                                 </div>
