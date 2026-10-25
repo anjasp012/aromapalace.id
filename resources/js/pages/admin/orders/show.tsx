@@ -138,15 +138,26 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
         return pickupSchedules.filter((s): s is PickupSchedule => Boolean(s && typeof s === 'object' && s.clock));
     }, [pickupSchedules]);
 
-    const [selectedSchedule, setSelectedSchedule] = useState<string>(() => {
-        return validSchedules.length > 0 ? validSchedules[0].clock : '';
-    });
+    const [selectedSchedule, setSelectedSchedule] = useState<string>('');
+    const [isRefreshingSchedules, setIsRefreshingSchedules] = useState(false);
 
     React.useEffect(() => {
-        if (validSchedules.length > 0 && !selectedSchedule) {
-            setSelectedSchedule(validSchedules[0].clock);
+        if (selectedSchedule && !validSchedules.some((s) => s.clock === selectedSchedule)) {
+            setSelectedSchedule('');
         }
-    }, [validSchedules]);
+    }, [validSchedules, selectedSchedule]);
+
+    const handleRefreshSchedules = () => {
+        setIsRefreshingSchedules(true);
+        router.reload({
+            only: ['pickupSchedules'],
+            preserveScroll: true,
+            preserveState: true,
+            onFinish: () => {
+                setIsRefreshingSchedules(false);
+            },
+        });
+    };
 
     const [manualTrackingNumber, setManualTrackingNumber] = useState(order.tracking_number || '');
     const [manualCourier, setManualCourier] = useState(order.courier || '');
@@ -190,15 +201,17 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
     };
 
     const handleShipAutomatic = (scheduleClock?: string) => {
+        const clockToUse = scheduleClock || selectedSchedule;
+        if (!clockToUse) return;
+
         setIsUpdatingStatus(true);
-        const clockToUse = scheduleClock || selectedSchedule || (validSchedules[0]?.clock ?? '');
         router.patch(
             `/manajemen-pesanan/${order.order_number}/status`,
             {
                 status: 'dikirim',
                 shipping_mode: 'kiriminaja',
-                pickup_schedule: clockToUse || null,
-                schedule: clockToUse || null,
+                pickup_schedule: clockToUse,
+                schedule: clockToUse,
             },
             {
                 onFinish: () => {
@@ -369,9 +382,7 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem
                                                 onClick={() => {
-                                                    if (validSchedules.length > 0 && !selectedSchedule) {
-                                                        setSelectedSchedule(validSchedules[0].clock);
-                                                    }
+                                                    setSelectedSchedule('');
                                                     setIsAutomaticModalOpen(true);
                                                 }}
                                                 disabled={isUpdatingStatus}
@@ -844,7 +855,7 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
                             </p>
                         </div>
 
-                        <DialogFooter className="pt-2 gap-2 sm:gap-0">
+                        <DialogFooter className="pt-3 gap-3 sm:gap-3 flex-row items-center justify-end">
                             <Button
                                 type="button"
                                 variant="outline"
@@ -867,7 +878,15 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
                 </DialogContent>
             </Dialog>
             {/* Modal Dialog Pilih Jadwal Pickup (Resi Otomatis KiriminAja) */}
-            <Dialog open={isAutomaticModalOpen} onOpenChange={setIsAutomaticModalOpen}>
+            <Dialog
+                open={isAutomaticModalOpen}
+                onOpenChange={(open) => {
+                    setIsAutomaticModalOpen(open);
+                    if (!open) {
+                        setSelectedSchedule('');
+                    }
+                }}
+            >
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
@@ -904,21 +923,48 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
 
                         {/* Pilihan Jadwal Pickup */}
                         <div className="space-y-2">
-                            <label className="text-xs font-semibold text-foreground flex items-center justify-between">
-                                <span>Pilihan Jadwal Pickup Tersedia</span>
-                                <span className="text-[11px] text-muted-foreground font-normal">
-                                    {validSchedules.length} slot waktu
-                                </span>
-                            </label>
+                            <div className="flex items-center justify-between">
+                                <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                                    <span>Pilihan Jadwal Pickup Tersedia</span>
+                                    <span className="text-[11px] text-muted-foreground font-normal">
+                                        ({validSchedules.length} slot waktu)
+                                    </span>
+                                </label>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleRefreshSchedules}
+                                    disabled={isRefreshingSchedules || isUpdatingStatus}
+                                    className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground border-border/80 flex items-center gap-1.5 transition-colors"
+                                    title="Perbarui daftar jadwal pickup dari KiriminAja"
+                                >
+                                    <RefreshCw className={`size-3 ${isRefreshingSchedules ? 'animate-spin text-[#4A070B] dark:text-[#E8D0BA]' : ''}`} />
+                                    <span>{isRefreshingSchedules ? 'Memperbarui...' : 'Refresh Jadwal'}</span>
+                                </Button>
+                            </div>
 
                             {validSchedules.length === 0 ? (
                                 <div className="p-3.5 rounded-lg border border-dashed border-amber-500/40 bg-amber-500/5 text-xs text-amber-800 dark:text-amber-200 flex items-start gap-2.5">
                                     <Clock className="size-4 text-amber-600 shrink-0 mt-0.5" />
-                                    <div>
-                                        <p className="font-semibold">Tidak ada jadwal pickup terjadwal hari ini</p>
-                                        <p className="text-[11px] text-muted-foreground mt-0.5">
-                                            Ekspedisi mungkin sedang libur atau tidak ada slot pickup khusus. Anda tetap dapat melanjutkan request resi otomatis sekarang.
-                                        </p>
+                                    <div className="flex-1 space-y-2">
+                                        <div>
+                                            <p className="font-semibold">Tidak ada jadwal pickup terjadwal saat ini</p>
+                                            <p className="text-[11px] text-muted-foreground mt-0.5">
+                                                Ekspedisi belum membuka slot penjemputan atau sedang di luar jam operasional pickup. Silakan klik tombol <strong>Refresh Jadwal</strong> untuk memeriksa kembali ketersediaan slot.
+                                            </p>
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={handleRefreshSchedules}
+                                            disabled={isRefreshingSchedules || isUpdatingStatus}
+                                            className="h-7 text-xs flex items-center gap-1.5 bg-background shadow-xs"
+                                        >
+                                            <RefreshCw className={`size-3 ${isRefreshingSchedules ? 'animate-spin text-amber-600' : ''}`} />
+                                            <span>{isRefreshingSchedules ? 'Memuat slot...' : 'Coba Refresh Jadwal'}</span>
+                                        </Button>
                                     </div>
                                 </div>
                             ) : (
@@ -975,9 +1021,15 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
                                     })}
                                 </div>
                             )}
+
+                            {!selectedSchedule && validSchedules.length > 0 && (
+                                <p className="text-[11px] text-amber-700 dark:text-amber-400 font-medium pt-1">
+                                    * Silakan pilih salah satu slot jadwal pickup di atas untuk mengaktifkan tombol terbitkan resi.
+                                </p>
+                            )}
                         </div>
 
-                        <DialogFooter className="pt-2 gap-2 sm:gap-0">
+                        <DialogFooter className="pt-3 gap-3 sm:gap-3 flex-row items-center justify-end">
                             <Button
                                 type="button"
                                 variant="outline"
@@ -991,8 +1043,8 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
                                 type="button"
                                 size="sm"
                                 onClick={() => handleShipAutomatic()}
-                                disabled={isUpdatingStatus || (validSchedules.length > 0 && !selectedSchedule)}
-                                className="bg-[#4A070B] hover:bg-[#360407] text-[#E8D0BA] dark:bg-[#E8D0BA] dark:text-[#4A070B] dark:hover:bg-[#dfc4ab]"
+                                disabled={isUpdatingStatus || isRefreshingSchedules || !selectedSchedule}
+                                className="bg-[#4A070B] hover:bg-[#360407] text-[#E8D0BA] dark:bg-[#E8D0BA] dark:text-[#4A070B] dark:hover:bg-[#dfc4ab] disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isUpdatingStatus ? 'Memproses Resi...' : 'Terbitkan Resi Otomatis'}
                             </Button>

@@ -2,14 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\Order;
 use App\Models\Setting;
-use App\Models\UserAddress;
-use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class KiriminAjaService
 {
@@ -58,8 +53,8 @@ class KiriminAjaService
         }
 
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->apiKey
-        ])->post($this->baseUrl . '/api/mitra/province');
+            'Authorization' => 'Bearer '.$this->apiKey,
+        ])->post($this->baseUrl.'/api/mitra/province');
 
         $json = $response->json();
         $raw = $json['data'] ?? ($json['datas'] ?? ($json['results'] ?? []));
@@ -76,12 +71,12 @@ class KiriminAjaService
                 ];
             }, $raw));
             Cache::put('kiriminaja:provinces', $items, now()->addDays(30));
+
             return $items;
         }
 
         return [];
     }
-
 
     public function getCities($province_id)
     {
@@ -91,9 +86,9 @@ class KiriminAjaService
         }
 
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->apiKey
-        ])->post($this->baseUrl . '/api/mitra/city/', [
-            'provinsi_id' => $province_id
+            'Authorization' => 'Bearer '.$this->apiKey,
+        ])->post($this->baseUrl.'/api/mitra/city/', [
+            'provinsi_id' => $province_id,
         ]);
 
         $json = $response->json();
@@ -113,11 +108,13 @@ class KiriminAjaService
                 ];
             }, $raw));
             Cache::put('kiriminaja:cities:'.$province_id, $items, now()->addDays(30));
+
             return $items;
         }
 
         return [];
     }
+
     public function getDistricts($city_id)
     {
         $cached = Cache::get('kiriminaja:districts:'.$city_id);
@@ -126,9 +123,9 @@ class KiriminAjaService
         }
 
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->apiKey
-        ])->post($this->baseUrl . '/api/mitra/kecamatan/', [
-            'kabupaten_id' => $city_id
+            'Authorization' => 'Bearer '.$this->apiKey,
+        ])->post($this->baseUrl.'/api/mitra/kecamatan/', [
+            'kabupaten_id' => $city_id,
         ]);
 
         $json = $response->json();
@@ -143,15 +140,17 @@ class KiriminAjaService
                     'id' => (int) $arr['id'],
                     'name' => $name,
                     'kecamatan_name' => $name,
-                    'postal_code' => $arr['postal_code']
+                    'postal_code' => $arr['postal_code'],
                 ];
             }, $raw));
             Cache::put('kiriminaja:districts:'.$city_id, $items, now()->addDays(30));
+
             return $items;
         }
 
         return [];
     }
+
     public function getSubDistricts($district_id)
     {
         $cached = Cache::get('kiriminaja:subdistricts:'.$district_id);
@@ -160,9 +159,9 @@ class KiriminAjaService
         }
 
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->apiKey
-        ])->post($this->baseUrl . '/api/mitra/kelurahan/', [
-            'kecamatan_id' => $district_id
+            'Authorization' => 'Bearer '.$this->apiKey,
+        ])->post($this->baseUrl.'/api/mitra/kelurahan/', [
+            'kecamatan_id' => $district_id,
         ]);
 
         $json = $response->json();
@@ -177,25 +176,28 @@ class KiriminAjaService
                     'id' => (int) $arr['id'],
                     'name' => $name,
                     'kelurahan_name' => $name,
-                    'postal_code' => $arr['postal_code']
+                    'postal_code' => $arr['postal_code'],
                 ];
             }, $raw));
             Cache::put('kiriminaja:subdistricts:'.$district_id, $items, now()->addDays(30));
+
             return $items;
         }
 
         return [];
     }
 
-    public function getActiveCouriers() {
+    public function getActiveCouriers()
+    {
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->apiKey
-        ])->post($this->baseUrl . '/api/mitra/couriers');
+            'Authorization' => 'Bearer '.$this->apiKey,
+        ])->post($this->baseUrl.'/api/mitra/couriers');
         $json = $response->json();
         $raw = $json['data'] ?? ($json['datas'] ?? ($json['results'] ?? []));
         if (is_array($raw) && ! empty($raw)) {
             $items = array_values(array_map(function ($item) {
                 $arr = (array) $item;
+
                 return [
                     'code' => $arr['code'],
                     'name' => $arr['name'],
@@ -203,15 +205,18 @@ class KiriminAjaService
                     'type' => $arr['type'],
                 ];
             }, $raw));
+
             return $items;
         }
+
         return [];
     }
 
-    public function shippingPriceExpresss($destination, $origin, $weight, $services = []) {
+    public function shippingPriceExpresss($destination, $origin, $weight, $services = [])
+    {
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->apiKey
-        ])->post($this->baseUrl . '/api/mitra/v6.1/shipping_price', [
+            'Authorization' => 'Bearer '.$this->apiKey,
+        ])->post($this->baseUrl.'/api/mitra/v6.1/shipping_price', [
             'service' => $services,
             'origin' => $origin,
             'destination' => $destination,
@@ -222,6 +227,7 @@ class KiriminAjaService
         if (is_array($raw) && ! empty($raw)) {
             $items = array_values(array_map(function ($item) {
                 $arr = (array) $item;
+
                 return [
                     'service' => strtoupper($arr['service']),
                     'name' => $arr['service_name'],
@@ -232,14 +238,18 @@ class KiriminAjaService
                     'insurance' => number_format($arr['insurance'], 0, ',', '.'),
                 ];
             }, $raw));
+
             return $items;
         }
+
         return [];
     }
-    public function shippingPriceInstants($destination, $origin, $weight, $services = []) {
+
+    public function shippingPriceInstants($destination, $origin, $weight, $services = [])
+    {
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->apiKey
-        ])->post($this->baseUrl . '/api/mitra/v4/instant/pricing', [
+            'Authorization' => 'Bearer '.$this->apiKey,
+        ])->post($this->baseUrl.'/api/mitra/v4/instant/pricing', [
             'services' => $services,
             'origin' => $origin,
             'destination' => $destination,
@@ -247,129 +257,140 @@ class KiriminAjaService
         ]);
         $json = $response->json();
         $raw = $json['data'] ?? ($json['datas'] ?? ($json['results'] ?? []));
-         if (is_array($raw) && ! empty($raw)) {
+        if (is_array($raw) && ! empty($raw)) {
             $items = array_values(array_map(function ($item) {
                 $arr = (array) $item;
+
                 return [
                     'name' => $arr['name'],
                     'etd' => $arr['costs']['estimation'],
                     'cost' => $arr['costs']['price']['total_price'],
                 ];
             }, $raw));
+
             return $items;
         }
+
         return [];
     }
 
-
-    public function getShippingPrices($destination, $origin, $weight){
+    public function getShippingPrices($destination, $origin, $weight)
+    {
         $activeCouriers = $this->getActiveCouriers();
         $shippingPrices = [];
         $expressCouriers = [];
         $instantCouriers = [];
         foreach ($activeCouriers as $courier) {
-            if($courier['type'] == 'Express'){
+            if ($courier['type'] == 'Express') {
                 $expressCouriers[] = [
                     'code' => $courier['code'],
                     'name' => $courier['name'],
                 ];
+
                 continue;
             }
-            if($courier['type'] == 'Instant'){
+            if ($courier['type'] == 'Instant') {
                 $instantCouriers[] = [
                     'code' => $courier['code'],
                     'name' => $courier['name'],
                 ];
+
                 continue;
             }
         }
         $shippingPriceExpresss = $this->shippingPriceExpresss($destination, $origin, $weight, $expressCouriers);
         $shippingPriceInstants = $this->shippingPriceInstants($destination, $origin, $weight, $instantCouriers);
+
         return $shippingPriceExpresss;
     }
 
-    public function getPickupSchedules() {
+    public function getPickupSchedules()
+    {
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->apiKey
-        ])->post($this->baseUrl . '/api/mitra/v2/schedules');
+            'Authorization' => 'Bearer '.$this->apiKey,
+        ])->post($this->baseUrl.'/api/mitra/v2/schedules');
         $json = $response->json();
         $raw = $json['data'] ?? ($json['datas'] ?? ($json['schedules'] ?? []));
-         if (is_array($raw) && ! empty($raw)) {
+        if (is_array($raw) && ! empty($raw)) {
             $items = array_values(array_map(function ($item) {
                 $arr = (array) $item;
+
                 return $arr['libur'] == false ? [
                     'clock' => $arr['clock'],
-                    'until' => $arr['until']
+                    'until' => $arr['until'],
                 ] : null;
             }, $raw));
+
             return $items;
         }
+
         return [];
     }
 
-    public function requestPickup($orderModel, $pickupSchedule) {
+    public function requestPickup($orderModel, $pickupSchedule)
+    {
 
         dd($orderModel, $pickupSchedule);
         $response = Http::withHeaders([
-        'Content-Type' => 'application/json',
-        'Authorization' => 'Bearer ' . $this->apiKey
+            'Content-Type' => 'application/json',
+            'Authorization' => 'Bearer '.$this->apiKey,
         ])
-        ->post($this->baseUrl . '/api/mitra/v6.2/request_pickup', [
-            'address' => 'Jl. Palagan Tentara Pelajar, Ngaglik, Sleman 55581',
-            'phone' => '6282200000000',
-            'kecamatan_id' => 5788,
-            'kelurahan_id' => 31554,
-            'payment_method' => 'credit',
-            'pin' => '123456',
-            'latitude' => -7.7393368,
-            'longitude' => 110.3734844,
-            'platform_name' => 'shopify',
-            'name' => 'Demo Sender',
-            'zipcode' => '55581',
-            'schedule' => '2026-04-28 16:00:00',
-            'packages' => [
-            [
-                'order_id' => 'DEVX-0000000000001',
-                'destination_name' => 'PENERIMA TESTING',
-                'destination_phone' => '6282200000000',
-                'destination_address' => 'Jl. Danau Ranau, Sawojajar, Kota Malang, Jawa Timur 65139',
-                'destination_kecamatan_id' => 3635,
-                'destination_kelurahan_id' => 46740,
-                'destination_zipcode' => '65139',
-                'destination_latitude' => -7.976862,
-                'destination_longitude' => 112.6564411,
-                'weight' => 1000,
-                'width' => 10,
-                'height' => 10,
-                'length' => 10,
-                'qty' => 1,
-                'item_value' => 100000,
-                'shipping_cost' => 16000,
-                'service' => 'jnt',
-                'insurance_amount' => 0,
-                'service_type' => 'EZ',
-                'cod' => 0,
-                'package_type_id' => 7,
-                'item_name' => 'iPhone 17 Pro Max 2TB',
-                'drop' => false,
-                'note' => 'iPhone Sangar',
-                'items' => [
-                [
-                    'name' => 'iPhone 17 Pro Max 2TB',
-                    'price' => 1000000,
-                    'weight' => 1000,
-                    'width' => 10,
-                    'height' => 10,
-                    'length' => 10,
-                    'qty' => 1,
-                    'metadata' => [
-                    'sku' => '2531030304',
-                    'variant_label' => '2TB'
-                    ]
-                ]
-                ]
-            ]
-            ]
-        ]);
+            ->post($this->baseUrl.'/api/mitra/v6.2/request_pickup', [
+                'address' => $orderModel->address,
+                'phone' => $orderModel->recipient_phone,
+                'kecamatan_id' => $orderModel->district_id,
+                'kelurahan_id' => $orderModel->subdistrict_id,
+                'payment_method' => 'credit',
+                'pin' => '123456',
+                'latitude' => $orderModel->latitude,
+                'longitude' => $orderModel->longitude,
+                'platform_name' => 'Aroma Palace',
+                'name' => $orderModel->recipient_name,
+                'zipcode' => $orderModel->postal_code,
+                'schedule' => $pickupSchedule,
+                'packages' => [
+                    [
+                        'order_id' => 'DEVX-0000000000001',
+                        'destination_name' => 'PENERIMA TESTING',
+                        'destination_phone' => '6282200000000',
+                        'destination_address' => 'Jl. Danau Ranau, Sawojajar, Kota Malang, Jawa Timur 65139',
+                        'destination_kecamatan_id' => 3635,
+                        'destination_kelurahan_id' => 46740,
+                        'destination_zipcode' => '65139',
+                        'destination_latitude' => -7.976862,
+                        'destination_longitude' => 112.6564411,
+                        'weight' => 1000,
+                        'width' => 10,
+                        'height' => 10,
+                        'length' => 10,
+                        'qty' => 1,
+                        'item_value' => 100000,
+                        'shipping_cost' => 16000,
+                        'service' => 'jnt',
+                        'insurance_amount' => 0,
+                        'service_type' => 'EZ',
+                        'cod' => 0,
+                        'package_type_id' => 7,
+                        'item_name' => 'iPhone 17 Pro Max 2TB',
+                        'drop' => false,
+                        'note' => 'iPhone Sangar',
+                        'items' => [
+                            [
+                                'name' => 'iPhone 17 Pro Max 2TB',
+                                'price' => 1000000,
+                                'weight' => 1000,
+                                'width' => 10,
+                                'height' => 10,
+                                'length' => 10,
+                                'qty' => 1,
+                                'metadata' => [
+                                    'sku' => '2531030304',
+                                    'variant_label' => '2TB',
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ]);
     }
 }

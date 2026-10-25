@@ -112,7 +112,7 @@ class OrderController extends Controller
 
         return Inertia::render('admin/orders/show', [
             'order' => $this->mapOrderDetail($orderModel),
-            'pickupSchedules' => app(KiriminAjaService::class)->getPickupSchedules(),
+            'pickupSchedules' => fn () => app(KiriminAjaService::class)->getPickupSchedules(),
         ]);
     }
 
