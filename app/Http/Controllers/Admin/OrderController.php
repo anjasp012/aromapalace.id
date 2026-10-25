@@ -185,8 +185,8 @@ class OrderController extends Controller
             if ($shippingMode === 'kiriminaja') {
                 $pickupSchedule = $validated['pickup_schedule'] ?? ($validated['schedule'] ?? null);
                 $service = app(KiriminAjaService::class);
-                if (method_exists($service, 'requestPickupForOrder')) {
-                    $kirimResult = $service->requestPickupForOrder($orderModel, $pickupSchedule);
+                if (method_exists($service, 'requestPickup')) {
+                    $kirimResult = $service->requestPickup($orderModel, $pickupSchedule);
                 } else {
                     $kirimResult = ['success' => false, 'message' => 'Layanan request pickup KiriminAja belum tersedia.'];
                 }

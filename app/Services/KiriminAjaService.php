@@ -306,4 +306,70 @@ class KiriminAjaService
         }
         return [];
     }
+
+    public function requestPickup($orderModel, $pickupSchedule) {
+
+        dd($orderModel, $pickupSchedule);
+        $response = Http::withHeaders([
+        'Content-Type' => 'application/json',
+        'Authorization' => 'Bearer ' . $this->apiKey
+        ])
+        ->post($this->baseUrl . '/api/mitra/v6.2/request_pickup', [
+            'address' => 'Jl. Palagan Tentara Pelajar, Ngaglik, Sleman 55581',
+            'phone' => '6282200000000',
+            'kecamatan_id' => 5788,
+            'kelurahan_id' => 31554,
+            'payment_method' => 'credit',
+            'pin' => '123456',
+            'latitude' => -7.7393368,
+            'longitude' => 110.3734844,
+            'platform_name' => 'shopify',
+            'name' => 'Demo Sender',
+            'zipcode' => '55581',
+            'schedule' => '2026-04-28 16:00:00',
+            'packages' => [
+            [
+                'order_id' => 'DEVX-0000000000001',
+                'destination_name' => 'PENERIMA TESTING',
+                'destination_phone' => '6282200000000',
+                'destination_address' => 'Jl. Danau Ranau, Sawojajar, Kota Malang, Jawa Timur 65139',
+                'destination_kecamatan_id' => 3635,
+                'destination_kelurahan_id' => 46740,
+                'destination_zipcode' => '65139',
+                'destination_latitude' => -7.976862,
+                'destination_longitude' => 112.6564411,
+                'weight' => 1000,
+                'width' => 10,
+                'height' => 10,
+                'length' => 10,
+                'qty' => 1,
+                'item_value' => 100000,
+                'shipping_cost' => 16000,
+                'service' => 'jnt',
+                'insurance_amount' => 0,
+                'service_type' => 'EZ',
+                'cod' => 0,
+                'package_type_id' => 7,
+                'item_name' => 'iPhone 17 Pro Max 2TB',
+                'drop' => false,
+                'note' => 'iPhone Sangar',
+                'items' => [
+                [
+                    'name' => 'iPhone 17 Pro Max 2TB',
+                    'price' => 1000000,
+                    'weight' => 1000,
+                    'width' => 10,
+                    'height' => 10,
+                    'length' => 10,
+                    'qty' => 1,
+                    'metadata' => [
+                    'sku' => '2531030304',
+                    'variant_label' => '2TB'
+                    ]
+                ]
+                ]
+            ]
+            ]
+        ]);
+    }
 }
