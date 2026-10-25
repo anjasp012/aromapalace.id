@@ -233,7 +233,7 @@ class CheckoutController extends Controller
         $originId = (int) Setting::get('shipping_district_id', 2101);
 
         $rates = $destinationId > 0
-            ? $this->kiriminAjaService->getShippingRates($originId, $destinationId, $weight)
+            ? $this->kiriminAjaService->getShippingPrices($originId, $destinationId, $weight)
             : [];
 
         return response()->json([
