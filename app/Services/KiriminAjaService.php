@@ -223,8 +223,8 @@ class KiriminAjaService
             $items = array_values(array_map(function ($item) {
                 $arr = (array) $item;
                 return [
-                    'service' => $arr['service'],
-                    'name' => $arr['service_name'],
+                    'name' => strtoupper($arr['service']),
+                    'service' => $arr['service_name'],
                     'type' => $arr['service_type'],
                     'price' => $arr['cost'],
                     'etd' => $arr['etd'],
