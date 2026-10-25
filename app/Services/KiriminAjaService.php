@@ -128,7 +128,7 @@ class KiriminAjaService
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $this->apiKey
         ])->post($this->baseUrl . '/api/mitra/kecamatan/', [
-            'city_id' => $city_id
+            'kabupaten_id' => $city_id
         ]);
 
         $json = $response->json();
@@ -162,7 +162,7 @@ class KiriminAjaService
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $this->apiKey
         ])->post($this->baseUrl . '/api/mitra/kelurahan/', [
-            'district_id' => $district_id
+            'kecamatan_id' => $district_id
         ]);
 
         $json = $response->json();
