@@ -423,8 +423,6 @@ class KiriminAjaService
         ])->post($this->baseUrl.'/api/mitra/v6.2/request_pickup', $payload);
 
          $json = $response->json();
-         dd($json);
-
-        
+            return $json;
     }
 }

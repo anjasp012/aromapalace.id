@@ -193,38 +193,29 @@ class OrderController extends Controller
                     $kirimResult = ['success' => false, 'message' => 'Layanan request pickup KiriminAja belum tersedia.'];
                 }
 
-                if (! ($kirimResult['success'] ?? false) || empty($kirimResult['tracking_number'])) {
+                if (! ($kirimResult['success'] ?? false) || empty($kirimResult['pickup_number'])) {
                     $errMsg = $kirimResult['message'] ?? 'Gagal membuat request pickup di KiriminAja.';
 
                     return back()->with('error', "Gagal menerbitkan Resi Otomatis KiriminAja: {$errMsg}. Silakan periksa data pesanan atau gunakan Resi Manual.");
                 }
 
-                $awb = $kirimResult['tracking_number'] ?? ($kirimResult['awb'] ?? null);
-                if (! empty($kirimResult['courier'])) {
-                    $orderModel->courier = $kirimResult['courier'];
-                }
-                if (! empty($kirimResult['shipping_cost'])) {
-                    $orderModel->shipping_cost = (int) $kirimResult['shipping_cost'];
-                }
+                $awb = $kirimResult['awb'] ?? ($kirimResult['awb'] ?? null);
 
                 $orderModel->shipping()->updateOrCreate(
                     ['order_id' => $orderModel->id],
                     [
-                        'awb' => $awb,
+                        'awb' => "Menunggu...",
                         'text' => $kirimResult['text'] ?? null,
-                        'image' => $kirimResult['image'] ?? null,
-                        'origin' => $kirimResult['origin'] ?? null,
-                        'destination' => $kirimResult['destination'] ?? null,
-                        'histories' => $kirimResult['histories'] ?? null,
+                        'image' => $kirimResult['image'] ?? [],
+                        'origin' => $kirimResult['origin'] ?? [],
+                        'destination' => $kirimResult['destination'] ?? [],
+                        'histories' => $kirimResult['histories'] ?? [],
                     ]
                 );
 
                 $customFlash = "Pesanan #{$orderModel->order_number} berhasil dikirim dengan Resi Otomatis KiriminAja: {$awb}.";
-            } elseif (! empty($validated['tracking_number'])) {
-                $manualAwb = trim($validated['tracking_number']);
-                if (! empty($validated['courier'])) {
-                    $orderModel->courier = trim($validated['courier']);
-                }
+            } elseif (! empty($validated['awb'])) {
+                $manualAwb = trim($validated['awb']);
 
                 $orderModel->shipping()->updateOrCreate(
                     ['order_id' => $orderModel->id],
@@ -235,11 +226,8 @@ class OrderController extends Controller
 
                 $customFlash = "Pesanan #{$orderModel->order_number} berhasil dikirim dengan Resi Manual: {$manualAwb}.";
             }
-        } elseif (! empty($validated['tracking_number'])) {
-            $manualAwb = trim($validated['tracking_number']);
-            if (! empty($validated['courier'])) {
-                $orderModel->courier = trim($validated['courier']);
-            }
+        } elseif (! empty($validated['awb'])) {
+            $manualAwb = trim($validated['awb']);
 
             $orderModel->shipping()->updateOrCreate(
                 ['order_id' => $orderModel->id],
