@@ -38,7 +38,7 @@ interface BrandOption {
 interface VariantFormItem {
     id?: number;
     name: string;
-    volume: string;
+    volume: number | string;
     price: number | string;
     original_price: number | string;
     discount_percent: number | string;
@@ -170,9 +170,9 @@ export default function AdminProductEdit({
     };
 
     const handleAddVariant = () => {
-        const vol = `${(data.variants.length + 1) * 50}ml`;
+        const vol = String((data.variants.length + 1) * 50);
         const newVariant: VariantFormItem = {
-            name: `Edisi Koleksi (${vol})`,
+            name: `Edisi Koleksi (${vol}ml)`,
             volume: vol,
             price: 1500000,
             original_price: '',
@@ -554,7 +554,7 @@ export default function AdminProductEdit({
                                 <div key={idx} className="rounded-lg border p-3.5 space-y-3 bg-muted/20">
                                     <div className="flex items-center justify-between">
                                         <span className="text-xs font-semibold">
-                                            Varian #{idx + 1} ({variant.volume || 'Volume'}) {variant.id ? `(ID: ${variant.id})` : '(Varian Baru)'}
+                                            Varian #{idx + 1} ({variant.volume ? `${variant.volume}ml` : 'Volume'}) {variant.id ? `(ID: ${variant.id})` : '(Varian Baru)'}
                                         </span>
                                         {data.variants.length > 1 && (
                                             <Button
@@ -583,9 +583,11 @@ export default function AdminProductEdit({
                                         </div>
 
                                         <div className="space-y-1">
-                                            <label className="font-medium text-foreground">Volume Botol *</label>
+                                            <label className="font-medium text-foreground">Volume (ml) *</label>
                                             <Input
-                                                type="text"
+                                                type="number"
+                                                min={1}
+                                                placeholder="cth: 50, 100, 500, 1000"
                                                 value={variant.volume}
                                                 onChange={(e) => handleVariantChange(idx, 'volume', e.target.value)}
                                                 className="h-8 text-xs font-medium"

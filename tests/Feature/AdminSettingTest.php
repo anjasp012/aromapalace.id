@@ -56,6 +56,8 @@ test('admin can update store contact and kiriminaja origin settings', function (
             'shipping_subdistrict_id' => 54300,
             'shipping_subdistrict_name' => 'Senayan',
             'shipping_postal_code' => '12190',
+            'shipping_latitude' => -6.223845,
+            'shipping_longitude' => 106.805523,
             'kiriminaja_mode' => 'staging',
             'kiriminaja_api_key' => 'v4.local.test_key_sample',
             'kiriminaja_prefix' => 'ARPL',
@@ -70,6 +72,9 @@ test('admin can update store contact and kiriminaja origin settings', function (
     expect(Setting::get('shipping_sender_name'))->toBe('Gudang Pusat Aroma Palace');
     expect((int) Setting::get('shipping_district_id'))->toBe(4715);
     expect(Setting::get('shipping_postal_code'))->toBe('12190');
+    expect((float) Setting::get('shipping_latitude'))->toBe(-6.223845);
+    expect((float) Setting::get('shipping_longitude'))->toBe(106.805523);
+    expect((float) Setting::get('latitude'))->toBe(-6.223845);
     expect(Setting::get('kiriminaja_mode'))->toBe('staging');
     expect(Setting::get('kiriminaja_api_key'))->toBe('v4.local.test_key_sample');
     expect(Setting::get('kiriminaja_prefix'))->toBe('ARPL');

@@ -130,7 +130,7 @@ class CatalogService
         $discountPercent = $effectiveDiscountVariant?->discount_percent ? (int) $effectiveDiscountVariant->discount_percent : null;
         $discountBadge = $discountPercent ? "-{$discountPercent}%" : null;
 
-        $volume = $displayVariant?->volume ?? ($primaryVariant?->volume ?? '50ml');
+        $volume = $displayVariant?->volume ?? ($primaryVariant?->volume ?? 50);
 
         return [
             'id' => $p->id,

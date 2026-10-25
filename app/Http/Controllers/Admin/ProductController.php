@@ -175,7 +175,7 @@ class ProductController extends Controller
             'images.*' => ['nullable'],
             'variants' => ['required', 'array', 'min:1'],
             'variants.*.name' => ['required', 'string', 'max:255'],
-            'variants.*.volume' => ['required', 'string', 'max:255'],
+            'variants.*.volume' => ['required'],
             'variants.*.price' => ['required', 'integer', 'min:0'],
             'variants.*.original_price' => ['nullable', 'integer', 'min:0'],
             'variants.*.discount_percent' => ['nullable', 'integer', 'min:0', 'max:100'],
@@ -184,7 +184,7 @@ class ProductController extends Controller
         ]);
 
         // Validate unique volume within the same request
-        $volumes = array_map(fn ($v) => trim($v['volume']), $validated['variants']);
+        $volumes = array_map(fn ($v) => (int) filter_var($v['volume'], FILTER_SANITIZE_NUMBER_INT), $validated['variants']);
         if (count($volumes) !== count(array_unique($volumes))) {
             return back()->withErrors(['variants' => 'Setiap varian dalam satu produk harus memiliki volume yang berbeda.'])->withInput();
         }
@@ -251,14 +251,15 @@ class ProductController extends Controller
                     $discountPercent = (int) round((($originalPrice - $price) / $originalPrice) * 100);
                 }
 
+                $volInt = (int) filter_var($v['volume'], FILTER_SANITIZE_NUMBER_INT);
                 $sku = ! empty($v['sku'])
                     ? trim($v['sku'])
-                    : 'AP-'.strtoupper(Str::slug($v['volume'])).'-'.$product->id;
+                    : 'AP-'.$volInt.'-'.$product->id;
 
                 ProductVariant::create([
                     'product_id' => $product->id,
                     'name' => $v['name'],
-                    'volume' => $v['volume'],
+                    'volume' => $volInt,
                     'price' => $price,
                     'original_price' => $originalPrice,
                     'discount_percent' => $discountPercent,
@@ -332,7 +333,7 @@ class ProductController extends Controller
             'variants' => ['required', 'array', 'min:1'],
             'variants.*.id' => ['nullable', 'integer'],
             'variants.*.name' => ['required', 'string', 'max:255'],
-            'variants.*.volume' => ['required', 'string', 'max:255'],
+            'variants.*.volume' => ['required'],
             'variants.*.price' => ['required', 'integer', 'min:0'],
             'variants.*.original_price' => ['nullable', 'integer', 'min:0'],
             'variants.*.discount_percent' => ['nullable', 'integer', 'min:0', 'max:100'],
@@ -341,7 +342,7 @@ class ProductController extends Controller
         ]);
 
         // Validate unique volume within the same request
-        $volumes = array_map(fn ($v) => trim($v['volume']), $validated['variants']);
+        $volumes = array_map(fn ($v) => (int) filter_var($v['volume'], FILTER_SANITIZE_NUMBER_INT), $validated['variants']);
         if (count($volumes) !== count(array_unique($volumes))) {
             return back()->withErrors(['variants' => 'Setiap varian dalam satu produk harus memiliki volume yang berbeda.'])->withInput();
         }
@@ -414,9 +415,10 @@ class ProductController extends Controller
                     $discountPercent = (int) round((($originalPrice - $price) / $originalPrice) * 100);
                 }
 
+                $volInt = (int) filter_var($v['volume'], FILTER_SANITIZE_NUMBER_INT);
                 $sku = ! empty($v['sku'])
                     ? trim($v['sku'])
-                    : 'AP-'.strtoupper(Str::slug($v['volume'])).'-'.$product->id;
+                    : 'AP-'.$volInt.'-'.$product->id;
 
                 if (! empty($v['id'])) {
                     $existingVariant = ProductVariant::where('product_id', $product->id)
@@ -426,7 +428,7 @@ class ProductController extends Controller
                     if ($existingVariant) {
                         $existingVariant->update([
                             'name' => $v['name'],
-                            'volume' => $v['volume'],
+                            'volume' => $volInt,
                             'price' => $price,
                             'original_price' => $originalPrice,
                             'discount_percent' => $discountPercent,
@@ -442,7 +444,7 @@ class ProductController extends Controller
                 $newVariant = ProductVariant::create([
                     'product_id' => $product->id,
                     'name' => $v['name'],
-                    'volume' => $v['volume'],
+                    'volume' => $volInt,
                     'price' => $price,
                     'original_price' => $originalPrice,
                     'discount_percent' => $discountPercent,

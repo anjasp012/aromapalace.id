@@ -19,6 +19,7 @@ import {
     Eye,
     EyeOff,
     ExternalLink,
+    Compass,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import SearchableSelect, { SearchableOption } from '@/components/ui/searchable-select';
+import AddressMapPicker from '@/components/AddressMapPicker';
 
 interface SettingsIndexProps {
     settings: Record<string, any>;
@@ -58,6 +60,12 @@ export default function SettingsIndex({ settings = {} }: SettingsIndexProps) {
         shipping_subdistrict_id: settings.shipping_subdistrict_id ? Number(settings.shipping_subdistrict_id) : '',
         shipping_subdistrict_name: settings.shipping_subdistrict_name || '',
         shipping_postal_code: settings.shipping_postal_code || '',
+        shipping_latitude: settings.shipping_latitude !== undefined && settings.shipping_latitude !== null && settings.shipping_latitude !== ''
+            ? settings.shipping_latitude
+            : (settings.latitude ?? ''),
+        shipping_longitude: settings.shipping_longitude !== undefined && settings.shipping_longitude !== null && settings.shipping_longitude !== ''
+            ? settings.shipping_longitude
+            : (settings.longitude ?? ''),
     });
 
     const [showApiKey, setShowApiKey] = useState(false);
@@ -774,6 +782,75 @@ export default function SettingsIndex({ settings = {} }: SettingsIndexProps) {
                                     </div>
                                 </div>
 
+                                {/* Koordinat GPS (Latitude & Longitude) */}
+                                <div className="border-t pt-4 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5 uppercase tracking-wider">
+                                                <Compass className="size-3.5 text-[#4A070B] dark:text-red-400" />
+                                                <span>Titik Koordinat Asal / Pickup (Latitude &amp; Longitude)</span>
+                                            </h3>
+                                            <p className="text-[11px] text-muted-foreground mt-0.5">
+                                                Digunakan untuk akurasi penjemputan armada kurir (Instant/Same Day/Ekspedisi) dan penentuan rute penjemputan.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        {/* Latitude */}
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                                                <span>Latitude</span>
+                                                <span className="text-[10px] text-muted-foreground font-mono">-90 s/d 90</span>
+                                            </label>
+                                            <Input
+                                                type="number"
+                                                step="any"
+                                                placeholder="Contoh: -6.260714"
+                                                value={data.shipping_latitude}
+                                                onChange={(e) => setData('shipping_latitude', e.target.value)}
+                                                className="h-9 text-xs font-mono"
+                                            />
+                                            {errors.shipping_latitude && (
+                                                <p className="text-xs text-destructive">{errors.shipping_latitude}</p>
+                                            )}
+                                        </div>
+
+                                        {/* Longitude */}
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                                                <span>Longitude</span>
+                                                <span className="text-[10px] text-muted-foreground font-mono">-180 s/d 180</span>
+                                            </label>
+                                            <Input
+                                                type="number"
+                                                step="any"
+                                                placeholder="Contoh: 106.816635"
+                                                value={data.shipping_longitude}
+                                                onChange={(e) => setData('shipping_longitude', e.target.value)}
+                                                className="h-9 text-xs font-mono"
+                                            />
+                                            {errors.shipping_longitude && (
+                                                <p className="text-xs text-destructive">{errors.shipping_longitude}</p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Interactive Map Picker */}
+                                    <AddressMapPicker
+                                        latitude={data.shipping_latitude}
+                                        longitude={data.shipping_longitude}
+                                        onChange={(lat, lng) => {
+                                            setData((prev) => ({
+                                                ...prev,
+                                                shipping_latitude: lat,
+                                                shipping_longitude: lng,
+                                            }));
+                                        }}
+                                        height="220px"
+                                    />
+                                </div>
+
                                 {/* Active Summary Confirmation Box */}
                                 <div className="mt-4 p-4 rounded-xl bg-card border border-border/80 text-xs space-y-1.5">
                                     <div className="font-semibold text-foreground flex items-center gap-1.5">
@@ -788,6 +865,12 @@ export default function SettingsIndex({ settings = {} }: SettingsIndexProps) {
                                         {data.shipping_province_name && `, ${data.shipping_province_name}`}
                                         {data.shipping_postal_code && ` ${data.shipping_postal_code}`}.
                                     </p>
+                                    {data.shipping_latitude && data.shipping_longitude && (
+                                        <div className="pt-1 flex items-center gap-1.5 text-[11px] font-mono text-[#4A070B] dark:text-red-300">
+                                            <MapPin className="size-3 shrink-0" />
+                                            <span>Koordinat Asal: {data.shipping_latitude}, {data.shipping_longitude}</span>
+                                        </div>
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>

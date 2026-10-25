@@ -60,7 +60,7 @@ class CheckoutController extends Controller
 
             $variant = $record->variant;
             $unitPrice = $variant ? (int) $variant->price : (int) ($product['raw_price'] ?? 0);
-            $volume = $variant?->volume ?? ($product['volume'] ?? '50ml');
+            $volume = $variant ? (int) $variant->volume : (int) filter_var($product['volume'] ?? 50, FILTER_SANITIZE_NUMBER_INT);
 
             $itemTotal = $unitPrice * $record->quantity;
             $subtotal += $itemTotal;
@@ -302,7 +302,7 @@ class CheckoutController extends Controller
 
                 $variant = $record->variant;
                 $unitPrice = $variant ? (int) $variant->price : (int) ($product['raw_price'] ?? 0);
-                $volume = $variant?->volume ?? ($product['volume'] ?? '50ml');
+                $volume = $variant ? (int) $variant->volume : (int) filter_var($product['volume'] ?? 50, FILTER_SANITIZE_NUMBER_INT);
                 $itemTotal = $unitPrice * $record->quantity;
                 $subtotal += $itemTotal;
 

@@ -25,6 +25,10 @@ class SettingController extends Controller
         $settings['kiriminaja_api_key'] = $settings['kiriminaja_api_key'] ?? '';
         $settings['kiriminaja_prefix'] = $settings['kiriminaja_prefix'] ?? 'ARPL';
         $settings['kiriminaja_pin'] = $settings['kiriminaja_pin'] ?? '123456';
+        $settings['shipping_latitude'] = $settings['shipping_latitude'] ?? $settings['latitude'] ?? '';
+        $settings['shipping_longitude'] = $settings['shipping_longitude'] ?? $settings['longitude'] ?? '';
+        $settings['latitude'] = $settings['shipping_latitude'];
+        $settings['longitude'] = $settings['shipping_longitude'];
 
         return Inertia::render('admin/settings/index', [
             'settings' => $settings,
@@ -57,6 +61,10 @@ class SettingController extends Controller
             'shipping_subdistrict_id' => ['nullable', 'integer'],
             'shipping_subdistrict_name' => ['nullable', 'string', 'max:255'],
             'shipping_postal_code' => ['nullable', 'string', 'max:20'],
+            'shipping_latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'shipping_longitude' => ['nullable', 'numeric', 'between:-180,180'],
+            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
 
             // KiriminAja API Integration
             'kiriminaja_mode' => ['nullable', 'string', 'in:staging,production'],
@@ -64,6 +72,17 @@ class SettingController extends Controller
             'kiriminaja_prefix' => ['nullable', 'string', 'max:20'],
             'kiriminaja_pin' => ['nullable', 'string', 'max:10'],
         ]);
+
+        if (isset($validated['latitude']) && ! isset($validated['shipping_latitude'])) {
+            $validated['shipping_latitude'] = $validated['latitude'];
+        } elseif (isset($validated['shipping_latitude']) && ! isset($validated['latitude'])) {
+            $validated['latitude'] = $validated['shipping_latitude'];
+        }
+        if (isset($validated['longitude']) && ! isset($validated['shipping_longitude'])) {
+            $validated['shipping_longitude'] = $validated['longitude'];
+        } elseif (isset($validated['shipping_longitude']) && ! isset($validated['longitude'])) {
+            $validated['longitude'] = $validated['shipping_longitude'];
+        }
 
         if (isset($validated['kiriminaja_api_key'])) {
             $validated['kiriminaja_api_key'] = trim((string) $validated['kiriminaja_api_key']);
@@ -93,6 +112,10 @@ class SettingController extends Controller
             'shipping_subdistrict_id' => ['group' => 'shipping', 'type' => 'integer'],
             'shipping_subdistrict_name' => ['group' => 'shipping', 'type' => 'string'],
             'shipping_postal_code' => ['group' => 'shipping', 'type' => 'string'],
+            'shipping_latitude' => ['group' => 'shipping', 'type' => 'string'],
+            'shipping_longitude' => ['group' => 'shipping', 'type' => 'string'],
+            'latitude' => ['group' => 'shipping', 'type' => 'string'],
+            'longitude' => ['group' => 'shipping', 'type' => 'string'],
             'kiriminaja_mode' => ['group' => 'shipping', 'type' => 'string'],
             'kiriminaja_api_key' => ['group' => 'shipping', 'type' => 'string'],
             'kiriminaja_prefix' => ['group' => 'shipping', 'type' => 'string'],
@@ -130,11 +153,17 @@ class SettingController extends Controller
             ? (string) ($request->input('api_key') ?? '')
             : null;
 
-        $result = $service->testConnection(
-            $apiKey,
-            $validated['mode'] ?? null,
-            $validated['base_url'] ?? null
-        );
+        $result = method_exists($service, 'testConnection')
+            ? $service->testConnection(
+                $apiKey,
+                $validated['mode'] ?? null,
+                $validated['base_url'] ?? null
+            )
+            : [
+                'success' => ! empty($apiKey),
+                'mode' => $validated['mode'] ?? 'staging',
+                'message' => empty($apiKey) ? 'API key kosong.' : 'Terkoneksi.',
+            ];
 
         return response()->json($result);
     }

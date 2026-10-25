@@ -36,8 +36,8 @@ class CartController extends Controller
 
             $variant = $record->variant;
             $unitPrice = $variant ? (int) $variant->price : (int) ($product['raw_price'] ?? 0);
-            $volume = $variant?->volume ?? ($product['volume'] ?? '50ml');
-            $volumeLabel = $variant ? "{$variant->volume} ({$variant->name})" : $volume;
+            $volume = $variant?->volume ?? ($product['volume'] ?? 50);
+            $volumeLabel = $variant ? "{$variant->volume}ml ({$variant->name})" : "{$volume}ml";
 
             $itemTotal = $unitPrice * $record->quantity;
             $subtotal += $itemTotal;
@@ -111,7 +111,7 @@ class CartController extends Controller
             'product_id' => ['required', 'integer'],
             'variant_id' => ['nullable', 'integer'],
             'quantity' => ['nullable', 'integer', 'min:1', 'max:20'],
-            'volume' => ['nullable', 'string', 'max:30'],
+            'volume' => ['nullable'],
         ]);
 
         $productId = (int) $validated['product_id'];
@@ -128,11 +128,16 @@ class CartController extends Controller
         if (! empty($validated['variant_id'])) {
             $variant = ProductVariant::where('product_id', $productId)->find($validated['variant_id']);
         } elseif (! empty($validated['volume'])) {
-            $variant = ProductVariant::where('product_id', $productId)->where('volume', $validated['volume'])->first();
+            $volInt = is_numeric($validated['volume'])
+                ? (int) $validated['volume']
+                : (int) filter_var($validated['volume'], FILTER_SANITIZE_NUMBER_INT);
+            if ($volInt > 0) {
+                $variant = ProductVariant::where('product_id', $productId)->where('volume', $volInt)->first();
+            }
         }
 
         $variantId = $variant?->id;
-        $volume = $variant ? $variant->volume : ($product['volume'] ?? '50ml');
+        $volume = $variant ? $variant->volume : ($product['volume'] ?? 50);
         $userId = $request->user()->id;
 
         $existing = CartItem::where('user_id', $userId)
