@@ -282,8 +282,8 @@ class KiriminAjaService
                 continue;
             }
         }
-        $expressPrices = $this->shippingPriceExpresss($destination, $origin, $weight, $expressCouriers);
-        $instantPrices = $this->shippingPriceInstants($destination, $origin, $weight, $instantCouriers);
-        
+        $shippingPriceExpresss = $this->shippingPriceExpresss($destination, $origin, $weight, $expressCouriers);
+        $shippingPriceInstants = $this->shippingPriceInstants($destination, $origin, $weight, $instantCouriers);
+        dd($shippingPriceExpresss, $shippingPriceInstants);
     }
 }
