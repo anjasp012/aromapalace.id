@@ -241,12 +241,23 @@ class CheckoutController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        if ($request->has('recipient_phone')) {
+            $request->merge([
+                'recipient_phone' => preg_replace('/[\s\-\.]/', '', (string) $request->input('recipient_phone')),
+            ]);
+        }
+
         $validated = $request->validate([
             'delivery_type' => ['nullable', 'string', 'in:delivery,pickup'],
             'store_id' => ['nullable', 'integer', 'exists:stores,id'],
             'address_id' => ['nullable', 'integer', 'exists:user_addresses,id'],
             'recipient_name' => ['required', 'string', 'max:120'],
-            'recipient_phone' => ['required', 'string', 'max:25'],
+            'recipient_phone' => [
+                'required',
+                'string',
+                'max:25',
+                'regex:/^(\+628|628|08|02)[0-9]{6,13}$/',
+            ],
             'address' => ['required_if:delivery_type,delivery', 'nullable', 'string', 'max:500'],
             'province_id' => ['nullable', 'integer'],
             'province_name' => ['nullable', 'string', 'max:100'],
@@ -271,6 +282,8 @@ class CheckoutController extends Controller
             'insurance' => ['nullable', 'boolean'],
             'notes' => ['nullable', 'string', 'max:500'],
             'device_token' => ['nullable', 'string', 'max:500'],
+        ], [
+            'recipient_phone.regex' => 'Nomor telepon harus dimulai dengan 08, 628, +628, atau 02 dan hanya berisi angka.',
         ]);
 
         $user = $request->user();

@@ -614,6 +614,9 @@ export default function SettingsIndex({ settings = {} }: SettingsIndexProps) {
                                             className="h-10 text-sm"
                                             required
                                         />
+                                        <p className="text-[11px] text-muted-foreground">
+                                            Format KiriminAja: Harus dimulai dengan 08, 628, +628, atau 02.
+                                        </p>
                                         {errors.shipping_sender_phone && (
                                             <p className="text-xs text-destructive">{errors.shipping_sender_phone}</p>
                                         )}

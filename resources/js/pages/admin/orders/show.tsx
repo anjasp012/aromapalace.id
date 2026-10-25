@@ -170,7 +170,6 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
     const [manualCourier, setManualCourier] = useState(order.courier || '');
     const [manualError, setManualError] = useState('');
     const [copiedTracking, setCopiedTracking] = useState(false);
-    const [isSyncingResi, setIsSyncingResi] = useState(false);
 
     React.useEffect(() => {
         setManualTrackingNumber(order.tracking_number || '');

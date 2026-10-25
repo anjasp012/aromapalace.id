@@ -31,10 +31,21 @@ class UserAddressController extends Controller
     {
         $user = $request->user();
 
+        if ($request->has('recipient_phone')) {
+            $request->merge([
+                'recipient_phone' => preg_replace('/[\s\-\.]/', '', (string) $request->input('recipient_phone')),
+            ]);
+        }
+
         $validated = $request->validate([
             'label' => ['required', 'string', 'max:50'],
             'recipient_name' => ['required', 'string', 'max:120'],
-            'recipient_phone' => ['required', 'string', 'max:25'],
+            'recipient_phone' => [
+                'required',
+                'string',
+                'max:25',
+                'regex:/^(\+628|628|08|02)[0-9]{6,13}$/',
+            ],
             'province_id' => ['nullable', 'integer'],
             'province_name' => ['nullable', 'string', 'max:100'],
             'city_id' => ['nullable', 'integer'],
@@ -48,6 +59,8 @@ class UserAddressController extends Controller
             'latitude' => ['nullable', 'numeric'],
             'longitude' => ['nullable', 'numeric'],
             'is_primary' => ['nullable', 'boolean'],
+        ], [
+            'recipient_phone.regex' => 'Nomor telepon harus dimulai dengan 08, 628, +628, atau 02 dan hanya berisi angka.',
         ]);
 
         $hasExistingAddresses = $user->addresses()->exists();
@@ -105,10 +118,21 @@ class UserAddressController extends Controller
             abort(403, 'Akses tidak diizinkan.');
         }
 
+        if ($request->has('recipient_phone')) {
+            $request->merge([
+                'recipient_phone' => preg_replace('/[\s\-\.]/', '', (string) $request->input('recipient_phone')),
+            ]);
+        }
+
         $validated = $request->validate([
             'label' => ['required', 'string', 'max:50'],
             'recipient_name' => ['required', 'string', 'max:120'],
-            'recipient_phone' => ['required', 'string', 'max:25'],
+            'recipient_phone' => [
+                'required',
+                'string',
+                'max:25',
+                'regex:/^(\+628|628|08|02)[0-9]{6,13}$/',
+            ],
             'province_id' => ['nullable', 'integer'],
             'province_name' => ['nullable', 'string', 'max:100'],
             'city_id' => ['nullable', 'integer'],
@@ -122,6 +146,8 @@ class UserAddressController extends Controller
             'latitude' => ['nullable', 'numeric'],
             'longitude' => ['nullable', 'numeric'],
             'is_primary' => ['nullable', 'boolean'],
+        ], [
+            'recipient_phone.regex' => 'Nomor telepon harus dimulai dengan 08, 628, +628, atau 02 dan hanya berisi angka.',
         ]);
 
         $isPrimary = ! empty($validated['is_primary']);

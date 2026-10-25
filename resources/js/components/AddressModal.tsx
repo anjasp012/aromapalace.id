@@ -315,6 +315,16 @@ export default function AddressModal({
             setErrorMessage(isEn ? 'Recipient phone number is required.' : 'Nomor telepon penerima wajib diisi.');
             return;
         }
+        const cleanPhone = recipientPhone.replace(/[\s\-\.]/g, '');
+        const phoneRegex = /^(\+628|628|08|02)[0-9]{6,13}$/;
+        if (!phoneRegex.test(cleanPhone)) {
+            setErrorMessage(
+                isEn
+                    ? 'Phone number must start with 08, 628, +628, or 02 and contain only digits.'
+                    : 'Nomor telepon harus dimulai dengan 08, 628, +628, atau 02 dan hanya berisi angka.'
+            );
+            return;
+        }
         if (!selectedCityName.trim()) {
             setErrorMessage(isEn ? 'Please select a City / Regency.' : 'Silakan pilih Kota / Kabupaten.');
             return;
@@ -341,7 +351,7 @@ export default function AddressModal({
         const payload = {
             label: finalLabel,
             recipient_name: recipientName.trim(),
-            recipient_phone: recipientPhone.trim(),
+            recipient_phone: cleanPhone,
             province_id: selectedProvinceId ? Number(selectedProvinceId) : null,
             province_name: selectedProvinceName || null,
             city_id: selectedCityId ? Number(selectedCityId) : null,
@@ -483,6 +493,9 @@ export default function AddressModal({
                                 className="h-11 sm:h-12 text-sm rounded-xl px-4 bg-background border-border/80"
                                 required
                             />
+                            <p className="text-[10px] text-muted-foreground">
+                                {isEn ? 'Format: Start with 08, 628, +628, or 02' : 'Format: Mulai dengan 08, 628, +628, atau 02'}
+                            </p>
                         </div>
                     </div>
 

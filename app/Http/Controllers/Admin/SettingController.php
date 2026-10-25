@@ -40,17 +40,25 @@ class SettingController extends Controller
      */
     public function update(Request $request): RedirectResponse
     {
+        foreach (['shipping_sender_phone', 'store_phone', 'store_whatsapp'] as $phoneField) {
+            if ($request->has($phoneField) && filled($request->input($phoneField))) {
+                $request->merge([
+                    $phoneField => preg_replace('/[\s\-\.]/', '', (string) $request->input($phoneField)),
+                ]);
+            }
+        }
+
         $validated = $request->validate([
             // Store & Contact Info
             'store_name' => ['required', 'string', 'max:255'],
             'store_email' => ['nullable', 'email', 'max:255'],
-            'store_phone' => ['nullable', 'string', 'max:50'],
-            'store_whatsapp' => ['nullable', 'string', 'max:50'],
+            'store_phone' => ['nullable', 'string', 'max:25', 'regex:/^(\+628|628|08|02)[0-9]{6,13}$/'],
+            'store_whatsapp' => ['nullable', 'string', 'max:25', 'regex:/^(\+628|628|08|02)[0-9]{6,13}$/'],
             'store_description' => ['nullable', 'string', 'max:1000'],
 
             // Shipping & KiriminAja Origin
             'shipping_sender_name' => ['required', 'string', 'max:255'],
-            'shipping_sender_phone' => ['required', 'string', 'max:50'],
+            'shipping_sender_phone' => ['required', 'string', 'max:25', 'regex:/^(\+628|628|08|02)[0-9]{6,13}$/'],
             'shipping_address' => ['required', 'string', 'max:1000'],
             'shipping_province_id' => ['nullable', 'integer'],
             'shipping_province_name' => ['nullable', 'string', 'max:255'],
@@ -71,6 +79,10 @@ class SettingController extends Controller
             'kiriminaja_api_key' => ['nullable', 'string', 'max:500'],
             'kiriminaja_prefix' => ['nullable', 'string', 'max:20'],
             'kiriminaja_pin' => ['nullable', 'string', 'max:10'],
+        ], [
+            'shipping_sender_phone.regex' => 'Nomor telepon pengirim harus dimulai dengan 08, 628, +628, atau 02 dan hanya berisi angka.',
+            'store_phone.regex' => 'Nomor telepon toko harus dimulai dengan 08, 628, +628, atau 02 dan hanya berisi angka.',
+            'store_whatsapp.regex' => 'Nomor WhatsApp toko harus dimulai dengan 08, 628, +628, atau 02 dan hanya berisi angka.',
         ]);
 
         if (isset($validated['latitude']) && ! isset($validated['shipping_latitude'])) {

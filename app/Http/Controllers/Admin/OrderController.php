@@ -275,6 +275,7 @@ class OrderController extends Controller
      */
     protected function mapOrderSummary(Order $order): array
     {
+        dd($order->shipping);
         $orderStatus = $order->status ?: match ($order->payment_status) {
             'paid' => 'diproses',
             'cancelled' => 'dibatalkan',
