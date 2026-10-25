@@ -136,7 +136,6 @@ interface OrderDetail {
 export interface PickupSchedule {
     clock: string;
     until: string;
-    is_fallback?: boolean;
 }
 
 interface OrderShowProps {
@@ -1106,17 +1105,8 @@ export default function AdminOrderShow({ order, pickupSchedules }: OrderShowProp
                                                         <Clock className="size-4" />
                                                     </div>
                                                     <div className="min-w-0">
-                                                        <div className="text-xs font-bold text-foreground flex items-center gap-2 flex-wrap">
+                                                        <div className="text-xs font-bold text-foreground">
                                                             <span>{formatScheduleDate(schedule.clock)}</span>
-                                                            {schedule.is_fallback ? (
-                                                                <span className="text-[9.5px] px-1.5 py-0.5 rounded font-medium bg-amber-500/15 text-amber-800 dark:text-amber-300">
-                                                                    Estimasi Slot
-                                                                </span>
-                                                            ) : (
-                                                                <span className="text-[9.5px] px-1.5 py-0.5 rounded font-medium bg-emerald-500/15 text-emerald-800 dark:text-emerald-300">
-                                                                    Slot Resmi
-                                                                </span>
-                                                            )}
                                                         </div>
                                                         <div className="text-[11px] text-muted-foreground flex items-center gap-2 mt-0.5">
                                                             <span className="font-mono text-[10.5px]">{schedule.clock}</span>
