@@ -118,16 +118,16 @@ class KiriminAjaService
 
         return [];
     }
-    public function getDistrict($city_id)
+    public function getDistricts($city_id)
     {
-        $cached = Cache::get('kiriminaja:district:'.$city_id);
+        $cached = Cache::get('kiriminaja:districts:'.$city_id);
         if (is_array($cached) && ! empty($cached)) {
             return $cached;
         }
 
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $this->apiKey
-        ])->post($this->baseUrl . '/api/mitra/district/', [
+        ])->post($this->baseUrl . '/api/mitra/kecamatan/', [
             'city_id' => $city_id
         ]);
 
@@ -145,22 +145,22 @@ class KiriminAjaService
                     'kecamatan_name' => $name
                 ];
             }, $raw));
-            Cache::put('kiriminaja:district:'.$city_id, $items, now()->addDays(30));
+            Cache::put('kiriminaja:districts:'.$city_id, $items, now()->addDays(30));
             return $items;
         }
 
         return [];
     }
-    public function getSubDistrict($district_id)
+    public function getSubDistricts($district_id)
     {
-        $cached = Cache::get('kiriminaja:subdistrict:'.$district_id);
+        $cached = Cache::get('kiriminaja:subdistricts:'.$district_id);
         if (is_array($cached) && ! empty($cached)) {
             return $cached;
         }
 
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $this->apiKey
-        ])->post($this->baseUrl . '/api/mitra/subdistrict/', [
+        ])->post($this->baseUrl . '/api/mitra/kelurahan/', [
             'district_id' => $district_id
         ]);
 
@@ -178,7 +178,7 @@ class KiriminAjaService
                     'kelurahan_name' => $name
                 ];
             }, $raw));
-            Cache::put('kiriminaja:subdistrict:'.$district_id, $items, now()->addDays(30));
+            Cache::put('kiriminaja:subdistricts:'.$district_id, $items, now()->addDays(30));
             return $items;
         }
 
