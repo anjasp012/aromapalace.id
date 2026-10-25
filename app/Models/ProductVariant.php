@@ -15,7 +15,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $product_id
  * @property string $name
- * @property string $volume
+ * @property int $volume
  * @property int $price
  * @property int|null $original_price
  * @property int|null $discount_percent
@@ -48,11 +48,32 @@ class ProductVariant extends Model
     {
         return [
             'product_id' => 'integer',
+            'volume' => 'integer',
             'price' => 'integer',
             'original_price' => 'integer',
             'discount_percent' => 'integer',
             'stock' => 'integer',
         ];
+    }
+
+    /**
+     * Set volume attribute ensuring it is always saved as an integer (e.g. 500, 1000).
+     */
+    public function setVolumeAttribute($value): void
+    {
+        if (is_numeric($value)) {
+            $this->attributes['volume'] = (int) $value;
+
+            return;
+        }
+
+        $raw = strtolower(trim((string) $value));
+        if (str_contains($raw, 'liter') || (str_contains($raw, 'l') && ! str_contains($raw, 'ml'))) {
+            $num = (float) filter_var($raw, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+            $this->attributes['volume'] = (int) ($num * 1000);
+        } else {
+            $this->attributes['volume'] = (int) filter_var($raw, FILTER_SANITIZE_NUMBER_INT);
+        }
     }
 
     /**

@@ -15,7 +15,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $variant_id
  * @property string $product_name
  * @property string|null $variant_name
- * @property string|null $volume
+ * @property int|null $volume
  * @property int $price
  * @property int $quantity
  * @property int $total_price
@@ -49,10 +49,38 @@ class OrderItem extends Model
             'order_id' => 'integer',
             'product_id' => 'integer',
             'variant_id' => 'integer',
+            'volume' => 'integer',
             'price' => 'integer',
             'quantity' => 'integer',
             'total_price' => 'integer',
         ];
+    }
+
+    /**
+     * Set volume attribute ensuring it is always saved as an integer.
+     */
+    public function setVolumeAttribute($value): void
+    {
+        if ($value === null || $value === '') {
+            $this->attributes['volume'] = null;
+
+            return;
+        }
+
+        if (is_numeric($value)) {
+            $this->attributes['volume'] = (int) $value;
+
+            return;
+        }
+
+        $raw = strtolower(trim((string) $value));
+        if (str_contains($raw, 'liter') || (str_contains($raw, 'l') && ! str_contains($raw, 'ml'))) {
+            $num = (float) filter_var($raw, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+            $this->attributes['volume'] = (int) ($num * 1000);
+        } else {
+            $num = (int) filter_var($raw, FILTER_SANITIZE_NUMBER_INT);
+            $this->attributes['volume'] = $num > 0 ? $num : null;
+        }
     }
 
     /**

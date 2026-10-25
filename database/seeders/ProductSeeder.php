@@ -111,11 +111,11 @@ class ProductSeeder extends Seeder
             if ($product->id === 3 || $product->id === 4) {
                 // Products with ONLY 1 single variant
                 ProductVariant::where('product_id', $product->id)
-                    ->where('volume', '!=', '50ml')
+                    ->where('volume', '!=', 50)
                     ->delete();
 
                 ProductVariant::updateOrCreate(
-                    ['product_id' => $product->id, 'volume' => '50ml'],
+                    ['product_id' => $product->id, 'volume' => 50],
                     [
                         'name' => 'Signature Atelier Produk (50ml)',
                         'price' => $rawBase,
@@ -128,12 +128,12 @@ class ProductSeeder extends Seeder
             } else {
                 // Products with multiple variants (50ml & 100ml)
                 ProductVariant::where('product_id', $product->id)
-                    ->whereNotIn('volume', ['50ml', '100ml'])
+                    ->whereNotIn('volume', [50, 100])
                     ->delete();
 
                 // Primary 50ml variant matching the product's headline price
                 ProductVariant::updateOrCreate(
-                    ['product_id' => $product->id, 'volume' => '50ml'],
+                    ['product_id' => $product->id, 'volume' => 50],
                     [
                         'name' => 'Signature Atelier Produk (50ml)',
                         'price' => $rawBase,
@@ -146,7 +146,7 @@ class ProductSeeder extends Seeder
 
                 // Larger 100ml decanter variant
                 ProductVariant::updateOrCreate(
-                    ['product_id' => $product->id, 'volume' => '100ml'],
+                    ['product_id' => $product->id, 'volume' => 100],
                     [
                         'name' => 'Grand Decanter (100ml)',
                         'price' => $raw100,
