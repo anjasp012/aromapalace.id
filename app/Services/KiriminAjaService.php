@@ -102,7 +102,7 @@ class KiriminAjaService
         if (is_array($raw) && ! empty($raw)) {
             $items = array_values(array_map(function ($item) {
                 $arr = (array) $item;
-                $name = (string) ($arr['provinsi_name'] ?? ($arr['name'] ?? ''));
+                $name = (string) ($arr['kabupaten_name'] ?? ($arr['name'] ?? ''));
 
                 return [
                     'id' => (int) $arr['id'],
