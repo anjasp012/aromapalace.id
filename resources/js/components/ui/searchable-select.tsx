@@ -79,13 +79,40 @@ export default function SearchableSelect({
         }
     }, [open]);
 
+    const touchStartY = useRef<number | null>(null);
+    const isSwiping = useRef(false);
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        touchStartY.current = e.touches[0]?.clientY ?? null;
+        isSwiping.current = false;
+        e.stopPropagation();
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (touchStartY.current !== null && e.touches[0]) {
+            const delta = Math.abs(e.touches[0].clientY - touchStartY.current);
+            if (delta > 6) {
+                isSwiping.current = true;
+            }
+        }
+        e.stopPropagation();
+    };
+
+    const handleTouchEnd = () => {
+        touchStartY.current = null;
+        setTimeout(() => {
+            isSwiping.current = false;
+        }, 120);
+    };
+
     const handleSelect = (option: SearchableOption) => {
+        if (isSwiping.current) return;
         onChange(option.id, option);
         setOpen(false);
     };
 
     return (
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover open={open} onOpenChange={setOpen} modal={false}>
             <PopoverTrigger asChild>
                 <button
                     type="button"
@@ -121,9 +148,10 @@ export default function SearchableSelect({
             </PopoverTrigger>
 
             <PopoverContent
+                portalled={false}
                 align="start"
                 sideOffset={4}
-                className="p-1.5 w-[var(--radix-popover-trigger-width)] min-w-[260px] max-w-[380px] bg-popover/95 backdrop-blur-md border border-border/80 rounded-lg shadow-xl z-50"
+                className="p-1.5 w-[var(--radix-popover-trigger-width)] min-w-[260px] max-w-[380px] bg-popover/95 backdrop-blur-md border border-border/80 rounded-lg shadow-xl z-50 overscroll-contain touch-pan-y"
             >
                 {/* Search Bar */}
                 <div className="relative mb-1">
@@ -154,7 +182,13 @@ export default function SearchableSelect({
                 </div>
 
                 {/* Options List */}
-                <div className="max-h-56 overflow-y-auto divide-y divide-border/30 rounded-md">
+                <div
+                    className="max-h-56 overflow-y-auto overscroll-contain touch-pan-y divide-y divide-border/30 rounded-md [-webkit-overflow-scrolling:touch]"
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                    onWheel={(e) => e.stopPropagation()}
+                >
                     {filteredOptions.length === 0 ? (
                         <div className="p-3 text-center text-xs text-muted-foreground">
                             {emptyMessage}
@@ -168,7 +202,7 @@ export default function SearchableSelect({
                                     type="button"
                                     onClick={() => handleSelect(opt)}
                                     className={cn(
-                                        'w-full flex items-center justify-between gap-2 px-2.5 py-2 text-xs rounded-md transition-colors text-left cursor-pointer select-none',
+                                        'w-full flex items-center justify-between gap-2 px-2.5 py-2 text-xs rounded-md transition-colors text-left cursor-pointer select-none touch-pan-y',
                                         isSelected
                                             ? 'bg-[#4A070B]/10 text-[#4A070B] dark:text-[#E8D0BA] font-semibold'
                                             : 'hover:bg-muted/50 text-foreground'
