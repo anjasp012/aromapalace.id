@@ -1096,18 +1096,18 @@ export default function CheckoutPage({
                                                 ) : (
                                                     <div className="flex items-center gap-2.5 flex-wrap min-w-0 text-xs">
                                                         {selectedCourier?.logo ? (
-                                                            <div className="h-6 px-1.5 py-0.5 rounded bg-white border border-border/80 shadow-2xs flex items-center justify-center shrink-0">
+                                                            <div className="w-16 h-8 sm:w-20 sm:h-9 px-1.5 py-1 rounded-md bg-white border border-border/80 shadow-xs flex items-center justify-center shrink-0">
                                                                 <img
                                                                     src={selectedCourier.logo}
                                                                     alt={selectedCourier.courierBrand}
-                                                                    className="h-4 w-auto max-w-[48px] object-contain"
+                                                                    className="h-full w-full object-contain"
                                                                     onError={(e) => {
                                                                         (e.currentTarget as HTMLElement).style.display = 'none';
                                                                     }}
                                                                 />
                                                             </div>
                                                         ) : (
-                                                            <span className="font-bold uppercase text-[10px] text-[#4A070B] dark:text-[#E8D0BA] bg-[#4A070B]/10 dark:bg-[#E8D0BA]/10 px-1.5 py-0.5 rounded">
+                                                            <span className="font-bold uppercase text-[10px] text-[#4A070B] dark:text-[#E8D0BA] bg-[#4A070B]/10 dark:bg-[#E8D0BA]/10 px-2 py-1 rounded-md">
                                                                 {selectedCourier?.courierBrand || (isEn ? 'Courier' : 'Kurir')}
                                                             </span>
                                                         )}
@@ -1149,20 +1149,20 @@ export default function CheckoutPage({
                                                                 : 'hover:bg-muted text-muted-foreground'
                                                                 }`}
                                                         >
-                                                            <div className="flex items-center gap-2.5 min-w-0">
+                                                            <div className="flex items-center gap-3 min-w-0">
                                                                 {c.logo ? (
-                                                                    <div className="size-7 rounded bg-white border border-border/70 shadow-2xs flex items-center justify-center shrink-0 p-1">
+                                                                    <div className="w-16 h-8 sm:w-20 sm:h-9 rounded-md bg-white border border-border/70 shadow-xs flex items-center justify-center shrink-0 p-1">
                                                                         <img
                                                                             src={c.logo}
                                                                             alt={c.courierBrand}
-                                                                            className="size-full object-contain"
+                                                                            className="h-full w-full object-contain"
                                                                             onError={(e) => {
                                                                                 (e.currentTarget as HTMLElement).style.display = 'none';
                                                                             }}
                                                                         />
                                                                     </div>
                                                                 ) : (
-                                                                    <span className="font-bold text-[#4A070B] dark:text-[#E8D0BA] uppercase text-[10px] bg-[#4A070B]/10 dark:bg-[#E8D0BA]/10 px-1.5 py-0.5 rounded shrink-0">{c.courierBrand}</span>
+                                                                    <span className="font-bold text-[#4A070B] dark:text-[#E8D0BA] uppercase text-[10px] bg-[#4A070B]/10 dark:bg-[#E8D0BA]/10 px-2 py-1 rounded-md shrink-0">{c.courierBrand}</span>
                                                                 )}
                                                                 <div className="flex flex-col min-w-0">
                                                                     <div className="flex items-center gap-1.5 min-w-0">
