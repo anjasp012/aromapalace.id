@@ -192,6 +192,7 @@ class OrderController extends Controller
                 } else {
                     $kirimResult = ['success' => false, 'message' => 'Layanan request pickup KiriminAja belum tersedia.'];
                 }
+                dd($kirimResult);
 
                 if (! ($kirimResult['success'] ?? false) || empty($kirimResult['awb'])) {
                     $errMsg = $kirimResult['message'] ?? 'Gagal membuat request pickup di KiriminAja.';
