@@ -223,8 +223,8 @@ class KiriminAjaService
             $items = array_values(array_map(function ($item) {
                 $arr = (array) $item;
                 return [
-                    'code' => strtoupper($arr['service']),
-                    'service' => $arr['service_name'],
+                    'service' => strtoupper($arr['service']),
+                    'name' => $arr['service_name'],
                     'type' => $arr['service_type'],
                     'price' => $arr['cost'],
                     'price_formatted' => number_format($arr['cost'], 0, ',', '.'),
@@ -286,5 +286,24 @@ class KiriminAjaService
         $shippingPriceExpresss = $this->shippingPriceExpresss($destination, $origin, $weight, $expressCouriers);
         $shippingPriceInstants = $this->shippingPriceInstants($destination, $origin, $weight, $instantCouriers);
         return $shippingPriceExpresss;
+    }
+
+    public function getPickupSchedules() {
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->apiKey
+        ])->post($this->baseUrl . '/api/mitra/v2/schedules');
+        $json = $response->json();
+        $raw = $json['data'] ?? ($json['datas'] ?? ($json['results'] ?? []));
+         if (is_array($raw) && ! empty($raw)) {
+            $items = array_values(array_map(function ($item) {
+                $arr = (array) $item;
+                return $arr['libur'] == false ? [
+                    'clock' => $arr['clock'],
+                    'until' => $arr['until']
+                ] : null;
+            }, $raw));
+            return $items;
+        }
+        return [];
     }
 }

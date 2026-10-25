@@ -353,7 +353,7 @@ export default function CheckoutPage({
                 id: r.code,
                 code: r.code,
                 name: r.service,
-                courierBrand: r.service,
+                courierBrand: r.code,
                 type: r.service || 'Regular',
                 price: r.price,
                 priceFormatted: r.price_formatted,
