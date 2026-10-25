@@ -120,6 +120,30 @@ class KiriminAjaService
     }
 
     /**
+     * Format Order ID agar sesuai dengan Prefix yang didaftarkan di KiriminAja (maksimal 20 karakter).
+     */
+    public function formatOrderId(string $orderNumber): string
+    {
+        $prefix = $this->prefix ?: 'ARPL';
+        $trimmed = trim($orderNumber);
+
+        if (str_starts_with(strtoupper($trimmed), $prefix)) {
+            $formatted = $trimmed;
+        } else {
+            // Hilangkan prefix lain di awal seperti AP-, ORDER-, INV-, dll.
+            $cleanSuffix = preg_replace('/^(AP|ORDER|INV|ORD)[-_]?/i', '', $trimmed);
+            $formatted = $prefix.'-'.$cleanSuffix;
+        }
+
+        // Batas maksimal 20 karakter yang diwajibkan oleh KiriminAja
+        if (strlen($formatted) > 20) {
+            $formatted = substr($formatted, 0, 20);
+        }
+
+        return $formatted;
+    }
+
+    /**
      * Ambil daftar provinsi (di-cache 30 hari).
      * Endpoint: POST /api/mitra/province
      *
@@ -656,11 +680,8 @@ class KiriminAjaService
         $selectedServiceType = $selectedRate ? $selectedRate['service'] : 'REG';
         $actualShippingCost = $selectedRate ? (int) $selectedRate['price'] : ((int) $order->shipping_cost ?: 10000);
 
-        // 6. Siapkan Order ID yang valid (maksimal 20 karakter untuk KiriminAja)
-        $cleanOrderId = (string) $order->order_number;
-        if (strlen($cleanOrderId) > 20) {
-            $cleanOrderId = substr($cleanOrderId, 0, 20);
-        }
+        // 6. Siapkan Order ID yang valid sesuai prefix yang didaftarkan di KiriminAja (maksimal 20 karakter)
+        $cleanOrderId = $this->formatOrderId((string) $order->order_number);
 
         // 7. Jadwal Pickup
         $schedule = $this->resolvePickupSchedule();
@@ -783,19 +804,26 @@ class KiriminAjaService
      */
     public function checkExistingShipment(string $orderId): ?array
     {
-        try {
-            $response = $this->client()->post("{$this->baseUrl}/api/mitra/tracking", [
-                'order_id' => $orderId,
-            ]);
+        $candidates = array_unique(array_filter([
+            $orderId,
+            $this->formatOrderId($orderId),
+        ]));
 
-            if ($response->successful()) {
-                $json = $response->json();
-                if (($json['status'] ?? false) === true && ! empty($json['details'])) {
-                    return (array) $json['details'];
+        foreach ($candidates as $id) {
+            try {
+                $response = $this->client()->post("{$this->baseUrl}/api/mitra/tracking", [
+                    'order_id' => $id,
+                ]);
+
+                if ($response->successful()) {
+                    $json = $response->json();
+                    if (($json['status'] ?? false) === true && ! empty($json['details'])) {
+                        return (array) $json['details'];
+                    }
                 }
+            } catch (\Throwable $e) {
+                Log::warning("KiriminAja checkExistingShipment ({$id}) error: ".$e->getMessage());
             }
-        } catch (\Throwable $e) {
-            Log::warning("KiriminAja checkExistingShipment ({$orderId}) error: ".$e->getMessage());
         }
 
         return null;
@@ -811,6 +839,7 @@ class KiriminAjaService
     {
         $candidates = array_unique(array_filter([
             $order->tracking_number,
+            $this->formatOrderId((string) $order->order_number),
             $order->order_number,
             substr((string) $order->order_number, 0, 20),
         ]));

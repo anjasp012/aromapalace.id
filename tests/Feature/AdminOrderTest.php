@@ -441,3 +441,12 @@ test('kiriminaja service formats and sanitizes various phone number formats corr
         ->and($service->formatPhoneNumber('021-5551234'))->toBe('0215551234')
         ->and($service->formatPhoneNumber('+6221-5551234'))->toBe('0215551234');
 });
+
+test('kiriminaja service formats order id to match registered prefix and 20 chars limit', function () {
+    $service = app(KiriminAjaService::class);
+
+    expect($service->formatOrderId('AP-20261025-FYWYL'))->toBe('ARPL-20261025-FYWYL')
+        ->and(strlen($service->formatOrderId('AP-20261025-FYWYL')))->toBeLessThanOrEqual(20)
+        ->and($service->formatOrderId('ARPL-20261025-TVSON'))->toBe('ARPL-20261025-TVSON')
+        ->and(strlen($service->formatOrderId('AP-VERY-LONG-ORDER-NUMBER-1234567890')))->toBe(20);
+});
