@@ -208,6 +208,59 @@ class KiriminAjaService
         return [];
     }
 
+    public function shippingPriceExpresss($destination, $origin, $weight, $services = []) {
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->apiKey
+        ])->post($this->baseUrl . '/api/mitra/v6.1/shipping_price', [
+            'service' => $services,
+            'origin' => $origin,
+            'destination' => $destination,
+            'weight' => $weight,
+        ]);
+        $json = $response->json();
+        $raw = $json['data'] ?? ($json['datas'] ?? ($json['results'] ?? []));
+        if (is_array($raw) && ! empty($raw)) {
+            $items = array_values(array_map(function ($item) {
+                $arr = (array) $item;
+                return [
+                    'service' => $arr['service'],
+                    'service_name' => $arr['service_name'],
+                    'service_type' => $arr['service_type'],
+                    'cost' => $arr['cost'],
+                    'etd' => $arr['etd'],
+                    'insurance' => $arr['insurance'],
+                ];
+            }, $raw));
+            return $items;
+        }
+        return [];
+    }
+    public function shippingPriceInstants($destination, $origin, $weight, $services = []) {
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->apiKey
+        ])->post($this->baseUrl . '/api/mitra/v4/instant/pricing', [
+            'services' => $services,
+            'origin' => $origin,
+            'destination' => $destination,
+            'weight' => $weight,
+        ]);
+        $json = $response->json();
+        $raw = $json['data'] ?? ($json['datas'] ?? ($json['results'] ?? []));
+         if (is_array($raw) && ! empty($raw)) {
+            $items = array_values(array_map(function ($item) {
+                $arr = (array) $item;
+                return [
+                    'name' => $arr['name'],
+                    'etd' => $arr['costs']['estimation'],
+                    'cost' => $arr['costs']['price']['total_price'],
+                ];
+            }, $raw));
+            return $items;
+        }
+        return [];
+    }
+
+
     public function getShippingPrices($destination, $origin, $weight){
         $activeCouriers = $this->getActiveCouriers();
         $shippingPrices = [];
@@ -229,6 +282,8 @@ class KiriminAjaService
                 continue;
             }
         }
-        dd($expressCouriers, $instantCouriers);
+        $expressPrices = $this->shippingPriceExpresss($destination, $origin, $weight, $expressCouriers);
+        $instantPrices = $this->shippingPriceInstants($destination, $origin, $weight, $instantCouriers);
+        
     }
 }
