@@ -194,7 +194,6 @@ class OrderController extends Controller
                 } else {
                     $kirimResult = ['success' => false, 'message' => 'Layanan request pickup KiriminAja belum tersedia.'];
                 }
-                dd($kirimResult);
 
                 $pickupCode = $kirimResult['pickup_number'] ?? ($kirimResult['tracking_number'] ?? ($kirimResult['awb'] ?? null));
 
