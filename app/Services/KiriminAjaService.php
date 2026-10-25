@@ -347,8 +347,6 @@ class KiriminAjaService
 
     public function requestPickup($orderModel, $pickupSchedule)
     {
-        
-        dd($orderModel);
         $packageWeight = 0;
         foreach ($orderModel->orderItems as $item) {
             $vol = (int) ($item->volume ?: 100);
