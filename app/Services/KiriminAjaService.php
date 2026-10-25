@@ -118,4 +118,70 @@ class KiriminAjaService
 
         return [];
     }
+    public function getDistrict($city_id)
+    {
+        $cached = Cache::get('kiriminaja:district:'.$city_id);
+        if (is_array($cached) && ! empty($cached)) {
+            return $cached;
+        }
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->apiKey
+        ])->post($this->baseUrl . '/api/mitra/district/', [
+            'city_id' => $city_id
+        ]);
+
+        $json = $response->json();
+        $raw = $json['data'] ?? ($json['datas'] ?? ($json['results'] ?? []));
+
+        if (is_array($raw) && ! empty($raw)) {
+            $items = array_values(array_map(function ($item) {
+                $arr = (array) $item;
+                $name = (string) ($arr['kecamatan_name'] ?? ($arr['name'] ?? ''));
+
+                return [
+                    'id' => (int) $arr['id'],
+                    'name' => $name,
+                    'kecamatan_name' => $name
+                ];
+            }, $raw));
+            Cache::put('kiriminaja:district:'.$city_id, $items, now()->addDays(30));
+            return $items;
+        }
+
+        return [];
+    }
+    public function getSubDistrict($district_id)
+    {
+        $cached = Cache::get('kiriminaja:subdistrict:'.$district_id);
+        if (is_array($cached) && ! empty($cached)) {
+            return $cached;
+        }
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->apiKey
+        ])->post($this->baseUrl . '/api/mitra/subdistrict/', [
+            'district_id' => $district_id
+        ]);
+
+        $json = $response->json();
+        $raw = $json['data'] ?? ($json['datas'] ?? ($json['results'] ?? []));
+
+        if (is_array($raw) && ! empty($raw)) {
+            $items = array_values(array_map(function ($item) {
+                $arr = (array) $item;
+                $name = (string) ($arr['kelurahan_name'] ?? ($arr['name'] ?? ''));
+
+                return [
+                    'id' => (int) $arr['id'],
+                    'name' => $name,
+                    'kelurahan_name' => $name
+                ];
+            }, $raw));
+            Cache::put('kiriminaja:subdistrict:'.$district_id, $items, now()->addDays(30));
+            return $items;
+        }
+
+        return [];
+    }
 }
