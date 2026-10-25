@@ -86,9 +86,13 @@ interface OrderDetail {
     recipient_name?: string;
     recipient_phone?: string;
     address?: string;
+    province_id?: number | null;
     province_name?: string | null;
+    city_id?: number | null;
     city_name?: string | null;
+    district_id?: number | null;
     district_name?: string | null;
+    subdistrict_id?: number | null;
     subdistrict_name?: string | null;
     city?: string;
     postal_code?: string;

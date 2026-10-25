@@ -18,9 +18,13 @@ use Illuminate\Support\Carbon;
  * @property string $recipient_name
  * @property string $recipient_phone
  * @property string|null $address
+ * @property int|null $province_id
  * @property string|null $province_name
+ * @property int|null $city_id
  * @property string|null $city_name
+ * @property int|null $district_id
  * @property string|null $district_name
+ * @property int|null $subdistrict_id
  * @property string|null $subdistrict_name
  * @property string|null $postal_code
  * @property float|null $latitude
@@ -56,9 +60,13 @@ use Illuminate\Support\Carbon;
     'recipient_name',
     'recipient_phone',
     'address',
+    'province_id',
     'province_name',
+    'city_id',
     'city_name',
+    'district_id',
     'district_name',
+    'subdistrict_id',
     'subdistrict_name',
     'postal_code',
     'latitude',
@@ -94,6 +102,10 @@ class Order extends Model
         return [
             'user_id' => 'integer',
             'store_id' => 'integer',
+            'province_id' => 'integer',
+            'city_id' => 'integer',
+            'district_id' => 'integer',
+            'subdistrict_id' => 'integer',
             'shipping_cost' => 'integer',
             'subtotal' => 'integer',
             'discount_amount' => 'integer',

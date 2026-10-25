@@ -254,9 +254,13 @@ class CheckoutController extends Controller
             'recipient_name' => ['required', 'string', 'max:120'],
             'recipient_phone' => ['required', 'string', 'max:25'],
             'address' => ['required_if:delivery_type,delivery', 'nullable', 'string', 'max:500'],
+            'province_id' => ['nullable', 'integer'],
             'province_name' => ['nullable', 'string', 'max:100'],
+            'city_id' => ['nullable', 'integer'],
             'city_name' => ['nullable', 'string', 'max:100'],
+            'district_id' => ['nullable', 'integer'],
             'district_name' => ['nullable', 'string', 'max:100'],
+            'subdistrict_id' => ['nullable', 'integer'],
             'subdistrict_name' => ['nullable', 'string', 'max:100'],
             'city' => ['required_if:delivery_type,delivery', 'nullable', 'string', 'max:100'],
             'postal_code' => ['nullable', 'string', 'max:15'],
@@ -389,17 +393,25 @@ class CheckoutController extends Controller
                 $storeId = $store?->id;
                 $storeName = $store ? $store->name : 'Butik Resmi Aroma Palace';
                 $orderAddress = 'Ambil di butik: '.($store ? $store->name.' - '.$store->description : 'Butik Resmi Aroma Palace');
+                $provinceId = null;
                 $provinceName = null;
+                $cityId = null;
                 $cityName = 'Ambil di Butik';
+                $districtId = null;
                 $districtName = null;
+                $subdistrictId = null;
                 $subdistrictName = null;
                 $courier = 'Ambil Mandiri di Butik ('.$storeName.')';
                 $shippingCost = 0;
             } else {
                 $orderAddress = $validated['address'] ?? ($address?->formatted_address ?: ($address?->address ?? '-'));
+                $provinceId = ! empty($validated['province_id']) ? (int) $validated['province_id'] : ($address?->province_id ?? null);
                 $provinceName = $validated['province_name'] ?? ($address?->province_name ?? null);
+                $cityId = ! empty($validated['city_id']) ? (int) $validated['city_id'] : ($address?->city_id ?? null);
                 $cityName = $validated['city_name'] ?? ($address?->city_name ?? ($validated['city'] ?? null));
+                $districtId = ! empty($validated['district_id']) ? (int) $validated['district_id'] : ($address?->district_id ?? null);
                 $districtName = $validated['district_name'] ?? ($address?->district_name ?? null);
+                $subdistrictId = ! empty($validated['subdistrict_id']) ? (int) $validated['subdistrict_id'] : ($address?->subdistrict_id ?? null);
                 $subdistrictName = $validated['subdistrict_name'] ?? ($address?->subdistrict_name ?? null);
                 $courier = $validated['courier'] ?? 'JNE Express Reguler';
             }
@@ -411,9 +423,13 @@ class CheckoutController extends Controller
                 $storeId,
                 $validated,
                 $orderAddress,
+                $provinceId,
                 $provinceName,
+                $cityId,
                 $cityName,
+                $districtId,
                 $districtName,
+                $subdistrictId,
                 $subdistrictName,
                 $address,
                 $courier,
@@ -477,9 +493,13 @@ class CheckoutController extends Controller
                     'recipient_name' => $validated['recipient_name'],
                     'recipient_phone' => $validated['recipient_phone'],
                     'address' => $orderAddress,
+                    'province_id' => $provinceId,
                     'province_name' => $provinceName,
+                    'city_id' => $cityId,
                     'city_name' => $cityName,
+                    'district_id' => $districtId,
                     'district_name' => $districtName,
+                    'subdistrict_id' => $subdistrictId,
                     'subdistrict_name' => $subdistrictName,
                     'postal_code' => $validated['postal_code'] ?? ($address?->postal_code ?? null),
                     'latitude' => $address?->latitude !== null ? (float) $address->latitude : null,
