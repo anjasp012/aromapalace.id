@@ -53,6 +53,7 @@ class KiriminAjaService
     public function getProvinces()
     {
         $cached = Cache::get('kiriminaja:provinces');
+        dd($cached);
         if (is_array($cached) && ! empty($cached)) {
             return $cached;
         }
