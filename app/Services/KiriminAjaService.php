@@ -242,7 +242,6 @@ class KiriminAjaService
         ]);
         $json = $response->json();
         $raw = $json['data'] ?? ($json['datas'] ?? ($json['results'] ?? []));
-        dd($json);
         if (is_array($raw) && ! empty($raw)) {
             $items = array_values(array_map(function ($item) {
                 $arr = (array) $item;
@@ -423,7 +422,8 @@ class KiriminAjaService
             'Authorization' => 'Bearer '.$this->apiKey,
         ])->post($this->baseUrl.'/api/mitra/v6.2/request_pickup', $payload);
 
-         $json = $response->json();
-            return $json;
+        $json = $response->json();
+
+        return $json;
     }
 }
