@@ -103,8 +103,6 @@ class OrderController extends Controller
      */
     public function show(Request $request, string $order): Response
     {
-        $pickupSchedules = app(KiriminAjaService::class)->getPickupSchedules();
-        dd($pickupSchedules);
 
         $orderModel = Order::where(function ($q) use ($order) {
             $q->where('order_number', $order)->orWhere('id', $order);
@@ -112,24 +110,9 @@ class OrderController extends Controller
             ->with(['items', 'store', 'user', 'voucher'])
             ->firstOrFail();
 
-        // Jika resi masih berupa kode sementara KiriminAja (PUP- / ARPL- / KJ-), coba sinkronkan AWB resmi otomatis
-        if (
-            $orderModel->status === 'dikirim' &&
-            ! empty($orderModel->tracking_number) &&
-            (str_starts_with($orderModel->tracking_number, 'PUP-') ||
-             str_starts_with($orderModel->tracking_number, 'ARPL-') ||
-             str_starts_with($orderModel->tracking_number, 'KJ-'))
-        ) {
-            try {
-                app(KiriminAjaService::class)->syncTrackingNumber($orderModel);
-                $orderModel->refresh();
-            } catch (\Throwable $e) {
-                // ignore
-            }
-        }
-
         return Inertia::render('admin/orders/show', [
             'order' => $this->mapOrderDetail($orderModel),
+            'pickupSchedules' => app(KiriminAjaService::class)->getPickupSchedules(),
         ]);
     }
 
@@ -170,6 +153,8 @@ class OrderController extends Controller
             'tracking_number' => ['nullable', 'string', 'max:100'],
             'courier' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:500'],
+            'pickup_schedule' => ['nullable', 'string', 'max:100'],
+            'schedule' => ['nullable', 'string', 'max:100'],
         ]);
 
         $newStatus = $validated['status'];
@@ -198,7 +183,13 @@ class OrderController extends Controller
             $shippingMode = $validated['shipping_mode'] ?? null;
 
             if ($shippingMode === 'kiriminaja') {
-                $kirimResult = app(KiriminAjaService::class)->requestPickupForOrder($orderModel);
+                $pickupSchedule = $validated['pickup_schedule'] ?? ($validated['schedule'] ?? null);
+                $service = app(KiriminAjaService::class);
+                if (method_exists($service, 'requestPickupForOrder')) {
+                    $kirimResult = $service->requestPickupForOrder($orderModel, $pickupSchedule);
+                } else {
+                    $kirimResult = ['success' => false, 'message' => 'Layanan request pickup KiriminAja belum tersedia.'];
+                }
 
                 if (! ($kirimResult['success'] ?? false) || empty($kirimResult['tracking_number'])) {
                     $errMsg = $kirimResult['message'] ?? 'Gagal membuat request pickup di KiriminAja.';
