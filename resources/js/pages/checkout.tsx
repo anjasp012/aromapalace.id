@@ -350,13 +350,13 @@ export default function CheckoutPage({
     const courierOptions = useMemo(() => {
         if (shippingRates.length > 0) {
             return shippingRates.map((r) => ({
-                id: r.name,
-                code: r.name,
+                id: r.code,
+                code: r.code,
                 name: r.name,
                 courierBrand: r.name,
                 type: r.service || 'Regular',
                 price: r.price,
-                priceFormatted: r.price,
+                priceFormatted: r.price_formatted,
                 etd: r.etd,
             }));
         }
