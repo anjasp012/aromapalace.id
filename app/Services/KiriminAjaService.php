@@ -231,6 +231,34 @@ class KiriminAjaService
         return [];
     }
 
+    /**
+     * Get official courier logo URL from GCS storage.
+     */
+    public function getCourierLogoUrl(?string $serviceCode): string
+    {
+        $code = strtolower(trim((string) $serviceCode));
+        $code = str_replace([' ', '-', '_', '&'], '', $code);
+
+        // Normalize common courier codes to match hosted logo assets
+        $code = match ($code) {
+            'jt', 'j&t' => 'jnt',
+            'ninjainter', 'ninjaxpress' => 'ninja',
+            'grabexpress' => 'grab',
+            'gosend', 'gojek' => 'gosend',
+            'pos', 'posindo' => 'posindonesia',
+            'idexpress' => 'idx',
+            'lionparcel' => 'lion',
+            'sicepatekspres' => 'sicepat',
+            default => $code,
+        };
+
+        if ($code === '') {
+            return '';
+        }
+
+        return "https://storage.googleapis.com/tprt0ezsggqjornc7nf1wwluvgulhr/assets/courier-logo/{$code}.png";
+    }
+
     public function shippingPriceExpresss($destination, $weight, $services = [])
     {
         $response = Http::withHeaders([
@@ -246,6 +274,8 @@ class KiriminAjaService
         if (is_array($raw) && ! empty($raw)) {
             $items = array_values(array_map(function ($item) {
                 $arr = (array) $item;
+                $serviceCode = (string) ($arr['service'] ?? '');
+                $logoUrl = $this->getCourierLogoUrl($serviceCode);
 
                 return [
                     'service' => strtoupper($arr['service']),
@@ -255,6 +285,8 @@ class KiriminAjaService
                     'price_formatted' => number_format($arr['cost'], 0, ',', '.'),
                     'etd' => $arr['etd'],
                     'insurance' => number_format($arr['insurance'], 0, ',', '.'),
+                    'logo' => $logoUrl,
+                    'courier_logo' => $logoUrl,
                 ];
             }, $raw));
 
@@ -318,7 +350,7 @@ class KiriminAjaService
             }
         }
         $shippingPriceExpresss = $this->shippingPriceExpresss($destination, $weight, $expressCouriers);
-        $shippingPriceInstants = $this->shippingPriceInstants($destination, $weight, $instantCouriers);
+        // $shippingPriceInstants = $this->shippingPriceInstants($destination, $weight, $instantCouriers);
 
         return $shippingPriceExpresss;
     }

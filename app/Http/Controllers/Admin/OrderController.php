@@ -110,7 +110,7 @@ class OrderController extends Controller
         $orderModel = Order::where(function ($q) use ($order) {
             $q->where('order_number', $order)->orWhere('id', $order);
         })
-            ->with(['items', 'store', 'user', 'voucher'])
+            ->with(['items', 'store', 'user', 'voucher', 'shipping'])
             ->firstOrFail();
 
         return Inertia::render('admin/orders/show', [
