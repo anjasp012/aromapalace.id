@@ -7,7 +7,6 @@ use App\Models\DeviceToken;
 use App\Models\Order;
 use App\Models\PaymentMethod;
 use App\Models\ProductVariant;
-use App\Models\Setting;
 use App\Models\Store;
 use App\Models\Voucher;
 use App\Services\CatalogService;
@@ -399,7 +398,7 @@ class CheckoutController extends Controller
                 $subdistrictId = null;
                 $subdistrictName = null;
                 $courierService = 'pickup';
-                $courierServiceType = 'Ambil Mandiri ('.$storeName.')';
+                $courierServiceType = 'Ambil Mandiri di Butik ('.$storeName.')';
                 $shippingCost = 0;
             } else {
                 $orderAddress = $validated['address'] ?? ($address?->formatted_address ?: ($address?->address ?? '-'));
@@ -419,12 +418,16 @@ class CheckoutController extends Controller
                         [$s, $t] = explode(' - ', $validated['courier'], 2);
                         $courierService = trim($s);
                         $courierServiceType = trim($t);
+                    } elseif (preg_match('/^(J&T|JNE|SiCepat|Anteraja|TIKI|POS|Wahana|Ninja|Lion)\s+(.+)$/i', $validated['courier'], $matches)) {
+                        $courierService = trim($matches[1]);
+                        $courierServiceType = trim($matches[2]);
                     } else {
                         $courierService = $validated['courier'];
+                        $courierServiceType = null;
                     }
                 }
                 $courierService = $courierService ?: 'JNE';
-                $courierServiceType = $courierServiceType ?: 'REG';
+                $courierServiceType = $courierServiceType ?: ($validated['courier_service_type'] ?? null);
             }
 
             $order = DB::transaction(function () use (

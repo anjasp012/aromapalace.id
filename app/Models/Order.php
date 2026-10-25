@@ -181,6 +181,10 @@ class Order extends Model
         $service = $this->attributes['courier_service'] ?? null;
         $type = $this->attributes['courier_service_type'] ?? null;
 
+        if ($service === 'pickup') {
+            return $type ?: 'Ambil Mandiri di Butik';
+        }
+
         if ($service && $type) {
             return "{$service} {$type}";
         }
@@ -201,6 +205,9 @@ class Order extends Model
             [$service, $type] = explode(' - ', $value, 2);
             $this->attributes['courier_service'] = trim($service);
             $this->attributes['courier_service_type'] = trim($type);
+        } elseif (is_string($value) && preg_match('/^(J&T|JNE|SiCepat|Anteraja|TIKI|POS|Wahana|Ninja|Lion)\s+(.+)$/i', $value, $matches)) {
+            $this->attributes['courier_service'] = trim($matches[1]);
+            $this->attributes['courier_service_type'] = trim($matches[2]);
         } else {
             $this->attributes['courier_service'] = $value;
         }
