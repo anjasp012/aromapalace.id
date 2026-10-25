@@ -3,6 +3,7 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/lib/i18n';
+import { formatVolume } from '@/lib/utils';
 import {
     Package,
     Clock,
@@ -36,7 +37,7 @@ interface OrderItemData {
     variant_id: number | null;
     product_name: string;
     variant_name?: string;
-    volume: string;
+    volume: string | number;
     price: number;
     price_formatted: string;
     quantity: number;
@@ -339,7 +340,7 @@ export default function OrdersPage({
                     <div className="flex items-center gap-2 flex-wrap">
                         <span className="inline-flex items-center gap-1 text-[11px] bg-muted/40 border border-border/70 px-2 py-0.5 rounded-md">
                             <span>Ukuran:</span>
-                            <strong className="text-foreground">{item.volume}</strong>
+                            <strong className="text-foreground">{formatVolume(item.volume)}</strong>
                             {item.variant_name && (
                                 <span className="hidden sm:inline text-[#4A070B] dark:text-[#E8D0BA] font-medium ml-0.5">
                                     ({item.variant_name})
@@ -1061,7 +1062,7 @@ export default function OrdersPage({
                                                                     {item.product_name}
                                                                 </h4>
                                                                 <div className="text-[11px] text-muted-foreground">
-                                                                    1 produk ({item.volume}{item.variant_name ? ` • ${item.variant_name}` : ''})
+                                                                    1 produk ({formatVolume(item.volume)}{item.variant_name ? ` • ${item.variant_name}` : ''})
                                                                 </div>
                                                                 <div className="text-[11px] text-muted-foreground">
                                                                     {item.quantity} × {item.price_formatted}

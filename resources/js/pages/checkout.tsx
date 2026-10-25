@@ -11,13 +11,14 @@ import { Truck, Store as StoreIcon, MapPin, ExternalLink, Clock, ShieldCheck, Lo
 import type { UserAddress } from '@/types/address';
 import AddressModal from '@/components/AddressModal';
 import AddressSelectorModal from '@/components/AddressSelectorModal';
+import { formatVolume } from '@/lib/utils';
 
 interface CheckoutItem {
     id: number;
     product_id: number;
     variant_id: number | null;
     quantity: number;
-    volume: string;
+    volume: string | number;
     variant_name?: string;
     unit_price: number;
     unit_price_formatted: string;
@@ -381,7 +382,7 @@ export default function CheckoutPage({
     const totalWeight = useMemo(() => {
         let w = 0;
         items.forEach((item) => {
-            const volNum = parseInt(item.volume || '100', 10);
+            const volNum = typeof item.volume === 'number' ? item.volume : parseInt(String(item.volume || '100'), 10);
             const itemWeight = Math.max(250, (isNaN(volNum) ? 100 : volNum) * 3);
             w += itemWeight * (item.quantity || 1);
         });
@@ -1282,7 +1283,7 @@ export default function CheckoutPage({
                                                 <div className="flex items-center gap-2 flex-wrap">
                                                     <span className="inline-flex items-center gap-1 text-[11px] bg-muted/40 border border-border/70 px-2 py-0.5 rounded-md">
                                                         <span className="text-muted-foreground">{isEn ? 'Size:' : 'Ukuran:'}</span>
-                                                        <strong className="text-foreground">{item.volume}</strong>
+                                                        <strong className="text-foreground">{formatVolume(item.volume)}</strong>
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center gap-2 flex-wrap text-xs">

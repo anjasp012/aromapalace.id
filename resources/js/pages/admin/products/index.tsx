@@ -32,11 +32,12 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { formatVolume } from '@/lib/utils';
 
 interface ProductVariantItem {
     id: number;
     name: string;
-    volume: string;
+    volume: string | number;
     price: number;
     price_formatted: string;
     original_price?: number | null;
@@ -391,7 +392,7 @@ export default function AdminProductsIndex({
                                                     >
                                                         <div className="flex items-center gap-1.5">
                                                             <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
-                                                                {v.volume}
+                                                                {formatVolume(v.volume)}
                                                             </Badge>
                                                             <span className="font-medium">{v.price_formatted}</span>
                                                             {v.discount_percent && (
@@ -520,7 +521,7 @@ export default function AdminProductsIndex({
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <div>
                                 <CardTitle className="text-sm font-semibold">Ubah Stok Varian</CardTitle>
-                                <CardDescription className="text-xs">{quickStockTarget.variant.name} ({quickStockTarget.variant.volume})</CardDescription>
+                                <CardDescription className="text-xs">{quickStockTarget.variant.name} ({formatVolume(quickStockTarget.variant.volume)})</CardDescription>
                             </div>
                             <Button variant="ghost" size="icon" onClick={() => setQuickStockTarget(null)} className="size-7">
                                 <X className="size-4" />

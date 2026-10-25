@@ -60,8 +60,8 @@ class KiriminAjaService
         $this->senderSubdistrictId = (int) Setting::get('shipping_subdistrict_id');
         $this->senderAddress = (string) Setting::get('shipping_address');
         $this->senderZipcode = (int) Setting::get('shipping_postal_code');
-        $this->senderLatitude = (string) Setting::get('shipping_latitude', null);
-        $this->senderLongitude = (string) Setting::get('shipping_longitude', null);
+        $this->senderLatitude = (string) Setting::get('shipping_latitude');
+        $this->senderLongitude = (string) Setting::get('shipping_longitude');
         $this->prefix = strtoupper(trim((string) Setting::get('kiriminaja_prefix')));
         if (empty($this->prefix)) {
             $this->prefix = 'ARPL';
@@ -326,7 +326,7 @@ class KiriminAjaService
     }
 
     public function requestPickup($orderModel, $pickupSchedule) {
-
+        dd(Setting::all());
         $items = $orderModel->orderItems->map(function ($item) {
             return [
                 'name' => $item->product_name,

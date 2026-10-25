@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
+import { cn, formatVolume } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
 import { Loader2 } from 'lucide-react';
 
@@ -17,7 +17,7 @@ interface FragranceProduct {
     brand: string;
     family: string;
     category: string;
-    volume: string;
+    volume: string | number;
     price: string;
     raw_price?: number;
     image: string;
@@ -28,7 +28,7 @@ interface CartItemData {
     product_id: number;
     variant_id?: number | null;
     quantity: number;
-    volume: string;
+    volume: string | number;
     variant_name?: string | null;
     unit_price: number;
     unit_price_formatted: string;
@@ -382,7 +382,7 @@ export default function CartPage({
                                                     <div className="flex flex-col flex-wrap gap-2 text-xs text-muted-foreground pt-0.5">
                                                         <span className="inline-flex items-center gap-1 text-[11px] bg-muted/40 border border-border/70 px-2 py-0.5 rounded-md">
                                                             <span>{isEn ? 'Size:' : 'Ukuran:'}</span>
-                                                            <strong className="text-foreground">{item.volume}</strong>
+                                                            <strong className="text-foreground">{formatVolume(item.volume)}</strong>
                                                         </span>
                                                         <span className="text-[11px]">
                                                             {isEn ? 'Unit Price:' : 'Harga Satuan:'} <strong className="text-[#4A070B] dark:text-[#E8D0BA]">{item.unit_price_formatted}</strong>

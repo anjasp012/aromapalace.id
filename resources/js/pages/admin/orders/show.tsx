@@ -45,13 +45,14 @@ import {
     DialogDescription,
     DialogFooter,
 } from '@/components/ui/dialog';
+import { formatVolume } from '@/lib/utils';
 
 interface OrderItemDetail {
     id: number;
     product_id: number;
     product_name: string;
     variant_name?: string;
-    volume: string;
+    volume: string | number;
     price: number;
     price_formatted: string;
     quantity: number;
@@ -534,7 +535,7 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
                                                 <div className="font-medium text-foreground truncate">{item.product_name}</div>
                                                 <div className="text-xs text-muted-foreground mt-0.5">
                                                     {item.variant_name ? `${item.variant_name} • ` : ''}
-                                                    <span className="font-medium text-foreground">{item.volume}</span>
+                                                    <span className="font-medium text-foreground">{formatVolume(item.volume)}</span>
                                                 </div>
                                                 <div className="text-xs text-muted-foreground mt-1">
                                                     {item.quantity} x {item.price_formatted}

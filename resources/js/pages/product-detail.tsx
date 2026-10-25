@@ -15,7 +15,7 @@ import {
     DialogTitle,
     DialogDescription,
 } from '@/components/ui/dialog';
-import { cn } from '@/lib/utils';
+import { cn, formatVolume } from '@/lib/utils';
 import { isNativeApp } from '@/lib/native-app';
 import { useTranslation, formatCategoryName } from '@/lib/i18n';
 import { Check, Loader2 } from 'lucide-react';

@@ -2,12 +2,13 @@ import React from 'react';
 import { Head } from '@inertiajs/react';
 import { ArrowLeft, Download, Loader2 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
+import { formatVolume } from '@/lib/utils';
 
 interface InvoiceItem {
     id: number;
     product_name: string;
     variant_name?: string | null;
-    volume?: string;
+    volume?: string | number;
     price: number;
     price_formatted: string;
     quantity: number;
@@ -259,7 +260,7 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
                                             <div className="text-[10px] text-gray-500 mt-0.5 space-x-1">
                                                 {item.variant_name && <span>Varian: {item.variant_name}</span>}
                                                 {item.variant_name && item.volume && <span>&bull;</span>}
-                                                {item.volume && <span>Volume: {item.volume}</span>}
+                                                {item.volume && <span>Volume: {formatVolume(item.volume)}</span>}
                                             </div>
                                         </td>
                                         <td className="py-2.5 px-2 text-right text-gray-800 font-medium whitespace-nowrap">
