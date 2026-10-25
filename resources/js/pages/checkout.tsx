@@ -1817,10 +1817,15 @@ export default function CheckoutPage({
                                             {data.address}
                                         </span>
                                     </div>
-                                    <div className="flex items-start justify-between gap-2">
+                                    <div className="flex items-center justify-between gap-2">
                                         <span className="text-muted-foreground shrink-0">{isEn ? 'Courier' : 'Kurir'}</span>
-                                        <span className="font-semibold text-foreground text-right">
-                                            {selectedCourier ? `${selectedCourier.fullName} (${selectedCourier.priceFormatted})` : (isEn ? 'Not selected' : 'Belum dipilih')}
+                                        <span className="font-semibold text-foreground text-right flex items-center gap-1.5 justify-end">
+                                            {selectedCourier?.logo && (
+                                                <span className="h-5 px-1 py-0.5 rounded bg-white border border-border/70 flex items-center justify-center shrink-0">
+                                                    <img src={selectedCourier.logo} alt="" className="h-3.5 w-auto max-w-[36px] object-contain" />
+                                                </span>
+                                            )}
+                                            <span>{selectedCourier ? `${selectedCourier.fullName} (${selectedCourier.priceFormatted})` : (isEn ? 'Not selected' : 'Belum dipilih')}</span>
                                         </span>
                                     </div>
                                 </>
