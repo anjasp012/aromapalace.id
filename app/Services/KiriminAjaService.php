@@ -293,7 +293,7 @@ class KiriminAjaService
             'Authorization' => 'Bearer ' . $this->apiKey
         ])->post($this->baseUrl . '/api/mitra/v2/schedules');
         $json = $response->json();
-        dd($json);
+        dd($response);
         $raw = $json['data'] ?? ($json['datas'] ?? ($json['results'] ?? []));
          if (is_array($raw) && ! empty($raw)) {
             $items = array_values(array_map(function ($item) {
