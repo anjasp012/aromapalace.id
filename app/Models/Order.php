@@ -74,7 +74,6 @@ use Illuminate\Support\Carbon;
     'postal_code',
     'latitude',
     'longitude',
-    'courier',
     'courier_service',
     'courier_service_type',
     'shipping_cost',
