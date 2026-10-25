@@ -350,13 +350,13 @@ export default function CheckoutPage({
     const courierOptions = useMemo(() => {
         if (shippingRates.length > 0) {
             return shippingRates.map((r) => ({
-                id: r.code,
-                code: r.code,
+                id: r.name,
+                code: r.name,
                 name: r.name,
-                courierBrand: r.name.split(' ')[0],
+                courierBrand: r.name,
                 type: r.service || 'Regular',
                 price: r.price,
-                priceFormatted: r.price_formatted,
+                priceFormatted: r.price,
                 etd: r.etd,
             }));
         }
@@ -1033,13 +1033,12 @@ export default function CheckoutPage({
                                                     }
                                                     setShowCourierModal(!showCourierModal);
                                                 }}
-                                                className={`rounded-md border p-3 transition flex items-center justify-between gap-3 ${
-                                                    !selectedAddress
-                                                        ? 'border-dashed border-amber-500/40 bg-amber-500/5 cursor-pointer hover:border-amber-500'
-                                                        : courierOptions.length === 0 && !loadingRates
-                                                            ? 'border-destructive/40 bg-destructive/5'
-                                                            : 'border-border/80 hover:border-border cursor-pointer bg-background/50'
-                                                }`}
+                                                className={`rounded-md border p-3 transition flex items-center justify-between gap-3 ${!selectedAddress
+                                                    ? 'border-dashed border-amber-500/40 bg-amber-500/5 cursor-pointer hover:border-amber-500'
+                                                    : courierOptions.length === 0 && !loadingRates
+                                                        ? 'border-destructive/40 bg-destructive/5'
+                                                        : 'border-border/80 hover:border-border cursor-pointer bg-background/50'
+                                                    }`}
                                             >
                                                 {!selectedAddress ? (
                                                     <div className="flex items-center gap-2 text-xs text-amber-800 dark:text-amber-200">
@@ -1334,67 +1333,67 @@ export default function CheckoutPage({
                                         </div>
                                     ) : (
                                         displayedPayments.map((pm) => {
-                                        const isSelected = data.payment_method === pm.id;
-                                        return (
-                                            <div
-                                                key={pm.id}
-                                                onClick={() => setData('payment_method', pm.id)}
-                                                className={`rounded-md p-3 flex items-center justify-between gap-2.5 cursor-pointer transition select-none ${isSelected
-                                                    ? 'border-2 border-[#4A070B] dark:border-[#E8D0BA] bg-[#4A070B]/5 dark:bg-[#E8D0BA]/5'
-                                                    : 'border border-border/80 hover:border-border bg-background/50'
-                                                    }`}
-                                            >
-                                                <div className="flex items-center gap-2.5 min-w-0">
-                                                    {isPaymentIconImage(pm.icon) ? (
-                                                        <div className="w-12 h-7 rounded border border-border/60 bg-white dark:bg-muted p-0.5 flex items-center justify-center shrink-0 overflow-hidden">
-                                                            <img
-                                                                src={formatPaymentImageUrl(pm.icon!)}
-                                                                alt={pm.name}
-                                                                className="max-h-full max-w-full object-contain"
-                                                                onError={(e) => {
-                                                                    const target = e.currentTarget;
-                                                                    if (target.parentElement) {
-                                                                        target.parentElement.style.display = 'none';
-                                                                        const fallback = target.parentElement.nextElementSibling;
-                                                                        if (fallback) (fallback as HTMLElement).style.display = 'inline-flex';
-                                                                    }
-                                                                }}
-                                                            />
-                                                        </div>
-                                                    ) : null}
-                                                    <span
-                                                        style={{ display: isPaymentIconImage(pm.icon) ? 'none' : 'inline-flex' }}
-                                                        className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-sm shrink-0 tracking-tight ${pm.logoStyle}`}
-                                                    >
-                                                        {pm.logo}
-                                                    </span>
-                                                    <div className="min-w-0">
-                                                        <span className="text-xs font-bold text-foreground block truncate">
-                                                            {pm.name}
+                                            const isSelected = data.payment_method === pm.id;
+                                            return (
+                                                <div
+                                                    key={pm.id}
+                                                    onClick={() => setData('payment_method', pm.id)}
+                                                    className={`rounded-md p-3 flex items-center justify-between gap-2.5 cursor-pointer transition select-none ${isSelected
+                                                        ? 'border-2 border-[#4A070B] dark:border-[#E8D0BA] bg-[#4A070B]/5 dark:bg-[#E8D0BA]/5'
+                                                        : 'border border-border/80 hover:border-border bg-background/50'
+                                                        }`}
+                                                >
+                                                    <div className="flex items-center gap-2.5 min-w-0">
+                                                        {isPaymentIconImage(pm.icon) ? (
+                                                            <div className="w-12 h-7 rounded border border-border/60 bg-white dark:bg-muted p-0.5 flex items-center justify-center shrink-0 overflow-hidden">
+                                                                <img
+                                                                    src={formatPaymentImageUrl(pm.icon!)}
+                                                                    alt={pm.name}
+                                                                    className="max-h-full max-w-full object-contain"
+                                                                    onError={(e) => {
+                                                                        const target = e.currentTarget;
+                                                                        if (target.parentElement) {
+                                                                            target.parentElement.style.display = 'none';
+                                                                            const fallback = target.parentElement.nextElementSibling;
+                                                                            if (fallback) (fallback as HTMLElement).style.display = 'inline-flex';
+                                                                        }
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        ) : null}
+                                                        <span
+                                                            style={{ display: isPaymentIconImage(pm.icon) ? 'none' : 'inline-flex' }}
+                                                            className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-sm shrink-0 tracking-tight ${pm.logoStyle}`}
+                                                        >
+                                                            {pm.logo}
                                                         </span>
-                                                        {pm.description && (
-                                                            <span className="text-[10.5px] text-muted-foreground block truncate">
-                                                                {pm.description}
+                                                        <div className="min-w-0">
+                                                            <span className="text-xs font-bold text-foreground block truncate">
+                                                                {pm.name}
                                                             </span>
-                                                        )}
+                                                            {pm.description && (
+                                                                <span className="text-[10.5px] text-muted-foreground block truncate">
+                                                                    {pm.description}
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                </div>
 
-                                                <div className="flex items-center gap-2 shrink-0">
-                                                    <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
-                                                        Bebas Biaya
-                                                    </span>
-                                                    {/* Radio Button */}
-                                                    <div className={`w-4 h-4 rounded-full flex items-center justify-center transition border ${isSelected ? 'border-[#4A070B] dark:border-[#E8D0BA] bg-background' : 'border-border/80'
-                                                        }`}>
-                                                        {isSelected && (
-                                                            <div className="w-2.5 h-2.5 rounded-full bg-[#4A070B] dark:bg-[#E8D0BA]"></div>
-                                                        )}
+                                                    <div className="flex items-center gap-2 shrink-0">
+                                                        <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+                                                            Bebas Biaya
+                                                        </span>
+                                                        {/* Radio Button */}
+                                                        <div className={`w-4 h-4 rounded-full flex items-center justify-center transition border ${isSelected ? 'border-[#4A070B] dark:border-[#E8D0BA] bg-background' : 'border-border/80'
+                                                            }`}>
+                                                            {isSelected && (
+                                                                <div className="w-2.5 h-2.5 rounded-full bg-[#4A070B] dark:bg-[#E8D0BA]"></div>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        );
-                                    }))}
+                                            );
+                                        }))}
                                     {errors.payment_method && (
                                         <p className="text-xs text-destructive font-medium mt-1">
                                             {errors.payment_method}
