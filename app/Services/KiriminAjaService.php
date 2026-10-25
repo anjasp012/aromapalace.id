@@ -215,14 +215,14 @@ class KiriminAjaService
         $expressCouriers = [];
         $instantCouriers = [];
         foreach ($activeCouriers as $courier) {
-            if($courier['type'] == 'express'){
+            if($courier['type'] == 'Express'){
                 $expressCouriers[] = [
                     'code' => $courier['code'],
                     'name' => $courier['name'],
                 ];
                 continue;
             }
-            if($courier['type'] == 'instant'){
+            if($courier['type'] == 'Instant'){
                 $instantCouriers[] = [
                     'code' => $courier['code'],
                     'name' => $courier['name'],
