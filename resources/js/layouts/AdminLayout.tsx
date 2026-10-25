@@ -1,4 +1,4 @@
-import React, { useState, type ReactNode } from 'react';
+import React, { useState, useEffect, type ReactNode } from 'react';
 import { Head, Link, usePage, router } from '@inertiajs/react';
 import {
     LayoutDashboard,
@@ -34,6 +34,7 @@ import {
     DropdownMenuContent,
 } from '@/components/ui/dropdown-menu';
 import { useAdminOrderNotifier } from '@/lib/use-admin-notifications';
+import { autoRequestNotificationPermission } from '@/lib/push-notification';
 
 interface AdminLayoutProps {
     title: string;
@@ -135,6 +136,11 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
 
     // Real-time Order Notification Poller (plays chime and shows desktop banner)
     useAdminOrderNotifier(Boolean(user && user.role === 'admin'));
+
+    // Automatically sync admin device token with backend for FCM notifications
+    useEffect(() => {
+        autoRequestNotificationPermission().catch(() => {});
+    }, []);
 
     const isDashboard = url === '/' || url === '/dashboard' || url === '/admin' || url.startsWith('/admin/dashboard') || url.startsWith('/dashboard');
     const isOrders = url.startsWith('/manajemen-pesanan');

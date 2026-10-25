@@ -184,10 +184,32 @@ export default function OrdersPage({
         }
     };
 
-    // Real-time WebSocket: listen for ShippingUpdated on currently viewed order
+    // Real-time WebSocket: listen for ShippingUpdated on all orders and currently viewed order
+    useEcho(
+        'orders',
+        ['ShippingUpdated', '.ShippingUpdated'],
+        () => {
+            router.reload({
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: (page) => {
+                    const freshOrders = page.props.orders as OrderData[];
+                    if (Array.isArray(freshOrders) && selectedOrder) {
+                        const updated = freshOrders.find((o) => o.id === selectedOrder.id);
+                        if (updated) {
+                            setSelectedOrder(updated);
+                        }
+                    }
+                },
+            });
+        },
+        [selectedOrder?.id],
+        'public',
+    );
+
     useEcho(
         selectedOrder ? `orders.${selectedOrder.order_number}` : '',
-        '.ShippingUpdated',
+        ['ShippingUpdated', '.ShippingUpdated'],
         () => {
             router.reload({
                 preserveScroll: true,
@@ -206,6 +228,30 @@ export default function OrdersPage({
         [selectedOrder?.order_number, selectedOrder?.id],
         'public',
     );
+
+    // Smart Fallback: background poll every 10s if user is viewing an order or tracking
+    useEffect(() => {
+        if (!selectedOrder && !trackingOrder) return;
+
+        const interval = setInterval(() => {
+            router.reload({
+                preserveScroll: true,
+                preserveState: true,
+                only: ['orders'],
+                onSuccess: (page) => {
+                    const freshOrders = page.props.orders as OrderData[];
+                    if (Array.isArray(freshOrders) && selectedOrder) {
+                        const updated = freshOrders.find((o) => o.id === selectedOrder.id);
+                        if (updated) {
+                            setSelectedOrder(updated);
+                        }
+                    }
+                },
+            });
+        }, 10000);
+
+        return () => clearInterval(interval);
+    }, [selectedOrder?.id, trackingOrder?.id]);
 
     // Lock body scroll and close on Escape when modal is open
     useEffect(() => {

@@ -4,8 +4,17 @@ import { initAppRedirect } from '@/lib/app-redirect';
 import { resolveComponentForUrl } from '@/lib/route-resolver';
 import { configureEcho } from '@laravel/echo-react';
 
+const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+const defaultHost = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+
 configureEcho({
     broadcaster: 'reverb',
+    key: import.meta.env.VITE_REVERB_APP_KEY,
+    wsHost: import.meta.env.VITE_REVERB_HOST || defaultHost,
+    wsPort: import.meta.env.VITE_REVERB_PORT ? parseInt(import.meta.env.VITE_REVERB_PORT) : 8080,
+    wssPort: import.meta.env.VITE_REVERB_PORT ? parseInt(import.meta.env.VITE_REVERB_PORT) : (isHttps ? 443 : 8080),
+    forceTLS: isHttps || (import.meta.env.VITE_REVERB_SCHEME === 'https'),
+    enabledTransports: ['ws', 'wss'],
 });
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';

@@ -28,7 +28,6 @@ import {
     RefreshCw,
     Printer,
 } from 'lucide-react';
-import ShippingLabelModal from '@/components/ShippingLabelModal';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -176,7 +175,6 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
     const [manualError, setManualError] = useState('');
     const [copiedTracking, setCopiedTracking] = useState(false);
     const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
-    const [isShippingLabelOpen, setIsShippingLabelOpen] = useState(false);
 
     React.useEffect(() => {
         setManualTrackingNumber(order.tracking_number || '');
@@ -186,7 +184,7 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
     // Real-time WebSocket: listen for ShippingUpdated event via Laravel Reverb
     useEcho(
         `orders.${order.order_number}`,
-        '.ShippingUpdated',
+        ['ShippingUpdated', '.ShippingUpdated'],
         () => {
             router.reload({
                 preserveScroll: true,
@@ -196,6 +194,33 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
         [order.order_number],
         'public',
     );
+
+    useEcho(
+        'admin.orders',
+        ['ShippingUpdated', '.ShippingUpdated'],
+        () => {
+            router.reload({
+                preserveScroll: true,
+                preserveState: true,
+            });
+        },
+        [order.order_number],
+        'public',
+    );
+
+    // Smart fallback: poll every 10s if tracking number is pending or order is shipped
+    React.useEffect(() => {
+        if (!isWaitingTracking && order.order_status !== 'dikirim') return;
+
+        const interval = setInterval(() => {
+            router.reload({
+                preserveScroll: true,
+                preserveState: true,
+            });
+        }, 10000);
+
+        return () => clearInterval(interval);
+    }, [isWaitingTracking, order.order_status]);
 
     const isPaid = order.payment_status === 'paid';
     const canShip = (order.order_status === 'diproses' || isPaid) &&
@@ -609,15 +634,20 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
                                                     </span>
                                                     <div className="flex items-center gap-1.5 shrink-0">
                                                         <Button
-                                                            type="button"
                                                             variant="outline"
                                                             size="sm"
-                                                            onClick={() => setIsShippingLabelOpen(true)}
-                                                            title="Cetak label pengiriman thermal (100x150mm)"
+                                                            asChild
                                                             className="h-7 px-2.5 text-xs font-semibold text-foreground hover:bg-muted"
                                                         >
-                                                            <Printer className="size-3 mr-1" />
-                                                            <span>Cetak Label</span>
+                                                            <a
+                                                                href={`/manajemen-pesanan/${order.id}/shipping-label?print=1`}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                title="Cetak label pengiriman thermal (100x150mm) di tab baru"
+                                                            >
+                                                                <Printer className="size-3 mr-1" />
+                                                                <span>Cetak Label</span>
+                                                            </a>
                                                         </Button>
                                                         <Button
                                                             type="button"
@@ -1082,12 +1112,6 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
                 awb={order.tracking_number}
                 orderNumber={order.order_number}
                 initialData={order.shipping}
-            />
-
-            <ShippingLabelModal
-                open={isShippingLabelOpen}
-                onOpenChange={setIsShippingLabelOpen}
-                order={order}
             />
         </AdminLayout>
     );

@@ -37,6 +37,7 @@ class ShippingUpdated implements ShouldBroadcastNow
         return [
             new Channel('orders.'.$this->order->order_number),
             new PrivateChannel('orders.'.$this->order->order_number),
+            new Channel('orders'),
             new Channel('admin.orders'),
             new PrivateChannel('admin'),
         ];

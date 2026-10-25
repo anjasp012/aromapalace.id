@@ -221,8 +221,20 @@ export default function TrackingModal({
     const channelName = orderNumber ? `orders.${orderNumber}` : (lookupCode ? `orders.${lookupCode}` : '');
     useEcho(
         open && channelName ? channelName : '',
-        '.ShippingUpdated',
-        () => {
+        ['ShippingUpdated', '.ShippingUpdated'],
+        (payload?: any) => {
+            if (payload && payload.awb && !payload.awb.toLowerCase().includes('menunggu')) {
+                setData((prev) => ({
+                    ...prev,
+                    awb: payload.awb,
+                    status: payload.status,
+                    text: payload.text || prev?.text,
+                    delivered_at: payload.delivered_at,
+                    auto_completes_at: payload.auto_completes_at,
+                    auto_completes_at_formatted: payload.auto_completes_at_formatted,
+                    histories: Array.isArray(payload.histories) && payload.histories.length > 0 ? payload.histories : prev?.histories,
+                }));
+            }
             if (lookupCode) {
                 fetch(`/api/shipping/track/${encodeURIComponent(lookupCode)}`)
                     .then((res) => res.json())
@@ -237,6 +249,24 @@ export default function TrackingModal({
         [open, channelName, lookupCode],
         'public',
     );
+
+    // Smart fallback: poll tracking API every 6s while modal is open
+    useEffect(() => {
+        if (!open || !lookupCode) return;
+
+        const interval = setInterval(() => {
+            fetch(`/api/shipping/track/${encodeURIComponent(lookupCode)}`)
+                .then((res) => res.json())
+                .then((resJson) => {
+                    if (resJson.status && resJson.data) {
+                        setData(resJson.data);
+                    }
+                })
+                .catch(() => {});
+        }, 6000);
+
+        return () => clearInterval(interval);
+    }, [open, lookupCode]);
 
     const displayAwb = data?.awb || lookupCode || '-';
     const isWaitingAwb = !displayAwb || displayAwb === '-' || displayAwb.toLowerCase().includes('menunggu');

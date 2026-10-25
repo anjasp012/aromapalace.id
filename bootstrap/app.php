@@ -63,6 +63,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'webhook/pakasir',
             'webhook/kiriminaja',
             'api/webhooks/*',
+            'api/device-tokens',
+            'api/device-tokens/*',
         ]);
 
         $middleware->web(append: [

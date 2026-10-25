@@ -32,6 +32,12 @@ class FirebaseNotificationService
             $credentials = json_decode(env('FIREBASE_CREDENTIALS_JSON'), true);
         }
 
+        if (str_starts_with($token, 'fcm_web_')) {
+            DeviceToken::where('token', $token)->delete();
+
+            return false;
+        }
+
         // If service account is not yet configured, log safely without throwing exceptions
         if (! $credentials) {
             Log::info('Firebase Push Notification (Simulated/Local Mode - Service Account not found):', [
@@ -70,20 +76,33 @@ class FirebaseNotificationService
                             'body' => $body,
                         ],
                         'android' => [
+                            'priority' => 'HIGH',
                             'notification' => [
-                                'sound' => env('FCM_ANDROID_SOUND', 'notif'),
+                                'sound' => env('FCM_ANDROID_SOUND', 'default'),
                                 'channel_id' => 'aroma_palace_channel',
-                                'default_sound' => false,
+                                'default_sound' => true,
+                                'notification_priority' => 'PRIORITY_MAX',
                             ],
                         ],
                         'apns' => [
+                            'headers' => [
+                                'apns-priority' => '10',
+                            ],
                             'payload' => [
                                 'aps' => [
-                                    'sound' => env('FCM_IOS_SOUND', 'notif.wav'),
+                                    'alert' => [
+                                        'title' => $title,
+                                        'body' => $body,
+                                    ],
+                                    'sound' => env('FCM_IOS_SOUND', 'default'),
+                                    'badge' => 1,
                                 ],
                             ],
                         ],
                         'webpush' => [
+                            'headers' => [
+                                'Urgency' => 'high',
+                            ],
                             'notification' => [
                                 'title' => $title,
                                 'body' => $body,
@@ -102,6 +121,11 @@ class FirebaseNotificationService
                 DeviceToken::where('token', $token)->update(['last_used_at' => now()]);
 
                 return true;
+            }
+
+            // Remove unregistered or invalid tokens so they don't fail subsequent dispatches
+            if ($response->status() === 404 || ($response->status() === 400 && str_contains($response->body(), 'INVALID_ARGUMENT'))) {
+                DeviceToken::where('token', $token)->delete();
             }
 
             Log::warning('Firebase FCM HTTP v1 notification failed', [
@@ -178,17 +202,20 @@ class FirebaseNotificationService
         $userId = $user instanceof User ? $user->id : $user;
         $tokens = DeviceToken::where('user_id', $userId)->pluck('token')->unique()->all();
 
-        // Fallback: If no tokens linked to user_id, search active customer tokens from the last 2 hours
+        // Fallback: If no tokens linked to user_id, search active customer tokens from the last 30 days
         if (empty($tokens)) {
             $tokens = DeviceToken::where(function ($q) {
                 $q->whereNull('role')->orWhere('role', 'customer');
             })
-                ->where('last_used_at', '>=', now()->subHours(2))
+                ->where('last_used_at', '>=', now()->subDays(30))
                 ->latest('last_used_at')
                 ->pluck('token')
                 ->unique()
                 ->all();
         }
+
+        // Filter out dummy/empty tokens
+        $tokens = array_values(array_filter($tokens, fn ($t) => ! empty($t) && ! str_starts_with($t, 'fcm_web_')));
 
         Log::info('Firebase FCM sendToUser', [
             'user_id' => $userId,
@@ -250,6 +277,8 @@ class FirebaseNotificationService
                 ->orWhereHas('user', fn ($uq) => $uq->where('role', 'admin'));
         })->pluck('token')->unique()->all();
 
+        $adminTokens = array_values(array_filter($adminTokens, fn ($t) => ! empty($t) && ! str_starts_with($t, 'fcm_web_')));
+
         $sentCount = 0;
         foreach ($adminTokens as $token) {
             if ($this->sendToToken($token, $title, $body, $url, $data)) {
@@ -284,6 +313,7 @@ class FirebaseNotificationService
 
         // Broadcast to all registered devices (customers, guests, and testing admins)
         $tokens = DeviceToken::pluck('token')->unique()->all();
+        $tokens = array_values(array_filter($tokens, fn ($t) => ! empty($t) && ! str_starts_with($t, 'fcm_web_')));
 
         Log::info('Firebase FCM sendBroadcast dispatched', [
             'total_tokens' => count($tokens),

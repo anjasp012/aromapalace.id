@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
+import { useEcho } from '@laravel/echo-react';
 import AdminLayout from '@/layouts/AdminLayout';
 import AnimatedWaitingDots from '@/components/AnimatedWaitingDots';
 import {
@@ -105,6 +106,33 @@ export default function AdminOrdersIndex({
     const [isUpdating, setIsUpdating] = useState(false);
 
     const activeTab = filters.status || 'all';
+
+    // Real-time WebSocket: reload orders list on shipping update
+    useEcho(
+        'admin.orders',
+        ['ShippingUpdated', '.ShippingUpdated'],
+        () => {
+            router.reload({
+                preserveScroll: true,
+                preserveState: true,
+            });
+        },
+        [],
+        'public',
+    );
+
+    useEcho(
+        'orders',
+        ['ShippingUpdated', '.ShippingUpdated'],
+        () => {
+            router.reload({
+                preserveScroll: true,
+                preserveState: true,
+            });
+        },
+        [],
+        'public',
+    );
 
     const handleTabChange = (statusKey: string) => {
         router.get(

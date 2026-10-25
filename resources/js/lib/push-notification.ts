@@ -333,45 +333,16 @@ export async function enablePushNotifications(csrfToken?: string): Promise<{ suc
             if (existing && !existing.startsWith('fcm_web_')) {
                 fcmToken = existing;
             } else {
-                fcmToken = 'fcm_web_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
-                localStorage.setItem('aromapalace_fcm_token', fcmToken);
+                localStorage.removeItem('aromapalace_fcm_token');
+                return {
+                    success: false,
+                    message: 'Gagal memperoleh token notifikasi dari Firebase.',
+                };
             }
         }
 
-        const ua = navigator.userAgent;
-        let browser = 'Chrome';
-        let detectedDeviceType: 'web' | 'android' | 'ios' = 'web';
-
-        if (/iPhone|iPad|iPod/i.test(ua)) {
-            detectedDeviceType = 'ios';
-            browser = 'Safari Mobile (iOS)';
-        } else if (/Android/i.test(ua)) {
-            detectedDeviceType = 'android';
-            browser = 'Chrome Mobile (Android)';
-        } else if (ua.includes('Firefox')) {
-            browser = 'Firefox';
-        } else if (ua.includes('Edg/')) {
-            browser = 'Edge';
-        } else if (ua.includes('Safari') && !ua.includes('Chrome')) {
-            browser = 'Safari';
-        }
-
-        const response = await fetch('/api/device-tokens', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Accept: 'application/json',
-                'X-CSRF-TOKEN': csrfToken || (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
-            },
-            body: JSON.stringify({
-                token: fcmToken,
-                device_type: detectedDeviceType,
-                browser: browser,
-            }),
-        });
-
-        if (response.ok) {
-            localStorage.setItem('aromapalace_notifications_enabled', 'true');
+        const synced = await syncDeviceTokenToBackend(fcmToken, csrfToken);
+        if (synced) {
             return {
                 success: true,
                 message: 'Notifikasi berhasil diaktifkan.',
@@ -388,6 +359,64 @@ export async function enablePushNotifications(csrfToken?: string): Promise<{ suc
             message: err?.message || 'Terjadi kesalahan saat mengaktifkan notifikasi.',
         };
     }
+}
+
+/**
+ * Synchronize an FCM device token with the Laravel backend.
+ */
+export async function syncDeviceTokenToBackend(
+    fcmToken: string,
+    csrfToken?: string
+): Promise<boolean> {
+    if (!fcmToken || fcmToken.startsWith('fcm_web_')) {
+        return false;
+    }
+
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+    let browser = 'Chrome';
+    let detectedDeviceType: 'web' | 'android' | 'ios' = 'web';
+
+    if (/iPhone|iPad|iPod/i.test(ua)) {
+        detectedDeviceType = 'ios';
+        browser = 'Safari Mobile (iOS)';
+    } else if (/Android/i.test(ua)) {
+        detectedDeviceType = 'android';
+        browser = 'Chrome Mobile (Android)';
+    } else if (ua.includes('Firefox')) {
+        browser = 'Firefox';
+    } else if (ua.includes('Edg/')) {
+        browser = 'Edge';
+    } else if (ua.includes('Safari') && !ua.includes('Chrome')) {
+        browser = 'Safari';
+    }
+
+    try {
+        const csrf = csrfToken || (typeof document !== 'undefined' ? (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content : '') || '';
+
+        const response = await fetch('/api/device-tokens', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+                'X-CSRF-TOKEN': csrf,
+            },
+            body: JSON.stringify({
+                token: fcmToken,
+                device_type: detectedDeviceType,
+                browser: browser,
+            }),
+        });
+
+        if (response.ok) {
+            localStorage.setItem('aromapalace_notifications_enabled', 'true');
+            localStorage.setItem('aromapalace_fcm_token', fcmToken);
+            return true;
+        }
+    } catch (e) {
+        console.warn('Failed to sync device token to backend:', e);
+    }
+
+    return false;
 }
 
 /**
@@ -550,11 +579,35 @@ export async function autoRequestNotificationPermission(csrfToken?: string): Pro
         return;
     }
 
+    // Always re-sync existing token to associate with current user session if already stored
+    const existingToken = typeof localStorage !== 'undefined' ? localStorage.getItem('aromapalace_fcm_token') : null;
+    if (existingToken && !existingToken.startsWith('fcm_web_')) {
+        syncDeviceTokenToBackend(existingToken, csrfToken).catch(() => {});
+    }
+
     try {
         const currentPermission = Notification.permission;
-        // On web/Safari, only auto-register if already granted; never auto-prompt without user gesture
         if (currentPermission === 'granted') {
             await enablePushNotifications(csrfToken);
+        } else if (currentPermission === 'default') {
+            // Trigger browser notification permission prompt on first user gesture
+            const onFirstGesture = async () => {
+                document.removeEventListener('click', onFirstGesture);
+                document.removeEventListener('touchend', onFirstGesture);
+
+                if (sessionStorage.getItem('aromapalace_prompted_push')) return;
+                sessionStorage.setItem('aromapalace_prompted_push', '1');
+
+                try {
+                    const result = await Notification.requestPermission();
+                    if (result === 'granted') {
+                        await enablePushNotifications(csrfToken);
+                    }
+                } catch {}
+            };
+
+            document.addEventListener('click', onFirstGesture, { once: true });
+            document.addEventListener('touchend', onFirstGesture, { once: true });
         }
     } catch (err) {
         console.warn('[Web Push] Auto notification request error:', err);

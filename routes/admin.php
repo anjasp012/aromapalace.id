@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\SliderPromoController;
 use App\Http\Controllers\Admin\StoreController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VoucherController;
+use App\Http\Controllers\DeviceTokenController;
 use App\Http\Controllers\ShippingController;
 use Illuminate\Support\Facades\Route;
 
@@ -37,6 +38,8 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/api/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/api/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/api/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+    Route::post('/api/device-tokens', [DeviceTokenController::class, 'store'])->name('device-tokens.store');
+    Route::delete('/api/device-tokens', [DeviceTokenController::class, 'destroy'])->name('device-tokens.destroy');
 
     Route::get('/manajemen-pesanan', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/manajemen-pesanan/{order}', [OrderController::class, 'show'])->name('orders.show');
