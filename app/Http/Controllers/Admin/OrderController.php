@@ -115,7 +115,7 @@ class OrderController extends Controller
 
         return Inertia::render('admin/orders/show', [
             'order' => $this->mapOrderDetail($orderModel),
-            'pickupSchedules' => function () {
+            'pickupSchedules' => Inertia::optional(function () {
                 $service = app(KiriminAjaService::class);
                 $schedules = $service->getPickupSchedules();
                 if (empty($schedules)) {
@@ -129,7 +129,7 @@ class OrderController extends Controller
                 }
 
                 return $schedules ?: [];
-            },
+            }),
         ]);
     }
 

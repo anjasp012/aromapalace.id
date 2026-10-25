@@ -26,6 +26,7 @@ use App\Http\Controllers\UserAddressController;
 use App\Http\Controllers\WishlistController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 Route::match(['get', 'post'], '/locale/{lang?}', [LocaleController::class, 'setLocale'])->name('locale.set');
 
@@ -166,9 +167,8 @@ Route::any('/admin/{path?}', function (Request $request, ?string $path = null) {
     $targetUrl = "{$scheme}://{$adminDomain}{$portSuffix}/{$cleanPath}";
 
     if ($request->header('X-Inertia')) {
-        return \Inertia\Inertia::location($targetUrl);
+        return Inertia::location($targetUrl);
     }
 
     return redirect($targetUrl);
 })->where('path', '.*');
-
