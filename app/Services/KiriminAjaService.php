@@ -385,6 +385,6 @@ class KiriminAjaService
             ]
         ]);
         $json = $response->json();
-        dd($json);        
+        dd($response);        
     }
 }
