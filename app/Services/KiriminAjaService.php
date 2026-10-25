@@ -81,4 +81,39 @@ class KiriminAjaService
 
         return [];
     }
+
+
+    public function getCities($province_id)
+    {
+        $cached = Cache::get('kiriminaja:cities:'.$province_id);
+        if (is_array($cached) && ! empty($cached)) {
+            return $cached;
+        }
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->apiKey
+        ])->post($this->baseUrl . '/api/mitra/city/'.$province_id);
+
+        $json = $response->json();
+        $raw = $json['data'] ?? ($json['datas'] ?? ($json['results'] ?? []));
+
+        if (is_array($raw) && ! empty($raw)) {
+            $items = array_values(array_map(function ($item) {
+                $arr = (array) $item;
+                $name = (string) ($arr['provinsi_name'] ?? ($arr['name'] ?? ''));
+
+                return [
+                    'id' => (int) $arr['id'],
+                    'name' => $name,
+                    'kabupaten_name' => $name,
+                    'type' => $arr['type'],
+                    'postal_code' => $arr['postal_code'],
+                ];
+            }, $raw));
+            Cache::put('kiriminaja:cities:'.$province_id, $items, now()->addDays(30));
+            return $items;
+        }
+
+        return [];
+    }
 }
