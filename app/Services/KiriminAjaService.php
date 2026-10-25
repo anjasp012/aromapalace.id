@@ -226,7 +226,7 @@ class KiriminAjaService
                     'service' => $arr['service'],
                     'service_name' => $arr['service_name'],
                     'service_type' => $arr['service_type'],
-                    'cost' => $arr['cost'],
+                    'price' => $arr['cost'],
                     'etd' => $arr['etd'],
                     'insurance' => $arr['insurance'],
                 ];
@@ -284,6 +284,6 @@ class KiriminAjaService
         }
         $shippingPriceExpresss = $this->shippingPriceExpresss($destination, $origin, $weight, $expressCouriers);
         $shippingPriceInstants = $this->shippingPriceInstants($destination, $origin, $weight, $instantCouriers);
-        dd($shippingPriceExpresss, $shippingPriceInstants);
+        return $shippingPriceExpresss;
     }
 }
