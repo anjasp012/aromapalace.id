@@ -60,8 +60,8 @@ class KiriminAjaService
         $this->senderSubdistrictId = (int) Setting::get('shipping_subdistrict_id');
         $this->senderAddress = (string) Setting::get('shipping_address');
         $this->senderZipcode = (int) Setting::get('shipping_postal_code');
-        $this->senderLatitude = (int) Setting::get('shipping_latitude');
-        $this->senderLongitude = (int) Setting::get('shipping_longitude');
+        $this->senderLatitude = (double) Setting::get('shipping_latitude');
+        $this->senderLongitude = (double) Setting::get('shipping_longitude');
         $this->prefix = strtoupper(trim((string) Setting::get('kiriminaja_prefix')));
         if (empty($this->prefix)) {
             $this->prefix = 'ARPL';
@@ -307,7 +307,6 @@ class KiriminAjaService
     }
 
     public function getPickupSchedules() {
-        dd($this->senderLatitude, $this->senderLongitude);
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $this->apiKey
         ])->post($this->baseUrl . '/api/mitra/v2/schedules');
