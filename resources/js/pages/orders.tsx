@@ -3,7 +3,6 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useEcho } from '@laravel/echo-react';
 import Layout from '@/components/Layout';
 import TrackingModal from '@/components/TrackingModal';
-import AnimatedWaitingDots from '@/components/AnimatedWaitingDots';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/lib/i18n';
 import { formatVolume } from '@/lib/utils';
@@ -938,23 +937,8 @@ export default function OrdersPage({
                                                 </div>
                                             ) : (
                                                 <div className="space-y-0.5">
-                                                    <div className="flex items-center justify-between gap-2">
-                                                        <div className="font-bold text-foreground">
-                                                            {selectedOrder.courier || 'JNE Express VIP (Bebas Ongkir)'}
-                                                        </div>
-                                                        {((effectiveStatus === 'dikirim' || effectiveStatus === 'selesai' || hasDelivered) || selectedOrder.tracking_number) && (
-                                                            <div className="text-xs">
-                                                                {(!selectedOrder.tracking_number || selectedOrder.tracking_number.toLowerCase().includes('menunggu')) ? (
-                                                                    <span className="text-amber-600 dark:text-amber-400 font-mono text-[11px] font-semibold flex items-center">
-                                                                        Resi:&nbsp;<AnimatedWaitingDots text="Menunggu" />
-                                                                    </span>
-                                                                ) : (
-                                                                    <span className="text-muted-foreground font-mono text-[11px]">
-                                                                        Resi: <span className="font-semibold text-foreground">{selectedOrder.tracking_number}</span>
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        )}
+                                                    <div className="font-bold text-foreground">
+                                                        {selectedOrder.courier || 'JNE Express VIP (Bebas Ongkir)'}
                                                     </div>
                                                     <div className="text-muted-foreground text-[11px]">
                                                         Express Delivery (1 - 3 Hari)

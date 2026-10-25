@@ -480,9 +480,8 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
                         <CardContent className="pt-2">
                             <div className="grid grid-cols-4 text-center gap-2 py-2">
                                 <div className="flex flex-col items-center">
-                                    <div className={`size-9 rounded-full flex items-center justify-center text-xs font-semibold ${
-                                        currentStep >= 1 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                                    }`}>
+                                    <div className={`size-9 rounded-full flex items-center justify-center text-xs font-semibold ${currentStep >= 1 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                                        }`}>
                                         <CreditCard className="size-4" />
                                     </div>
                                     <span className="text-xs font-medium mt-1.5 text-foreground">1. Bayar (PG)</span>
@@ -490,9 +489,8 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
                                 </div>
 
                                 <div className="flex flex-col items-center">
-                                    <div className={`size-9 rounded-full flex items-center justify-center text-xs font-semibold ${
-                                        currentStep >= 2 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                                    }`}>
+                                    <div className={`size-9 rounded-full flex items-center justify-center text-xs font-semibold ${currentStep >= 2 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                                        }`}>
                                         <Package className="size-4" />
                                     </div>
                                     <span className="text-xs font-medium mt-1.5 text-foreground">2. Diproses</span>
@@ -500,9 +498,8 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
                                 </div>
 
                                 <div className="flex flex-col items-center">
-                                    <div className={`size-9 rounded-full flex items-center justify-center text-xs font-semibold ${
-                                        currentStep >= 3 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                                    }`}>
+                                    <div className={`size-9 rounded-full flex items-center justify-center text-xs font-semibold ${currentStep >= 3 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                                        }`}>
                                         {isPickup ? <ShoppingBag className="size-4" /> : <Truck className="size-4" />}
                                     </div>
                                     <span className="text-xs font-medium mt-1.5 text-foreground">3. {isPickup ? 'Pengambilan' : 'Dikirim'}</span>
@@ -510,9 +507,8 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
                                 </div>
 
                                 <div className="flex flex-col items-center">
-                                    <div className={`size-9 rounded-full flex items-center justify-center text-xs font-semibold ${
-                                        currentStep >= 4 ? 'bg-emerald-600 text-white' : 'bg-muted text-muted-foreground'
-                                    }`}>
+                                    <div className={`size-9 rounded-full flex items-center justify-center text-xs font-semibold ${currentStep >= 4 ? 'bg-emerald-600 text-white' : 'bg-muted text-muted-foreground'
+                                        }`}>
                                         <CheckCircle2 className="size-4" />
                                     </div>
                                     <span className="text-xs font-medium mt-1.5 text-foreground">4. Selesai</span>
@@ -601,9 +597,7 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
                                                         <Truck className="size-3.5 text-primary" />
                                                         <span>Nomor Resi / AWB</span>
                                                     </span>
-                                                    <Badge variant="outline" className="text-[10px] font-mono uppercase bg-background">
-                                                        {order.courier || 'Kurir Rekanan'}
-                                                    </Badge>
+
                                                 </div>
                                                 <div className="flex items-center justify-between gap-2">
                                                     <span className="font-mono text-sm sm:text-base font-extrabold text-foreground tracking-wider select-all">
@@ -699,18 +693,18 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
                                         <div className="space-y-1 text-xs">
                                             <div className="text-muted-foreground font-medium">Alamat Tujuan:</div>
                                             <div className="rounded-lg border p-3 bg-muted/30 space-y-1">
-                                            <div className="text-foreground">{order.address || '-'}</div>
-                                            <div className="font-medium text-foreground">
-                                                {[
-                                                    order.subdistrict_name ? `Kel. ${order.subdistrict_name}` : null,
-                                                    order.district_name ? `Kec. ${order.district_name}` : null,
-                                                    order.city_name || order.city,
-                                                    order.province_name,
-                                                    order.postal_code,
-                                                ].filter(Boolean).join(', ') || '-'}
+                                                <div className="text-foreground">{order.address || '-'}</div>
+                                                <div className="font-medium text-foreground">
+                                                    {[
+                                                        order.subdistrict_name ? `Kel. ${order.subdistrict_name}` : null,
+                                                        order.district_name ? `Kec. ${order.district_name}` : null,
+                                                        order.city_name || order.city,
+                                                        order.province_name,
+                                                        order.postal_code,
+                                                    ].filter(Boolean).join(', ') || '-'}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
                                     </>
                                 )}
 
@@ -1007,19 +1001,17 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
                                             <div
                                                 key={idx}
                                                 onClick={() => setSelectedSchedule(schedule.clock)}
-                                                className={`p-3 rounded-lg border text-left cursor-pointer transition select-none flex items-center justify-between gap-3 ${
-                                                    isSelected
+                                                className={`p-3 rounded-lg border text-left cursor-pointer transition select-none flex items-center justify-between gap-3 ${isSelected
                                                         ? 'border-[#4A070B] dark:border-[#E8D0BA] bg-[#4A070B]/5 dark:bg-[#E8D0BA]/5 ring-1 ring-[#4A070B] dark:ring-[#E8D0BA]'
                                                         : 'border-border/80 hover:border-border bg-background/50 hover:bg-muted/40'
-                                                }`}
+                                                    }`}
                                             >
                                                 <div className="flex items-center gap-3 min-w-0">
                                                     <div
-                                                        className={`w-9 h-9 rounded-md flex items-center justify-center shrink-0 transition-colors ${
-                                                            isSelected
+                                                        className={`w-9 h-9 rounded-md flex items-center justify-center shrink-0 transition-colors ${isSelected
                                                                 ? 'bg-[#4A070B] text-white dark:bg-[#E8D0BA] dark:text-[#4A070B]'
                                                                 : 'bg-muted text-muted-foreground'
-                                                        }`}
+                                                            }`}
                                                     >
                                                         <Clock className="size-4" />
                                                     </div>
@@ -1038,11 +1030,10 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
 
                                                 {/* Radio indicator */}
                                                 <div
-                                                    className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 border transition ${
-                                                        isSelected
+                                                    className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 border transition ${isSelected
                                                             ? 'border-[#4A070B] dark:border-[#E8D0BA] bg-background'
                                                             : 'border-border/80'
-                                                    }`}
+                                                        }`}
                                                 >
                                                     {isSelected && (
                                                         <div className="w-2.5 h-2.5 rounded-full bg-[#4A070B] dark:bg-[#E8D0BA]" />
