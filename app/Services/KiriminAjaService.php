@@ -187,11 +187,49 @@ class KiriminAjaService
         return [];
     }
 
-    public function getShippingRates() {
+    public function getActiveCouriers() {
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $this->apiKey
         ])->post($this->baseUrl . '/api/mitra/couriers');
-         $json = $response->json();
-         return $json;
+        $json = $response->json();
+        $raw = $json['data'] ?? ($json['datas'] ?? ($json['results'] ?? []));
+    
+        if (is_array($raw) && ! empty($raw)) {
+            $items = array_values(array_map(function ($item) {
+                $arr = (array) $item;
+                return [
+                    'code' => (int) $arr['code'],
+                    'name' => $arr['name'],
+                    'region' => $arr['region'],
+                    'type' => $arr['type'],
+                ];
+            }, $raw));
+            return $items;
+        }
+        return [];
+    }
+
+    public function getShippingPrices($destination, $origin, $weight){
+        $activeCouriers = $this->getActiveCouriers();
+        $shippingPrices = [];
+        $expressCouriers = [];
+        $instantCouriers = [];
+        foreach ($activeCouriers as $courier) {
+            if($courier['type'] == 'express'){
+                $expressCouriers[] = [
+                    'code' => $courier['code'],
+                    'name' => $courier['name'],
+                ];
+                continue;
+            }
+            if($courier['type'] == 'instant'){
+                $instantCouriers[] = [
+                    'code' => $courier['code'],
+                    'name' => $courier['name'],
+                ];
+                continue;
+            }
+        }
+        dd($expressCouriers, $instantCouriers);
     }
 }
