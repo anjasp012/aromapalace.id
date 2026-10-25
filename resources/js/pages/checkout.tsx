@@ -352,8 +352,8 @@ export default function CheckoutPage({
             return shippingRates.map((r) => ({
                 id: r.code,
                 code: r.code,
-                name: r.name,
-                courierBrand: r.name,
+                name: r.service,
+                courierBrand: r.service,
                 type: r.service || 'Regular',
                 price: r.price,
                 priceFormatted: r.price_formatted,
