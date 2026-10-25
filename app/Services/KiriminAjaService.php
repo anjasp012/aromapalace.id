@@ -326,6 +326,7 @@ class KiriminAjaService
     }
 
     public function requestPickup($orderModel, $pickupSchedule) {
+        dd($orderModel);
         $items = $orderModel->orderItems->map(function ($item) {
             return [
                 'name' => $item->product_name,
