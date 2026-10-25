@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\SliderPromoController;
 use App\Http\Controllers\Admin\StoreController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VoucherController;
+use App\Http\Controllers\ShippingController;
 use Illuminate\Support\Facades\Route;
 
 // Dedicated Admin Guest Authentication
@@ -41,6 +42,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/manajemen-pesanan/{order}', [OrderController::class, 'show'])->name('orders.show');
     Route::patch('/manajemen-pesanan/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
     Route::post('/manajemen-pesanan/{order}/sync-resi', [OrderController::class, 'syncResi'])->name('orders.sync-resi');
+    Route::get('/api/shipping/track/{awb}', [ShippingController::class, 'track'])->name('admin.shipping.track');
 
     // Product & Variant Management
     Route::get('/manajemen-produk', [ProductController::class, 'index'])->name('products.index');

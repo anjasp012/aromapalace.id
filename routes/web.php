@@ -20,6 +20,7 @@ use App\Http\Controllers\PakasirWebhookController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\ShippingController;
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\UserAddressController;
 use App\Http\Controllers\WishlistController;
@@ -62,6 +63,7 @@ Route::get('/api/coverage/cities', [CoverageAreaController::class, 'cities'])->n
 Route::get('/api/coverage/districts', [CoverageAreaController::class, 'districts'])->name('coverage.districts');
 Route::get('/api/coverage/subdistricts', [CoverageAreaController::class, 'subdistricts'])->name('coverage.subdistricts');
 Route::get('/api/coverage/geocode', [CoverageAreaController::class, 'geocode'])->name('coverage.geocode');
+Route::get('/api/shipping/track/{awb}', [ShippingController::class, 'track'])->name('shipping.track');
 
 Route::post('/webhook/pakasir', [PakasirWebhookController::class, 'handle'])->name('webhook.pakasir');
 Route::post('/webhook/kiriminaja', [KiriminAjaWebhookController::class, 'handle'])->name('webhook.kiriminaja');

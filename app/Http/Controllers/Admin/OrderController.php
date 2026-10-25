@@ -109,7 +109,7 @@ class OrderController extends Controller
         })
             ->with(['items', 'store', 'user', 'voucher'])
             ->firstOrFail();
-                dd($orderModel->shipping);
+
         return Inertia::render('admin/orders/show', [
             'order' => $this->mapOrderDetail($orderModel),
             'pickupSchedules' => fn () => app(KiriminAjaService::class)->getPickupSchedules(),

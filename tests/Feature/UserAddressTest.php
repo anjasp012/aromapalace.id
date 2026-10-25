@@ -177,4 +177,3 @@ test('user address sanitizes and accepts valid phone numbers with dashes and pre
     expect($address)->not->toBeNull()
         ->and($address->recipient_phone)->toBe('+6281234567890');
 });
-

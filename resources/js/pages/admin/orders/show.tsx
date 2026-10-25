@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import AdminLayout from '@/layouts/AdminLayout';
+import TrackingModal from '@/components/TrackingModal';
 import {
     ArrowLeft,
     ExternalLink,
@@ -170,6 +171,7 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
     const [manualCourier, setManualCourier] = useState(order.courier || '');
     const [manualError, setManualError] = useState('');
     const [copiedTracking, setCopiedTracking] = useState(false);
+    const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
 
     React.useEffect(() => {
         setManualTrackingNumber(order.tracking_number || '');
@@ -608,6 +610,17 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
                                                         </Button>
                                                         <Button
                                                             type="button"
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => setIsTrackingModalOpen(true)}
+                                                            title="Lacak status dan riwayat pengiriman paket"
+                                                            className="h-7 px-2.5 text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 border-blue-200 dark:border-blue-900/60 bg-blue-50/60 dark:bg-blue-950/20"
+                                                        >
+                                                            <Truck className="size-3 mr-1" />
+                                                            <span>Lacak</span>
+                                                        </Button>
+                                                        <Button
+                                                            type="button"
                                                             variant="ghost"
                                                             size="sm"
                                                             onClick={() => {
@@ -1034,6 +1047,14 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
                     </div>
                 </DialogContent>
             </Dialog>
+
+            <TrackingModal
+                open={isTrackingModalOpen}
+                onOpenChange={setIsTrackingModalOpen}
+                awb={order.tracking_number}
+                orderNumber={order.order_number}
+                initialData={order.shipping}
+            />
         </AdminLayout>
     );
 }

@@ -131,4 +131,3 @@ test('admin settings sanitizes and accepts shipping_sender_phone with dashes', f
     $response->assertSessionHasNoErrors();
     expect(Setting::get('shipping_sender_phone'))->toBe('081288889999');
 });
-
