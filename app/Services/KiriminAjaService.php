@@ -158,7 +158,7 @@ class KiriminAjaService
 
         try {
             $response = $this->client()->post("{$this->baseUrl}/api/mitra/province");
-            dd($response->json());
+            dd($response->successful());
 
             if ($response->successful()) {
                 $json = $response->json();
