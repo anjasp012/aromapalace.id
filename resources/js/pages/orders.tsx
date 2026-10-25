@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
+import { useEcho } from '@laravel/echo-react';
 import Layout from '@/components/Layout';
 import TrackingModal from '@/components/TrackingModal';
+import AnimatedWaitingDots from '@/components/AnimatedWaitingDots';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/lib/i18n';
 import { formatVolume } from '@/lib/utils';
@@ -183,6 +185,29 @@ export default function OrdersPage({
         }
     };
 
+    // Real-time WebSocket: listen for ShippingUpdated on currently viewed order
+    useEcho(
+        selectedOrder ? `orders.${selectedOrder.order_number}` : '',
+        '.ShippingUpdated',
+        () => {
+            router.reload({
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: (page) => {
+                    const freshOrders = page.props.orders as OrderData[];
+                    if (Array.isArray(freshOrders) && selectedOrder) {
+                        const updated = freshOrders.find((o) => o.id === selectedOrder.id);
+                        if (updated) {
+                            setSelectedOrder(updated);
+                        }
+                    }
+                },
+            });
+        },
+        [selectedOrder?.order_number, selectedOrder?.id],
+        'public',
+    );
+
     // Lock body scroll and close on Escape when modal is open
     useEffect(() => {
         if (selectedOrder || invoiceModalOrder) {
@@ -309,25 +334,28 @@ export default function OrdersPage({
         const hasDelivered = !!(order?.auto_completes_at || order?.shipping?.auto_completes_at);
         const autoCompletesFormatted = order?.auto_completes_at_formatted || order?.shipping?.auto_completes_at_formatted;
 
-        if (status === 'selesai' || status === 'paid' || hasDelivered) {
+        if (status === 'selesai') {
             return (
                 <div className="text-right">
                     <span className="inline-block px-3 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
                         Selesai
                     </span>
-                    {hasDelivered && status !== 'selesai' && autoCompletesFormatted && (
+                </div>
+            );
+        }
+        if (status === 'dikirim' || status === 'pengambilan' || hasDelivered) {
+            const isPickup = order?.delivery_type === 'pickup' || label === 'Pengambilan';
+            return (
+                <div className="text-right">
+                    <span className="inline-block px-3 py-0.5 rounded-full text-xs font-semibold bg-sky-100 text-sky-800 dark:bg-sky-950/40 dark:text-sky-300">
+                        {isPickup ? 'Pengambilan' : 'Dikirim'}
+                    </span>
+                    {hasDelivered && autoCompletesFormatted && (
                         <div className="text-[11px] text-muted-foreground mt-1 font-normal">
                             otomatis selesai pada {autoCompletesFormatted}
                         </div>
                     )}
                 </div>
-            );
-        }
-        if (status === 'dikirim') {
-            return (
-                <span className="inline-block px-3 py-0.5 rounded-full text-xs font-semibold bg-sky-100 text-sky-800 dark:bg-sky-950/40 dark:text-sky-300">
-                    Dikirim
-                </span>
             );
         }
         if (status === 'diproses') {
@@ -407,28 +435,31 @@ export default function OrdersPage({
         const hasDelivered = !!(order?.auto_completes_at || order?.shipping?.auto_completes_at);
         const autoCompletesFormatted = order?.auto_completes_at_formatted || order?.shipping?.auto_completes_at_formatted;
 
-        if (status === 'selesai' || status === 'paid' || hasDelivered) {
+        if (status === 'selesai') {
             return (
                 <div className="text-right">
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         <span>Selesai</span>
                     </span>
-                    {hasDelivered && status !== 'selesai' && autoCompletesFormatted && (
+                </div>
+            );
+        }
+
+        if (status === 'dikirim' || status === 'pengambilan' || hasDelivered) {
+            const isPickup = order?.delivery_type === 'pickup' || label === 'Pengambilan';
+            return (
+                <div className="text-right">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-sky-500/10 text-sky-700 dark:text-sky-400 border border-sky-500/20">
+                        {isPickup ? <ShoppingBag className="w-3.5 h-3.5" /> : <Truck className="w-3.5 h-3.5" />}
+                        <span>{isPickup ? 'Pengambilan' : 'Dikirim'}</span>
+                    </span>
+                    {hasDelivered && autoCompletesFormatted && (
                         <div className="text-[10px] text-muted-foreground mt-0.5">
                             otomatis selesai pada {autoCompletesFormatted}
                         </div>
                     )}
                 </div>
-            );
-        }
-
-        if (status === 'dikirim' || status === 'pengambilan') {
-            return (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-sky-500/10 text-sky-700 dark:text-sky-400 border border-sky-500/20">
-                    {label === 'Pengambilan' ? <ShoppingBag className="w-3.5 h-3.5" /> : <Truck className="w-3.5 h-3.5" />}
-                    <span>{label}</span>
-                </span>
             );
         }
 
@@ -779,7 +810,7 @@ export default function OrdersPage({
                 const autoCompletesFormatted = selectedOrder.auto_completes_at_formatted || selectedOrder.shipping?.auto_completes_at_formatted;
 
                 const currentStep = (() => {
-                    if (effectiveStatus === 'selesai' || hasDelivered) return 4;
+                    if (effectiveStatus === 'selesai') return 4;
                     switch (effectiveStatus) {
                         case 'dikirim':
                         case 'pengambilan':
@@ -907,8 +938,23 @@ export default function OrdersPage({
                                                 </div>
                                             ) : (
                                                 <div className="space-y-0.5">
-                                                    <div className="font-bold text-foreground">
-                                                        {selectedOrder.courier || 'JNE Express VIP (Bebas Ongkir)'}
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <div className="font-bold text-foreground">
+                                                            {selectedOrder.courier || 'JNE Express VIP (Bebas Ongkir)'}
+                                                        </div>
+                                                        {((effectiveStatus === 'dikirim' || effectiveStatus === 'selesai' || hasDelivered) || selectedOrder.tracking_number) && (
+                                                            <div className="text-xs">
+                                                                {(!selectedOrder.tracking_number || selectedOrder.tracking_number.toLowerCase().includes('menunggu')) ? (
+                                                                    <span className="text-amber-600 dark:text-amber-400 font-mono text-[11px] font-semibold flex items-center">
+                                                                        Resi:&nbsp;<AnimatedWaitingDots text="Menunggu" />
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="text-muted-foreground font-mono text-[11px]">
+                                                                        Resi: <span className="font-semibold text-foreground">{selectedOrder.tracking_number}</span>
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                     <div className="text-muted-foreground text-[11px]">
                                                         Express Delivery (1 - 3 Hari)
@@ -1036,7 +1082,7 @@ export default function OrdersPage({
                                                                 {effectiveStatus === 'selesai'
                                                                     ? 'Pesanan telah diterima dan transaksi telah selesai. Terima kasih telah berbelanja di Aroma Palace.'
                                                                     : hasDelivered
-                                                                        ? `Paket pesanan Anda telah sampai di alamat tujuan. Pesanan otomatis selesai pada ${autoCompletesFormatted || '03/33/2234'}. Silakan periksa produk Anda.`
+                                                                        ? `Paket pesanan Anda telah sampai di alamat tujuan. Pesanan otomatis selesai pada ${autoCompletesFormatted || '3 hari ke depan'}. Silakan periksa produk Anda.`
                                                                         : (effectiveStatus === 'dikirim' || effectiveStatus === 'pengambilan')
                                                                             ? (isPickup
                                                                                 ? `Wewangian Anda telah siap diambil di butik ${selectedOrder.store?.name || 'Aroma Palace'}. Silakan tunjukkan detail pesanan ini kepada kurator butik kami.`
@@ -1071,7 +1117,7 @@ export default function OrdersPage({
                                                                         <span>Ambil di Butik →</span>
                                                                     </span>
                                                                 )
-                                                            ) : selectedOrder.tracking_number ? (
+                                                            ) : (selectedOrder.tracking_number || effectiveStatus === 'dikirim' || effectiveStatus === 'selesai' || hasDelivered) ? (
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => handleOpenTracking(selectedOrder)}

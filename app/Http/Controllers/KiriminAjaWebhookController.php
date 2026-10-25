@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\ShippingUpdated;
 use App\Models\Order;
 use App\Models\Setting;
 use App\Models\Shipping;
@@ -182,6 +183,13 @@ class KiriminAjaWebhookController extends Controller
                 if ($order->status !== 'dibatalkan') {
                     $order->update(['status' => 'dibatalkan']);
                 }
+            }
+
+            // Broadcast real-time update via WebSockets to admin & user order details
+            try {
+                broadcast(new ShippingUpdated($order->fresh(['shipping']), $shipping));
+            } catch (\Throwable $e) {
+                Log::warning("Failed to broadcast ShippingUpdated for order #{$order->order_number}: ".$e->getMessage());
             }
 
             $processedCount++;

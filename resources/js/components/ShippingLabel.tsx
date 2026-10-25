@@ -1,0 +1,391 @@
+import React from 'react';
+import Barcode from '@/components/Barcode';
+import { Truck } from 'lucide-react';
+
+export interface ShippingLabelOrder {
+    id: number;
+    order_number: string;
+    created_at?: string;
+    recipient_name?: string;
+    recipient_phone?: string;
+    address?: string;
+    province_name?: string | null;
+    city_name?: string | null;
+    district_name?: string | null;
+    subdistrict_name?: string | null;
+    city?: string | null;
+    postal_code?: string | null;
+    courier?: string | null;
+    courier_service?: string | null;
+    courier_service_type?: string | null;
+    tracking_number?: string | null;
+    total_amount: number;
+    payment_method?: string;
+    payment_channel?: string;
+    notes?: string | null;
+    items_count?: number;
+    items?: Array<{
+        id?: number;
+        product_name: string;
+        variant_name?: string;
+        volume?: string | number;
+        quantity: number;
+    }>;
+    sender?: {
+        name?: string;
+        phone?: string;
+        address?: string;
+        province_name?: string;
+        city_name?: string;
+        district_name?: string;
+        subdistrict_name?: string;
+        postal_code?: string;
+    };
+    weight_formatted?: string;
+    total_qty?: number;
+    is_cod?: boolean;
+    sorting_code?: string;
+    origin_city?: string;
+    destination_city?: string;
+}
+
+interface ShippingLabelProps {
+    order: ShippingLabelOrder;
+    className?: string;
+}
+
+// KiriminAja Brand Logo (Purple arrow mark + text)
+function KiriminAjaLogo() {
+    return (
+        <div className="flex items-center gap-1.5 select-none">
+            {/* KiriminAja Vector Icon */}
+            <svg viewBox="0 0 40 40" className="w-8 h-8 shrink-0" fill="none">
+                <path
+                    d="M12 28C10 24 11 18 16 13L24 7C25 6 27 7 27 9L26 15C31 16 35 19 35 24C35 29 30 33 24 33C19 33 14 31 12 28Z"
+                    fill="#6D28D9"
+                />
+                <path
+                    d="M18 19L27 12L24 20L21 21L18 19Z"
+                    fill="#C4B5FD"
+                />
+                <circle cx="15" cy="27" r="3" fill="#4C1D95" />
+            </svg>
+            <div className="flex flex-col">
+                <span className="font-extrabold text-lg sm:text-xl text-[#581C87] tracking-tight leading-none font-sans">
+                    kirimin<span className="text-[#7C3AED]">aja</span>
+                </span>
+            </div>
+        </div>
+    );
+}
+
+// Official Logistic Brand Logos
+function LogisticLogo({ courier = '' }: { courier?: string }) {
+    const lower = (courier || '').toLowerCase();
+
+    if (lower.includes('jne')) {
+        return (
+            <div className="flex flex-col items-end leading-none select-none">
+                <div className="flex items-center gap-1">
+                    <span className="text-2xl font-black italic tracking-tighter text-[#E11D48]">
+                        JNE
+                    </span>
+                    <span className="text-sm font-black italic tracking-tight text-[#1D4ED8] -mt-1">
+                        EXPRESS
+                    </span>
+                </div>
+                <span className="text-[7px] font-bold tracking-widest text-[#1D4ED8] uppercase">
+                    EXPRESS ACROSS NATIONS
+                </span>
+            </div>
+        );
+    }
+
+    if (lower.includes('j&t') || lower.includes('jnt')) {
+        return (
+            <div className="flex flex-col items-end leading-none select-none">
+                <div className="flex items-center gap-1">
+                    <span className="text-2xl font-black italic tracking-tighter text-[#DC2626]">
+                        J&T
+                    </span>
+                </div>
+                <span className="text-[9px] font-black italic tracking-widest text-[#DC2626] uppercase">
+                    EXPRESS
+                </span>
+            </div>
+        );
+    }
+
+    if (lower.includes('sicepat')) {
+        return (
+            <div className="flex flex-col items-end leading-none select-none">
+                <div className="flex items-center gap-1">
+                    <span className="text-xl font-black tracking-tighter text-[#DC2626]">
+                        SICEPAT
+                    </span>
+                </div>
+                <span className="text-[8px] font-extrabold tracking-wider text-black uppercase">
+                    EKSPRES
+                </span>
+            </div>
+        );
+    }
+
+    if (lower.includes('lion')) {
+        return (
+            <div className="flex flex-col items-end leading-none select-none">
+                <div className="flex items-center gap-1">
+                    <span className="text-lg font-black italic text-[#DC2626]">
+                        Lion
+                    </span>
+                    <span className="bg-[#DC2626] text-white text-[10px] px-1 py-0.5 rounded italic font-bold">
+                        parcel
+                    </span>
+                </div>
+            </div>
+        );
+    }
+
+    if (lower.includes('ninja')) {
+        return (
+            <div className="flex flex-col items-end leading-none select-none">
+                <div className="flex items-center gap-1 font-black text-black text-lg tracking-tight">
+                    <span className="text-[#DC2626]">ninja</span>
+                    <span>Xpress</span>
+                </div>
+            </div>
+        );
+    }
+
+    if (lower.includes('anteraja')) {
+        return (
+            <div className="flex flex-col items-end leading-none select-none">
+                <span className="text-lg font-black tracking-tight text-[#DB2777]">
+                    anteraja
+                </span>
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex items-center gap-1 font-bold text-sm text-black select-none">
+            <Truck className="size-4 shrink-0" />
+            <span className="uppercase">{courier || 'KURIR EKSPEDISI'}</span>
+        </div>
+    );
+}
+
+export default function ShippingLabel({ order, className = '' }: ShippingLabelProps) {
+    // AWB / Tracking number
+    const awb = order.tracking_number || order.order_number;
+    const awbLabel = order.tracking_number ? order.tracking_number : `(OID) ${order.order_number}`;
+
+    // Sender details fallback
+    const sender = order.sender || {};
+    const senderName = sender.name || 'Aroma Palace Official';
+    const senderPhone = sender.phone || '081288889999';
+    const senderAddressParts = [
+        sender.address || 'Jl. Kemang Raya No. 10',
+        sender.subdistrict_name || 'Kramat Pela',
+        sender.district_name || 'Kebayoran Baru',
+        sender.city_name || 'Jakarta Selatan',
+        sender.province_name || 'DKI Jakarta',
+        sender.postal_code || '12130',
+    ].filter(Boolean);
+    const senderFullAddress = senderAddressParts.join(', ');
+
+    // Recipient details
+    const recipientName = order.recipient_name || 'Pelanggan Aroma Palace';
+    const recipientPhone = order.recipient_phone || '-';
+    const recipientAddressParts = [
+        order.address,
+        order.subdistrict_name,
+        order.district_name,
+        order.city_name || order.city,
+        order.province_name,
+        order.postal_code,
+    ].filter(Boolean);
+    const recipientFullAddress = recipientAddressParts.join(', ') || '-';
+
+    // Service & Courier
+    const courierName = order.courier || 'JNE';
+    const serviceCode = (order.courier_service_type || order.courier_service || 'Standard').toUpperCase();
+
+    // Weight and Quantity calculations
+    const items = order.items || [];
+    const totalQty = order.total_qty || (items.length > 0 ? items.reduce((sum, it) => sum + (it.quantity || 1), 0) : 1);
+    const weightFormatted = order.weight_formatted || `${Math.max(500, totalQty * 350)}gr`;
+
+    // Payment & COD
+    const isCod = order.is_cod ?? (order.payment_method === 'cod' || (order.payment_channel || '').toLowerCase().includes('cod'));
+    const codAmountFormatted = isCod ? `Rp. ${Number(order.total_amount).toLocaleString('id-ID')}` : 'Rp. 0';
+
+    // Origin and Destination
+    const originCity = (order.origin_city || sender.city_name || 'JAKARTA SELATAN')
+        .replace(/^(Kota|Kabupaten|Kota Administrasi)\s+/i, '')
+        .toUpperCase();
+    const destCity = (order.destination_city || order.city_name || order.city || 'KOTA TUJUAN')
+        .replace(/^(Kota|Kabupaten|Kota Administrasi)\s+/i, '')
+        .toUpperCase();
+
+    // Sorting Code
+    const originCode = originCity.replace(/[^A-Z]/g, '').substring(0, 3) || 'JKT';
+    const destCode = destCity.replace(/[^A-Z]/g, '').substring(0, 3) || 'DEST';
+    const sortingCode = order.sorting_code || `${originCode} - ${originCode}2003 - ${destCode}${order.postal_code ? order.postal_code.substring(0, 4) : '4043'}`;
+
+    // Item summary
+    const itemSummary = items.length > 0
+        ? items.map(it => `${it.product_name}${it.variant_name ? ` (${it.variant_name})` : ''} x${it.quantity}`).join(', ')
+        : 'Parfum Mewah Aroma Palace';
+
+    return (
+        <div
+            className={`bg-white text-black font-sans leading-normal select-text print:m-0 print:p-0 ${className}`}
+            style={{
+                width: '100%',
+                maxWidth: '400px',
+                color: '#000000',
+            }}
+        >
+            {/* OUTER SOLID BLACK BORDER (100mm x 150mm standard thermal proportion) */}
+            <div className="border-2 border-black rounded-xs overflow-hidden bg-white text-black">
+                {/* 1. TOP HEADER: KiriminAja Logo (Left) & Logistic Logo (Right) */}
+                <div className="flex items-center justify-between px-3 py-2 border-b-2 border-black bg-white">
+                    <KiriminAjaLogo />
+                    <LogisticLogo courier={courierName} />
+                </div>
+
+                {/* 2. BARCODE & SERVICE TYPE / WEIGHT / QUANTITY GRID */}
+                <div className="grid grid-cols-[1.25fr_1fr] border-b-2 border-black">
+                    {/* Left: Barcode + AWB Label */}
+                    <div className="p-2 flex flex-col items-center justify-center border-r-2 border-black text-center">
+                        <Barcode
+                            value={awb}
+                            height={48}
+                            className="w-full max-w-[210px] h-12"
+                            showText={false}
+                        />
+                        <span className="font-mono text-xs sm:text-sm font-black tracking-widest mt-1 text-black">
+                            {awbLabel}
+                        </span>
+                    </div>
+
+                    {/* Right: Stacked Specs (Service, Weight, Quantity) */}
+                    <div className="flex flex-col divide-y-2 divide-black text-xs">
+                        <div className="p-1.5">
+                            <span className="font-bold text-[10px] text-zinc-600 uppercase block leading-none">
+                                Service:
+                            </span>
+                            <span className="font-black text-sm text-black tracking-tight block mt-0.5">
+                                {serviceCode}
+                            </span>
+                        </div>
+                        <div className="p-1.5">
+                            <span className="font-bold text-[10px] text-zinc-600 uppercase block leading-none">
+                                Weight:
+                            </span>
+                            <span className="font-black text-xs sm:text-sm text-black block mt-0.5">
+                                {weightFormatted}
+                            </span>
+                        </div>
+                        <div className="p-1.5">
+                            <span className="font-bold text-[10px] text-zinc-600 uppercase block leading-none">
+                                Quantity:
+                            </span>
+                            <span className="font-black text-xs sm:text-sm text-black block mt-0.5">
+                                {totalQty} Pcs
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 3. SHIPPING TYPE (COD / NON-COD) & INSURANCE */}
+                <div className="grid grid-cols-[1.25fr_1fr] border-b-2 border-black items-center">
+                    <div className="p-2 border-r-2 border-black text-center flex items-center justify-center">
+                        <span className="font-black text-base sm:text-lg text-black tracking-tight">
+                            {isCod ? `COD: ${codAmountFormatted}` : 'NON-COD'}
+                        </span>
+                    </div>
+                    <div className="p-2 text-left">
+                        <span className="text-[11px] font-bold text-black block">
+                            Ins: Rp. 0
+                        </span>
+                    </div>
+                </div>
+
+                {/* 4. SORTING CODE BAR */}
+                <div className="border-b-2 border-black py-1 px-2 text-center bg-zinc-50">
+                    <span className="font-black text-xs sm:text-sm uppercase tracking-wider text-black">
+                        {sortingCode}
+                    </span>
+                </div>
+
+                {/* 5. RECIPIENT & SENDER DETAILS */}
+                <div className="grid grid-cols-2 border-b-2 border-black text-left">
+                    {/* Penerima (Left) */}
+                    <div className="p-2 border-r-2 border-black flex flex-col justify-between">
+                        <div>
+                            <div className="text-[10px] font-medium text-zinc-600 uppercase tracking-wide">
+                                Penerima
+                            </div>
+                            <div className="font-black text-xs sm:text-sm text-black leading-tight mt-0.5">
+                                {recipientName}
+                            </div>
+                            <div className="text-[10px] leading-tight text-zinc-900 mt-1 break-words">
+                                <span className="font-bold">{recipientPhone}</span> | {recipientFullAddress}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Pengirim (Right) */}
+                    <div className="p-2 flex flex-col justify-between">
+                        <div>
+                            <div className="text-[10px] font-medium text-zinc-600 uppercase tracking-wide">
+                                Pengirim
+                            </div>
+                            <div className="font-black text-xs sm:text-sm text-black leading-tight mt-0.5">
+                                {senderName}
+                            </div>
+                            <div className="text-[10px] leading-tight text-zinc-900 mt-1 break-words">
+                                <span className="font-bold">{senderPhone}</span> | {senderFullAddress}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 6. ORIGIN CITY TO DESTINATION CITY */}
+                <div className="border-b-2 border-black px-3 py-1 flex items-center justify-between text-xs font-black uppercase text-black bg-zinc-50">
+                    <span className="truncate max-w-[42%]">{originCity}</span>
+                    <span className="font-normal lowercase text-[10px] text-zinc-600 px-2 shrink-0">to</span>
+                    <span className="truncate max-w-[42%] text-right">{destCity}</span>
+                </div>
+
+                {/* 7. ITEM INFORMATION (ISI PAKET) */}
+                <div className="p-2 border-b-2 border-black text-left">
+                    <div className="text-[9px] font-bold text-zinc-600 uppercase tracking-wider">
+                        Isi Paket
+                    </div>
+                    <div className="font-black text-[11px] sm:text-xs text-black mt-0.5 line-clamp-2 leading-snug">
+                        {itemSummary}
+                    </div>
+                </div>
+
+                {/* 8. CATATAN & ORDER REF INFORMATION */}
+                <div className="grid grid-cols-[1.1fr_1.1fr] items-center text-left">
+                    <div className="p-1.5 border-r-2 border-black text-[10px] italic text-zinc-800 truncate">
+                        Catatan: {order.notes || '-'}
+                    </div>
+                    <div className="p-1.5 text-center font-black text-xs text-black tracking-wider truncate">
+                        OID-{order.order_number}
+                    </div>
+                </div>
+            </div>
+
+            {/* 9. FOOTER DISCLAIMER */}
+            <div className="text-[8.5px] italic text-zinc-600 leading-tight pt-1.5 px-1 space-y-0.5 text-left">
+                <p>* Pengirim wajib meminta bukti serah terima paket ke kurir.</p>
+                <p>* Jika paket ini retur, pengirim tetap dikenakan biaya keberangkatan dan biaya retur sesuai ekspedisi.</p>
+            </div>
+        </div>
+    );
+}

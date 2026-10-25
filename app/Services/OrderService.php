@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\ShippingUpdated;
 use App\Models\Order;
 use App\Models\ProductVariant;
 use Illuminate\Support\Facades\DB;
@@ -110,6 +111,13 @@ class OrderService
                 $this->notificationService->notifyOrderCompleted($lockedOrder);
             } catch (\Throwable $e) {
                 Log::warning("Failed to send order completed notification for #{$lockedOrder->order_number}: ".$e->getMessage());
+            }
+
+            // Broadcast real-time update via WebSockets
+            try {
+                broadcast(new ShippingUpdated($lockedOrder->fresh(['shipping'])));
+            } catch (\Throwable $e) {
+                Log::warning('Failed to broadcast ShippingUpdated on completeOrder: '.$e->getMessage());
             }
 
             Log::info("Order #{$lockedOrder->order_number} has been completed. Reason: {$reason}");

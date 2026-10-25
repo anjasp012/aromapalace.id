@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useEcho } from '@laravel/echo-react';
+import AnimatedWaitingDots from '@/components/AnimatedWaitingDots';
 import {
     Dialog,
     DialogContent,
@@ -215,15 +217,38 @@ export default function TrackingModal({
             });
     }, [open, lookupCode]);
 
+    // Real-time WebSocket: listen for ShippingUpdated event via Laravel Reverb
+    const channelName = orderNumber ? `orders.${orderNumber}` : (lookupCode ? `orders.${lookupCode}` : '');
+    useEcho(
+        open && channelName ? channelName : '',
+        '.ShippingUpdated',
+        () => {
+            if (lookupCode) {
+                fetch(`/api/shipping/track/${encodeURIComponent(lookupCode)}`)
+                    .then((res) => res.json())
+                    .then((resJson) => {
+                        if (resJson.status && resJson.data) {
+                            setData(resJson.data);
+                        }
+                    })
+                    .catch(() => {});
+            }
+        },
+        [open, channelName, lookupCode],
+        'public',
+    );
+
+    const displayAwb = data?.awb || lookupCode || '-';
+    const isWaitingAwb = !displayAwb || displayAwb === '-' || displayAwb.toLowerCase().includes('menunggu');
+
     const handleCopy = () => {
+        if (isWaitingAwb) return;
         const textToCopy = data?.awb || lookupCode || '';
         if (!textToCopy) return;
         navigator.clipboard.writeText(textToCopy);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
-
-    const displayAwb = data?.awb || lookupCode || '-';
     const displayCourier = data?.courier || initialData?.courier || 'Kurir Pengiriman';
     const displaySenderName = data?.sender?.name || initialData?.sender?.name || 'Aroma Palace Official';
     const displayRecipientName = data?.recipient?.name || initialData?.recipient?.name || 'Penerima';
@@ -281,7 +306,8 @@ export default function TrackingModal({
                                 <button
                                     type="button"
                                     onClick={handleCopy}
-                                    className="inline-flex font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer items-center gap-1 text-xs py-0.5 px-1 rounded hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors"
+                                    disabled={isWaitingAwb}
+                                    className="inline-flex font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer items-center gap-1 text-xs py-0.5 px-1 rounded hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                     title="Salin nomor resi"
                                 >
                                     {copied ? (
@@ -298,7 +324,11 @@ export default function TrackingModal({
                                 </button>
                             </div>
                             <div className="font-mono text-xs font-bold text-foreground break-all bg-muted/40 dark:bg-muted/20 px-2.5 py-1.5 rounded border border-border/60">
-                                {displayAwb}
+                                {isWaitingAwb ? (
+                                    <AnimatedWaitingDots text="Menunggu Resi" className="text-amber-600 dark:text-amber-400 font-semibold" />
+                                ) : (
+                                    displayAwb
+                                )}
                             </div>
                         </div>
 

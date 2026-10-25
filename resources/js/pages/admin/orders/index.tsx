@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import AdminLayout from '@/layouts/AdminLayout';
+import AnimatedWaitingDots from '@/components/AnimatedWaitingDots';
 import {
     Search,
     Truck,
@@ -346,7 +347,11 @@ export default function AdminOrdersIndex({
                                                         </div>
                                                         {order.tracking_number && (
                                                             <div className="text-[9.5px] font-mono text-primary font-semibold truncate max-w-[140px] mt-0.5">
-                                                                Resi: {order.tracking_number}
+                                                                Resi: {order.tracking_number.toLowerCase().includes('menunggu') ? (
+                                                                    <AnimatedWaitingDots text="Menunggu" />
+                                                                ) : (
+                                                                    order.tracking_number
+                                                                )}
                                                             </div>
                                                         )}
                                                     </div>

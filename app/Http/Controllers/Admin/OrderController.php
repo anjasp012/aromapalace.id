@@ -2,15 +2,18 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Events\ShippingUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Setting;
 use App\Services\CatalogService;
 use App\Services\FirebaseNotificationService;
 use App\Services\KiriminAjaService;
 use App\Services\MembershipService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -117,6 +120,22 @@ class OrderController extends Controller
     }
 
     /**
+     * Display printable thermal shipping label for the order.
+     */
+    public function shippingLabel(Request $request, string $order): Response
+    {
+        $orderModel = Order::where(function ($q) use ($order) {
+            $q->where('order_number', $order)->orWhere('id', $order);
+        })
+            ->with(['items', 'store', 'user', 'voucher', 'shipping'])
+            ->firstOrFail();
+
+        return Inertia::render('admin/orders/shipping-label', [
+            'order' => $this->mapOrderDetail($orderModel),
+        ]);
+    }
+
+    /**
      * Sinkronkan nomor resi (AWB) dan status pengiriman resmi langsung dari KiriminAja.
      */
     public function syncResi(Request $request, string $order): RedirectResponse
@@ -128,6 +147,12 @@ class OrderController extends Controller
         $result = app(KiriminAjaService::class)->syncTrackingNumber($orderModel);
 
         if ($result['success'] ?? false) {
+            try {
+                broadcast(new ShippingUpdated($orderModel->fresh(['shipping'])));
+            } catch (\Throwable $e) {
+                Log::warning('Failed to broadcast ShippingUpdated on syncResi: '.$e->getMessage());
+            }
+
             return back()->with('success', $result['message']);
         }
 
@@ -252,6 +277,13 @@ class OrderController extends Controller
         } elseif ($newStatus === 'diproses' || $newStatus === 'selesai') {
             app(FirebaseNotificationService::class)->notifyPaymentSuccess($orderModel);
             app(MembershipService::class)->awardOrderPoints($orderModel);
+        }
+
+        // Broadcast real-time update via WebSockets
+        try {
+            broadcast(new ShippingUpdated($orderModel->fresh(['shipping'])));
+        } catch (\Throwable $e) {
+            Log::warning('Failed to broadcast ShippingUpdated on updateStatus: '.$e->getMessage());
         }
 
         $label = match ($newStatus) {
@@ -443,10 +475,22 @@ class OrderController extends Controller
             'total_amount' => (int) $order->total_amount,
             'total_amount_formatted' => 'Rp '.number_format($order->total_amount, 0, ',', '.'),
             'payment_method' => $order->payment_method,
-            'payment_channel' => $order->payment_channel,
             'payment_code' => $order->payment_code,
             'notes' => $order->notes,
             'items_count' => $items->sum('quantity'),
+            'total_qty' => $items->sum('quantity'),
+            'weight_formatted' => max(500, $items->sum('quantity') * 350).'gr',
+            'is_cod' => $order->payment_method === 'cod' || str_contains(strtolower($order->payment_channel ?? ''), 'cod'),
+            'sender' => [
+                'name' => Setting::get('shipping_sender_name', Setting::get('store_name', 'Aroma Palace Official')),
+                'phone' => Setting::get('shipping_sender_phone', Setting::get('store_phone', '081288889999')),
+                'address' => Setting::get('shipping_address', 'Jl. Kemang Raya No. 10'),
+                'province_name' => Setting::get('shipping_province_name', 'DKI Jakarta'),
+                'city_name' => Setting::get('shipping_city_name', 'Kota Administrasi Jakarta Selatan'),
+                'district_name' => Setting::get('shipping_district_name', 'Kebayoran Baru'),
+                'subdistrict_name' => Setting::get('shipping_subdistrict_name', 'Kramat Pela'),
+                'postal_code' => Setting::get('shipping_postal_code', '12130'),
+            ],
             'items' => $items,
         ];
     }

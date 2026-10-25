@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
+import { useEcho } from '@laravel/echo-react';
 import AdminLayout from '@/layouts/AdminLayout';
 import TrackingModal from '@/components/TrackingModal';
+import AnimatedWaitingDots from '@/components/AnimatedWaitingDots';
 import {
     ArrowLeft,
     ExternalLink,
@@ -24,7 +26,9 @@ import {
     Copy,
     Edit2,
     RefreshCw,
+    Printer,
 } from 'lucide-react';
+import ShippingLabelModal from '@/components/ShippingLabelModal';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -172,11 +176,26 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
     const [manualError, setManualError] = useState('');
     const [copiedTracking, setCopiedTracking] = useState(false);
     const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
+    const [isShippingLabelOpen, setIsShippingLabelOpen] = useState(false);
 
     React.useEffect(() => {
         setManualTrackingNumber(order.tracking_number || '');
         setManualCourier(order.courier || '');
     }, [order.tracking_number, order.courier]);
+
+    // Real-time WebSocket: listen for ShippingUpdated event via Laravel Reverb
+    useEcho(
+        `orders.${order.order_number}`,
+        '.ShippingUpdated',
+        () => {
+            router.reload({
+                preserveScroll: true,
+                preserveState: true,
+            });
+        },
+        [order.order_number],
+        'public',
+    );
 
     const isPaid = order.payment_status === 'paid';
     const canShip = (order.order_status === 'diproses' || isPaid) &&
@@ -256,8 +275,10 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
         );
     };
 
+    const isWaitingTracking = !order.tracking_number || order.tracking_number.toLowerCase().includes('menunggu');
+
     const handleCopyTracking = () => {
-        if (!order.tracking_number) return;
+        if (isWaitingTracking || !order.tracking_number) return;
         navigator.clipboard.writeText(order.tracking_number);
         setCopiedTracking(true);
         setTimeout(() => setCopiedTracking(false), 2000);
@@ -586,15 +607,31 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
                                                 </div>
                                                 <div className="flex items-center justify-between gap-2">
                                                     <span className="font-mono text-sm sm:text-base font-extrabold text-foreground tracking-wider select-all">
-                                                        {order.tracking_number}
+                                                        {isWaitingTracking ? (
+                                                            <AnimatedWaitingDots text="Menunggu Resi" className="text-amber-600 dark:text-amber-400 font-semibold" />
+                                                        ) : (
+                                                            order.tracking_number
+                                                        )}
                                                     </span>
                                                     <div className="flex items-center gap-1.5 shrink-0">
                                                         <Button
                                                             type="button"
                                                             variant="outline"
                                                             size="sm"
+                                                            onClick={() => setIsShippingLabelOpen(true)}
+                                                            title="Cetak label pengiriman thermal (100x150mm)"
+                                                            className="h-7 px-2.5 text-xs font-semibold text-foreground hover:bg-muted"
+                                                        >
+                                                            <Printer className="size-3 mr-1" />
+                                                            <span>Cetak Label</span>
+                                                        </Button>
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            size="sm"
                                                             onClick={handleCopyTracking}
-                                                            className="h-7 px-2.5 text-xs"
+                                                            disabled={isWaitingTracking}
+                                                            className="h-7 px-2.5 text-xs disabled:opacity-50"
                                                         >
                                                             {copiedTracking ? (
                                                                 <>
@@ -1054,6 +1091,12 @@ export default function AdminOrderShow({ order, pickupSchedules = [] }: OrderSho
                 awb={order.tracking_number}
                 orderNumber={order.order_number}
                 initialData={order.shipping}
+            />
+
+            <ShippingLabelModal
+                open={isShippingLabelOpen}
+                onOpenChange={setIsShippingLabelOpen}
+                order={order}
             />
         </AdminLayout>
     );
