@@ -60,7 +60,7 @@ class UserAddressController extends Controller
             $addr = $user->addresses()->create([
                 'label' => $validated['label'],
                 'recipient_name' => $validated['recipient_name'],
-                'recipient_phone' => app(KiriminAjaService::class)->formatPhoneNumber($validated['recipient_phone']),
+                'recipient_phone' => $validated['recipient_phone'],
                 'province_id' => $validated['province_id'] ?? null,
                 'province_name' => $validated['province_name'] ?? null,
                 'city_id' => $validated['city_id'] ?? null,
@@ -129,7 +129,7 @@ class UserAddressController extends Controller
             $address->update([
                 'label' => $validated['label'],
                 'recipient_name' => $validated['recipient_name'],
-                'recipient_phone' => app(KiriminAjaService::class)->formatPhoneNumber($validated['recipient_phone']),
+                'recipient_phone' => $validated['recipient_phone'],
                 'province_id' => $validated['province_id'] ?? $address->province_id,
                 'province_name' => $validated['province_name'] ?? $address->province_name,
                 'city_id' => $validated['city_id'] ?? $address->city_id,

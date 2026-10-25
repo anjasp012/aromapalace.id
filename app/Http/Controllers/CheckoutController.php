@@ -475,7 +475,7 @@ class CheckoutController extends Controller
                     'delivery_type' => $deliveryType,
                     'store_id' => $storeId,
                     'recipient_name' => $validated['recipient_name'],
-                    'recipient_phone' => $this->kiriminAjaService->formatPhoneNumber($validated['recipient_phone']),
+                    'recipient_phone' => $validated['recipient_phone'],
                     'shipping_address' => $shippingAddress,
                     'province_name' => $provinceName,
                     'city_name' => $cityName,

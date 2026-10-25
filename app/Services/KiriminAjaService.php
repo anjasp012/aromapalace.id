@@ -41,7 +41,7 @@ class KiriminAjaService
         $this->baseUrl = $this->mode === 'production' ? 'https://client.kiriminaja.com' : 'https://tdev.kiriminaja.com';
         $this->pin = trim((string) Setting::get('kiriminaja_pin', '123456'));
         $this->senderName = (string) Setting::get('shipping_sender_name', Setting::get('store_name', 'Aroma Palace Official'));
-        $this->senderPhone = $this->formatPhoneNumber((string) Setting::get('shipping_sender_phone', Setting::get('store_phone', '081288889999')));
+        $this->senderPhone = (string) Setting::get('shipping_sender_phone', Setting::get('store_phone', '081288889999'));
         $this->senderAddress = (string) Setting::get('shipping_address', Setting::get('store_address', 'Jl. Kemang Raya No. 10, Jakarta Selatan'));
         $this->senderZipcode = (string) Setting::get('shipping_postal_code', '12130');
         $this->prefix = strtoupper(trim((string) Setting::get('kiriminaja_prefix', config('services.kiriminaja.order_prefix', 'ARPL'))));
