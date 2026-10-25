@@ -372,7 +372,7 @@ class KiriminAjaService
                     'length' => 100* $orderModel->orderItems->sum('quantity'),
                     'qty' => $orderModel->orderItems->sum('quantity'),
                     'item_value' => $orderModel->orderItems->sum('total_price'),
-                    'shipping_cost' => $orderModel->shipping_cost,
+                    'shipping_cost' => (float) $orderModel->shipping_cost,
                     'service' => $orderModel->courier_service,
                     'insurance_amount' => 0,
                     'service_type' => $orderModel->courier_service_type,
