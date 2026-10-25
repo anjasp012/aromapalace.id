@@ -352,7 +352,7 @@ class KiriminAjaService
             'longitude' => (float)$this->senderLongitude,
             'platform_name' => $this->storeName,
             'name' => $this->senderName,
-            'zipcode' => $this->senderZipcode,
+            'zipcode' => (int) $this->senderZipcode,
             'schedule' => $pickupSchedule,
             'packages' => [
                 [
@@ -362,7 +362,7 @@ class KiriminAjaService
                     'destination_address' => $orderModel->address,
                     'destination_kecamatan_id' => $orderModel->district_id,
                     'destination_kelurahan_id' => $orderModel->subdistrict_id,
-                    'destination_zipcode' => $orderModel->postal_code,
+                    'destination_zipcode' => (int) $orderModel->postal_code,
                     'destination_latitude' => (float) $orderModel->latitude,
                     'destination_longitude' => (float) $orderModel->longitude,
                     'weight' => $orderModel->orderItems->sum('volume'),
