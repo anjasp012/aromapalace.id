@@ -210,7 +210,6 @@ class KiriminAjaService
 
     public function getShippingPrices($destination, $origin, $weight){
         $activeCouriers = $this->getActiveCouriers();
-        dd($activeCouriers);
         $shippingPrices = [];
         $expressCouriers = [];
         $instantCouriers = [];
