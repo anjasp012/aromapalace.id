@@ -354,7 +354,7 @@ export default function CheckoutPage({
                 code: r.code,
                 name: r.service,
                 courierBrand: r.name,
-                type: r.service || 'Regular',
+                type: r.code || 'Regular',
                 price: r.price,
                 priceFormatted: r.price_formatted,
                 etd: r.etd,
