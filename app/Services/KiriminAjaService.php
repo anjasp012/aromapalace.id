@@ -132,7 +132,7 @@ class KiriminAjaService
         ]);
 
         $json = $response->json();
-        dd($json);
+        dd($response);
         $raw = $json['data'] ?? ($json['datas'] ?? ($json['results'] ?? []));
 
         if (is_array($raw) && ! empty($raw)) {
