@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, router } from '@inertiajs/react';
 import Layout from '@/components/Layout';
 import { useTranslation } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
@@ -70,22 +70,107 @@ export interface PaymentMethodItem {
     description?: string;
 }
 
-export interface CourierOption {
-    code: string;
-    name: string;
-    region: string;
-    type: string;
-}
-
 interface ShippingRate {
     code: string;
-    courier_code: string;
+    courier_code?: string;
+    name?: string;
+    service?: string;
+    type?: string;
+    price: number | string;
+    cost?: number | string;
+    price_formatted?: string;
+    etd?: string;
+    insurance?: number | string;
+}
+
+export interface ParsedCourierOption {
+    id: string;
+    code: string;
+    courierBrand: string;
     name: string;
-    service: string;
+    fullName: string;
+    type: string;
     price: number;
-    price_formatted: string;
+    priceFormatted: string;
     etd: string;
 }
+
+const parseShippingRate = (r: ShippingRate | any, idx: number): ParsedCourierOption => {
+    // 1. Calculate price safely as integer number (handles 44000, "44000", "44.000", "Rp 44.000")
+    let numericPrice = 0;
+    if (typeof r?.price === 'number') {
+        numericPrice = isNaN(r.price) ? 0 : r.price;
+    } else if (typeof r?.price === 'string') {
+        const cleaned = r.price.replace(/[^\d]/g, '');
+        numericPrice = parseInt(cleaned, 10) || 0;
+    } else if (typeof r?.cost === 'number') {
+        numericPrice = isNaN(r.cost) ? 0 : r.cost;
+    } else if (typeof r?.cost === 'string') {
+        const cleaned = r.cost.replace(/[^\d]/g, '');
+        numericPrice = parseInt(cleaned, 10) || 0;
+    }
+
+    // 2. Identify courier brand, service name, and service type
+    // Format A (User's API response):
+    // { code: "SAP", service: "SAP One Day Services", type: "UDRONS", price: "44000", price_formatted: "44.000", etd: "1-3" }
+    // Format B (Alternate format):
+    // { service: "SAP", name: "SAP One Day Services", code: "UDRONS", price: 44000, price_formatted: "44.000", etd: "1-3" }
+    let courierBrand = '';
+    let serviceName = '';
+    let serviceType = '';
+
+    if (r?.type) {
+        courierBrand = (r.code || r.courier_code || '').toUpperCase();
+        serviceName = r.service || r.name || '';
+        serviceType = r.type;
+    } else if (r?.name && r?.service && String(r.name).toLowerCase() !== String(r.service).toLowerCase()) {
+        courierBrand = (r.service || r.code || '').toUpperCase();
+        serviceName = r.name;
+        serviceType = r.code || '';
+    } else {
+        courierBrand = (r?.code || r?.courier_code || r?.service || '').toUpperCase();
+        serviceName = r?.service || r?.name || '';
+        serviceType = r?.type || '';
+    }
+
+    // Don't show serviceType if it's identical to courierBrand or serviceName
+    const displayType = (serviceType && serviceType.toUpperCase() !== courierBrand.toUpperCase() && serviceType.toUpperCase() !== serviceName.toUpperCase())
+        ? serviceType
+        : '';
+
+    // 3. Format Price consistently as "Rp 44.000"
+    let priceFormatted = '';
+    if (r?.price_formatted) {
+        const pf = String(r.price_formatted).trim();
+        priceFormatted = pf.startsWith('Rp') ? pf : `Rp ${pf}`;
+    } else {
+        priceFormatted = `Rp ${numericPrice.toLocaleString('id-ID')}`;
+    }
+
+    // 4. Format ETD
+    const rawEtd = r?.etd ? String(r.etd).trim() : '';
+    const etdText = rawEtd
+        ? (rawEtd.toLowerCase().includes('hari') || rawEtd.toLowerCase().includes('day') ? rawEtd : `${rawEtd} Hari`)
+        : '';
+
+    // 5. Full courier name for order payload & confirmation
+    const fullName = courierBrand && serviceName
+        ? (serviceName.toUpperCase().startsWith(courierBrand.toUpperCase()) ? serviceName : `${courierBrand} - ${serviceName}`)
+        : (serviceName || courierBrand || '');
+
+    return {
+        id: `${courierBrand}-${serviceType || serviceName}-${idx}`,
+        code: r?.code || courierBrand,
+        courierBrand,
+        name: serviceName,
+        fullName,
+        type: displayType,
+        price: numericPrice,
+        priceFormatted,
+        etd: etdText,
+    };
+};
+
 
 interface CheckoutProps {
     items: CheckoutItem[];
@@ -197,108 +282,6 @@ const getPaymentMeta = (code: string, icon?: string) => {
     }
 };
 
-const DEFAULT_PAYMENT_METHODS = [
-    {
-        id: 'payment_link',
-        name: 'Payment Link',
-        type: 'Multi-Payment Portal',
-        description: 'Multi-payment portal resmi Pakasir (E-Wallet, Kartu Kredit, Bank Transfer)',
-        freeFee: true,
-        logo: 'PORTAL',
-        logoStyle: 'text-[#4A070B] bg-[#4A070B]/10 dark:text-[#E8D0BA] dark:bg-[#E8D0BA]/10 border border-[#4A070B]/20 dark:border-[#E8D0BA]/20',
-    },
-    {
-        id: 'qris',
-        name: 'QRIS',
-        type: 'QRIS Instant',
-        description: 'Scan QR instan semua mobile banking & e-wallet',
-        freeFee: true,
-        logo: 'QRIS',
-        logoStyle: 'text-rose-700 bg-rose-50 dark:bg-rose-950/50 dark:text-rose-300 border border-rose-200 dark:border-rose-900',
-    },
-    {
-        id: 'bri_va',
-        name: 'BRI',
-        type: 'Virtual Account',
-        description: 'Virtual Account Bank BRI',
-        freeFee: true,
-        logo: 'BRI',
-        logoStyle: 'text-[#00529C] bg-blue-50 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200 dark:border-blue-900',
-    },
-    {
-        id: 'bni_va',
-        name: 'BNI',
-        type: 'Virtual Account',
-        description: 'Virtual Account Bank BNI',
-        freeFee: true,
-        logo: 'BNI',
-        logoStyle: 'text-[#F15A24] bg-orange-50 dark:bg-orange-950/50 dark:text-orange-300 border border-orange-200 dark:border-orange-900',
-    },
-    {
-        id: 'cimb_niaga_va',
-        name: 'CIMB Niaga',
-        type: 'Virtual Account',
-        description: 'Virtual Account CIMB Niaga',
-        freeFee: true,
-        logo: 'CIMB',
-        logoStyle: 'text-[#ED1C24] bg-red-50 dark:bg-red-950/50 dark:text-red-300 border border-red-200 dark:border-red-900',
-    },
-    {
-        id: 'maybank_va',
-        name: 'Maybank',
-        type: 'Virtual Account',
-        description: 'Virtual Account Maybank Indonesia',
-        freeFee: true,
-        logo: 'MAYBANK',
-        logoStyle: 'text-amber-800 bg-amber-50 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200 dark:border-amber-900',
-    },
-    {
-        id: 'danamon_va',
-        name: 'Danamon',
-        type: 'Virtual Account',
-        description: 'Virtual Account Bank Danamon',
-        freeFee: true,
-        logo: 'DANAMON',
-        logoStyle: 'text-orange-600 bg-orange-50 dark:bg-orange-950/50 dark:text-orange-300 border border-orange-200 dark:border-orange-900',
-    },
-    {
-        id: 'bnc_va',
-        name: 'Bank Neo Commerce',
-        type: 'Virtual Account',
-        description: 'Virtual Account Bank Neo Commerce',
-        freeFee: true,
-        logo: 'BNC NEO',
-        logoStyle: 'text-amber-900 bg-yellow-100 dark:bg-yellow-950/50 dark:text-yellow-300 border border-yellow-300 dark:border-yellow-800',
-    },
-    {
-        id: 'bsi_va',
-        name: 'BSI',
-        type: 'Virtual Account',
-        description: 'Virtual Account Bank Syariah Indonesia',
-        freeFee: true,
-        logo: 'BSI',
-        logoStyle: 'text-teal-700 bg-teal-50 dark:bg-teal-950/50 dark:text-teal-300 border border-teal-200 dark:border-teal-900',
-    },
-    {
-        id: 'muamalat_va',
-        name: 'Muamalat',
-        type: 'Virtual Account',
-        description: 'Virtual Account Bank Muamalat',
-        freeFee: true,
-        logo: 'MUAMALAT',
-        logoStyle: 'text-purple-700 bg-purple-50 dark:bg-purple-950/50 dark:text-purple-300 border border-purple-200 dark:border-purple-900',
-    },
-    {
-        id: 'ocbc_va',
-        name: 'OCBC',
-        type: 'Virtual Account',
-        description: 'Virtual Account OCBC NISP',
-        freeFee: true,
-        logo: 'OCBC',
-        logoStyle: 'text-rose-700 bg-red-50 dark:bg-red-950/50 dark:text-red-300 border border-red-200 dark:border-red-900',
-    },
-];
-
 export default function CheckoutPage({
     items = [],
     subtotal = 0,
@@ -347,18 +330,9 @@ export default function CheckoutPage({
     const hasInitialRatesRef = useRef<boolean>((initial_shipping_rates && initial_shipping_rates.length > 0) ? true : false);
 
     // Build courier options strictly from real KiriminAja live rates (no dummy/fallback couriers)
-    const courierOptions = useMemo(() => {
+    const courierOptions = useMemo<ParsedCourierOption[]>(() => {
         if (shippingRates.length > 0) {
-            return shippingRates.map((r) => ({
-                id: r.code,
-                code: r.code,
-                name: r.name,
-                courierBrand: r.service,
-                type: r.code || 'Regular',
-                price: r.price,
-                priceFormatted: r.price_formatted,
-                etd: r.etd,
-            }));
+            return shippingRates.map((r, idx) => parseShippingRate(r, idx));
         }
 
         return [];
@@ -447,11 +421,11 @@ export default function CheckoutPage({
                 if (!cancelled && json?.status && Array.isArray(json.rates) && json.rates.length > 0) {
                     setShippingRates(json.rates);
                     setSelectedCourierIndex(0);
-                    const firstCourier = json.rates[0];
+                    const firstCourier = parseShippingRate(json.rates[0], 0);
                     setData((prev) => ({
                         ...prev,
-                        courier: firstCourier.name || firstCourier.code || '',
-                        shipping_cost: firstCourier.price || 0,
+                        courier: firstCourier.fullName,
+                        shipping_cost: firstCourier.price,
                     }));
                 } else if (!cancelled) {
                     setShippingRates([]);
@@ -532,7 +506,14 @@ export default function CheckoutPage({
     // Confirmation Modal
     const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-    const selectedCourier = courierOptions[selectedCourierIndex] || courierOptions[0];
+    const initialCourier = useMemo(() => {
+        if (initial_shipping_rates && initial_shipping_rates.length > 0) {
+            return parseShippingRate(initial_shipping_rates[0], 0);
+        }
+        return null;
+    }, [initial_shipping_rates]);
+
+    const selectedCourier = courierOptions[selectedCourierIndex] || courierOptions[0] || initialCourier;
 
     const { data, setData, post, processing, errors } = useForm({
         delivery_type: 'delivery' as 'delivery' | 'pickup',
@@ -547,9 +528,9 @@ export default function CheckoutPage({
         subdistrict_name: initialSelectedAddress?.subdistrict_name || '',
         city: initialSelectedAddress?.city_name || user?.city || '',
         postal_code: initialSelectedAddress?.postal_code || user?.postal_code || '',
-        courier: courierOptions[0]?.name || courierOptions[0]?.id || '',
-        shipping_cost: courierOptions[0]?.price || 0,
-        payment_method: 'qris',
+        courier: initialCourier?.fullName || '',
+        shipping_cost: initialCourier?.price || 0,
+        payment_method: (payment_methods && payment_methods.length > 0 ? payment_methods[0].code : ''),
         voucher_code: initial_voucher,
         notes: '',
         device_token: typeof window !== 'undefined' ? (localStorage.getItem('aromapalace_fcm_token') || '') : '',
@@ -597,6 +578,7 @@ export default function CheckoutPage({
             ...prev,
             delivery_type: type,
             store_id: type === 'pickup' ? (prev.store_id || defaultStoreId) : prev.store_id,
+            courier: type === 'pickup' ? '' : (selectedCourier?.fullName || prev.courier),
             shipping_cost: type === 'pickup' ? 0 : (selectedCourier?.price || 0),
         }));
     };
@@ -698,15 +680,17 @@ export default function CheckoutPage({
         if (chosen) {
             setData((prev) => ({
                 ...prev,
-                courier: chosen.name || chosen.id || chosen.code || '',
-                shipping_cost: chosen.price || 0,
+                courier: chosen.fullName,
+                shipping_cost: chosen.price,
             }));
         }
         setShowCourierModal(false);
     };
 
-    const currentShippingCost = deliveryType === 'pickup' ? 0 : (selectedCourier?.price ?? 0);
-    const finalTotal = Math.max(0, subtotal - voucherDiscount + currentShippingCost);
+    const numSubtotal = Number(subtotal) || 0;
+    const numVoucherDiscount = Number(voucherDiscount) || 0;
+    const currentShippingCost = deliveryType === 'pickup' ? 0 : (Number(selectedCourier?.price) || 0);
+    const finalTotal = Math.max(0, numSubtotal - numVoucherDiscount + currentShippingCost);
     const finalTotalFormatted = 'Rp ' + finalTotal.toLocaleString('id-ID');
 
     const appliedVoucherObj = useMemo(() => {
@@ -751,7 +735,7 @@ export default function CheckoutPage({
                     subdistrict_name: activeAddress.subdistrict_name || '',
                     city: activeAddress.city_name || prev.city,
                     postal_code: activeAddress.postal_code || prev.postal_code,
-                    courier: selectedCourier?.name || prev.courier || '',
+                    courier: selectedCourier?.fullName || prev.courier || '',
                     shipping_cost: currentShippingCost,
                 }));
             }
@@ -783,7 +767,7 @@ export default function CheckoutPage({
     };
 
     const activePaymentMethods = useMemo(() => {
-        if (Array.isArray(payment_methods)) {
+        if (Array.isArray(payment_methods) && payment_methods.length > 0) {
             return payment_methods.map((pm) => {
                 const meta = getPaymentMeta(pm.code, pm.icon || undefined);
                 return {
@@ -791,7 +775,7 @@ export default function CheckoutPage({
                     code: pm.code,
                     name: pm.name,
                     icon: pm.icon || null,
-                    type: pm.type === 'qris' ? 'QRIS Instant' : pm.type === 'payment_link' ? 'Multi-Payment Portal' : 'Virtual Account',
+                    type: pm.type === 'qris' ? 'QRIS Instant' : pm.type === 'payment_link' ? 'Multi-Payment Portal' : (pm.type || 'Virtual Account'),
                     min_amount: pm.min_amount,
                     max_amount: pm.max_amount,
                     min_amount_formatted: pm.min_amount_formatted,
@@ -803,7 +787,7 @@ export default function CheckoutPage({
                 };
             });
         }
-        return DEFAULT_PAYMENT_METHODS;
+        return [];
     }, [payment_methods]);
 
     // Ensure selected payment method is valid among active payment methods
@@ -931,7 +915,7 @@ export default function CheckoutPage({
                                                     onClick={() => setAddressSelectorOpen(true)}
                                                     className="text-xs font-semibold text-[#4A070B] dark:text-[#E8D0BA] hover:opacity-75 cursor-pointer transition-opacity"
                                                 >
-                                                    Ganti Alamat
+                                                    {isEn ? 'Change Address' : 'Ganti Alamat'}
                                                 </button>
                                             )}
                                         </div>
@@ -949,11 +933,11 @@ export default function CheckoutPage({
                                                             {selectedAddress.recipient_phone}
                                                         </span>
                                                         <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border/60">
-                                                            {selectedAddress.label || 'Alamat'}
+                                                            {selectedAddress.label || (isEn ? 'Address' : 'Alamat')}
                                                         </span>
                                                         {selectedAddress.is_primary && (
                                                             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#4A070B]/10 text-[#4A070B] dark:bg-[#E8D0BA]/15 dark:text-[#E8D0BA] border border-[#4A070B]/20">
-                                                                Utama
+                                                                {isEn ? 'Primary' : 'Utama'}
                                                             </span>
                                                         )}
                                                     </div>
@@ -1011,7 +995,7 @@ export default function CheckoutPage({
                                                 {loadingRates && (
                                                     <span className="text-xs text-muted-foreground flex items-center gap-1">
                                                         <Loader2 className="w-3 h-3 animate-spin" />
-                                                        Menghitung ongkir...
+                                                        {isEn ? 'Calculating shipping...' : 'Menghitung ongkir...'}
                                                     </span>
                                                 )}
                                             </div>
@@ -1064,10 +1048,10 @@ export default function CheckoutPage({
                                                 ) : (
                                                     <div className="flex items-center gap-2.5 flex-wrap min-w-0 text-xs">
                                                         <span className="font-bold uppercase text-[10px] text-[#4A070B] dark:text-[#E8D0BA] bg-[#4A070B]/10 dark:bg-[#E8D0BA]/10 px-1.5 py-0.5 rounded">
-                                                            {selectedCourier?.courierBrand || 'Kurir'}
+                                                            {selectedCourier?.courierBrand || (isEn ? 'Courier' : 'Kurir')}
                                                         </span>
                                                         <span className="font-bold text-foreground">
-                                                            {selectedCourier?.name || 'Pilih Kurir'}
+                                                            {selectedCourier?.name || (isEn ? 'Select Courier' : 'Pilih Kurir')}
                                                         </span>
                                                         {selectedCourier?.type && (
                                                             <>
@@ -1081,8 +1065,8 @@ export default function CheckoutPage({
                                                     </div>
                                                 )}
                                                 <div className="flex items-center gap-2 shrink-0">
-                                                    <span className={`text-xs font-bold ${selectedCourier?.price && selectedCourier.price > 0 ? 'text-[#4A070B] dark:text-[#E8D0BA]' : (selectedAddress && courierOptions.length === 0 ? 'text-destructive' : 'text-amber-700 dark:text-amber-300')}`}>
-                                                        {!selectedAddress ? (isEn ? '+ Choose Address' : '+ Pilih Alamat') : (selectedCourier?.priceFormatted || (courierOptions.length === 0 ? (isEn ? 'Unavailable' : 'Tidak Tersedia') : 'Pilih Kurir'))}
+                                                    <span className={`text-xs font-bold ${selectedCourier && selectedCourier.price > 0 ? 'text-[#4A070B] dark:text-[#E8D0BA]' : (selectedAddress && courierOptions.length === 0 ? 'text-destructive' : 'text-amber-700 dark:text-amber-300')}`}>
+                                                        {!selectedAddress ? (isEn ? '+ Choose Address' : '+ Pilih Alamat') : (selectedCourier?.priceFormatted || (courierOptions.length === 0 ? (isEn ? 'Unavailable' : 'Tidak Tersedia') : (isEn ? 'Select Courier' : 'Pilih Kurir')))}
                                                     </span>
                                                     {courierOptions.length > 0 && (
                                                         <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1146,16 +1130,16 @@ export default function CheckoutPage({
                                             >
                                                 <div className="flex items-center gap-2.5 flex-wrap min-w-0 text-xs">
                                                     <span className="font-bold text-foreground">
-                                                        {selectedStore?.name || 'Pilih Gerai Butik'}
+                                                        {selectedStore?.name || (isEn ? 'Select Boutique Store' : 'Pilih Gerai Butik')}
                                                     </span>
-                                                    <span className="text-muted-foreground">•</span>
-                                                    <span className="text-foreground font-medium truncate max-w-[200px] sm:max-w-xs">
-                                                        {selectedStore?.description}
-                                                    </span>
-                                                    <span className="text-muted-foreground hidden sm:inline">|</span>
-                                                    <span className="text-muted-foreground">
-                                                        10.00 - 22.00 WIB
-                                                    </span>
+                                                    {selectedStore?.description && (
+                                                        <>
+                                                            <span className="text-muted-foreground">•</span>
+                                                            <span className="text-foreground font-medium truncate max-w-[200px] sm:max-w-xs">
+                                                                {selectedStore.description}
+                                                            </span>
+                                                        </>
+                                                    )}
                                                 </div>
 
                                                 <div className="text-muted-foreground shrink-0">
@@ -1184,13 +1168,12 @@ export default function CheckoutPage({
                                                                 <span className="font-bold text-[#4A070B] dark:text-[#E8D0BA] shrink-0">
                                                                     {store.name}
                                                                 </span>
-                                                                <span className="text-muted-foreground truncate max-w-sm sm:max-w-md">
-                                                                    ({store.description})
-                                                                </span>
+                                                                {store.description && (
+                                                                    <span className="text-muted-foreground truncate max-w-sm sm:max-w-md">
+                                                                        ({store.description})
+                                                                    </span>
+                                                                )}
                                                             </div>
-                                                            <span className="text-muted-foreground shrink-0 text-[11px] ml-2">
-                                                                10.00 - 22.00 WIB
-                                                            </span>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -1200,24 +1183,24 @@ export default function CheckoutPage({
                                         {/* Contact info for store pickup */}
                                         <div className="pt-3 border-t border-border/70 space-y-3">
                                             <h3 className="font-bold text-xs sm:text-sm text-foreground tracking-tight">
-                                                Identitas Pengambil Pesanan di Butik
+                                                {isEn ? 'Pickup Person Identity at Boutique' : 'Identitas Pengambil Pesanan di Butik'}
                                             </h3>
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                 <div>
                                                     <label className="text-xs font-semibold text-foreground">
-                                                        Nama Pengambil
+                                                        {isEn ? 'Pickup Person Name' : 'Nama Pengambil'}
                                                     </label>
                                                     <Input
                                                         type="text"
                                                         value={data.recipient_name}
                                                         onChange={(e) => setData('recipient_name', e.target.value)}
-                                                        placeholder="Nama sesuai KTP / Identitas"
+                                                        placeholder={isEn ? 'Name matching ID card' : 'Nama sesuai KTP / Identitas'}
                                                         className="h-9 text-xs mt-1 rounded-md border-border/80 bg-background/80 focus:border-[#4A070B]"
                                                     />
                                                 </div>
                                                 <div>
                                                     <label className="text-xs font-semibold text-foreground">
-                                                        Nomor WhatsApp Pengambil
+                                                        {isEn ? 'Pickup Person WhatsApp Number' : 'Nomor WhatsApp Pengambil'}
                                                     </label>
                                                     <Input
                                                         type="tel"
@@ -1261,13 +1244,13 @@ export default function CheckoutPage({
                                                 </h3>
                                                 <div className="flex items-center gap-2 flex-wrap">
                                                     <span className="inline-flex items-center gap-1 text-[11px] bg-muted/40 border border-border/70 px-2 py-0.5 rounded-md">
-                                                        <span className="text-muted-foreground">Ukuran:</span>
+                                                        <span className="text-muted-foreground">{isEn ? 'Size:' : 'Ukuran:'}</span>
                                                         <strong className="text-foreground">{item.volume}</strong>
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center gap-2 flex-wrap text-xs">
                                                     <span className="text-[11px] text-muted-foreground">
-                                                        Jumlah: <strong className="text-foreground">{item.quantity}</strong>
+                                                        {isEn ? 'Qty:' : 'Jumlah:'} <strong className="text-foreground">{item.quantity}</strong>
                                                     </span>
                                                     <span className="text-muted-foreground/60 text-[10px]">•</span>
                                                     <span className="font-bold text-[#4A070B] dark:text-[#E8D0BA] text-xs sm:text-sm">
@@ -1288,7 +1271,7 @@ export default function CheckoutPage({
                                     {/* Tambah Catatan Section */}
                                     <div className="flex items-center justify-between">
                                         <h3 className="font-bold text-xs sm:text-sm text-foreground tracking-tight">
-                                            Tambah Catatan
+                                            {isEn ? 'Add Notes' : 'Tambah Catatan'}
                                         </h3>
                                         <span className="text-muted-foreground font-normal text-xs">
                                             {data.notes.length}/100
@@ -1299,7 +1282,7 @@ export default function CheckoutPage({
                                         maxLength={100}
                                         value={data.notes}
                                         onChange={(e) => setData('notes', e.target.value)}
-                                        placeholder="Berikan catatan untuk pesanan ini..."
+                                        placeholder={isEn ? 'Add special instructions for this order...' : 'Berikan catatan untuk pesanan ini...'}
                                         className="h-10 text-xs rounded-md border border-border/80 bg-background/80 focus:border-[#4A070B]"
                                     />
                                 </div>
@@ -1329,7 +1312,7 @@ export default function CheckoutPage({
                                 <div className="space-y-2.5">
                                     {displayedPayments.length === 0 ? (
                                         <div className="rounded-md p-4 text-center text-xs text-muted-foreground border border-dashed">
-                                            Tidak ada metode pembayaran aktif yang tersedia saat ini.
+                                            {isEn ? 'No active payment methods currently available.' : 'Tidak ada metode pembayaran aktif yang tersedia saat ini.'}
                                         </div>
                                     ) : (
                                         displayedPayments.map((pm) => {
@@ -1411,34 +1394,34 @@ export default function CheckoutPage({
                                 {/* Line items */}
                                 <div className="space-y-2.5 text-xs">
                                     <div className="flex items-center justify-between text-muted-foreground">
-                                        <span>Subtotal ({totalItemsCount} barang)</span>
+                                        <span>{isEn ? `Subtotal (${totalItemsCount} items)` : `Subtotal (${totalItemsCount} barang)`}</span>
                                         <span className="font-bold text-foreground">
                                             Rp {subtotal.toLocaleString('id-ID')}
                                         </span>
                                     </div>
 
                                     <div className="flex items-center justify-between text-muted-foreground">
-                                        <span>Total Ongkos Kirim</span>
+                                        <span>{isEn ? 'Shipping Fee' : 'Total Ongkos Kirim'}</span>
                                         {deliveryType === 'pickup' ? (
                                             <span className="font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md text-[10.5px]">
-                                                Gratis (Ambil di Butik)
+                                                {isEn ? 'Free (Store Pickup)' : 'Gratis (Ambil di Butik)'}
                                             </span>
                                         ) : selectedCourier && selectedCourier.price > 0 ? (
                                             <span className="font-bold text-foreground text-xs">
-                                                Rp {selectedCourier.price.toLocaleString('id-ID')}
+                                                {selectedCourier.priceFormatted}
                                             </span>
                                         ) : loadingRates ? (
                                             <span className="text-xs text-muted-foreground flex items-center gap-1 font-medium">
                                                 <Loader2 className="w-3 h-3 animate-spin text-[#4A070B] dark:text-[#E8D0BA]" />
-                                                Menghitung...
+                                                {isEn ? 'Calculating...' : 'Menghitung...'}
                                             </span>
                                         ) : courierOptions.length === 0 ? (
                                             <span className="text-xs text-destructive font-medium">
-                                                {selectedAddress ? 'Tidak tersedia' : '-'}
+                                                {selectedAddress ? (isEn ? 'Unavailable' : 'Tidak tersedia') : '-'}
                                             </span>
                                         ) : (
                                             <span className="text-xs text-muted-foreground font-medium">
-                                                Belum dipilih
+                                                {isEn ? 'Not selected' : 'Belum dipilih'}
                                             </span>
                                         )}
                                     </div>
@@ -1727,14 +1710,14 @@ export default function CheckoutPage({
                         {/* Order Brief Summary */}
                         <div className="space-y-2.5 bg-muted/40 border border-border/70 rounded-lg p-3.5 text-xs">
                             <div className="flex items-start justify-between gap-2">
-                                <span className="text-muted-foreground shrink-0">Metode</span>
+                                <span className="text-muted-foreground shrink-0">{isEn ? 'Method' : 'Metode'}</span>
                                 <span className="font-bold text-foreground text-right">
-                                    {deliveryType === 'pickup' ? 'Ambil Sendiri di Butik' : 'Kirim via Kurir'}
+                                    {deliveryType === 'pickup' ? (isEn ? 'Store Pickup' : 'Ambil Sendiri di Butik') : (isEn ? 'Courier Delivery' : 'Kirim via Kurir')}
                                 </span>
                             </div>
                             <div className="flex items-start justify-between gap-2">
                                 <span className="text-muted-foreground shrink-0">
-                                    {deliveryType === 'pickup' ? 'Pengambil' : 'Penerima'}
+                                    {deliveryType === 'pickup' ? (isEn ? 'Pickup Person' : 'Pengambil') : (isEn ? 'Recipient' : 'Penerima')}
                                 </span>
                                 <span className="font-semibold text-foreground text-right truncate">
                                     {data.recipient_name} ({data.recipient_phone})
@@ -1742,35 +1725,35 @@ export default function CheckoutPage({
                             </div>
                             {deliveryType === 'pickup' ? (
                                 <div className="flex items-start justify-between gap-2">
-                                    <span className="text-muted-foreground shrink-0">Lokasi Butik</span>
+                                    <span className="text-muted-foreground shrink-0">{isEn ? 'Boutique Location' : 'Lokasi Butik'}</span>
                                     <span className="font-medium text-foreground text-right max-w-[220px] truncate" title={selectedStore?.name}>
-                                        {selectedStore?.name || 'Butik Resmi Aroma Palace'}
+                                        {selectedStore?.name || '-'}
                                     </span>
                                 </div>
                             ) : (
                                 <>
                                     <div className="flex items-start justify-between gap-2">
-                                        <span className="text-muted-foreground shrink-0">Alamat</span>
+                                        <span className="text-muted-foreground shrink-0">{isEn ? 'Address' : 'Alamat'}</span>
                                         <span className="font-medium text-foreground text-right max-w-[220px] truncate" title={data.shipping_address}>
                                             {data.shipping_address}
                                         </span>
                                     </div>
                                     <div className="flex items-start justify-between gap-2">
-                                        <span className="text-muted-foreground shrink-0">Kurir</span>
+                                        <span className="text-muted-foreground shrink-0">{isEn ? 'Courier' : 'Kurir'}</span>
                                         <span className="font-semibold text-foreground text-right">
-                                            {selectedCourier ? `${selectedCourier.courierBrand} (${selectedCourier.priceFormatted})` : (isEn ? 'Not selected' : 'Belum dipilih')}
+                                            {selectedCourier ? `${selectedCourier.fullName} (${selectedCourier.priceFormatted})` : (isEn ? 'Not selected' : 'Belum dipilih')}
                                         </span>
                                     </div>
                                 </>
                             )}
                             <div className="flex items-start justify-between gap-2">
-                                <span className="text-muted-foreground shrink-0">Pembayaran</span>
+                                <span className="text-muted-foreground shrink-0">{isEn ? 'Payment' : 'Pembayaran'}</span>
                                 <span className="font-semibold text-[#4A070B] dark:text-[#E8D0BA] text-right">
                                     {activePaymentMethods.find((p) => p.id === data.payment_method)?.name || data.payment_method}
                                 </span>
                             </div>
                             <div className="border-t border-border/70 pt-2 flex items-center justify-between">
-                                <span className="font-bold text-foreground">Total Tagihan ({totalItemsCount} item)</span>
+                                <span className="font-bold text-foreground">{isEn ? `Total Bill (${totalItemsCount} items)` : `Total Tagihan (${totalItemsCount} item)`}</span>
                                 <span className="font-extrabold text-sm text-[#4A070B] dark:text-[#E8D0BA]">
                                     {finalTotalFormatted}
                                 </span>
@@ -1783,10 +1766,10 @@ export default function CheckoutPage({
                                 <div className="w-7 h-7 rounded-full border-2 border-[#4A070B]/20 border-t-[#4A070B] dark:border-[#E8D0BA]/20 dark:border-t-[#E8D0BA] animate-spin" />
                                 <div className="space-y-0.5">
                                     <p className="text-xs font-bold text-[#4A070B] dark:text-[#E8D0BA]">
-                                        Menyiapkan Transaksi Pembayaran...
+                                        {isEn ? 'Preparing Payment Transaction...' : 'Menyiapkan Transaksi Pembayaran...'}
                                     </p>
                                     <p className="text-[11px] text-muted-foreground">
-                                        Mohon jangan tutup halaman, Anda akan segera dialihkan ke halaman transaksi.
+                                        {isEn ? 'Please do not close this page, you will be redirected shortly.' : 'Mohon jangan tutup halaman, Anda akan segera dialihkan ke halaman transaksi.'}
                                     </p>
                                 </div>
                             </div>
@@ -1799,7 +1782,7 @@ export default function CheckoutPage({
                                     disabled={processing}
                                     className="h-10 rounded-md text-xs font-semibold border-border/80 hover:bg-muted cursor-pointer shadow-none"
                                 >
-                                    Batal
+                                    {isEn ? 'Cancel' : 'Batal'}
                                 </Button>
                                 <Button
                                     type="button"
@@ -1807,7 +1790,7 @@ export default function CheckoutPage({
                                     disabled={processing}
                                     className="h-10 rounded-md text-xs font-bold bg-[#4A070B] hover:bg-[#360407] text-white cursor-pointer shadow-none flex items-center justify-center gap-1.5"
                                 >
-                                    <span>Ya, Bayar Sekarang</span>
+                                    <span>{isEn ? 'Yes, Pay Now' : 'Ya, Bayar Sekarang'}</span>
                                     <span>→</span>
                                 </Button>
                             </div>
