@@ -226,7 +226,7 @@ class OrderController extends Controller
 
         $dateFormatted = $orderModel->created_at ? $orderModel->created_at->format('d F Y, H:i').' WIB' : now()->format('d F Y, H:i').' WIB';
         $invDateCode = $orderModel->created_at ? $orderModel->created_at->format('Ymd') : date('Ymd');
-        $invoiceNumber = 'INV/'.$invDateCode.'/AP/'.str_pad((string) $orderModel->id, 8, '0', STR_PAD_LEFT);
+        $invoiceNumber = 'INV/'.$invDateCode.'/ARPL/'.str_pad((string) $orderModel->id, 8, '0', STR_PAD_LEFT);
 
         $orderStatus = $orderModel->status ?: match ($orderModel->payment_status) {
             'paid' => 'diproses',
@@ -321,7 +321,7 @@ class OrderController extends Controller
 
         $dateFormatted = $orderModel->created_at ? $orderModel->created_at->format('d F Y, H:i').' WIB' : now()->format('d F Y, H:i').' WIB';
         $invDateCode = $orderModel->created_at ? $orderModel->created_at->format('Ymd') : date('Ymd');
-        $invoiceNumber = 'INV/'.$invDateCode.'/AP/'.str_pad((string) $orderModel->id, 8, '0', STR_PAD_LEFT);
+        $invoiceNumber = 'INV/'.$invDateCode.'/ARPL/'.str_pad((string) $orderModel->id, 8, '0', STR_PAD_LEFT);
 
         $orderStatus = $orderModel->status ?: match ($orderModel->payment_status) {
             'paid' => 'diproses',

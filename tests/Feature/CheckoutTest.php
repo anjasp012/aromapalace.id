@@ -59,7 +59,7 @@ test('authenticated user can complete checkout and place order', function () {
     $response = $this->actingAs($user)->post(route('checkout.store'), [
         'recipient_name' => 'Dimas Pratama',
         'recipient_phone' => '081234567890',
-        'shipping_address' => 'Jl. Senopati No. 45, Kebayoran Baru',
+        'address' => 'Jl. Senopati No. 45, Kebayoran Baru',
         'city' => 'Jakarta Selatan',
         'postal_code' => '12190',
         'courier' => 'JNE Express VIP (Bebas Ongkir)',
@@ -87,11 +87,11 @@ test('authenticated user can view their payment page', function () {
     $variant = ProductVariant::where('product_id', 1)->firstOrFail();
 
     $order = Order::create([
-        'order_number' => 'AP-TEST-001',
+        'order_number' => 'ARPL-TEST-001',
         'user_id' => $user->id,
         'recipient_name' => 'Dimas Pratama',
         'recipient_phone' => '081234567890',
-        'shipping_address' => 'Jl. Senopati No. 45',
+        'address' => 'Jl. Senopati No. 45',
         'city' => 'Jakarta Selatan',
         'courier' => 'JNE Express VIP (Bebas Ongkir)',
         'shipping_cost' => 0,
@@ -120,7 +120,7 @@ test('authenticated user can view their payment page', function () {
     $response->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('payment')
-            ->where('order.order_number', 'AP-TEST-001')
+            ->where('order.order_number', 'ARPL-TEST-001')
             ->where('order.payment_code', '8808112345678')
             ->has('order.total_amount_formatted')
         );
@@ -147,11 +147,11 @@ test('authenticated user can view their order history list on orders page', func
     $variant = ProductVariant::where('product_id', 1)->firstOrFail();
 
     $order = Order::create([
-        'order_number' => 'AP-ORDERS-001',
+        'order_number' => 'ARPL-ORDERS-001',
         'user_id' => $user->id,
         'recipient_name' => 'Dimas Pratama',
         'recipient_phone' => '081234567890',
-        'shipping_address' => 'Jl. Senopati No. 45',
+        'address' => 'Jl. Senopati No. 45',
         'city' => 'Jakarta Selatan',
         'courier' => 'JNE Express VIP (Bebas Ongkir)',
         'shipping_cost' => 0,
@@ -181,7 +181,7 @@ test('authenticated user can view their order history list on orders page', func
         ->assertInertia(fn ($page) => $page
             ->component('orders')
             ->has('orders', 1)
-            ->where('orders.0.order_number', 'AP-ORDERS-001')
+            ->where('orders.0.order_number', 'ARPL-ORDERS-001')
             ->where('orders.0.status', 'pending')
         );
 });
@@ -191,11 +191,11 @@ test('orders page provides tab counts and supports serverside status filtering',
     $variant = ProductVariant::where('product_id', 1)->firstOrFail();
 
     $order1 = Order::create([
-        'order_number' => 'AP-ORDER-PND',
+        'order_number' => 'ARPL-ORDER-PND',
         'user_id' => $user->id,
         'recipient_name' => 'Dimas',
         'recipient_phone' => '081234567890',
-        'shipping_address' => 'Jl. Senopati',
+        'address' => 'Jl. Senopati',
         'city' => 'Jakarta Selatan',
         'courier' => 'JNE Express VIP (Bebas Ongkir)',
         'shipping_cost' => 0,
@@ -220,11 +220,11 @@ test('orders page provides tab counts and supports serverside status filtering',
     ]);
 
     $order2 = Order::create([
-        'order_number' => 'AP-ORDER-CNF',
+        'order_number' => 'ARPL-ORDER-CNF',
         'user_id' => $user->id,
         'recipient_name' => 'Dimas',
         'recipient_phone' => '081234567890',
-        'shipping_address' => 'Jl. Senopati',
+        'address' => 'Jl. Senopati',
         'city' => 'Jakarta Selatan',
         'courier' => 'JNE Express VIP (Bebas Ongkir)',
         'shipping_cost' => 0,
@@ -249,11 +249,11 @@ test('orders page provides tab counts and supports serverside status filtering',
     ]);
 
     $order3 = Order::create([
-        'order_number' => 'AP-ORDER-PRC',
+        'order_number' => 'ARPL-ORDER-PRC',
         'user_id' => $user->id,
         'recipient_name' => 'Dimas',
         'recipient_phone' => '081234567890',
-        'shipping_address' => 'Jl. Senopati',
+        'address' => 'Jl. Senopati',
         'city' => 'Jakarta Selatan',
         'courier' => 'JNE Express VIP (Bebas Ongkir)',
         'shipping_cost' => 0,
@@ -278,11 +278,11 @@ test('orders page provides tab counts and supports serverside status filtering',
     ]);
 
     $order4 = Order::create([
-        'order_number' => 'AP-ORDER-SHP',
+        'order_number' => 'ARPL-ORDER-SHP',
         'user_id' => $user->id,
         'recipient_name' => 'Dimas',
         'recipient_phone' => '081234567890',
-        'shipping_address' => 'Jl. Senopati',
+        'address' => 'Jl. Senopati',
         'city' => 'Jakarta Selatan',
         'courier' => 'JNE Express VIP (Bebas Ongkir)',
         'shipping_cost' => 0,
@@ -327,7 +327,7 @@ test('orders page provides tab counts and supports serverside status filtering',
             ->component('orders')
             ->where('active_tab', 'menunggu_pembayaran')
             ->has('orders', 1)
-            ->where('orders.0.order_number', 'AP-ORDER-PND')
+            ->where('orders.0.order_number', 'ARPL-ORDER-PND')
         );
 
     // Filter diproses
@@ -346,7 +346,7 @@ test('orders page provides tab counts and supports serverside status filtering',
             ->component('orders')
             ->where('active_tab', 'dikirim')
             ->has('orders', 1)
-            ->where('orders.0.order_number', 'AP-ORDER-SHP')
+            ->where('orders.0.order_number', 'ARPL-ORDER-SHP')
         );
 
     // Filter selesai (empty in this scenario)
@@ -425,7 +425,7 @@ test('checkout links voucher_id and increments used_count when voucher is applie
     $response = $this->actingAs($user)->post(route('checkout.store'), [
         'recipient_name' => 'Budi Santoso',
         'recipient_phone' => '081234567899',
-        'shipping_address' => 'Jl. Gatot Subroto No. 12',
+        'address' => 'Jl. Gatot Subroto No. 12',
         'city' => 'Jakarta Selatan',
         'postal_code' => '12930',
         'courier' => 'JNE Express VIP (Bebas Ongkir)',
@@ -504,7 +504,7 @@ test('checkout rejects cod payment method', function () {
     $response = $this->actingAs($user)->post(route('checkout.store'), [
         'recipient_name' => 'Dimas Pratama',
         'recipient_phone' => '081234567890',
-        'shipping_address' => 'Jl. Senopati No. 45',
+        'address' => 'Jl. Senopati No. 45',
         'city' => 'Jakarta Selatan',
         'payment_method' => 'cod',
     ]);
@@ -518,11 +518,11 @@ test('authenticated user can view invoice page of their order', function () {
     $variant = ProductVariant::where('product_id', 1)->firstOrFail();
 
     $order = Order::create([
-        'order_number' => 'AP-INV-TEST-001',
+        'order_number' => 'ARPL-INV-TEST-001',
         'user_id' => $user->id,
         'recipient_name' => 'Anjas Putra',
         'recipient_phone' => '089529591732',
-        'shipping_address' => 'Klepu, Ceper',
+        'address' => 'Klepu, Ceper',
         'city' => 'Kabupaten Klaten',
         'courier' => 'JNE REG',
         'shipping_cost' => 0,
@@ -552,7 +552,7 @@ test('authenticated user can view invoice page of their order', function () {
 
     $response->assertInertia(fn ($page) => $page
         ->component('invoice')
-        ->where('order.order_number', 'AP-INV-TEST-001')
+        ->where('order.order_number', 'ARPL-INV-TEST-001')
         ->where('order.recipient_name', 'Anjas Putra')
         ->where('order.is_paid', false)
         ->has('order.items', 1)
@@ -564,11 +564,11 @@ test('user cannot view invoice of another user order', function () {
     $otherUser = User::factory()->create();
 
     $order = Order::create([
-        'order_number' => 'AP-INV-OTHER-002',
+        'order_number' => 'ARPL-INV-OTHER-002',
         'user_id' => $owner->id,
         'recipient_name' => 'Owner',
         'recipient_phone' => '081234567890',
-        'shipping_address' => 'Jl. Owner',
+        'address' => 'Jl. Owner',
         'city' => 'Jakarta',
         'courier' => 'JNE',
         'shipping_cost' => 0,
@@ -600,8 +600,6 @@ test('user can fetch shipping rates via api endpoint with real prices or fallbac
             'rates' => [
                 '*' => [
                     'code',
-                    'courier_code',
-                    'name',
                     'service',
                     'price',
                     'price_formatted',
@@ -632,7 +630,7 @@ test('checkout stores custom shipping cost into order total and database', funct
         'delivery_type' => 'delivery',
         'recipient_name' => 'Budi Pratama',
         'recipient_phone' => '081234567890',
-        'shipping_address' => 'Jl. Kebon Jeruk No. 12',
+        'address' => 'Jl. Kebon Jeruk No. 12',
         'city' => 'Jakarta Barat',
         'courier' => 'J&T EZ',
         'shipping_cost' => $shippingCost,

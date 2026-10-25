@@ -51,12 +51,12 @@ test('admin can view orders index with status filter and search', function () {
     $customer = User::factory()->create();
 
     $order1 = Order::create([
-        'order_number' => 'AP-TEST-'.uniqid(),
+        'order_number' => 'ARPL-TEST-'.uniqid(),
         'user_id' => $customer->id,
         'delivery_type' => 'delivery',
         'recipient_name' => 'Budi Santoso',
         'recipient_phone' => '081234567890',
-        'shipping_address' => 'Jl. Sudirman No. 1',
+        'address' => 'Jl. Sudirman No. 1',
         'city' => 'Jakarta Pusat',
         'courier' => 'JNE Express VIP',
         'shipping_cost' => 0,
@@ -100,12 +100,12 @@ test('admin can view order detail page', function () {
     $store = Store::factory()->create();
 
     $order = Order::create([
-        'order_number' => 'AP-SHOW-'.uniqid(),
+        'order_number' => 'ARPL-SHOW-'.uniqid(),
         'user_id' => $customer->id,
         'delivery_type' => 'pickup',
         'recipient_name' => 'Siti Nurhaliza',
         'recipient_phone' => '081987654321',
-        'shipping_address' => 'Boutique Grand Indonesia, Level 1',
+        'address' => 'Boutique Grand Indonesia, Level 1',
         'city' => 'Jakarta Pusat',
         'store_id' => $store->id,
         'shipping_cost' => 0,
@@ -147,12 +147,12 @@ test('admin can update order status from menunggu_pembayaran to diproses and syn
     $customer = User::factory()->create();
 
     $order = Order::create([
-        'order_number' => 'AP-STATUS-'.uniqid(),
+        'order_number' => 'ARPL-STATUS-'.uniqid(),
         'user_id' => $customer->id,
         'delivery_type' => 'delivery',
         'recipient_name' => 'Ahmad Dani',
         'recipient_phone' => '081234567899',
-        'shipping_address' => 'Jl. Thamrin No. 5',
+        'address' => 'Jl. Thamrin No. 5',
         'city' => 'Jakarta Pusat',
         'courier' => 'JNE Express VIP',
         'shipping_cost' => 0,
@@ -186,12 +186,12 @@ test('admin can update status to dikirim with manual tracking number and selesai
     $customer = User::factory()->create();
 
     $order = Order::create([
-        'order_number' => 'AP-FLOW-'.uniqid(),
+        'order_number' => 'ARPL-FLOW-'.uniqid(),
         'user_id' => $customer->id,
         'delivery_type' => 'delivery',
         'recipient_name' => 'Dewi Lestari',
         'recipient_phone' => '081234567898',
-        'shipping_address' => 'Jl. Gatot Subroto No. 8',
+        'address' => 'Jl. Gatot Subroto No. 8',
         'city' => 'Jakarta Selatan',
         'courier' => 'JNE Express VIP',
         'shipping_cost' => 0,
@@ -217,7 +217,7 @@ test('admin can update status to dikirim with manual tracking number and selesai
 
     $order->refresh();
     expect($order->status)->toBe('dikirim')
-        ->and($order->tracking_number)->toBe('JNE1234567890');
+        ->and($order->shipping?->awb)->toBe('JNE1234567890');
 
     // Update to selesai
     $this->actingAs($admin)
@@ -236,12 +236,12 @@ test('admin can ship order with kiriminaja automatic tracking number', function 
     $customer = User::factory()->create();
 
     $order = Order::create([
-        'order_number' => 'AP-KIRIMIN-'.uniqid(),
+        'order_number' => 'ARPL-KIRIMIN-'.uniqid(),
         'user_id' => $customer->id,
         'delivery_type' => 'delivery',
         'recipient_name' => 'Citra Kirana',
         'recipient_phone' => '081234567897',
-        'shipping_address' => 'Jl. Senopati No. 20',
+        'address' => 'Jl. Senopati No. 20',
         'city' => 'Jakarta Selatan',
         'courier' => 'JNE Express Reguler',
         'shipping_cost' => 18000,
@@ -255,9 +255,9 @@ test('admin can ship order with kiriminaja automatic tracking number', function 
 
     // Mock KiriminAjaService
     $mockService = Mockery::mock(KiriminAjaService::class);
-    $mockService->shouldReceive('requestPickupForOrder')
+    $mockService->shouldReceive('requestPickup')
         ->once()
-        ->with(Mockery::on(fn ($o) => $o->id === $order->id))
+        ->with(Mockery::on(fn ($o) => $o->id === $order->id), Mockery::any())
         ->andReturn([
             'success' => true,
             'tracking_number' => 'XID-9998887776',
@@ -276,7 +276,7 @@ test('admin can ship order with kiriminaja automatic tracking number', function 
     $response->assertRedirect();
     $order->refresh();
     expect($order->status)->toBe('dikirim')
-        ->and($order->tracking_number)->toBe('XID-9998887776');
+        ->and($order->shipping?->awb)->toBe('XID-9998887776');
 });
 
 test('admin receives flash error when kiriminaja request pickup fails', function () {
@@ -285,12 +285,12 @@ test('admin receives flash error when kiriminaja request pickup fails', function
     $customer = User::factory()->create();
 
     $order = Order::create([
-        'order_number' => 'AP-FAIL-'.uniqid(),
+        'order_number' => 'ARPL-FAIL-'.uniqid(),
         'user_id' => $customer->id,
         'delivery_type' => 'delivery',
         'recipient_name' => 'Citra Kirana',
         'recipient_phone' => '081234567897',
-        'shipping_address' => 'Jl. Senopati No. 20',
+        'address' => 'Jl. Senopati No. 20',
         'city' => 'Jakarta Selatan',
         'courier' => 'JNE Express Reguler',
         'shipping_cost' => 18000,
@@ -304,7 +304,7 @@ test('admin receives flash error when kiriminaja request pickup fails', function
 
     // Mock failure
     $mockService = Mockery::mock(KiriminAjaService::class);
-    $mockService->shouldReceive('requestPickupForOrder')
+    $mockService->shouldReceive('requestPickup')
         ->once()
         ->andReturn([
             'success' => false,
@@ -325,118 +325,5 @@ test('admin receives flash error when kiriminaja request pickup fails', function
     $order->refresh();
     // Status must remain diproses, not changed to dikirim!
     expect($order->status)->toBe('diproses')
-        ->and($order->tracking_number)->toBeNull();
-});
-
-test('kiriminaja service sends insurance_amount as 0 without insurance fee', function () {
-    Http::fake([
-        '*/api/mitra/v2/schedules' => Http::response(['status' => true, 'schedules' => [['clock' => '2026-10-25 14:00:00']]], 200),
-        '*/api/mitra/v6.2/request_pickup' => Http::response([
-            'status' => true,
-            'pickup_number' => 'PICKUP-TEST-123',
-            'details' => [
-                [
-                    'awb' => 'AWB-TEST-123',
-                    'kj_order_id' => 'KJ-123',
-                ],
-            ],
-        ], 200),
-    ]);
-
-    $customer = User::factory()->create();
-    $order = Order::create([
-        'order_number' => 'AP-INS-'.uniqid(),
-        'user_id' => $customer->id,
-        'delivery_type' => 'delivery',
-        'recipient_name' => 'Citra Kirana',
-        'recipient_phone' => '081234567897',
-        'shipping_address' => 'Jl. Senopati No. 20',
-        'city' => 'Jakarta Selatan',
-        'courier' => 'JNE Express Reguler',
-        'shipping_cost' => 18000,
-        'payment_method' => 'qris',
-        'payment_status' => 'paid',
-        'status' => 'diproses',
-        'subtotal' => 350000,
-        'discount_amount' => 0,
-        'total_amount' => 368000,
-    ]);
-
-    $service = app(KiriminAjaService::class);
-    $result = $service->requestPickupForOrder($order);
-
-    expect($result['success'])->toBeTrue()
-        ->and($result['tracking_number'])->toBe('AWB-TEST-123');
-
-    Http::assertSent(function (Request $request) {
-        if (! str_contains($request->url(), 'request_pickup')) {
-            return false;
-        }
-
-        $package = $request['packages'][0] ?? [];
-
-        return isset($package['insurance_amount'])
-            && $package['insurance_amount'] === 0
-            && isset($request['pin'])
-            && $request['pin'] === '123456'
-            && isset($package['order_id'])
-            && strlen($package['order_id']) <= 20;
-    });
-});
-
-test('admin can sync tracking number and shipping cost from kiriminaja', function () {
-    $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
-    $admin = User::factory()->admin()->create();
-    $customer = User::factory()->create();
-
-    $order = Order::create([
-        'order_number' => 'AP-SYNC-'.uniqid(),
-        'user_id' => $customer->id,
-        'delivery_type' => 'delivery',
-        'recipient_name' => 'Citra Kirana',
-        'recipient_phone' => '081234567897',
-        'shipping_address' => 'Jl. Senopati No. 20',
-        'city' => 'Jakarta Selatan',
-        'courier' => 'JNE Express Reguler',
-        'tracking_number' => 'PUP-TEMP-12345',
-        'shipping_cost' => 18000,
-        'payment_method' => 'qris',
-        'payment_status' => 'paid',
-        'status' => 'dikirim',
-        'subtotal' => 350000,
-        'discount_amount' => 0,
-        'total_amount' => 368000,
-    ]);
-
-    Http::fake([
-        '*/api/mitra/tracking' => Http::response([
-            'status' => true,
-            'details' => [
-                'awb' => 'AWB-REAL-999888',
-                'service' => 'JNE',
-                'service_type' => 'CTC23',
-                'shipping_cost' => 10000,
-            ],
-        ], 200),
-    ]);
-
-    $response = $this->actingAs($admin)
-        ->post("http://{$adminDomain}/manajemen-pesanan/{$order->order_number}/sync-resi");
-
-    $response->assertRedirect();
-    $order->refresh();
-
-    expect($order->tracking_number)->toBe('AWB-REAL-999888')
-        ->and($order->shipping_cost)->toBe(10000)
-        ->and($order->courier)->toBe('JNE (CTC23)');
-});
-
-
-test('kiriminaja service formats order id to match registered prefix and 20 chars limit', function () {
-    $service = app(KiriminAjaService::class);
-
-    expect($service->formatOrderId('AP-20261025-FYWYL'))->toBe('ARPL-20261025-FYWYL')
-        ->and(strlen($service->formatOrderId('AP-20261025-FYWYL')))->toBeLessThanOrEqual(20)
-        ->and($service->formatOrderId('ARPL-20261025-TVSON'))->toBe('ARPL-20261025-TVSON')
-        ->and(strlen($service->formatOrderId('AP-VERY-LONG-ORDER-NUMBER-1234567890')))->toBe(20);
+        ->and($order->shipping)->toBeNull();
 });

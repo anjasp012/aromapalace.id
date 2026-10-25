@@ -73,11 +73,11 @@ test('paying an order awards loyalty points (1 point per Rp 10.000 spent)', func
 
     // Create an order of Rp 500.000 (at 1 pt / 10k = 50 pts)
     $order = Order::create([
-        'order_number' => 'AP-ORDER-TEST-PTS',
+        'order_number' => 'ARPL-ORDER-TEST-PTS',
         'user_id' => $user->id,
         'recipient_name' => 'Dimas',
         'recipient_phone' => '081234567890',
-        'shipping_address' => 'Jl. Senopati',
+        'address' => 'Jl. Senopati',
         'city' => 'Jakarta Selatan',
         'payment_method' => 'credit_card',
         'payment_status' => 'paid',
@@ -101,7 +101,7 @@ test('paying an order awards loyalty points (1 point per Rp 10.000 spent)', func
     expect($orderHistory)->not->toBeNull();
     expect($orderHistory->points)->toBe(50);
     expect($orderHistory->balance_after)->toBe(150);
-    expect($orderHistory->reference_id)->toBe('AP-ORDER-TEST-PTS');
+    expect($orderHistory->reference_id)->toBe('ARPL-ORDER-TEST-PTS');
 });
 
 test('user can redeem loyalty points for a voucher reward', function () {

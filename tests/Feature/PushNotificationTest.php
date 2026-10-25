@@ -99,11 +99,11 @@ test('firebase notification service dispatches order, payment, pickup, shipping 
     ]);
 
     $order = Order::create([
-        'order_number' => 'AP-NOTIF-TEST',
+        'order_number' => 'ARPL-NOTIF-TEST',
         'user_id' => $customer->id,
         'recipient_name' => 'Budi',
         'recipient_phone' => '0812345678',
-        'shipping_address' => 'Jakarta',
+        'address' => 'Jakarta',
         'city' => 'Jakarta',
         'courier' => 'JNE Express',
         'shipping_cost' => 0,

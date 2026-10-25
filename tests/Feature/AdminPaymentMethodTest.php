@@ -207,7 +207,7 @@ test('admin cannot delete a payment method that is in use by orders', function (
         'delivery_type' => 'shipping',
         'recipient_name' => 'John Doe',
         'recipient_phone' => '08123456789',
-        'shipping_address' => 'Jl. Mawar No. 12',
+        'address' => 'Jl. Mawar No. 12',
         'city' => 'Jakarta',
         'courier' => 'JNE Express',
         'payment_method' => 'protected_channel',

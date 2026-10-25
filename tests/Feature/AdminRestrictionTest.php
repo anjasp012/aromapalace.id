@@ -98,11 +98,11 @@ test('customer only sees their own orders on account/orders', function () {
     $userB = User::factory()->create();
 
     Order::create([
-        'order_number' => 'AP-TEST-USER-A',
+        'order_number' => 'ARPL-TEST-USER-A',
         'user_id' => $userA->id,
         'recipient_name' => 'User A',
         'recipient_phone' => '0812345678',
-        'shipping_address' => 'Alamat A',
+        'address' => 'Alamat A',
         'city' => 'Jakarta',
         'courier' => 'JNE',
         'shipping_cost' => 0,
@@ -114,11 +114,11 @@ test('customer only sees their own orders on account/orders', function () {
     ]);
 
     Order::create([
-        'order_number' => 'AP-TEST-USER-B',
+        'order_number' => 'ARPL-TEST-USER-B',
         'user_id' => $userB->id,
         'recipient_name' => 'User B',
         'recipient_phone' => '0812345679',
-        'shipping_address' => 'Alamat B',
+        'address' => 'Alamat B',
         'city' => 'Surabaya',
         'courier' => 'JNE',
         'shipping_cost' => 0,
@@ -135,6 +135,6 @@ test('customer only sees their own orders on account/orders', function () {
         ->assertInertia(fn ($page) => $page
             ->component('orders')
             ->has('orders', 1)
-            ->where('orders.0.order_number', 'AP-TEST-USER-A')
+            ->where('orders.0.order_number', 'ARPL-TEST-USER-A')
         );
 });

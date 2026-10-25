@@ -371,7 +371,7 @@ export default function SupportPage({ faqs = [], channels }: SupportProps) {
                                             type="text"
                                             value={data.subject}
                                             onChange={(e) => setData('subject', e.target.value)}
-                                            placeholder={isEn ? 'e.g. Order Tracking #AP-1234' : 'cth. Pelacakan Pesanan #AP-1234'}
+                                            placeholder={isEn ? 'e.g. Order Tracking #ARPL-1234' : 'cth. Pelacakan Pesanan #ARPL-1234'}
                                             className="text-xs h-9"
                                             required
                                         />

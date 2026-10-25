@@ -107,7 +107,7 @@ test('admin cannot delete a store that has associated pickup orders', function (
         'store_id' => $store->id,
         'recipient_name' => 'Jane Doe',
         'recipient_phone' => '08198765432',
-        'shipping_address' => 'Ambil di Butik Flagship Senayan',
+        'address' => 'Ambil di Butik Flagship Senayan',
         'city' => 'Jakarta Pusat',
         'shipping_cost' => 0,
         'payment_method' => 'qris',

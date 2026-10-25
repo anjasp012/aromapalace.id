@@ -216,7 +216,7 @@ export default function OrdersPage({
 
     const handleCopyInvoice = (orderNumber: string) => {
         if (navigator?.clipboard) {
-            navigator.clipboard.writeText(`INV/${orderNumber.replace('AP-', '')}`);
+            navigator.clipboard.writeText(`INV/${orderNumber.replace(/^(ARPL-|AP-)/, '')}`);
         }
         setCopiedInvoice(true);
         setTimeout(() => setCopiedInvoice(false), 2000);
@@ -763,7 +763,7 @@ export default function OrdersPage({
                                         <div className="space-y-2.5 text-xs">
                                             <div className="flex items-center justify-between gap-2">
                                                 <span className="font-mono text-foreground font-medium">
-                                                    INV/{selectedOrder.order_number.replace('AP-', '')}
+                                                    INV/{selectedOrder.order_number.replace(/^(ARPL-|AP-)/, '')}
                                                 </span>
                                                 <button
                                                     type="button"

@@ -9,12 +9,12 @@ use Illuminate\Support\Facades\Http;
 test('pakasir webhook updates order status to paid on completed event', function () {
     $user = User::factory()->create();
     $order = Order::create([
-        'order_number' => 'AP-TEST-'.time(),
+        'order_number' => 'ARPL-TEST-'.time(),
         'user_id' => $user->id,
         'delivery_type' => 'delivery',
         'recipient_name' => 'Raden Arya',
         'recipient_phone' => '089529591732',
-        'shipping_address' => 'Jl. Kemang Raya No. 10',
+        'address' => 'Jl. Kemang Raya No. 10',
         'city' => 'Jakarta Selatan',
         'courier' => 'JNE Express VIP',
         'shipping_cost' => 0,
@@ -53,7 +53,7 @@ test('pakasir webhook rejects invalid secret with 401', function () {
     $response = $this->withHeaders([
         'X-Secret' => 'wrong-secret-key',
     ])->postJson(route('webhook.pakasir'), [
-        'order_id' => 'AP-NONEXISTENT',
+        'order_id' => 'ARPL-NONEXISTENT',
         'txn_id' => 'tx_fake',
         'status' => 'completed',
     ]);
@@ -65,7 +65,7 @@ test('pakasir webhook returns 404 for unknown order with valid secret', function
     $response = $this->withHeaders([
         'X-Secret' => config('services.pakasir.webhook_secret', '8e87d94431e74a6f8e8bf4ebb75476ac'),
     ])->postJson(route('webhook.pakasir'), [
-        'order_id' => 'AP-DOES-NOT-EXIST-999',
+        'order_id' => 'ARPL-DOES-NOT-EXIST-999',
         'txn_id' => 'tx_nonexistent',
         'status' => 'completed',
     ]);
@@ -76,12 +76,12 @@ test('pakasir webhook returns 404 for unknown order with valid secret', function
 test('authenticated user can trigger check payment status', function () {
     $user = User::factory()->create();
     $order = Order::create([
-        'order_number' => 'AP-STATUS-'.time(),
+        'order_number' => 'ARPL-STATUS-'.time(),
         'user_id' => $user->id,
         'delivery_type' => 'delivery',
         'recipient_name' => 'Raden Arya',
         'recipient_phone' => '089529591732',
-        'shipping_address' => 'Jl. Kemang Raya No. 10',
+        'address' => 'Jl. Kemang Raya No. 10',
         'city' => 'Jakarta Selatan',
         'courier' => 'JNE Express VIP',
         'shipping_cost' => 0,
@@ -140,7 +140,7 @@ test('checkout store handles qris payment method and creates transaction', funct
         '*create-transaction*' => Http::response([
             'txn_id' => 'tx_pakasir_qris_demo',
             'project' => 'aromapalace-id',
-            'order_id' => 'AP-TEST',
+            'order_id' => 'ARPL-TEST',
             'amount' => 150000,
             'fee' => 1500,
             'total_payment' => 150000,
@@ -155,7 +155,7 @@ test('checkout store handles qris payment method and creates transaction', funct
         'recipient_name' => 'Arya Test',
         'recipient_phone' => '081234567890',
         'delivery_type' => 'delivery',
-        'shipping_address' => 'Jl. Mawar 123',
+        'address' => 'Jl. Mawar 123',
         'city' => 'Jakarta Selatan',
         'postal_code' => '12190',
         'courier' => 'JNE Express VIP (Bebas Ongkir)',
@@ -207,7 +207,7 @@ test('checkout store rejects unknown payment method', function () {
         'recipient_name' => 'Arya Test',
         'recipient_phone' => '081234567890',
         'delivery_type' => 'delivery',
-        'shipping_address' => 'Jl. Mawar 123',
+        'address' => 'Jl. Mawar 123',
         'city' => 'Jakarta Selatan',
         'postal_code' => '12190',
         'courier' => 'JNE Express VIP (Bebas Ongkir)',
@@ -238,7 +238,7 @@ test('checkout store handles pakasir failure cleanly without creating order', fu
         'recipient_name' => 'Arya Test',
         'recipient_phone' => '081234567890',
         'delivery_type' => 'delivery',
-        'shipping_address' => 'Jl. Mawar 123',
+        'address' => 'Jl. Mawar 123',
         'city' => 'Jakarta Selatan',
         'postal_code' => '12190',
         'courier' => 'JNE Express VIP (Bebas Ongkir)',
