@@ -97,3 +97,38 @@ test('admin can test kiriminaja connection via endpoint', function () {
             'mode' => 'staging',
         ]);
 });
+
+test('admin settings rejects shipping_sender_phone with invalid prefix', function () {
+    $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
+    $admin = User::factory()->admin()->create();
+
+    $response = $this->actingAs($admin)
+        ->from("http://{$adminDomain}/pengaturan")
+        ->post("http://{$adminDomain}/pengaturan", [
+            'store_name' => 'Aroma Palace',
+            'shipping_sender_name' => 'Gudang Pusat',
+            'shipping_sender_phone' => '071199997777', // invalid prefix
+            'shipping_address' => 'Jl. Senopati No. 88',
+            'shipping_district_id' => 4715,
+        ]);
+
+    $response->assertSessionHasErrors(['shipping_sender_phone']);
+});
+
+test('admin settings sanitizes and accepts shipping_sender_phone with dashes', function () {
+    $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
+    $admin = User::factory()->admin()->create();
+
+    $response = $this->actingAs($admin)
+        ->post("http://{$adminDomain}/pengaturan", [
+            'store_name' => 'Aroma Palace',
+            'shipping_sender_name' => 'Gudang Pusat',
+            'shipping_sender_phone' => '0812-8888-9999',
+            'shipping_address' => 'Jl. Senopati No. 88',
+            'shipping_district_id' => 4715,
+        ]);
+
+    $response->assertSessionHasNoErrors();
+    expect(Setting::get('shipping_sender_phone'))->toBe('081288889999');
+});
+

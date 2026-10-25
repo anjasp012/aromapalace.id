@@ -138,3 +138,43 @@ test('kiriminaja webhook populates shipping table', function () {
         ->and($shipping->destination['latitude'])->toBe(-6.875)
         ->and($shipping->histories)->toHaveCount(2);
 });
+
+test('user address rejects phone number not starting with 08, 628, +628, or 02', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->postJson('/account/addresses', [
+        'label' => 'Rumah',
+        'recipient_name' => 'Budi Santoso',
+        'recipient_phone' => '071234567890', // invalid prefix 07
+        'city_name' => 'Kota Bandung',
+        'district_name' => 'Coblong',
+        'subdistrict_name' => 'Dago',
+        'postal_code' => '40135',
+        'address' => 'Jl. Dago No. 12',
+    ]);
+
+    $response->assertStatus(422)
+        ->assertJsonValidationErrors(['recipient_phone']);
+});
+
+test('user address sanitizes and accepts valid phone numbers with dashes and prefixes', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->postJson('/account/addresses', [
+        'label' => 'Rumah',
+        'recipient_name' => 'Budi Santoso',
+        'recipient_phone' => '+62812-3456-7890',
+        'city_name' => 'Kota Bandung',
+        'district_name' => 'Coblong',
+        'subdistrict_name' => 'Dago',
+        'postal_code' => '40135',
+        'address' => 'Jl. Dago No. 12',
+    ]);
+
+    $response->assertOk();
+
+    $address = UserAddress::where('user_id', $user->id)->first();
+    expect($address)->not->toBeNull()
+        ->and($address->recipient_phone)->toBe('+6281234567890');
+});
+
