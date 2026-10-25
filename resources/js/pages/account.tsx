@@ -40,6 +40,7 @@ import AddressModal from '@/components/AddressModal';
 import AddressSelectorModal from '@/components/AddressSelectorModal';
 import { enablePushNotifications, disablePushNotifications, getNotificationPermission } from '@/lib/push-notification';
 import { Switch } from '@/components/ui/switch';
+import { cn } from '@/lib/utils';
 
 interface UserData {
     id: number;
@@ -688,9 +689,9 @@ export default function AccountPage({
 
             {/* MODAL 1: UBAH PROFIL / NAMA */}
             <Dialog open={editProfileOpen} onOpenChange={setEditProfileOpen}>
-                <DialogContent className="w-[calc(100vw-32px)] max-w-md p-5 sm:p-6 rounded-2xl">
+                <DialogContent className="w-[calc(100%-2rem)] sm:w-full max-w-md p-5 sm:p-6 rounded-2xl">
                     <form onSubmit={handleUpdateProfile}>
-                        <DialogHeader className="text-left space-y-1">
+                        <DialogHeader className="text-left space-y-1 pr-6 sm:pr-8">
                             <DialogTitle className="text-base font-bold text-foreground">
                                 {t('account.update_profile_title')}
                             </DialogTitle>
@@ -863,9 +864,9 @@ export default function AccountPage({
 
             {/* MODAL 2: UBAH KATA SANDI */}
             <Dialog open={changePasswordOpen} onOpenChange={setChangePasswordOpen}>
-                <DialogContent className="w-[calc(100vw-32px)] max-w-md p-5 sm:p-6 rounded-2xl">
+                <DialogContent className="w-[calc(100%-2rem)] sm:w-full max-w-md p-5 sm:p-6 rounded-2xl">
                     <form onSubmit={handleUpdatePassword}>
-                        <DialogHeader className="text-left space-y-1">
+                        <DialogHeader className="text-left space-y-1 pr-6 sm:pr-8">
                             <DialogTitle className="text-base font-bold text-foreground">
                                 {t('account.change_password_title')}
                             </DialogTitle>
@@ -945,8 +946,8 @@ export default function AccountPage({
 
             {/* MODAL 3: ROYALE POINTS INFO */}
             <Dialog open={pointsInfoOpen} onOpenChange={setPointsInfoOpen}>
-                <DialogContent className="w-[calc(100vw-32px)] max-w-sm p-5 sm:p-6 rounded-2xl">
-                    <DialogHeader className="text-left space-y-2">
+                <DialogContent className="w-[calc(100%-2rem)] sm:w-full max-w-sm p-5 sm:p-6 rounded-2xl">
+                    <DialogHeader className="text-left space-y-2 pr-6 sm:pr-8">
                         <div className="w-10 h-10 rounded-2xl bg-[#E5A844]/20 text-[#E5A844] flex items-center justify-center">
                             <Crown className="w-5 h-5" />
                         </div>
@@ -993,8 +994,8 @@ export default function AccountPage({
 
             {/* MODAL 4: KONFIRMASI KELUAR */}
             <Dialog open={logoutConfirmOpen} onOpenChange={setLogoutConfirmOpen}>
-                <DialogContent className="w-[calc(100vw-32px)] max-w-sm p-5 sm:p-6 rounded-2xl">
-                    <DialogHeader className="text-left space-y-2">
+                <DialogContent className="w-[calc(100%-2rem)] sm:w-full max-w-sm p-5 sm:p-6 rounded-2xl">
+                    <DialogHeader className="text-left space-y-2 pr-6 sm:pr-8">
                         <DialogTitle className="text-base font-bold text-foreground">
                             {t('account.logout_confirm_title')}
                         </DialogTitle>
@@ -1038,9 +1039,9 @@ export default function AccountPage({
                     }
                 }}
             >
-                <DialogContent className="w-[calc(100vw-32px)] max-w-sm p-5 sm:p-6 rounded-2xl">
+                <DialogContent className="w-[calc(100%-2rem)] sm:w-full max-w-sm p-5 sm:p-6 rounded-2xl">
                     <form onSubmit={handleDeleteAccount}>
-                        <DialogHeader className="text-left space-y-2">
+                        <DialogHeader className="text-left space-y-2 pr-6 sm:pr-8">
                             <DialogTitle className="text-base font-bold text-destructive">
                                 {t('account.delete_confirm_title')}
                             </DialogTitle>
@@ -1136,44 +1137,57 @@ export default function AccountPage({
             />
             {/* MODAL PENGATURAN NOTIFIKASI */}
             <Dialog open={notifModalOpen} onOpenChange={setNotifModalOpen}>
-                <DialogContent className="w-[calc(100vw-32px)] max-w-sm p-5 sm:p-6 rounded-2xl">
-                    <DialogHeader className="space-y-1.5 pb-2 border-b border-border/60 text-left">
-                        <div className="flex items-center gap-2.5">
-                            <div className="w-9 h-9 rounded-2xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                <DialogContent className="w-[calc(100%-2rem)] sm:w-full max-w-sm p-5 sm:p-6 rounded-2xl gap-4">
+                    <DialogHeader className="space-y-1.5 pb-3 border-b border-border/60 text-left pr-8">
+                        <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
                                 <Bell className="w-5 h-5" />
                             </div>
-                            <div>
+                            <div className="min-w-0 flex-1">
                                 <DialogTitle className="text-base font-bold text-foreground">
                                     Notifikasi
                                 </DialogTitle>
-                                <DialogDescription className="text-xs text-muted-foreground">
+                                <DialogDescription className="text-xs text-muted-foreground leading-relaxed mt-0.5">
                                     Atur pemberitahuan pesanan dan promo di perangkat ini
                                 </DialogDescription>
                             </div>
                         </div>
                     </DialogHeader>
 
-                    <div className="py-1">
+                    <div className="pt-1">
                         {/* Toggle Row */}
-                        <div className="flex items-center justify-between p-3.5 rounded-2xl bg-muted/40 border border-border/80">
-                            <div className="space-y-0.5 pr-3 min-w-0">
+                        <div className="flex items-center justify-between p-3.5 rounded-xl bg-muted/40 border border-border/80 gap-3">
+                            <div className="space-y-0.5 min-w-0 flex-1">
                                 <span className="text-xs sm:text-sm font-semibold text-foreground block">
                                     Izinkan Notifikasi
                                 </span>
-                                <span className="text-[11px] text-muted-foreground block truncate">
+                                <span className="text-[11px] text-muted-foreground block leading-normal">
                                     Status pesanan, update resi pengiriman, &amp; promo
                                 </span>
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
-                                {isTogglingNotif ? (
-                                    <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-                                ) : (
-                                    <Switch
-                                        checked={notificationEnabled}
-                                        onCheckedChange={handleToggleNotification}
-                                    />
+                                {isTogglingNotif && (
+                                    <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
                                 )}
+                                <Switch
+                                    checked={notificationEnabled}
+                                    disabled={isTogglingNotif}
+                                    onCheckedChange={handleToggleNotification}
+                                />
                             </div>
+                        </div>
+
+                        {/* Status Info Badge */}
+                        <div className="mt-3 flex items-center gap-2 px-1 text-[11px] text-muted-foreground">
+                            <span className={cn(
+                                "size-2 rounded-full shrink-0",
+                                notificationEnabled ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground/40"
+                            )} />
+                            <span>
+                                {notificationEnabled
+                                    ? "Notifikasi push aktif di perangkat ini"
+                                    : "Notifikasi push saat ini dinonaktifkan"}
+                            </span>
                         </div>
                     </div>
                 </DialogContent>
