@@ -18,6 +18,7 @@ import {
 import { cn, formatVolume } from '@/lib/utils';
 import { isNativeApp } from '@/lib/native-app';
 import { useTranslation, formatCategoryName } from '@/lib/i18n';
+import { getAdminUrl } from '@/lib/route-resolver';
 import { Check, Loader2 } from 'lucide-react';
 
 export interface FragranceReview {
@@ -826,9 +827,9 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
                                         {isEn ? 'Administrator Mode: Shopping features disabled.' : 'Mode Administrator: Fitur wishlist dan keranjang belanja dinonaktifkan.'}
                                     </span>
                                     <Button asChild size="sm" variant="outline" className="h-8 text-xs border-[#4A070B]/40 text-[#4A070B] shrink-0">
-                                        <Link href={`/admin/products/${product.id}/edit`}>
+                                        <a href={getAdminUrl(`/products/${product.id}/edit`, props?.admin_url)}>
                                             {isEn ? 'Edit Product in CMS →' : 'Edit Produk di CMS →'}
-                                        </Link>
+                                        </a>
                                     </Button>
                                 </div>
                             )}

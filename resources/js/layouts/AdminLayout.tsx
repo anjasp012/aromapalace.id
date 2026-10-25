@@ -36,6 +36,7 @@ import {
 import { useAdminOrderNotifier } from '@/lib/use-admin-notifications';
 import { autoRequestNotificationPermission } from '@/lib/push-notification';
 import { clearUserClientCache } from '@/lib/cache-cleanup';
+import { getStorefrontUrl } from '@/lib/route-resolver';
 
 interface AdminLayoutProps {
     title: string;
@@ -549,7 +550,11 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                         </DropdownMenu>
 
                         <Button variant="outline" size="sm" asChild>
-                            <a href="/" target="_blank" rel="noopener noreferrer">
+                            <a
+                                href={getStorefrontUrl('/', (props as any)?.storefront_url)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
                                 <Store className="size-3.5 mr-1.5" />
                                 <span className="hidden sm:inline">Lihat Toko</span>
                             </a>

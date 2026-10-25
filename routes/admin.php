@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\SliderPromoController;
 use App\Http\Controllers\Admin\StoreController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VoucherController;
+use App\Http\Controllers\CoverageAreaController;
 use App\Http\Controllers\DeviceTokenController;
 use App\Http\Controllers\ShippingController;
 use Illuminate\Support\Facades\Route;
@@ -47,6 +48,11 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::patch('/manajemen-pesanan/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
     Route::post('/manajemen-pesanan/{order}/sync-resi', [OrderController::class, 'syncResi'])->name('orders.sync-resi');
     Route::get('/api/shipping/track/{awb}', [ShippingController::class, 'track'])->name('admin.shipping.track');
+    Route::get('/api/coverage/provinces', [CoverageAreaController::class, 'provinces'])->name('coverage.provinces');
+    Route::get('/api/coverage/cities', [CoverageAreaController::class, 'cities'])->name('coverage.cities');
+    Route::get('/api/coverage/districts', [CoverageAreaController::class, 'districts'])->name('coverage.districts');
+    Route::get('/api/coverage/subdistricts', [CoverageAreaController::class, 'subdistricts'])->name('coverage.subdistricts');
+    Route::get('/api/coverage/geocode', [CoverageAreaController::class, 'geocode'])->name('coverage.geocode');
 
     // Product & Variant Management
     Route::get('/manajemen-produk', [ProductController::class, 'index'])->name('products.index');

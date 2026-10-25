@@ -88,14 +88,12 @@ export function getStorefrontUrl(path = '/', serverPropUrl?: string): string {
         const port = window.location.port ? `:${window.location.port}` : '';
         const protocol = window.location.protocol;
 
-        if (host === 'localhost' || host === '127.0.0.1' || host.endsWith('.test')) {
-            return `${protocol}//localhost${port}${cleanPath}`;
-        }
-
         if (host.startsWith('admin.')) {
             const cleanHost = host.replace(/^admin\./, '');
-            return `https://${cleanHost}${cleanPath}`;
+            return `${protocol}//${cleanHost}${port}${cleanPath}`;
         }
+
+        return `${protocol}//${host}${port}${cleanPath}`;
     }
 
     return `https://aromapalace.id${cleanPath}`;

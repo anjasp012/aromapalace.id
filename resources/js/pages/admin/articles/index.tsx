@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import AdminLayout from '@/layouts/AdminLayout';
+import { getStorefrontUrl } from '@/lib/route-resolver';
 import {
     Search,
     Plus,
@@ -113,7 +114,7 @@ export default function AdminArticlesIndex({
                         </CardHeader>
                         <CardContent>
                             <a
-                                href="/articles"
+                                href={getStorefrontUrl('/articles')}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center gap-1.5 text-xs text-primary font-semibold hover:underline"
@@ -245,7 +246,7 @@ export default function AdminArticlesIndex({
                                                         title="Lihat Halaman Publik"
                                                     >
                                                         <a
-                                                            href={`/articles/${art.slug}`}
+                                                            href={getStorefrontUrl(`/articles/${art.slug}`)}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                         >

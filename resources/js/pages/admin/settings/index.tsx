@@ -31,9 +31,19 @@ import AddressMapPicker from '@/components/AddressMapPicker';
 
 interface SettingsIndexProps {
     settings: Record<string, any>;
+    initial_provinces?: SearchableOption[];
+    initial_cities?: SearchableOption[];
+    initial_districts?: SearchableOption[];
+    initial_subdistricts?: SearchableOption[];
 }
 
-export default function SettingsIndex({ settings = {} }: SettingsIndexProps) {
+export default function SettingsIndex({
+    settings = {},
+    initial_provinces = [],
+    initial_cities = [],
+    initial_districts = [],
+    initial_subdistricts = [],
+}: SettingsIndexProps) {
     const { data, setData, post, processing, errors } = useForm({
         // Kontak & Profil Toko
         store_name: settings.store_name || '',
@@ -70,11 +80,35 @@ export default function SettingsIndex({ settings = {} }: SettingsIndexProps) {
 
     const [showApiKey, setShowApiKey] = useState(false);
 
-    // Coverage hierarchy lists
-    const [provinces, setProvinces] = useState<SearchableOption[]>([]);
-    const [cities, setCities] = useState<SearchableOption[]>([]);
-    const [districts, setDistricts] = useState<SearchableOption[]>([]);
-    const [subdistricts, setSubdistricts] = useState<SearchableOption[]>([]);
+    // Coverage hierarchy lists initialized with server-side preloaded data or database values
+    const [provinces, setProvinces] = useState<SearchableOption[]>(() => {
+        if (initial_provinces && initial_provinces.length > 0) return initial_provinces;
+        if (settings.shipping_province_id && settings.shipping_province_name) {
+            return [{ id: Number(settings.shipping_province_id), name: settings.shipping_province_name }];
+        }
+        return [];
+    });
+    const [cities, setCities] = useState<SearchableOption[]>(() => {
+        if (initial_cities && initial_cities.length > 0) return initial_cities;
+        if (settings.shipping_city_id && settings.shipping_city_name) {
+            return [{ id: Number(settings.shipping_city_id), name: settings.shipping_city_name }];
+        }
+        return [];
+    });
+    const [districts, setDistricts] = useState<SearchableOption[]>(() => {
+        if (initial_districts && initial_districts.length > 0) return initial_districts;
+        if (settings.shipping_district_id && settings.shipping_district_name) {
+            return [{ id: Number(settings.shipping_district_id), name: settings.shipping_district_name }];
+        }
+        return [];
+    });
+    const [subdistricts, setSubdistricts] = useState<SearchableOption[]>(() => {
+        if (initial_subdistricts && initial_subdistricts.length > 0) return initial_subdistricts;
+        if (settings.shipping_subdistrict_id && settings.shipping_subdistrict_name) {
+            return [{ id: Number(settings.shipping_subdistrict_id), name: settings.shipping_subdistrict_name, postal_code: settings.shipping_postal_code || '' }];
+        }
+        return [];
+    });
 
     // Loading indicators
     const [loadingProvinces, setLoadingProvinces] = useState(false);
@@ -84,19 +118,21 @@ export default function SettingsIndex({ settings = {} }: SettingsIndexProps) {
 
     // Initial load of provinces & dependent hierarchy if already configured
     useEffect(() => {
-        setLoadingProvinces(true);
-        fetch('/api/coverage/provinces')
-            .then((res) => res.json())
-            .then((json) => {
-                if (json.status && Array.isArray(json.data)) {
-                    setProvinces(json.data);
-                }
-            })
-            .catch((err) => console.error('Error fetching provinces:', err))
-            .finally(() => setLoadingProvinces(false));
+        if (provinces.length <= 1) {
+            setLoadingProvinces(true);
+            fetch('/api/coverage/provinces')
+                .then((res) => res.json())
+                .then((json) => {
+                    if (json.status && Array.isArray(json.data)) {
+                        setProvinces(json.data);
+                    }
+                })
+                .catch((err) => console.error('Error fetching provinces:', err))
+                .finally(() => setLoadingProvinces(false));
+        }
 
-        // Pre-fill cities if province exists
-        if (data.shipping_province_id) {
+        // Pre-fill cities if province exists and full list not yet loaded
+        if (data.shipping_province_id && cities.length <= 1) {
             setLoadingCities(true);
             fetch(`/api/coverage/cities?province_id=${data.shipping_province_id}`)
                 .then((r) => r.json())
@@ -106,8 +142,8 @@ export default function SettingsIndex({ settings = {} }: SettingsIndexProps) {
                 .finally(() => setLoadingCities(false));
         }
 
-        // Pre-fill districts if city exists
-        if (data.shipping_city_id) {
+        // Pre-fill districts if city exists and full list not yet loaded
+        if (data.shipping_city_id && districts.length <= 1) {
             setLoadingDistricts(true);
             fetch(`/api/coverage/districts?city_id=${data.shipping_city_id}`)
                 .then((r) => r.json())
@@ -117,8 +153,8 @@ export default function SettingsIndex({ settings = {} }: SettingsIndexProps) {
                 .finally(() => setLoadingDistricts(false));
         }
 
-        // Pre-fill subdistricts if district exists
-        if (data.shipping_district_id) {
+        // Pre-fill subdistricts if district exists and full list not yet loaded
+        if (data.shipping_district_id && subdistricts.length <= 1) {
             setLoadingSubdistricts(true);
             fetch(`/api/coverage/subdistricts?district_id=${data.shipping_district_id}`)
                 .then((r) => r.json())
@@ -657,6 +693,7 @@ export default function SettingsIndex({ settings = {} }: SettingsIndexProps) {
                                             <SearchableSelect
                                                 options={provinces}
                                                 value={data.shipping_province_id}
+                                                fallbackLabel={data.shipping_province_name}
                                                 onChange={handleProvinceChange}
                                                 placeholder="Pilih Provinsi"
                                                 searchPlaceholder="Cari provinsi..."
@@ -678,6 +715,7 @@ export default function SettingsIndex({ settings = {} }: SettingsIndexProps) {
                                             <SearchableSelect
                                                 options={cities}
                                                 value={data.shipping_city_id}
+                                                fallbackLabel={data.shipping_city_name}
                                                 onChange={handleCityChange}
                                                 disabled={!data.shipping_province_id || loadingCities}
                                                 loading={loadingCities}
@@ -713,6 +751,7 @@ export default function SettingsIndex({ settings = {} }: SettingsIndexProps) {
                                             <SearchableSelect
                                                 options={districts}
                                                 value={data.shipping_district_id}
+                                                fallbackLabel={data.shipping_district_name}
                                                 onChange={handleDistrictChange}
                                                 disabled={!data.shipping_city_id || loadingDistricts}
                                                 loading={loadingDistricts}
@@ -749,6 +788,7 @@ export default function SettingsIndex({ settings = {} }: SettingsIndexProps) {
                                                 <SearchableSelect
                                                     options={subdistricts}
                                                     value={data.shipping_subdistrict_id}
+                                                    fallbackLabel={data.shipping_subdistrict_name}
                                                     onChange={handleSubdistrictChange}
                                                     disabled={!data.shipping_district_id || loadingSubdistricts}
                                                     loading={loadingSubdistricts}

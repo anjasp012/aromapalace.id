@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Head, Link, useForm, router } from '@inertiajs/react';
 import AdminLayout from '@/layouts/AdminLayout';
+import { getStorefrontUrl } from '@/lib/route-resolver';
 import {
     ArrowLeft,
     Plus,
@@ -265,7 +266,7 @@ export default function AdminProductEdit({
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
                             <a
-                                href={`/products/${product.slug}`}
+                                href={getStorefrontUrl(`/products/${product.slug}`)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center gap-1.5"

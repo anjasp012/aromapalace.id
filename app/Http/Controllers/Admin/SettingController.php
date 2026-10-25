@@ -30,8 +30,24 @@ class SettingController extends Controller
         $settings['latitude'] = $settings['shipping_latitude'];
         $settings['longitude'] = $settings['shipping_longitude'];
 
+        $kiriminAja = app(KiriminAjaService::class);
+        $initialProvinces = $kiriminAja->getProvinces();
+
+        $provinceId = (int) ($settings['shipping_province_id'] ?? 0);
+        $initialCities = $provinceId > 0 ? $kiriminAja->getCities($provinceId) : [];
+
+        $cityId = (int) ($settings['shipping_city_id'] ?? 0);
+        $initialDistricts = $cityId > 0 ? $kiriminAja->getDistricts($cityId) : [];
+
+        $districtId = (int) ($settings['shipping_district_id'] ?? 0);
+        $initialSubdistricts = $districtId > 0 ? $kiriminAja->getSubDistricts($districtId) : [];
+
         return Inertia::render('admin/settings/index', [
             'settings' => $settings,
+            'initial_provinces' => $initialProvinces,
+            'initial_cities' => $initialCities,
+            'initial_districts' => $initialDistricts,
+            'initial_subdistricts' => $initialSubdistricts,
         ]);
     }
 

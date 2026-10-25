@@ -58,6 +58,7 @@ import { clearUserClientCache } from '@/lib/cache-cleanup';
 import { playMenuTapSound } from '@/lib/sound-effects';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
+import { getAdminUrl } from '@/lib/route-resolver';
 import PullToRefresh from '@/components/PullToRefresh';
 
 import { App as CapApp } from '@capacitor/app';
@@ -155,6 +156,9 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
     const user = props?.auth?.user;
     const isAdmin = Boolean(props?.auth?.is_admin || user?.role === 'admin');
     const { locale, isEn, isId, t, pickText, setLanguage } = useTranslation();
+
+    const adminBaseUrl = (props as any)?.admin_url;
+    const adminDashboardUrl = getAdminUrl('/dashboard', adminBaseUrl);
 
     // Header & Mobile Nav State
     const [slidRight, setSlidRight] = useState(false);
@@ -310,8 +314,9 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
         },
         {
             label: user ? (isAdmin ? 'Admin' : (isEn ? 'Account' : 'Akun')) : (isEn ? 'Account' : 'Akun'),
-            href: user ? (isAdmin ? '/admin/dashboard' : '/account') : '/login',
+            href: user ? (isAdmin ? adminDashboardUrl : '/account') : '/login',
             component: user ? (isAdmin ? undefined : 'account') : 'login',
+            isExternal: Boolean(user && isAdmin),
             active: (url === '/account' || url.startsWith('/membership') || url.startsWith('/loyalty') || url.startsWith('/login') || url.startsWith('/register') || (isAdmin && url.startsWith('/admin'))) && !url.startsWith('/account/orders') && !url.startsWith('/orders') && !url.startsWith('/payment'),
             renderIcon: (active: boolean) => (
                 isAdmin ? (
@@ -323,7 +328,7 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
             activeColor: 'text-[#4A070B] dark:text-[#E8D0BA]',
             activeBg: 'bg-[#4A070B]/10 dark:bg-[#E8D0BA]/15',
         },
-    ], [url, user, isAdmin, wishlistCount, isEn]);
+    ], [url, user, isAdmin, adminDashboardUrl, wishlistCount, isEn]);
 
     const getCsrfToken = () => {
         return (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '';
@@ -879,10 +884,10 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
 
                                                 {isAdmin ? (
                                                     <DropdownMenuItem asChild>
-                                                        <Link href="/admin/dashboard" className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-semibold text-[#4A070B] dark:text-[#E8D0BA] cursor-pointer">
+                                                        <a href={adminDashboardUrl} className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-semibold text-[#4A070B] dark:text-[#E8D0BA] cursor-pointer">
                                                             <LayoutDashboard className="w-4 h-4 text-[#4A070B] dark:text-[#E8D0BA] shrink-0" />
                                                             <span>{isEn ? 'Admin Dashboard' : 'Dashboard Admin'}</span>
-                                                        </Link>
+                                                        </a>
                                                     </DropdownMenuItem>
                                                 ) : (
                                                     <>
@@ -995,17 +1000,15 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
 
                             {/* Tombol Kanan: Jika Admin -> Cukup di mobile icon saja, di desktop sudah ada di dropdown Akun. Jika Customer/Guest -> Keranjang */}
                             {isAdmin ? (
-                                <Link
-                                    href="/admin/dashboard"
-                                    prefetch="hover"
-                                    cacheFor={['30s', '1m']}
+                                <a
+                                    href={adminDashboardUrl}
                                     className="sm:hidden flex items-center justify-center text-[#4A070B] hover:text-[#360407] transition cursor-pointer w-9 h-9 group relative rounded-full hover:bg-[#4A070B]/5 active:scale-95 shrink-0 -mr-1"
                                     aria-label={isEn ? "Admin Dashboard" : "Dashboard Admin"}
                                 >
                                     <div className="relative flex items-center justify-center">
                                         <LayoutDashboard className="w-5 h-5 text-[#4A070B] group-hover:text-[#360407] transition" />
                                     </div>
-                                </Link>
+                                </a>
                             ) : (
                                 <Link
                                     href={user ? '/cart' : '/login?notice=' + encodeURIComponent(isEn ? 'Please sign in to view your shopping cart.' : 'Silakan masuk untuk melihat keranjang belanja Anda.')}
@@ -1885,6 +1888,29 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
                     <div className="grid grid-cols-5 h-14 items-stretch">
                         {mobileNavItems.map((item) => {
                             const isActive = item.active;
+                            if (item.isExternal) {
+                                return (
+                                    <a
+                                        key={item.label}
+                                        href={item.href}
+                                        onClick={playMenuTapSound}
+                                        className={`h-full flex flex-col items-center justify-center gap-0.5 px-1 transition relative select-none active:scale-95 duration-150 ${isActive
+                                            ? `${item.activeColor} font-bold`
+                                            : 'text-muted-foreground hover:text-foreground font-medium'
+                                            }`}
+                                    >
+                                        {isActive && (
+                                            <span className="absolute -top-px left-2.5 right-2.5 h-0.5 rounded-full bg-[#4A070B] dark:bg-[#E8D0BA]" />
+                                        )}
+                                        <div className={`relative flex items-center justify-center p-1 rounded-full transition-all duration-200 ${isActive ? `${item.activeBg} scale-105` : ''}`}>
+                                            {item.renderIcon(isActive)}
+                                        </div>
+                                        <span className="text-[10px] tracking-tight truncate max-w-full">
+                                            {item.label}
+                                        </span>
+                                    </a>
+                                );
+                            }
                             return (
                                 <Link
                                     key={item.label}

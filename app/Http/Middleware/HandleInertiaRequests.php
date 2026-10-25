@@ -76,13 +76,18 @@ class HandleInertiaRequests extends Middleware
                 $portSuffix = ($port && ! in_array($port, [80, 443])) ? ":{$port}" : '';
                 $scheme = $request->getScheme();
 
-                if ($host === 'localhost' || $host === '127.0.0.1' || str_ends_with($host, '.test')) {
+                if (str_starts_with($host, 'admin.')) {
                     $cleanHost = preg_replace('/^admin\./', '', $host);
 
                     return "{$scheme}://{$cleanHost}{$portSuffix}";
                 }
 
-                return rtrim(config('app.url', 'https://aromapalace.id'), '/');
+                $configuredUrl = config('app.url');
+                if (! empty($configuredUrl)) {
+                    return rtrim($configuredUrl, '/');
+                }
+
+                return "{$scheme}://{$host}{$portSuffix}";
             },
             'locale' => fn () => app()->getLocale(),
             'flash' => [

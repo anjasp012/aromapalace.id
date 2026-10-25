@@ -14,6 +14,7 @@ export interface SearchableOption {
 interface SearchableSelectProps {
     options: SearchableOption[];
     value: number | string | '';
+    fallbackLabel?: string;
     onChange: (value: number | string, option?: SearchableOption) => void;
     placeholder?: string;
     searchPlaceholder?: string;
@@ -27,6 +28,7 @@ interface SearchableSelectProps {
 export default function SearchableSelect({
     options = [],
     value,
+    fallbackLabel,
     onChange,
     placeholder = 'Pilih...',
     searchPlaceholder = 'Cari...',
@@ -43,8 +45,13 @@ export default function SearchableSelect({
     // Find the currently selected option object
     const selectedOption = useMemo(() => {
         if (value === '' || value === null || value === undefined) return null;
-        return options.find((opt) => String(opt.id) === String(value)) || null;
-    }, [options, value]);
+        const found = options.find((opt) => String(opt.id) === String(value));
+        if (found) return found;
+        if (fallbackLabel) {
+            return { id: value, name: fallbackLabel };
+        }
+        return null;
+    }, [options, value, fallbackLabel]);
 
     const getOptionLabel = (opt?: SearchableOption | null): string => {
         if (!opt) return '';

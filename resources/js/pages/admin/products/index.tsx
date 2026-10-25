@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import AdminLayout from '@/layouts/AdminLayout';
+import { getStorefrontUrl } from '@/lib/route-resolver';
 import {
     Search,
     Plus,
@@ -362,7 +363,7 @@ export default function AdminProductsIndex({
                                                         /{product.slug}
                                                     </div>
                                                     <a
-                                                        href={`/products/${product.slug}`}
+                                                        href={getStorefrontUrl(`/products/${product.slug}`)}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline mt-1"
