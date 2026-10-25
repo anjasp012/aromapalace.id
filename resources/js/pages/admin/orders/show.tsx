@@ -104,6 +104,7 @@ interface OrderDetail {
     courier?: string;
     courier_service?: string;
     courier_service_type?: string;
+    courier_logo?: string;
     tracking_number?: string | null;
     shipping_cost: number;
     shipping_cost_formatted: string;
@@ -619,13 +620,28 @@ export default function AdminOrderShow({ order, pickupSchedules }: OrderShowProp
 
                         {/* Delivery / Boutique Card */}
                         <Card>
-                            <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                            <CardHeader className="pb-3 flex flex-row items-center justify-between gap-3 flex-wrap">
                                 <CardTitle className="text-base font-semibold">
                                     {isPickup ? 'Informasi Pengambilan di Butik' : 'Informasi Pengiriman Kurir'}
                                 </CardTitle>
-                                <Badge variant="outline">
-                                    {isPickup ? 'Ambil di Butik' : (order.courier || 'Kurir')}
-                                </Badge>
+                                {isPickup ? (
+                                    <Badge variant="outline">Ambil di Butik</Badge>
+                                ) : (
+                                    <div className="flex items-center gap-2">
+                                        {order.courier_logo && (
+                                            <div className="h-7 w-16 px-1.5 py-0.5 rounded-md bg-white border border-border/80 shadow-2xs flex items-center justify-center shrink-0">
+                                                <img
+                                                    src={order.courier_logo}
+                                                    alt={order.courier || 'Kurir'}
+                                                    className="h-full w-full object-contain"
+                                                />
+                                            </div>
+                                        )}
+                                        <Badge variant="outline" className="font-semibold text-xs">
+                                            {order.courier || 'Kurir'}
+                                        </Badge>
+                                    </div>
+                                )}
                             </CardHeader>
                             <CardContent className="space-y-4 text-sm">
                                 {isPickup ? (
@@ -995,9 +1011,18 @@ export default function AdminOrderShow({ order, pickupSchedules }: OrderShowProp
                         <div className="bg-muted/40 border border-border/70 rounded-lg p-3 text-xs space-y-1.5">
                             <div className="flex items-center justify-between text-muted-foreground">
                                 <span>Kurir Ekspedisi:</span>
-                                <span className="font-semibold text-foreground">
-                                    {order.courier || 'KiriminAja Express'}
-                                </span>
+                                <div className="flex items-center gap-2 font-semibold text-foreground">
+                                    {order.courier_logo && (
+                                        <div className="h-6 w-14 px-1 py-0.5 rounded bg-white border border-border/70 shadow-2xs flex items-center justify-center shrink-0">
+                                            <img
+                                                src={order.courier_logo}
+                                                alt={order.courier || 'Kurir'}
+                                                className="h-full w-full object-contain"
+                                            />
+                                        </div>
+                                    )}
+                                    <span>{order.courier || 'KiriminAja Express'}</span>
+                                </div>
                             </div>
                             <div className="flex items-center justify-between text-muted-foreground">
                                 <span>Penerima:</span>

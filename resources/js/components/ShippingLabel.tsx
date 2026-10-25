@@ -18,6 +18,7 @@ export interface ShippingLabelOrder {
     courier?: string | null;
     courier_service?: string | null;
     courier_service_type?: string | null;
+    courier_logo?: string | null;
     tracking_number?: string | null;
     total_amount: number;
     payment_method?: string;
@@ -80,89 +81,53 @@ function KiriminAjaLogo() {
 }
 
 // Official Logistic Brand Logos
-function LogisticLogo({ courier = '' }: { courier?: string }) {
-    const lower = (courier || '').toLowerCase();
-
-    if (lower.includes('jne')) {
-        return (
-            <div className="flex flex-col items-end leading-none select-none">
-                <div className="flex items-center gap-1">
-                    <span className="text-2xl font-black italic tracking-tighter text-[#E11D48]">
-                        JNE
-                    </span>
-                    <span className="text-sm font-black italic tracking-tight text-[#1D4ED8] -mt-1">
-                        EXPRESS
-                    </span>
-                </div>
-                <span className="text-[7px] font-bold tracking-widest text-[#1D4ED8] uppercase">
-                    EXPRESS ACROSS NATIONS
-                </span>
-            </div>
-        );
+function LogisticLogo({ courier = '', logo = '' }: { courier?: string; logo?: string }) {
+    let logoUrl = logo;
+    if (!logoUrl && courier) {
+        const clean = courier.toLowerCase().replace(/[\s\-_&]/g, '');
+        const courierMap: Record<string, string> = {
+            jtcargo: 'jtcargo',
+            jnt: 'jnt',
+            jt: 'jnt',
+            jne: 'jne',
+            sicepat: 'sicepat',
+            shopee: 'spx',
+            spx: 'spx',
+            anteraja: 'anteraja',
+            lion: 'lion',
+            ninja: 'ninja',
+            sap: 'sap',
+            idexpress: 'idx',
+            idx: 'idx',
+            tiki: 'tiki',
+            posindonesia: 'posindonesia',
+            posindo: 'posindonesia',
+            pos: 'posindonesia',
+            rpx: 'rpx',
+            sentral: 'sentral',
+            ncs: 'ncs',
+            borzo: 'borzo',
+            gosend: 'gosend',
+            gojek: 'gosend',
+            grab: 'grab',
+            paxel: 'paxel',
+        };
+        for (const [key, code] of Object.entries(courierMap)) {
+            if (clean.includes(key)) {
+                logoUrl = `https://storage.googleapis.com/tprt0ezsggqjornc7nf1wwluvgulhr/assets/courier-logo/${code}.png`;
+                break;
+            }
+        }
     }
 
-    if (lower.includes('j&t') || lower.includes('jnt')) {
+    if (logoUrl) {
         return (
-            <div className="flex flex-col items-end leading-none select-none">
-                <div className="flex items-center gap-1">
-                    <span className="text-2xl font-black italic tracking-tighter text-[#DC2626]">
-                        J&T
-                    </span>
-                </div>
-                <span className="text-[9px] font-black italic tracking-widest text-[#DC2626] uppercase">
-                    EXPRESS
-                </span>
-            </div>
-        );
-    }
-
-    if (lower.includes('sicepat')) {
-        return (
-            <div className="flex flex-col items-end leading-none select-none">
-                <div className="flex items-center gap-1">
-                    <span className="text-xl font-black tracking-tighter text-[#DC2626]">
-                        SICEPAT
-                    </span>
-                </div>
-                <span className="text-[8px] font-extrabold tracking-wider text-black uppercase">
-                    EKSPRES
-                </span>
-            </div>
-        );
-    }
-
-    if (lower.includes('lion')) {
-        return (
-            <div className="flex flex-col items-end leading-none select-none">
-                <div className="flex items-center gap-1">
-                    <span className="text-lg font-black italic text-[#DC2626]">
-                        Lion
-                    </span>
-                    <span className="bg-[#DC2626] text-white text-[10px] px-1 py-0.5 rounded italic font-bold">
-                        parcel
-                    </span>
-                </div>
-            </div>
-        );
-    }
-
-    if (lower.includes('ninja')) {
-        return (
-            <div className="flex flex-col items-end leading-none select-none">
-                <div className="flex items-center gap-1 font-black text-black text-lg tracking-tight">
-                    <span className="text-[#DC2626]">ninja</span>
-                    <span>Xpress</span>
-                </div>
-            </div>
-        );
-    }
-
-    if (lower.includes('anteraja')) {
-        return (
-            <div className="flex flex-col items-end leading-none select-none">
-                <span className="text-lg font-black tracking-tight text-[#DB2777]">
-                    anteraja
-                </span>
+            <div className="flex items-center justify-end h-8 max-w-[130px]">
+                <img
+                    src={logoUrl}
+                    alt={courier || 'Ekspedisi'}
+                    className="h-7.5 max-h-8 max-w-[120px] object-contain"
+                />
             </div>
         );
     }
@@ -257,7 +222,7 @@ export default function ShippingLabel({ order, className = '' }: ShippingLabelPr
                 {/* 1. TOP HEADER: KiriminAja Logo (Left) & Logistic Logo (Right) */}
                 <div className="flex items-center justify-between px-3 py-2 border-b-2 border-black bg-white">
                     <KiriminAjaLogo />
-                    <LogisticLogo courier={courierName} />
+                    <LogisticLogo courier={courierName} logo={order.courier_logo || ''} />
                 </div>
 
                 {/* 2. FULL-WIDTH HERO BARCODE & AWB NUMBER */}

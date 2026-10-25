@@ -46,6 +46,7 @@ interface OrderSummary {
     store_id?: number | null;
     store_name?: string;
     courier?: string;
+    courier_logo?: string;
     tracking_number?: string | null;
     city?: string;
     total_amount: number;
@@ -367,9 +368,21 @@ export default function AdminOrdersIndex({
                                                     </div>
                                                 ) : (
                                                     <div>
-                                                        <Badge variant="outline">
-                                                            <Truck className="size-3 mr-1" /> Kurir
-                                                        </Badge>
+                                                        <div className="flex items-center gap-1.5">
+                                                            {order.courier_logo ? (
+                                                                <div className="h-5 w-12 px-1 py-0.5 rounded bg-white border border-border/70 shadow-2xs flex items-center justify-center shrink-0">
+                                                                    <img
+                                                                        src={order.courier_logo}
+                                                                        alt={order.courier || 'Kurir'}
+                                                                        className="h-full w-full object-contain"
+                                                                    />
+                                                                </div>
+                                                            ) : (
+                                                                <Badge variant="outline">
+                                                                    <Truck className="size-3 mr-1" /> Kurir
+                                                                </Badge>
+                                                            )}
+                                                        </div>
                                                         <div className="text-[10px] text-muted-foreground mt-1 truncate max-w-[140px]">
                                                             {order.courier || 'Kurir Rekanan'}
                                                         </div>

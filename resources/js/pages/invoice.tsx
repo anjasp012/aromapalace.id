@@ -29,6 +29,7 @@ interface InvoiceProps {
         city: string;
         postal_code?: string | null;
         courier: string;
+        courier_logo?: string;
         courier_service?: string;
         courier_service_type?: string;
         tracking_number?: string | null;
@@ -358,8 +359,19 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
                                 <div className="text-[9.5px] sm:text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
                                     Metode Pengiriman
                                 </div>
-                                <div className="font-bold text-gray-900">
-                                    {order.courier}
+                                <div className="flex items-center gap-2 mt-0.5">
+                                    {order.courier_logo && (
+                                        <div className="h-6 w-14 px-1 py-0.5 rounded bg-white border border-gray-200 shadow-2xs flex items-center justify-center shrink-0">
+                                            <img
+                                                src={order.courier_logo}
+                                                alt={order.courier}
+                                                className="h-full w-full object-contain"
+                                            />
+                                        </div>
+                                    )}
+                                    <div className="font-bold text-gray-900">
+                                        {order.courier}
+                                    </div>
                                 </div>
                                 {order.tracking_number && (
                                     <div className="text-[10px] text-gray-600 font-mono mt-1">

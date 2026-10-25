@@ -236,25 +236,50 @@ class KiriminAjaService
      */
     public function getCourierLogoUrl(?string $serviceCode): string
     {
-        $code = strtolower(trim((string) $serviceCode));
-        $code = str_replace([' ', '-', '_', '&'], '', $code);
+        $clean = strtolower(trim((string) $serviceCode));
+        $clean = str_replace([' ', '-', '_', '&'], '', $clean);
 
-        // Normalize common courier codes to match hosted logo assets
-        $code = match ($code) {
-            'jt', 'j&t' => 'jnt',
-            'ninjainter', 'ninjaxpress' => 'ninja',
-            'grabexpress' => 'grab',
-            'gosend', 'gojek' => 'gosend',
-            'pos', 'posindo' => 'posindonesia',
-            'idexpress' => 'idx',
-            'lionparcel' => 'lion',
-            'sicepatekspres' => 'sicepat',
-            default => $code,
-        };
-
-        if ($code === '') {
+        if ($clean === '' || $clean === 'pickup') {
             return '';
         }
+
+        $courierMap = [
+            'jtcargo' => 'jtcargo',
+            'jnt' => 'jnt',
+            'jt' => 'jnt',
+            'jne' => 'jne',
+            'sicepat' => 'sicepat',
+            'shopee' => 'spx',
+            'spx' => 'spx',
+            'anteraja' => 'anteraja',
+            'lion' => 'lion',
+            'ninja' => 'ninja',
+            'sap' => 'sap',
+            'idexpress' => 'idx',
+            'idx' => 'idx',
+            'tiki' => 'tiki',
+            'posindonesia' => 'posindonesia',
+            'posindo' => 'posindonesia',
+            'pos' => 'posindonesia',
+            'rpx' => 'rpx',
+            'sentral' => 'sentral',
+            'ncs' => 'ncs',
+            'borzo' => 'borzo',
+            'gosend' => 'gosend',
+            'gojek' => 'gosend',
+            'grab' => 'grab',
+            'paxel' => 'paxel',
+        ];
+
+        $matchedCode = null;
+        foreach ($courierMap as $needle => $slug) {
+            if (str_contains($clean, $needle)) {
+                $matchedCode = $slug;
+                break;
+            }
+        }
+
+        $code = $matchedCode ?? $clean;
 
         return "https://storage.googleapis.com/tprt0ezsggqjornc7nf1wwluvgulhr/assets/courier-logo/{$code}.png";
     }

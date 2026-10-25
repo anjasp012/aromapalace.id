@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Services\CatalogService;
+use App\Services\KiriminAjaService;
 use App\Services\OrderService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
@@ -155,6 +156,7 @@ class OrderController extends Controller
                 'courier_service' => $order->courier_service,
                 'courier_service_type' => $order->courier_service_type,
                 'courier' => $order->courier,
+                'courier_logo' => app(KiriminAjaService::class)->getCourierLogoUrl($order->courier ?: $order->courier_service),
                 'tracking_number' => $order->shipping?->awb,
                 'awb' => $order->shipping?->awb,
                 'delivered_at' => $order->shipping?->delivered_at?->format('d/m/Y, H:i').' WIB',
@@ -280,6 +282,7 @@ class OrderController extends Controller
                 'courier_service' => $orderModel->courier_service,
                 'courier_service_type' => $orderModel->courier_service_type,
                 'courier' => $orderModel->courier,
+                'courier_logo' => app(KiriminAjaService::class)->getCourierLogoUrl($orderModel->courier ?: $orderModel->courier_service),
                 'shipping_cost' => (int) $orderModel->shipping_cost,
                 'shipping_cost_formatted' => $orderModel->shipping_cost > 0 ? 'Rp '.number_format($orderModel->shipping_cost, 0, ',', '.') : 'Rp 0',
                 'payment_method' => $orderModel->payment_method,
