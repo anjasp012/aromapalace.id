@@ -1616,16 +1616,6 @@ export default function CheckoutPage({
                                     </Button>
                                 </div>
                             </div>
-
-                            {/* Back to Cart Link (Placed under Ringkasan Belanja Card) */}
-                            <div className="pt-2.5">
-                                <Link
-                                    href="/cart"
-                                    className="inline-flex items-center gap-1.5 font-semibold text-xs text-[#4A070B] dark:text-[#E8D0BA] hover:text-[#360407] transition-colors"
-                                >
-                                    <span>←</span> {isEn ? 'Back to Cart' : 'Kembali ke Keranjang'}
-                                </Link>
-                            </div>
                         </div>
                     </div>
 
