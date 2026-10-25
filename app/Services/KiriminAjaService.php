@@ -92,10 +92,11 @@ class KiriminAjaService
 
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $this->apiKey
-        ])->post($this->baseUrl . '/api/mitra/city/'.$province_id);
+        ])->post($this->baseUrl . '/api/mitra/city/', [
+            'provinsi_id' => $province_id
+        ]);
 
         $json = $response->json();
-        dd($response);
         $raw = $json['data'] ?? ($json['datas'] ?? ($json['results'] ?? []));
 
         if (is_array($raw) && ! empty($raw)) {
