@@ -338,7 +338,7 @@ class CheckoutController extends Controller
             };
 
             $paymentStatus = 'pending';
-            $orderNumber = 'AP-'.date('Ymd').'-'.strtoupper(Str::random(5));
+            $orderNumber = 'ARPL-'.date('Ymd').'-'.strtoupper(Str::random(5));
 
             // Call Pakasir API to create real payment transaction
             if ($totalAmount > 0) {

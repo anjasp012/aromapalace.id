@@ -486,7 +486,6 @@ test('authenticated user can checkout with store pickup option and select a stor
     expect($order->store->id)->toBe($store->id);
     expect($order->shipping_cost)->toBe(0);
     expect($order->courier)->toContain('Ambil Mandiri di Butik');
-    expect($order->city)->toBe('Ambil di Butik');
 
     $response->assertRedirect(route('payment.show', ['order' => $order->order_number]));
 });

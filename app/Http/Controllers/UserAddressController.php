@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\UserAddress;
-use App\Services\KiriminAjaService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -46,6 +45,8 @@ class UserAddressController extends Controller
             'subdistrict_name' => ['required', 'string', 'max:100'],
             'postal_code' => ['required', 'string', 'max:15'],
             'address' => ['required', 'string', 'max:1000'],
+            'latitude' => ['nullable', 'numeric'],
+            'longitude' => ['nullable', 'numeric'],
             'is_primary' => ['nullable', 'boolean'],
         ]);
 
@@ -71,6 +72,8 @@ class UserAddressController extends Controller
                 'subdistrict_name' => $validated['subdistrict_name'],
                 'postal_code' => $validated['postal_code'],
                 'address' => $validated['address'],
+                'latitude' => isset($validated['latitude']) && $validated['latitude'] !== '' ? (float) $validated['latitude'] : null,
+                'longitude' => isset($validated['longitude']) && $validated['longitude'] !== '' ? (float) $validated['longitude'] : null,
                 'is_primary' => $isPrimary,
             ]);
 
@@ -116,6 +119,8 @@ class UserAddressController extends Controller
             'subdistrict_name' => ['required', 'string', 'max:100'],
             'postal_code' => ['required', 'string', 'max:15'],
             'address' => ['required', 'string', 'max:1000'],
+            'latitude' => ['nullable', 'numeric'],
+            'longitude' => ['nullable', 'numeric'],
             'is_primary' => ['nullable', 'boolean'],
         ]);
 
@@ -126,7 +131,7 @@ class UserAddressController extends Controller
                 $user->addresses()->where('id', '!=', $address->id)->update(['is_primary' => false]);
             }
 
-            $address->update([
+            $updateData = [
                 'label' => $validated['label'],
                 'recipient_name' => $validated['recipient_name'],
                 'recipient_phone' => $validated['recipient_phone'],
@@ -141,7 +146,16 @@ class UserAddressController extends Controller
                 'postal_code' => $validated['postal_code'],
                 'address' => $validated['address'],
                 'is_primary' => $isPrimary || $address->is_primary,
-            ]);
+            ];
+
+            if (array_key_exists('latitude', $validated)) {
+                $updateData['latitude'] = $validated['latitude'] !== null && $validated['latitude'] !== '' ? (float) $validated['latitude'] : null;
+            }
+            if (array_key_exists('longitude', $validated)) {
+                $updateData['longitude'] = $validated['longitude'] !== null && $validated['longitude'] !== '' ? (float) $validated['longitude'] : null;
+            }
+
+            $address->update($updateData);
 
             if ($address->is_primary && empty($user->phone)) {
                 $user->update(['phone' => $address->recipient_phone]);

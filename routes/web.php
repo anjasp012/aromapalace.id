@@ -11,6 +11,7 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\CoverageAreaController;
 use App\Http\Controllers\DeviceTokenController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\KiriminAjaWebhookController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\OrderController;
@@ -60,8 +61,10 @@ Route::get('/api/coverage/provinces', [CoverageAreaController::class, 'provinces
 Route::get('/api/coverage/cities', [CoverageAreaController::class, 'cities'])->name('coverage.cities');
 Route::get('/api/coverage/districts', [CoverageAreaController::class, 'districts'])->name('coverage.districts');
 Route::get('/api/coverage/subdistricts', [CoverageAreaController::class, 'subdistricts'])->name('coverage.subdistricts');
+Route::get('/api/coverage/geocode', [CoverageAreaController::class, 'geocode'])->name('coverage.geocode');
 
 Route::post('/webhook/pakasir', [PakasirWebhookController::class, 'handle'])->name('webhook.pakasir');
+Route::post('/webhook/kiriminaja', [KiriminAjaWebhookController::class, 'handle'])->name('webhook.kiriminaja');
 
 Route::post('/api/device-tokens', [DeviceTokenController::class, 'store'])->name('device-tokens.store');
 Route::delete('/api/device-tokens', [DeviceTokenController::class, 'destroy'])->name('device-tokens.destroy');

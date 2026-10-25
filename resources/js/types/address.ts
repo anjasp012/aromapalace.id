@@ -14,6 +14,8 @@ export interface UserAddress {
     subdistrict_name: string;
     postal_code: string;
     address: string;
+    latitude?: number | null;
+    longitude?: number | null;
     is_primary: boolean;
     formatted_address?: string;
     created_at?: string;

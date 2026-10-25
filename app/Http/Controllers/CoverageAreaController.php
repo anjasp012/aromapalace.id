@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Services\KiriminAjaService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 
 class CoverageAreaController extends Controller
 {
@@ -17,8 +19,9 @@ class CoverageAreaController extends Controller
      */
     public function provinces(): JsonResponse
     {
-        
+
         $provinces = $this->kiriminAjaService->getProvinces();
+
         return response()->json([
             'status' => true,
             'data' => $provinces,
@@ -88,6 +91,62 @@ class CoverageAreaController extends Controller
         return response()->json([
             'status' => true,
             'data' => $subdistricts,
+        ]);
+    }
+
+    /**
+     * Geocode an address, district, or city to latitude and longitude coordinates.
+     */
+    public function geocode(Request $request): JsonResponse
+    {
+        $q = trim((string) $request->query('q'));
+        if (empty($q)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Parameter q is required.',
+                'data' => null,
+            ], 422);
+        }
+
+        $cacheKey = 'geocode:'.md5(strtolower($q));
+        $data = Cache::remember($cacheKey, now()->addDays(30), function () use ($q) {
+            try {
+                $response = Http::withHeaders([
+                    'User-Agent' => 'AromaPalace-Ecommerce/1.0 (contact@aromapalace.id)',
+                ])->timeout(6)->get('https://nominatim.openstreetmap.org/search', [
+                    'format' => 'json',
+                    'q' => $q,
+                    'countrycodes' => 'id',
+                    'limit' => 1,
+                ]);
+
+                if ($response->successful() && ! empty($response->json())) {
+                    $first = $response->json()[0];
+
+                    return [
+                        'latitude' => (float) $first['lat'],
+                        'longitude' => (float) $first['lon'],
+                        'display_name' => $first['display_name'] ?? '',
+                    ];
+                }
+            } catch (\Throwable $e) {
+                // fall through
+            }
+
+            return null;
+        });
+
+        if (! $data) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Lokasi tidak ditemukan pada peta.',
+                'data' => null,
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $data,
         ]);
     }
 }

@@ -24,6 +24,8 @@ use Illuminate\Support\Carbon;
  * @property string $subdistrict_name
  * @property string $postal_code
  * @property string $address
+ * @property float|null $latitude
+ * @property float|null $longitude
  * @property bool $is_primary
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -45,6 +47,8 @@ use Illuminate\Support\Carbon;
     'subdistrict_name',
     'postal_code',
     'address',
+    'latitude',
+    'longitude',
     'is_primary',
 ])]
 class UserAddress extends Model
@@ -74,6 +78,8 @@ class UserAddress extends Model
             'city_id' => 'integer',
             'district_id' => 'integer',
             'subdistrict_id' => 'integer',
+            'latitude' => 'float',
+            'longitude' => 'float',
         ];
     }
 

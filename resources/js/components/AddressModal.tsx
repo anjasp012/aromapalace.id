@@ -20,6 +20,7 @@ import type {
     SubdistrictOption,
 } from '@/types/address';
 import SearchableSelect, { SearchableOption } from '@/components/ui/searchable-select';
+import AddressMapPicker from '@/components/AddressMapPicker';
 
 interface AddressModalProps {
     open: boolean;
@@ -46,6 +47,24 @@ export default function AddressModal({
     const [addressDetail, setAddressDetail] = useState('');
     const [postalCode, setPostalCode] = useState('');
     const [isPrimary, setIsPrimary] = useState(false);
+    const [latitude, setLatitude] = useState<number | null>(null);
+    const [longitude, setLongitude] = useState<number | null>(null);
+    const [mapZoom, setMapZoom] = useState<number>(14);
+
+    // Geocoding helper to zoom Leaflet map to selected location
+    const triggerGeocode = (query: string, zoom: number) => {
+        if (!query.trim()) return;
+        fetch(`/api/coverage/geocode?q=${encodeURIComponent(query)}`)
+            .then((res) => res.json())
+            .then((json) => {
+                if (json.status && json.data) {
+                    setLatitude(Number(json.data.latitude));
+                    setLongitude(Number(json.data.longitude));
+                    setMapZoom(zoom);
+                }
+            })
+            .catch(() => {});
+    };
 
     // KiriminAja Coverage Data
     const [provinces, setProvinces] = useState<ProvinceOption[]>([]);
@@ -101,6 +120,9 @@ export default function AddressModal({
             setAddressDetail(addressToEdit.address || '');
             setPostalCode(addressToEdit.postal_code || '');
             setIsPrimary(Boolean(addressToEdit.is_primary));
+            setLatitude(addressToEdit.latitude ? Number(addressToEdit.latitude) : null);
+            setLongitude(addressToEdit.longitude ? Number(addressToEdit.longitude) : null);
+            setMapZoom(addressToEdit.latitude ? 16 : 14);
 
             setSelectedProvinceId(addressToEdit.province_id || '');
             setSelectedProvinceName(addressToEdit.province_name || '');
@@ -136,6 +158,9 @@ export default function AddressModal({
             setAddressDetail('');
             setPostalCode('');
             setIsPrimary(false);
+            setLatitude(null);
+            setLongitude(null);
+            setMapZoom(12);
 
             setSelectedProvinceId('');
             setSelectedProvinceName('');
@@ -157,7 +182,8 @@ export default function AddressModal({
         const val = rawVal ? Number(rawVal) : '';
         setSelectedProvinceId(val);
         const found = provinces.find((p) => p.id === val);
-        setSelectedProvinceName(found ? found.name : '');
+        const provName = found ? found.name : '';
+        setSelectedProvinceName(provName);
 
         // Reset lower cascade
         setSelectedCityId('');
@@ -169,6 +195,10 @@ export default function AddressModal({
         setCities([]);
         setDistricts([]);
         setSubdistricts([]);
+
+        if (provName) {
+            triggerGeocode(`${provName}, Indonesia`, 9);
+        }
 
         if (val) {
             setLoadingCities(true);
@@ -189,7 +219,8 @@ export default function AddressModal({
         const val = rawVal ? Number(rawVal) : '';
         setSelectedCityId(val);
         const found = opt || cities.find((c) => c.id === val);
-        setSelectedCityName(found ? found.name : '');
+        const cityName = found ? found.name : '';
+        setSelectedCityName(cityName);
         if (found?.postal_code && !postalCode) {
             setPostalCode(found.postal_code);
         }
@@ -201,6 +232,10 @@ export default function AddressModal({
         setSelectedSubdistrictName('');
         setDistricts([]);
         setSubdistricts([]);
+
+        if (cityName) {
+            triggerGeocode(`${cityName}, ${selectedProvinceName || 'Indonesia'}`, 12);
+        }
 
         if (val) {
             setLoadingDistricts(true);
@@ -221,7 +256,8 @@ export default function AddressModal({
         const val = rawVal ? Number(rawVal) : '';
         setSelectedDistrictId(val);
         const found = opt || districts.find((d) => d.id === val);
-        setSelectedDistrictName(found ? found.name : '');
+        const districtName = found ? found.name : '';
+        setSelectedDistrictName(districtName);
         if (found?.postal_code) {
             setPostalCode(found.postal_code);
         }
@@ -230,6 +266,10 @@ export default function AddressModal({
         setSelectedSubdistrictId('');
         setSelectedSubdistrictName('');
         setSubdistricts([]);
+
+        if (districtName) {
+            triggerGeocode(`Kecamatan ${districtName}, ${selectedCityName || ''}, Indonesia`, 14);
+        }
 
         if (val) {
             setLoadingSubdistricts(true);
@@ -250,9 +290,14 @@ export default function AddressModal({
         const val = rawVal ? Number(rawVal) : '';
         setSelectedSubdistrictId(val);
         const found = opt || subdistricts.find((s) => s.id === val);
-        setSelectedSubdistrictName(found ? found.name : '');
+        const subdistrictName = found ? found.name : '';
+        setSelectedSubdistrictName(subdistrictName);
         if (found?.postal_code) {
             setPostalCode(found.postal_code);
+        }
+
+        if (subdistrictName) {
+            triggerGeocode(`Kelurahan ${subdistrictName}, ${selectedDistrictName || ''}, ${selectedCityName || ''}, Indonesia`, 16);
         }
     };
 
@@ -307,6 +352,8 @@ export default function AddressModal({
             subdistrict_name: selectedSubdistrictName,
             postal_code: postalCode.trim(),
             address: addressDetail.trim(),
+            latitude: latitude !== null ? Number(latitude) : null,
+            longitude: longitude !== null ? Number(longitude) : null,
             is_primary: isPrimary,
         };
 
@@ -553,6 +600,17 @@ export default function AddressModal({
                             required
                         />
                     </div>
+
+                    {/* LEAFLET MAP WITH AUTO-ZOOM TO PROVINSI/KOTA/KECAMATAN/KELURAHAN */}
+                    <AddressMapPicker
+                        latitude={latitude}
+                        longitude={longitude}
+                        targetZoom={mapZoom}
+                        onChange={(lat, lng) => {
+                            setLatitude(lat);
+                            setLongitude(lng);
+                        }}
+                    />
 
                     {/* PRIMARY CHECKBOX */}
                     <label className="flex items-center gap-2.5 pt-1 cursor-pointer select-none">

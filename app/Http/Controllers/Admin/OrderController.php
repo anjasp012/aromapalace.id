@@ -204,12 +204,33 @@ class OrderController extends Controller
                 if (! empty($kirimResult['shipping_cost'])) {
                     $orderModel->shipping_cost = (int) $kirimResult['shipping_cost'];
                 }
+
+                $orderModel->shipping()->updateOrCreate(
+                    ['order_id' => $orderModel->id],
+                    [
+                        'awb' => $kirimResult['tracking_number'] ?? ($kirimResult['awb'] ?? null),
+                        'text' => $kirimResult['text'] ?? null,
+                        'image' => $kirimResult['image'] ?? null,
+                        'origin' => $kirimResult['origin'] ?? null,
+                        'destination' => $kirimResult['destination'] ?? null,
+                        'histories' => $kirimResult['histories'] ?? null,
+                    ]
+                );
+
                 $customFlash = "Pesanan #{$orderModel->order_number} berhasil dikirim dengan Resi Otomatis KiriminAja: {$orderModel->tracking_number}.";
             } elseif (! empty($validated['tracking_number'])) {
                 $orderModel->tracking_number = trim($validated['tracking_number']);
                 if (! empty($validated['courier'])) {
                     $orderModel->courier = trim($validated['courier']);
                 }
+
+                $orderModel->shipping()->updateOrCreate(
+                    ['order_id' => $orderModel->id],
+                    [
+                        'awb' => trim($validated['tracking_number']),
+                    ]
+                );
+
                 $customFlash = "Pesanan #{$orderModel->order_number} berhasil dikirim dengan Resi Manual: {$orderModel->tracking_number}.";
             }
         } elseif (! empty($validated['tracking_number'])) {
@@ -217,6 +238,13 @@ class OrderController extends Controller
             if (! empty($validated['courier'])) {
                 $orderModel->courier = trim($validated['courier']);
             }
+
+            $orderModel->shipping()->updateOrCreate(
+                ['order_id' => $orderModel->id],
+                [
+                    'awb' => trim($validated['tracking_number']),
+                ]
+            );
         }
 
         $orderModel->save();
@@ -370,15 +398,24 @@ class OrderController extends Controller
             ] : null,
             'recipient_name' => $order->recipient_name,
             'recipient_phone' => $order->recipient_phone,
-            'shipping_address' => $order->shipping_address,
-            'province_name' => $order->province_name,
-            'city_name' => $order->city_name,
-            'district_name' => $order->district_name,
-            'subdistrict_name' => $order->subdistrict_name,
-            'city' => $order->city_name,
-            'postal_code' => $order->postal_code,
+            'shipping_address' => $order->shipping?->destination['address'] ?? ($order->shipping_address ?? null),
+            'province_name' => $order->shipping?->destination['province_name'] ?? ($order->province_name ?? null),
+            'city_name' => $order->shipping?->destination['city_name'] ?? ($order->city_name ?? null),
+            'district_name' => $order->shipping?->destination['district_name'] ?? ($order->district_name ?? null),
+            'subdistrict_name' => $order->shipping?->destination['subdistrict_name'] ?? ($order->subdistrict_name ?? null),
+            'city' => $order->shipping?->destination['city_name'] ?? ($order->city_name ?? null),
+            'postal_code' => $order->shipping?->destination['postal_code'] ?? ($order->postal_code ?? null),
             'courier' => $order->courier,
-            'tracking_number' => $order->tracking_number,
+            'tracking_number' => $order->shipping?->awb ?? $order->tracking_number,
+            'shipping' => $order->shipping ? [
+                'id' => $order->shipping->id,
+                'awb' => $order->shipping->awb,
+                'text' => $order->shipping->text,
+                'image' => $order->shipping->image,
+                'origin' => $order->shipping->origin,
+                'destination' => $order->shipping->destination,
+                'histories' => $order->shipping->histories,
+            ] : null,
             'shipping_cost' => (int) $order->shipping_cost,
             'shipping_cost_formatted' => $order->shipping_cost > 0 ? 'Rp '.number_format($order->shipping_cost, 0, ',', '.') : 'Gratis',
             'subtotal' => (int) $order->subtotal,
