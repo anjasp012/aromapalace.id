@@ -132,7 +132,6 @@ class KiriminAjaService
         ]);
 
         $json = $response->json();
-        dd($response);
         $raw = $json['data'] ?? ($json['datas'] ?? ($json['results'] ?? []));
 
         if (is_array($raw) && ! empty($raw)) {
@@ -143,7 +142,8 @@ class KiriminAjaService
                 return [
                     'id' => (int) $arr['id'],
                     'name' => $name,
-                    'kecamatan_name' => $name
+                    'kecamatan_name' => $name,
+                    'postal_code' => $arr['postal_code']
                 ];
             }, $raw));
             Cache::put('kiriminaja:districts:'.$city_id, $items, now()->addDays(30));
