@@ -60,8 +60,8 @@ class KiriminAjaService
         $this->senderSubdistrictId = (int) Setting::get('shipping_subdistrict_id');
         $this->senderAddress = (string) Setting::get('shipping_address');
         $this->senderZipcode = (int) Setting::get('shipping_postal_code');
-        $this->senderLatitude = (double) Setting::get('shipping_latitude');
-        $this->senderLongitude = (double) Setting::get('shipping_longitude');
+        $this->senderLatitude = (float) Setting::get('shipping_latitude');
+        $this->senderLongitude = (float) Setting::get('shipping_longitude');
         $this->prefix = strtoupper(trim((string) Setting::get('kiriminaja_prefix')));
         if (empty($this->prefix)) {
             $this->prefix = 'ARPL';
@@ -363,8 +363,8 @@ class KiriminAjaService
                     'destination_kecamatan_id' => $orderModel->district_id,
                     'destination_kelurahan_id' => $orderModel->subdistrict_id,
                     'destination_zipcode' => $orderModel->postal_code,
-                    'destination_latitude' => $orderModel->latitude,
-                    'destination_longitude' => $orderModel->longitude,
+                    'destination_latitude' => (float) $orderModel->latitude,
+                    'destination_longitude' => (float) $orderModel->longitude,
                     'weight' => $orderModel->orderItems->sum('volume'),
                     'width' => 100* $orderModel->orderItems->sum('quantity'),
                     'height' => 100* $orderModel->orderItems->sum('quantity'),
