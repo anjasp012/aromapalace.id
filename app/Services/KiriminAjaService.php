@@ -177,7 +177,8 @@ class KiriminAjaService
                 return [
                     'id' => (int) $arr['id'],
                     'name' => $name,
-                    'kelurahan_name' => $name
+                    'kelurahan_name' => $name,
+                    'postal_code' => $arr['postal_code']
                 ];
             }, $raw));
             Cache::put('kiriminaja:subdistricts:'.$district_id, $items, now()->addDays(30));
