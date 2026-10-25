@@ -251,11 +251,11 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
         if (!user) {
             router.visit(
                 '/login?notice=' +
-                    encodeURIComponent(
-                        isEn
-                            ? 'Please log in to save fragrances to your wishlist.'
-                            : 'Silakan masuk untuk menyimpan wewangian ke wishlist Anda.'
-                    )
+                encodeURIComponent(
+                    isEn
+                        ? 'Please log in to save fragrances to your wishlist.'
+                        : 'Silakan masuk untuk menyimpan wewangian ke wishlist Anda.'
+                )
             );
             return;
         }
@@ -278,11 +278,11 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
         if (!user) {
             router.visit(
                 '/login?notice=' +
-                    encodeURIComponent(
-                        isEn
-                            ? 'Please log in to add products to your shopping cart.'
-                            : 'Silakan masuk untuk menambahkan produk ke keranjang belanja.'
-                    )
+                encodeURIComponent(
+                    isEn
+                        ? 'Please log in to add products to your shopping cart.'
+                        : 'Silakan masuk untuk menambahkan produk ke keranjang belanja.'
+                )
             );
             return;
         }
@@ -610,7 +610,7 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
 
                         {/* Desktop Thumbnail Strip (hidden on mobile) */}
                         {images.length > 1 && (
-                            <div className="hidden sm:flex items-center gap-3 overflow-x-auto pb-1 pt-1">
+                            <div className="hidden sm:flex items-center gap-3 overflow-x-auto pb-1 pt-1 overflow-visible">
                                 {images.map((imgUrl, idx) => (
                                     <button
                                         key={idx}
