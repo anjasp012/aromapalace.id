@@ -347,7 +347,8 @@ class KiriminAjaService
 
     public function requestPickup($orderModel, $pickupSchedule)
     {
-        // 1. Calculate package weight consistently with checkout rate inquiry (minimum 1000g)
+        
+        dd($orderModel);
         $packageWeight = 0;
         foreach ($orderModel->orderItems as $item) {
             $vol = (int) ($item->volume ?: 100);
@@ -356,7 +357,6 @@ class KiriminAjaService
         }
         $packageWeight = max(1000, $packageWeight);
 
-        // 2. Prepare items with realistic dimensions (in cm)
         $items = $orderModel->orderItems->map(function ($item) {
             $vol = (int) ($item->volume ?: 100);
             $weight = max(250, $vol * 3);
@@ -371,22 +371,6 @@ class KiriminAjaService
                 'qty' => (int) ($item->quantity ?: 1),
             ];
         })->values()->all();
-
-        // 3. Normalize courier code to lowercase standard (e.g. 'jne', 'jnt', 'sicepat')
-        $courierRaw = strtolower(trim((string) ($orderModel->courier_service ?: $orderModel->courier)));
-        $courierMap = [
-            'j&t' => 'jnt',
-            'j&t express' => 'jnt',
-            'jne express' => 'jne',
-            'sicepat express' => 'sicepat',
-            'id express' => 'idx',
-            'idexpress' => 'idx',
-            'pos indonesia' => 'posindonesia',
-            'pos' => 'posindonesia',
-        ];
-        $courierCode = $courierMap[$courierRaw] ?? $courierRaw;
-
-        // 4. Safe access for item name and order notes
         $firstItemName = $orderModel->orderItems->first()?->product_name ?? 'Parfum Aroma Palace';
         $totalQty = (int) $orderModel->orderItems->sum('quantity');
         $totalItemValue = (int) $orderModel->orderItems->sum('total_price');
@@ -422,7 +406,7 @@ class KiriminAjaService
                     'qty' => max(1, $totalQty),
                     'item_value' => $totalItemValue,
                     'shipping_cost' => (int) $orderModel->shipping_cost,
-                    'service' => $courierCode,
+                    'service' => $orderModel->courier_service,
                     'insurance_amount' => 0,
                     'service_type' => $orderModel->courier_service_type,
                     'cod' => 0,
