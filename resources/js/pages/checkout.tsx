@@ -82,6 +82,8 @@ interface ShippingRate {
     price_formatted?: string;
     etd?: string;
     insurance?: number | string;
+    logo?: string;
+    courier_logo?: string;
 }
 
 export interface ParsedCourierOption {
@@ -96,6 +98,7 @@ export interface ParsedCourierOption {
     price: number;
     priceFormatted: string;
     etd: string;
+    logo?: string;
 }
 
 const parseShippingRate = (r: ShippingRate | any, idx: number): ParsedCourierOption => {
@@ -164,6 +167,12 @@ const parseShippingRate = (r: ShippingRate | any, idx: number): ParsedCourierOpt
     const courierService = String(r?.service || r?.courier_code || r?.code || courierBrand || '').toLowerCase();
     const courierServiceType = String(serviceType || r?.code || '').trim();
 
+    // Courier logo from backend or standard GCS bucket fallback
+    const rawLogo = r?.logo || r?.courier_logo || '';
+    const cleanBrandCode = courierBrand.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const normalizedCode = cleanBrandCode === 'jt' ? 'jnt' : cleanBrandCode;
+    const courierLogo = rawLogo || (normalizedCode ? `https://storage.googleapis.com/tprt0ezsggqjornc7nf1wwluvgulhr/assets/courier-logo/${normalizedCode}.png` : '');
+
     return {
         id: `${courierBrand}-${serviceType || serviceName}-${idx}`,
         code: r?.code || courierBrand,
@@ -176,6 +185,7 @@ const parseShippingRate = (r: ShippingRate | any, idx: number): ParsedCourierOpt
         price: numericPrice,
         priceFormatted,
         etd: etdText,
+        logo: courierLogo,
     };
 };
 
@@ -1085,9 +1095,22 @@ export default function CheckoutPage({
                                                     </div>
                                                 ) : (
                                                     <div className="flex items-center gap-2.5 flex-wrap min-w-0 text-xs">
-                                                        <span className="font-bold uppercase text-[10px] text-[#4A070B] dark:text-[#E8D0BA] bg-[#4A070B]/10 dark:bg-[#E8D0BA]/10 px-1.5 py-0.5 rounded">
-                                                            {selectedCourier?.courierBrand || (isEn ? 'Courier' : 'Kurir')}
-                                                        </span>
+                                                        {selectedCourier?.logo ? (
+                                                            <div className="h-6 px-1.5 py-0.5 rounded bg-white border border-border/80 shadow-2xs flex items-center justify-center shrink-0">
+                                                                <img
+                                                                    src={selectedCourier.logo}
+                                                                    alt={selectedCourier.courierBrand}
+                                                                    className="h-4 w-auto max-w-[48px] object-contain"
+                                                                    onError={(e) => {
+                                                                        (e.currentTarget as HTMLElement).style.display = 'none';
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        ) : (
+                                                            <span className="font-bold uppercase text-[10px] text-[#4A070B] dark:text-[#E8D0BA] bg-[#4A070B]/10 dark:bg-[#E8D0BA]/10 px-1.5 py-0.5 rounded">
+                                                                {selectedCourier?.courierBrand || (isEn ? 'Courier' : 'Kurir')}
+                                                            </span>
+                                                        )}
                                                         <span className="font-bold text-foreground">
                                                             {selectedCourier?.name || (isEn ? 'Select Courier' : 'Pilih Kurir')}
                                                         </span>
@@ -1126,10 +1149,28 @@ export default function CheckoutPage({
                                                                 : 'hover:bg-muted text-muted-foreground'
                                                                 }`}
                                                         >
-                                                            <div className="flex items-center gap-2 min-w-0">
-                                                                <span className="font-bold text-[#4A070B] dark:text-[#E8D0BA] uppercase text-[10px] bg-[#4A070B]/10 dark:bg-[#E8D0BA]/10 px-1.5 py-0.5 rounded shrink-0">{c.courierBrand}</span>
-                                                                <span className="truncate">{c.name}</span>
-                                                                {c.type && <span className="text-muted-foreground text-[11px] shrink-0">• {c.type}</span>}
+                                                            <div className="flex items-center gap-2.5 min-w-0">
+                                                                {c.logo ? (
+                                                                    <div className="size-7 rounded bg-white border border-border/70 shadow-2xs flex items-center justify-center shrink-0 p-1">
+                                                                        <img
+                                                                            src={c.logo}
+                                                                            alt={c.courierBrand}
+                                                                            className="size-full object-contain"
+                                                                            onError={(e) => {
+                                                                                (e.currentTarget as HTMLElement).style.display = 'none';
+                                                                            }}
+                                                                        />
+                                                                    </div>
+                                                                ) : (
+                                                                    <span className="font-bold text-[#4A070B] dark:text-[#E8D0BA] uppercase text-[10px] bg-[#4A070B]/10 dark:bg-[#E8D0BA]/10 px-1.5 py-0.5 rounded shrink-0">{c.courierBrand}</span>
+                                                                )}
+                                                                <div className="flex flex-col min-w-0">
+                                                                    <div className="flex items-center gap-1.5 min-w-0">
+                                                                        <span className="font-bold text-foreground truncate">{c.name}</span>
+                                                                        {c.type && <span className="text-muted-foreground text-[10.5px] shrink-0">• {c.type}</span>}
+                                                                    </div>
+                                                                    <span className="text-[9.5px] text-muted-foreground uppercase tracking-wider font-mono">{c.courierBrand}</span>
+                                                                </div>
                                                             </div>
                                                             <div className="flex flex-col items-end shrink-0 ml-2">
                                                                 <span className={`text-[11px] font-bold ${c.price > 0 ? 'text-foreground' : 'text-muted-foreground'}`}>
