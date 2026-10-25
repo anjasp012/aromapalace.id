@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Events\ShippingUpdated;
 use App\Models\Order;
 use App\Models\ProductVariant;
+use App\Models\Voucher;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -43,6 +44,13 @@ class OrderService
                         ->lockForUpdate()
                         ->increment('stock', $item->quantity);
                 }
+            }
+
+            // 3. Restore voucher quota if voucher was used
+            if ($lockedOrder->voucher_id) {
+                Voucher::where('id', $lockedOrder->voucher_id)
+                    ->where('used_count', '>', 0)
+                    ->decrement('used_count');
             }
 
             // 3. Send FCM Push Notification to Customer and Admin

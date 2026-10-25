@@ -77,9 +77,9 @@ class MembershipController extends Controller
                 $userVouchers = Voucher::whereIn('code', $redeemedCodes)
                     ->latest()
                     ->get()
-                    ->map(function (Voucher $v) {
+                    ->map(function (Voucher $v) use ($user) {
                         $isExpired = $v->expires_at && $v->expires_at->isPast();
-                        $isUsed = $v->usage_limit !== null && $v->used_count >= $v->usage_limit;
+                        $isUsed = $v->hasBeenUsedBy($user->id) || ($v->usage_limit !== null && $v->used_count >= $v->usage_limit);
 
                         return [
                             'id' => $v->id,

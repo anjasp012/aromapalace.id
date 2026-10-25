@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Setting;
+use App\Models\Voucher;
 use App\Services\CatalogService;
 use App\Services\FirebaseNotificationService;
 use App\Services\KiriminAjaService;
@@ -200,6 +201,11 @@ class OrderController extends Controller
             $orderModel->payment_status = 'paid';
         } elseif ($newStatus === 'dibatalkan') {
             $orderModel->payment_status = 'cancelled';
+            if ($orderModel->getOriginal('status') !== 'dibatalkan' && $orderModel->voucher_id) {
+                Voucher::where('id', $orderModel->voucher_id)
+                    ->where('used_count', '>', 0)
+                    ->decrement('used_count');
+            }
         } elseif ($newStatus === 'menunggu_pembayaran') {
             $orderModel->payment_status = 'pending';
         }

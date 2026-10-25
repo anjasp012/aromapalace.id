@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CartItem;
+use App\Models\Order;
 use App\Models\ProductVariant;
 use App\Models\Voucher;
 use App\Services\CatalogService;
@@ -60,6 +61,18 @@ class CartController extends Controller
 
         $formattedSubtotal = 'Rp '.number_format($subtotal, 0, ',', '.');
 
+        $usedVoucherIds = [];
+        $usedVoucherCodes = [];
+        if ($user) {
+            $usedOrders = Order::where('user_id', $user->id)
+                ->where('status', '!=', 'dibatalkan')
+                ->whereNotIn('payment_status', ['cancelled', 'canceled', 'failed', 'expired'])
+                ->get(['voucher_id', 'voucher_code']);
+
+            $usedVoucherIds = $usedOrders->pluck('voucher_id')->filter()->all();
+            $usedVoucherCodes = $usedOrders->pluck('voucher_code')->filter()->map(fn ($c) => strtoupper(trim((string) $c)))->all();
+        }
+
         $availableVouchers = Voucher::query()
             ->where('is_active', true)
             ->where(function ($q) {
@@ -72,6 +85,7 @@ class CartController extends Controller
                 $q->whereNull('usage_limit')->orWhereColumn('used_count', '<', 'usage_limit');
             })
             ->get()
+            ->filter(fn (Voucher $v) => ! in_array($v->id, $usedVoucherIds, true) && ! in_array(strtoupper(trim($v->code)), $usedVoucherCodes, true))
             ->map(fn (Voucher $v) => [
                 'id' => $v->id,
                 'code' => $v->code,
@@ -89,6 +103,10 @@ class CartController extends Controller
         if ($request->query('voucher')) {
             $appliedVoucher = strtoupper(trim((string) $request->query('voucher')));
             session(['applied_voucher' => $appliedVoucher]);
+        }
+        if ($appliedVoucher !== '' && in_array($appliedVoucher, $usedVoucherCodes, true)) {
+            session()->forget('applied_voucher');
+            $appliedVoucher = '';
         }
 
         return Inertia::render('cart', [
@@ -209,6 +227,10 @@ class CartController extends Controller
         if ($code !== '') {
             $voucher = Voucher::where('code', $code)->where('is_active', true)->first();
             if ($voucher) {
+                if ($request->user() && $voucher->hasBeenUsedBy($request->user())) {
+                    return back()->with('error', "Voucher {$voucher->code} hanya dapat digunakan 1 kali per akun dan sudah pernah Anda gunakan.");
+                }
+
                 session(['applied_voucher' => $voucher->code]);
 
                 return back()->with('success', "Voucher {$voucher->code} diterapkan.");

@@ -90,14 +90,33 @@ class CheckoutController extends Controller
                 session(['applied_voucher' => $initialVoucher]);
             }
         }
-        $discountAmount = $this->calculateDiscount($initialVoucher, $subtotal);
+        $discountAmount = $this->calculateDiscount($initialVoucher, $subtotal, $user);
+        if ($initialVoucher !== '' && $discountAmount === 0) {
+            $vCheck = Voucher::where('code', $initialVoucher)->first();
+            if ($vCheck && $vCheck->hasBeenUsedBy($user)) {
+                session()->forget('applied_voucher');
+                $initialVoucher = '';
+            }
+        }
         $total = max(0, $subtotal - $discountAmount);
+
+        $usedOrders = Order::where('user_id', $user->id)
+            ->where('status', '!=', 'dibatalkan')
+            ->whereNotIn('payment_status', ['cancelled', 'canceled', 'failed', 'expired'])
+            ->get(['voucher_id', 'voucher_code']);
+
+        $usedVoucherIds = $usedOrders->pluck('voucher_id')->filter()->all();
+        $usedVoucherCodes = $usedOrders->pluck('voucher_code')->filter()->map(fn ($c) => strtoupper(trim((string) $c)))->all();
 
         $availableVouchers = Voucher::where('is_active', true)
             ->where(function ($q) {
                 $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
             })
+            ->where(function ($q) {
+                $q->whereNull('usage_limit')->orWhereColumn('used_count', '<', 'usage_limit');
+            })
             ->get()
+            ->filter(fn (Voucher $v) => ! in_array($v->id, $usedVoucherIds, true) && ! in_array(strtoupper(trim($v->code)), $usedVoucherCodes, true))
             ->map(function (Voucher $v) {
                 return [
                     'id' => $v->id,
@@ -112,7 +131,8 @@ class CheckoutController extends Controller
                     'max_discount_amount' => $v->max_discount_amount ? (int) $v->max_discount_amount : null,
                     'formatted_discount' => $v->type === 'percentage' ? $v->value.'%' : 'Rp '.number_format($v->value, 0, ',', '.'),
                 ];
-            });
+            })
+            ->values();
 
         $stores = Store::query()->orderBy('id')->get()->map(fn (Store $s) => [
             'id' => $s->id,
@@ -333,7 +353,14 @@ class CheckoutController extends Controller
 
             $voucherCode = strtoupper(trim((string) ($validated['voucher_code'] ?? '')));
             $voucher = $voucherCode !== '' ? Voucher::where('code', $voucherCode)->first() : null;
-            $discountAmount = $voucher ? $voucher->calculateDiscount($subtotal) : $this->calculateDiscount($voucherCode, $subtotal);
+
+            if ($voucher && $voucher->hasBeenUsedBy($user->id)) {
+                return redirect()->route('checkout.index')
+                    ->withInput()
+                    ->with('error', "Voucher '{$voucher->code}' hanya dapat digunakan 1 kali per akun dan sudah pernah Anda gunakan.");
+            }
+
+            $discountAmount = $voucher ? $voucher->calculateDiscount($subtotal, $user->id) : $this->calculateDiscount($voucherCode, $subtotal, $user->id);
             $voucherId = ($voucher && $discountAmount > 0) ? $voucher->id : null;
             $deliveryType = $validated['delivery_type'] ?? 'delivery';
             $shippingCost = $deliveryType === 'delivery' ? max(0, (int) ($validated['shipping_cost'] ?? 0)) : 0;
@@ -509,6 +536,9 @@ class CheckoutController extends Controller
                         if ($lockedVoucher->usage_limit !== null && $lockedVoucher->used_count >= $lockedVoucher->usage_limit) {
                             throw new \Exception("Voucher '{$lockedVoucher->code}' telah mencapai batas kuota penggunaan.");
                         }
+                        if ($lockedVoucher->hasBeenUsedBy($user->id)) {
+                            throw new \Exception("Voucher '{$lockedVoucher->code}' hanya dapat digunakan 1 kali per akun.");
+                        }
                         $lockedVoucher->increment('used_count');
                     }
                 }
@@ -628,9 +658,9 @@ class CheckoutController extends Controller
     }
 
     /**
-     * Calculate discount amount from a promo code.
+     * Calculate discount amount from a promo code for a given user.
      */
-    private function calculateDiscount(string $code, int $subtotal): int
+    private function calculateDiscount(string $code, int $subtotal, \App\Models\User|int|null $user = null): int
     {
         $code = strtoupper(trim($code));
         if ($code === '') {
@@ -639,7 +669,7 @@ class CheckoutController extends Controller
 
         $voucher = Voucher::where('code', $code)->where('is_active', true)->first();
         if ($voucher) {
-            return $voucher->calculateDiscount($subtotal);
+            return $voucher->calculateDiscount($subtotal, $user);
         }
 
         return 0;

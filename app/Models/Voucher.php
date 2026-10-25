@@ -88,9 +88,34 @@ class Voucher extends Model
     }
 
     /**
-     * Check if voucher is currently valid for a given subtotal.
+     * Check if this voucher has already been used by a specific user.
+     * 1 voucher can only be used once per user.
      */
-    public function isValidFor(int $subtotal): bool
+    public function hasBeenUsedBy(User|int|null $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        $userId = $user instanceof User ? $user->id : (int) $user;
+        if ($userId <= 0) {
+            return false;
+        }
+
+        return Order::where('user_id', $userId)
+            ->where(function ($query) {
+                $query->where('voucher_id', $this->id)
+                    ->orWhere('voucher_code', $this->code);
+            })
+            ->where('status', '!=', 'dibatalkan')
+            ->whereNotIn('payment_status', ['cancelled', 'canceled', 'failed', 'expired'])
+            ->exists();
+    }
+
+    /**
+     * Check if voucher is currently valid for a given subtotal and optional user.
+     */
+    public function isValidFor(int $subtotal, User|int|null $user = null): bool
     {
         if (! $this->is_active) {
             return false;
@@ -112,15 +137,19 @@ class Voucher extends Model
             return false;
         }
 
+        if ($user !== null && $this->hasBeenUsedBy($user)) {
+            return false;
+        }
+
         return true;
     }
 
     /**
-     * Calculate discount amount for a given subtotal.
+     * Calculate discount amount for a given subtotal and optional user.
      */
-    public function calculateDiscount(int $subtotal): int
+    public function calculateDiscount(int $subtotal, User|int|null $user = null): int
     {
-        if (! $this->isValidFor($subtotal)) {
+        if (! $this->isValidFor($subtotal, $user)) {
             return 0;
         }
 
