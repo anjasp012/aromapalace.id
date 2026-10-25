@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
-// Code 128 (Subset B) 11-bit binary patterns (107 patterns, stop pattern is 13 bits)
+// Code 128 11-bit binary patterns (107 patterns, stop pattern is 13 bits)
 const PATTERNS: string[] = [
     '11011001100', '11001101100', '11001100110', '10010011000', '10010001100',
     '10001001100', '10011001000', '10011000100', '10001100100', '11001001000',
@@ -31,62 +31,145 @@ interface BarcodeProps {
     height?: number;
     className?: string;
     showText?: boolean;
+    quietZone?: number;
 }
 
 export default function Barcode({
     value,
-    height = 50,
-    className = 'w-full max-w-[280px] h-auto',
+    height = 56,
+    className = 'w-full max-w-[320px] h-auto',
     showText = false,
+    quietZone = 10,
 }: BarcodeProps) {
-    if (!value) return null;
+    const rawValue = (value || '').trim();
 
-    // Encode text using Code 128 Subset B
-    const codes: number[] = [104]; // Start Code B
-    let checksum = 104;
+    const barcodeData = useMemo(() => {
+        if (!rawValue || rawValue.toLowerCase().includes('menunggu')) {
+            return null;
+        }
 
-    for (let i = 0; i < value.length; i++) {
-        const charCode = value.charCodeAt(i);
-        const code = charCode >= 32 && charCode <= 127 ? charCode - 32 : 0;
-        codes.push(code);
-        checksum += code * (i + 1);
+        // Check if value is pure numeric and has even length for Code 128C
+        // Code 128C encodes 2 digits per symbol (50% less width, 2x thicker bars)
+        const isAllDigits = /^\d+$/.test(rawValue);
+        const useCodeC = isAllDigits && rawValue.length % 2 === 0;
+
+        const codes: number[] = [];
+        let checksum = 0;
+        let weight = 1;
+
+        if (useCodeC) {
+            // Start Code C = 105
+            codes.push(105);
+            checksum = 105;
+            for (let i = 0; i < rawValue.length; i += 2) {
+                const pair = parseInt(rawValue.substring(i, i + 2), 10);
+                codes.push(pair);
+                checksum += pair * weight;
+                weight++;
+            }
+        } else {
+            // Start Code B = 104
+            codes.push(104);
+            checksum = 104;
+            for (let i = 0; i < rawValue.length; i++) {
+                const charCode = rawValue.charCodeAt(i);
+                const code = charCode >= 32 && charCode <= 127 ? charCode - 32 : 0;
+                codes.push(code);
+                checksum += code * weight;
+                weight++;
+            }
+        }
+
+        codes.push(checksum % 103);
+        codes.push(106); // Stop Code
+
+        // Build binary string from patterns
+        let binary = '';
+        for (const code of codes) {
+            binary += PATTERNS[code] || '11011001100';
+        }
+
+        // Run-length encoding: merge consecutive '1' bits into solid bars
+        // This eliminates sub-pixel anti-aliasing gaps and rendering blur
+        const bars: { x: number; width: number }[] = [];
+        let currentRun = 0;
+        const len = binary.length;
+
+        for (let i = 0; i < len; i++) {
+            if (binary[i] === '1') {
+                currentRun++;
+            } else {
+                if (currentRun > 0) {
+                    bars.push({
+                        x: quietZone + i - currentRun,
+                        width: currentRun,
+                    });
+                    currentRun = 0;
+                }
+            }
+        }
+        if (currentRun > 0) {
+            bars.push({
+                x: quietZone + len - currentRun,
+                width: currentRun,
+            });
+        }
+
+        const totalWidth = len + quietZone * 2;
+
+        return {
+            totalWidth,
+            bars,
+        };
+    }, [rawValue, quietZone]);
+
+    if (!barcodeData) {
+        return (
+            <div className="flex flex-col items-center justify-center p-3 text-center border border-dashed border-zinc-300 rounded bg-zinc-50">
+                <span className="text-xs font-mono font-bold text-zinc-500">
+                    [ RESI BELUM TERBIT ]
+                </span>
+                <span className="text-[10px] text-zinc-400 mt-0.5">
+                    Barcode akan otomatis tersedia setelah resi resmi aktif
+                </span>
+            </div>
+        );
     }
-
-    codes.push(checksum % 103);
-    codes.push(106); // Stop Code
-
-    // Build binary string
-    let binary = '';
-    for (const code of codes) {
-        binary += PATTERNS[code] || '11011001100';
-    }
-
-    const totalModules = binary.length;
 
     return (
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center select-none bg-white p-1">
             <svg
-                viewBox={`0 0 ${totalModules} ${height}`}
+                viewBox={`0 0 ${barcodeData.totalWidth} ${height}`}
                 className={className}
                 preserveAspectRatio="none"
-                fill="currentColor"
+                shapeRendering="crispEdges"
+                style={{ imageRendering: 'pixelated' }}
             >
-                {binary.split('').map((bit, idx) =>
-                    bit === '1' ? (
-                        <rect
-                            key={idx}
-                            x={idx}
-                            y={0}
-                            width={1}
-                            height={height}
-                            fill="#000000"
-                        />
-                    ) : null
-                )}
+                {/* 100% Pure white background to guarantee maximum contrast across quiet zones */}
+                <rect
+                    x={0}
+                    y={0}
+                    width={barcodeData.totalWidth}
+                    height={height}
+                    fill="#ffffff"
+                />
+
+                {/* Crisp black solid barcode bars */}
+                {barcodeData.bars.map((bar, idx) => (
+                    <rect
+                        key={idx}
+                        x={bar.x}
+                        y={0}
+                        width={bar.width}
+                        height={height}
+                        fill="#000000"
+                    />
+                ))}
             </svg>
+
             {showText && (
-                <span className="font-mono text-xs font-bold tracking-widest mt-1 text-black">
-                    {value}
+                <span className="font-mono text-xs sm:text-sm font-bold tracking-widest mt-1 text-black">
+                    {rawValue}
                 </span>
             )}
         </div>

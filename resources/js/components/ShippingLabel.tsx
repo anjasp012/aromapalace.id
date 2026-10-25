@@ -177,8 +177,13 @@ function LogisticLogo({ courier = '' }: { courier?: string }) {
 
 export default function ShippingLabel({ order, className = '' }: ShippingLabelProps) {
     // AWB / Tracking number
-    const awb = order.tracking_number || order.order_number;
-    const awbLabel = order.tracking_number ? order.tracking_number : `(OID) ${order.order_number}`;
+    const rawTracking = (order.tracking_number || '').trim();
+    const isWaitingTracking = !rawTracking || rawTracking.toLowerCase().includes('menunggu');
+    const hasRealAwb = !isWaitingTracking && rawTracking.length > 0;
+
+    // Use actual courier AWB if available, fallback to order_number
+    const barcodeValue = hasRealAwb ? rawTracking : order.order_number;
+    const awbLabel = hasRealAwb ? rawTracking : order.order_number;
 
     // Sender details fallback
     const sender = order.sender || {};
@@ -255,47 +260,51 @@ export default function ShippingLabel({ order, className = '' }: ShippingLabelPr
                     <LogisticLogo courier={courierName} />
                 </div>
 
-                {/* 2. BARCODE & SERVICE TYPE / WEIGHT / QUANTITY GRID */}
-                <div className="grid grid-cols-[1.25fr_1fr] border-b-2 border-black">
-                    {/* Left: Barcode + AWB Label */}
-                    <div className="p-2 flex flex-col items-center justify-center border-r-2 border-black text-center">
-                        <Barcode
-                            value={awb}
-                            height={48}
-                            className="w-full max-w-[210px] h-12"
-                            showText={false}
-                        />
-                        <span className="font-mono text-xs sm:text-sm font-black tracking-widest mt-1 text-black">
-                            {awbLabel}
+                {/* 2. FULL-WIDTH HERO BARCODE & AWB NUMBER */}
+                <div className="p-3 border-b-2 border-black bg-white flex flex-col items-center justify-center text-center">
+                    <Barcode
+                        value={barcodeValue}
+                        height={54}
+                        className="w-full max-w-[340px] h-14"
+                        showText={false}
+                    />
+                    <div className="flex flex-col items-center justify-center mt-1.5">
+                        <span className="font-mono text-sm sm:text-base font-black tracking-widest text-black">
+                            {hasRealAwb ? rawTracking : `(OID) ${order.order_number}`}
+                        </span>
+                        {!hasRealAwb && (
+                            <span className="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded mt-1">
+                                * Resi Kurir Belum Terbit (Barcode Sementara OID)
+                            </span>
+                        )}
+                    </div>
+                </div>
+
+                {/* 2b. SPECS ROW: SERVICE TYPE / WEIGHT / QUANTITY (3 COLUMNS) */}
+                <div className="grid grid-cols-3 border-b-2 border-black divide-x-2 divide-black text-center bg-zinc-50/40">
+                    <div className="p-1.5">
+                        <span className="font-bold text-[9px] text-zinc-600 uppercase block leading-none">
+                            Service:
+                        </span>
+                        <span className="font-black text-xs sm:text-sm text-black tracking-tight block mt-0.5">
+                            {serviceCode}
                         </span>
                     </div>
-
-                    {/* Right: Stacked Specs (Service, Weight, Quantity) */}
-                    <div className="flex flex-col divide-y-2 divide-black text-xs">
-                        <div className="p-1.5">
-                            <span className="font-bold text-[10px] text-zinc-600 uppercase block leading-none">
-                                Service:
-                            </span>
-                            <span className="font-black text-sm text-black tracking-tight block mt-0.5">
-                                {serviceCode}
-                            </span>
-                        </div>
-                        <div className="p-1.5">
-                            <span className="font-bold text-[10px] text-zinc-600 uppercase block leading-none">
-                                Weight:
-                            </span>
-                            <span className="font-black text-xs sm:text-sm text-black block mt-0.5">
-                                {weightFormatted}
-                            </span>
-                        </div>
-                        <div className="p-1.5">
-                            <span className="font-bold text-[10px] text-zinc-600 uppercase block leading-none">
-                                Quantity:
-                            </span>
-                            <span className="font-black text-xs sm:text-sm text-black block mt-0.5">
-                                {totalQty} Pcs
-                            </span>
-                        </div>
+                    <div className="p-1.5">
+                        <span className="font-bold text-[9px] text-zinc-600 uppercase block leading-none">
+                            Weight:
+                        </span>
+                        <span className="font-black text-xs sm:text-sm text-black block mt-0.5">
+                            {weightFormatted}
+                        </span>
+                    </div>
+                    <div className="p-1.5">
+                        <span className="font-bold text-[9px] text-zinc-600 uppercase block leading-none">
+                            Quantity:
+                        </span>
+                        <span className="font-black text-xs sm:text-sm text-black block mt-0.5">
+                            {totalQty} Pcs
+                        </span>
                     </div>
                 </div>
 
