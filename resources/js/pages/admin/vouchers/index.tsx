@@ -51,6 +51,7 @@ interface VoucherItem {
     expires_at?: string | null;
     is_active: boolean;
     voucher_type?: 'biasa' | 'reward';
+    points_required?: number | null;
     user_id?: number | null;
     user?: { id: number; name: string; email: string } | null;
     applicable_type?: 'all' | 'specific';
@@ -381,10 +382,15 @@ export default function AdminVouchersIndex({
                                                 </td>
                                                 <td className="p-4 align-middle">
                                                     {isReward ? (
-                                                        <div>
-                                                            <Badge variant="secondary" className="bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30 text-[10px] font-semibold">
-                                                                Reward Royale Club
-                                                            </Badge>
+                                                        <div className="space-y-1">
+                                                            <div className="flex flex-wrap items-center gap-1">
+                                                                <Badge variant="secondary" className="bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30 text-[10px] font-semibold">
+                                                                    Reward Royale Club
+                                                                </Badge>
+                                                                <Badge variant="outline" className="bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700/50 text-[10px] font-medium">
+                                                                    🪙 {v.points_required ?? 100} Poin
+                                                                </Badge>
+                                                            </div>
                                                             {v.user && (
                                                                 <div className="text-[11px] text-muted-foreground mt-1">
                                                                     <span className="font-medium text-foreground">{v.user.name}</span>

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\LoyaltyReward;
 use App\Models\Product;
 use App\Models\User;
 use App\Models\Voucher;
@@ -134,6 +135,7 @@ class VoucherController extends Controller
             'expires_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
             'is_active' => ['nullable', 'boolean'],
             'voucher_type' => ['nullable', 'string', 'in:biasa,reward'],
+            'points_required' => ['nullable', 'integer', 'min:1'],
             'user_id' => ['nullable', 'integer', 'exists:users,id'],
             'applicable_type' => ['nullable', 'string', 'in:all,specific'],
             'applicable_product_ids' => ['nullable', 'array'],
@@ -144,6 +146,9 @@ class VoucherController extends Controller
         $validated['min_order_amount'] = $validated['min_order_amount'] ?? 0;
         $validated['is_active'] = $request->boolean('is_active', true);
         $validated['voucher_type'] = $validated['voucher_type'] ?? 'biasa';
+        $validated['points_required'] = ($validated['voucher_type'] === 'reward')
+            ? (! empty($validated['points_required']) ? (int) $validated['points_required'] : 100)
+            : null;
         $validated['user_id'] = ($validated['voucher_type'] === 'reward') ? ($validated['user_id'] ?? null) : null;
         $validated['applicable_type'] = $validated['applicable_type'] ?? 'all';
         $validated['applicable_product_ids'] = ($validated['applicable_type'] === 'specific')
@@ -151,6 +156,24 @@ class VoucherController extends Controller
             : null;
 
         $voucher = Voucher::create($validated);
+
+        // Sync with LoyaltyReward if general reward voucher
+        if ($voucher->voucher_type === 'reward' && empty($voucher->user_id)) {
+            LoyaltyReward::updateOrCreate(
+                ['name' => $voucher->name],
+                [
+                    'name_en' => $voucher->name_en,
+                    'description' => $voucher->description,
+                    'description_en' => $voucher->description_en,
+                    'points_required' => $voucher->points_required ?? 100,
+                    'reward_type' => $voucher->type,
+                    'reward_value' => $voucher->value,
+                    'min_order_amount' => $voucher->min_order_amount ?? 0,
+                    'max_discount_amount' => $voucher->max_discount_amount,
+                    'is_active' => $voucher->is_active,
+                ]
+            );
+        }
 
         // Broadcast notification to all customers for new voucher
         app(FirebaseNotificationService::class)->notifyNewVoucher($voucher);
@@ -185,6 +208,7 @@ class VoucherController extends Controller
             'expires_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
             'is_active' => ['nullable', 'boolean'],
             'voucher_type' => ['nullable', 'string', 'in:biasa,reward'],
+            'points_required' => ['nullable', 'integer', 'min:1'],
             'user_id' => ['nullable', 'integer', 'exists:users,id'],
             'applicable_type' => ['nullable', 'string', 'in:all,specific'],
             'applicable_product_ids' => ['nullable', 'array'],
@@ -195,13 +219,36 @@ class VoucherController extends Controller
         $validated['min_order_amount'] = $validated['min_order_amount'] ?? 0;
         $validated['is_active'] = $request->boolean('is_active', true);
         $validated['voucher_type'] = $validated['voucher_type'] ?? 'biasa';
+        $validated['points_required'] = ($validated['voucher_type'] === 'reward')
+            ? (! empty($validated['points_required']) ? (int) $validated['points_required'] : 100)
+            : null;
         $validated['user_id'] = ($validated['voucher_type'] === 'reward') ? ($validated['user_id'] ?? null) : null;
         $validated['applicable_type'] = $validated['applicable_type'] ?? 'all';
         $validated['applicable_product_ids'] = ($validated['applicable_type'] === 'specific')
             ? array_values(array_map('intval', $validated['applicable_product_ids'] ?? []))
             : null;
 
+        $oldName = $voucher->name;
         $voucher->update($validated);
+
+        // Sync with LoyaltyReward
+        if ($voucher->voucher_type === 'reward' && empty($voucher->user_id)) {
+            LoyaltyReward::updateOrCreate(
+                ['name' => $oldName],
+                [
+                    'name' => $voucher->name,
+                    'name_en' => $voucher->name_en,
+                    'description' => $voucher->description,
+                    'description_en' => $voucher->description_en,
+                    'points_required' => $voucher->points_required ?? 100,
+                    'reward_type' => $voucher->type,
+                    'reward_value' => $voucher->value,
+                    'min_order_amount' => $voucher->min_order_amount ?? 0,
+                    'max_discount_amount' => $voucher->max_discount_amount,
+                    'is_active' => $voucher->is_active,
+                ]
+            );
+        }
 
         return redirect()->route('admin.vouchers.index')
             ->with('success', "Voucher '{$voucher->code}' berhasil diperbarui.");
@@ -213,6 +260,10 @@ class VoucherController extends Controller
             'is_active' => ! $voucher->is_active,
         ]);
 
+        if ($voucher->voucher_type === 'reward') {
+            LoyaltyReward::where('name', $voucher->name)->update(['is_active' => $voucher->is_active]);
+        }
+
         $statusLabel = $voucher->is_active ? 'diaktifkan' : 'dinonaktifkan';
 
         return redirect()->route('admin.vouchers.index')
@@ -222,7 +273,14 @@ class VoucherController extends Controller
     public function destroy(Voucher $voucher): RedirectResponse
     {
         $code = $voucher->code;
+        $name = $voucher->name;
+        $isReward = $voucher->voucher_type === 'reward';
+
         $voucher->delete();
+
+        if ($isReward) {
+            LoyaltyReward::where('name', $name)->delete();
+        }
 
         return redirect()->route('admin.vouchers.index')
             ->with('success', "Voucher '{$code}' berhasil dihapus.");

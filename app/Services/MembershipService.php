@@ -206,6 +206,7 @@ class MembershipService
             $voucher = Voucher::create([
                 'user_id' => $user->id,
                 'voucher_type' => 'reward',
+                'points_required' => $reward->points_required,
                 'applicable_type' => 'all',
                 'code' => $voucherCode,
                 'name' => "Reward Royale: {$reward->name}",

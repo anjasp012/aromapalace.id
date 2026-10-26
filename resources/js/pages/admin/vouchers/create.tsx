@@ -45,6 +45,7 @@ export default function AdminVoucherCreate({ products = [], users = [] }: AdminV
         expires_at: string;
         is_active: boolean;
         voucher_type: 'biasa' | 'reward';
+        points_required: number | string;
         user_id: number | string;
         applicable_type: 'all' | 'specific';
         applicable_product_ids: number[];
@@ -63,6 +64,7 @@ export default function AdminVoucherCreate({ products = [], users = [] }: AdminV
         expires_at: '',
         is_active: true,
         voucher_type: 'biasa',
+        points_required: 100,
         user_id: '',
         applicable_type: 'all',
         applicable_product_ids: [],
@@ -278,28 +280,54 @@ export default function AdminVoucherCreate({ products = [], users = [] }: AdminV
                                 </Select>
                                 <p className="text-[11px] text-muted-foreground">Voucher Biasa dapat digunakan semua pelanggan, sedangkan Voucher Reward khusus penukaran reward Royale Club.</p>
                                 {data.voucher_type === 'reward' && (
-                                    <div className="pt-2 space-y-1.5">
-                                        <label className="text-xs font-semibold text-foreground">Pemilik Voucher (Opsional)</label>
-                                        <Select
-                                            value={data.user_id ? String(data.user_id) : 'all_members'}
-                                            onValueChange={(val) => setData('user_id', val === 'all_members' ? '' : val)}
-                                        >
-                                            <SelectTrigger className="h-9 text-xs">
-                                                <SelectValue placeholder="Pilih pemilik voucher..." />
-                                            </SelectTrigger>
-                                            <SelectContent className="max-h-60">
-                                                <SelectItem value="all_members">
-                                                    Semua Anggota (Bebas Ditukar)
-                                                </SelectItem>
-                                                {users.map((u) => (
-                                                    <SelectItem key={u.id} value={String(u.id)}>
-                                                        {u.name} ({u.email})
+                                    <>
+                                        <div className="pt-2 space-y-1.5">
+                                            <div className="flex items-center justify-between">
+                                                <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                                                    <span>🪙 Poin / Koin yang Dibutuhkan untuk Menukar *</span>
+                                                </label>
+                                                <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30">
+                                                    Royale Reward
+                                                </Badge>
+                                            </div>
+                                            <Input
+                                                type="number"
+                                                min={1}
+                                                placeholder="Contoh: 100"
+                                                value={data.points_required}
+                                                onChange={(e) => setData('points_required', e.target.value)}
+                                                className="h-9 text-xs font-semibold"
+                                                required={data.voucher_type === 'reward'}
+                                            />
+                                            <p className="text-[11px] text-muted-foreground">
+                                                Jumlah koin/poin loyalty yang harus ditukarkan oleh anggota di halaman Royale Club untuk mengklaim voucher ini.
+                                            </p>
+                                            {errors.points_required && <p className="text-destructive text-xs">{errors.points_required}</p>}
+                                        </div>
+
+                                        <div className="pt-2 space-y-1.5">
+                                            <label className="text-xs font-semibold text-foreground">Pemilik Voucher (Opsional)</label>
+                                            <Select
+                                                value={data.user_id ? String(data.user_id) : 'all_members'}
+                                                onValueChange={(val) => setData('user_id', val === 'all_members' ? '' : val)}
+                                            >
+                                                <SelectTrigger className="h-9 text-xs">
+                                                    <SelectValue placeholder="Pilih pemilik voucher..." />
+                                                </SelectTrigger>
+                                                <SelectContent className="max-h-60">
+                                                    <SelectItem value="all_members">
+                                                        Semua Anggota (Bebas Ditukar)
                                                     </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <p className="text-[11px] text-muted-foreground">Kosongkan jika voucher reward ini bisa ditukarkan oleh semua member.</p>
-                                    </div>
+                                                    {users.map((u) => (
+                                                        <SelectItem key={u.id} value={String(u.id)}>
+                                                            {u.name} ({u.email})
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <p className="text-[11px] text-muted-foreground">Kosongkan jika voucher reward ini bisa ditukarkan oleh semua member.</p>
+                                        </div>
+                                    </>
                                 )}
                             </div>
 

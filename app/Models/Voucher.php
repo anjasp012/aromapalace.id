@@ -31,6 +31,7 @@ use Illuminate\Support\Facades\Cache;
  * @property Carbon|null $expires_at
  * @property bool $is_active
  * @property string $voucher_type
+ * @property int|null $points_required
  * @property int|null $user_id
  * @property string $applicable_type
  * @property array<int, int>|null $applicable_product_ids
@@ -56,6 +57,7 @@ use Illuminate\Support\Facades\Cache;
     'expires_at',
     'is_active',
     'voucher_type',
+    'points_required',
     'user_id',
     'applicable_type',
     'applicable_product_ids',
@@ -94,6 +96,7 @@ class Voucher extends Model
             'starts_at' => 'datetime',
             'expires_at' => 'datetime',
             'is_active' => 'boolean',
+            'points_required' => 'integer',
             'applicable_product_ids' => 'array',
         ];
     }

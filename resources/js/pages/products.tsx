@@ -99,6 +99,8 @@ interface ParsedFilters {
     sortBy: 'featured' | 'popular' | 'price-asc' | 'price-desc' | 'rating' | 'discount';
 }
 
+const normalizeSlug = (str: string) => (str || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
 function parseFiltersFromUrl(
     searchString: string,
     categories: string[] = [],
@@ -112,15 +114,18 @@ function parseFiltersFromUrl(
 
     // 1. Text Search Query
     const search = searchParams.get('search') || searchParams.get('q') || '';
-    let searchQuery = search;
+    const searchQuery = search;
 
     // 2. Brand
     let activeBrand = defaultBrand;
     const rawBrand = searchParams.get('brand');
     const safeBrands = brands || [];
-    if (rawBrand) {
+    if (rawBrand && rawBrand !== 'All') {
+        const rawSlug = normalizeSlug(rawBrand);
         const matched = safeBrands.find(
-            (b) => b.toLowerCase() === rawBrand.toLowerCase() || b.toLowerCase().replace(/\s+/g, '-') === rawBrand.toLowerCase()
+            (b) => b.toLowerCase() === rawBrand.toLowerCase() ||
+                   normalizeSlug(b) === rawSlug ||
+                   b.toLowerCase().replace(/\s+/g, '-') === rawBrand.toLowerCase()
         );
         activeBrand = matched || rawBrand;
     }
@@ -129,21 +134,14 @@ function parseFiltersFromUrl(
     let activeCategory = defaultCategory;
     const rawCategory = searchParams.get('category') || searchParams.get('family') || searchParams.get('scent') || searchParams.get('collection');
     const safeCats = categories || [];
-    if (rawCategory) {
+    if (rawCategory && rawCategory !== 'All') {
+        const rawSlug = normalizeSlug(rawCategory);
         const matched = safeCats.find(
-            (c) => c.toLowerCase() === rawCategory.toLowerCase() || c.toLowerCase().replace(/\s+/g, '-') === rawCategory.toLowerCase()
+            (c) => c.toLowerCase() === rawCategory.toLowerCase() ||
+                   normalizeSlug(c) === rawSlug ||
+                   c.toLowerCase().replace(/\s+/g, '-') === rawCategory.toLowerCase()
         );
-        if (matched) {
-            activeCategory = matched;
-        } else if (!searchQuery) {
-            // Gracefully map legacy collection or gender slugs to search query
-            const norm = rawCategory.toLowerCase();
-            if (norm.includes('wanita')) searchQuery = 'Parfum Wanita';
-            else if (norm.includes('pria')) searchQuery = 'Parfum Pria';
-            else if (norm.includes('unisex')) searchQuery = 'Unisex';
-            else if (norm.includes('discovery')) searchQuery = 'Discovery';
-            else searchQuery = rawCategory.replace(/-/g, ' ');
-        }
+        activeCategory = matched || rawCategory;
     }
 
     // 4. Price Tier & Custom Min/Max
@@ -292,16 +290,18 @@ export default function Products({
 
     const primaryBrands = useMemo(() => {
         const preferred = ['Aroma Royale', 'Maison Floral', 'Capri Fragranze', 'Artisanal Niche'];
-        const matched = preferred.filter((p) => nonAllBrands.includes(p));
-        const remaining = nonAllBrands.filter((b) => !matched.includes(b));
+        const matched = preferred.filter((p) => nonAllBrands.some((b) => b === p || normalizeSlug(b) === normalizeSlug(p)));
+        const remaining = nonAllBrands.filter((b) => !matched.some((p) => p === b || normalizeSlug(p) === normalizeSlug(b)));
         return [...matched, ...remaining].slice(0, 4);
     }, [nonAllBrands]);
 
     const otherBrands = useMemo(() => {
-        return nonAllBrands.filter((b) => !primaryBrands.includes(b));
+        return nonAllBrands.filter((b) => !primaryBrands.some((p) => p === b || normalizeSlug(p) === normalizeSlug(b)));
     }, [nonAllBrands, primaryBrands]);
 
-    const isOtherBrandSelected = Boolean(activeBrand !== 'All' && otherBrands.includes(activeBrand));
+    const isOtherBrandSelected = Boolean(
+        activeBrand !== 'All' && otherBrands.some((b) => b === activeBrand || normalizeSlug(b) === normalizeSlug(activeBrand))
+    );
 
     // 2. Mobile Drawer State
     const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
@@ -321,6 +321,52 @@ export default function Products({
     const isFirstMountRef = useRef(true);
     const lastAppliedParamsRef = useRef<string>('');
     const pendingTimerRef = useRef<number | null>(null);
+
+    // Sync state when props from Inertia navigation update (e.g. from Home, Categories, or Brands)
+    useEffect(() => {
+        const nextFilters = serverFilters
+            ? {
+                searchQuery: serverFilters.searchQuery || '',
+                activeCategory: serverFilters.activeCategory || selectedCategory || 'All',
+                activeBrand: serverFilters.activeBrand || selectedBrand || 'All',
+                priceTier: serverFilters.priceTier || 'all',
+                customMin: serverFilters.customMin || '',
+                customMax: serverFilters.customMax || '',
+                minRating: serverFilters.minRating || 0,
+                onlyDiscount: serverFilters.onlyDiscount ?? false,
+                sortBy: serverFilters.sortBy || 'featured',
+            }
+            : parseFiltersFromUrl(
+                typeof window !== 'undefined' ? window.location.search : (url && url.includes('?') ? url.slice(url.indexOf('?')) : ''),
+                categories,
+                availableBrands,
+                selectedCategory,
+                selectedBrand
+            );
+
+        setSearchQuery(nextFilters.searchQuery);
+        setActiveCategory(nextFilters.activeCategory);
+        setActiveBrand(nextFilters.activeBrand);
+        setPriceTier(nextFilters.priceTier);
+        setCustomMin(nextFilters.customMin);
+        setCustomMax(nextFilters.customMax);
+        setMinRating(nextFilters.minRating);
+        setOnlyDiscount(nextFilters.onlyDiscount);
+        setSortBy(nextFilters.sortBy);
+
+        const currentParams: Record<string, string> = {};
+        if (nextFilters.searchQuery.trim()) currentParams.search = nextFilters.searchQuery.trim();
+        if (nextFilters.activeCategory && nextFilters.activeCategory !== 'All') currentParams.category = nextFilters.activeCategory;
+        if (nextFilters.activeBrand && nextFilters.activeBrand !== 'All') currentParams.brand = nextFilters.activeBrand;
+        if (nextFilters.priceTier && nextFilters.priceTier !== 'all' && nextFilters.priceTier !== 'custom') currentParams.price = nextFilters.priceTier;
+        if (nextFilters.customMin.trim()) currentParams.min_price = nextFilters.customMin.trim();
+        if (nextFilters.customMax.trim()) currentParams.max_price = nextFilters.customMax.trim();
+        if (nextFilters.minRating > 0) currentParams.rating = nextFilters.minRating.toString();
+        if (nextFilters.onlyDiscount) currentParams.discount = '1';
+        if (nextFilters.sortBy && nextFilters.sortBy !== 'featured') currentParams.sort = nextFilters.sortBy;
+
+        lastAppliedParamsRef.current = JSON.stringify(currentParams);
+    }, [serverFilters, selectedCategory, selectedBrand, url]);
 
     // Send server-side filter request when filter/sort state changes (debounced 150ms)
     useEffect(() => {
@@ -576,7 +622,7 @@ export default function Products({
                 </label>
                 <div className="flex flex-wrap gap-1.5">
                     {categories.map((cat) => {
-                        const isSelected = activeCategory === cat;
+                        const isSelected = activeCategory === cat || (cat !== 'All' && normalizeSlug(activeCategory) === normalizeSlug(cat));
                         return (
                             <button
                                 key={cat}
@@ -614,7 +660,7 @@ export default function Products({
 
                     {/* Primary Brands */}
                     {primaryBrands.map((b) => {
-                        const isSelected = activeBrand === b;
+                        const isSelected = activeBrand === b || (b !== 'All' && normalizeSlug(activeBrand) === normalizeSlug(b));
                         return (
                             <button
                                 key={b}
@@ -655,7 +701,7 @@ export default function Products({
                                     </DropdownMenuItem>
                                 )}
                                 {otherBrands.map((b) => {
-                                    const isSelected = activeBrand === b;
+                                    const isSelected = activeBrand === b || (b !== 'All' && normalizeSlug(activeBrand) === normalizeSlug(b));
                                     return (
                                         <DropdownMenuItem
                                             key={b}
@@ -931,7 +977,7 @@ export default function Products({
                                         className="gap-1 text-[11px] rounded-md px-2 py-0.5 border border-border cursor-pointer hover:bg-destructive/10"
                                         onClick={() => setActiveCategory('All')}
                                     >
-                                        <span>{formatCategoryName(activeCategory, isEn)}</span>
+                                        <span>{formatCategoryName(categories.find((c) => c === activeCategory || (c !== 'All' && normalizeSlug(c) === normalizeSlug(activeCategory))) || activeCategory, isEn)}</span>
                                         <span className="text-xs">&times;</span>
                                     </Badge>
                                 )}
@@ -942,7 +988,7 @@ export default function Products({
                                         className="gap-1 text-[11px] rounded-md px-2 py-0.5 border border-border cursor-pointer hover:bg-destructive/10"
                                         onClick={() => setActiveBrand('All')}
                                     >
-                                        <span>Brand: {activeBrand}</span>
+                                        <span>Brand: {availableBrands.find((b) => b === activeBrand || (b !== 'All' && normalizeSlug(b) === normalizeSlug(activeBrand))) || activeBrand}</span>
                                         <span className="text-xs">&times;</span>
                                     </Badge>
                                 )}

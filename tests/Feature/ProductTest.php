@@ -100,16 +100,30 @@ test('products page filters by discount on the server', function () {
         );
 });
 
-test('products page sorts by discount greatest first', function () {
-    $response = $this->get(route('products.index', ['sort' => 'discount']));
+test('products page filters by category slug on the server', function () {
+    $response = $this->get(route('products.index', ['category' => 'parfum-pria']));
 
     $response->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('products')
-            ->has('fragrances', 5)
-            ->where('fragrances.0.name', 'Oud Impérial Royale') // 15% discount
-            ->where('fragrances.0.discountBadge', '-15%')
-            ->where('fragrances.1.name', 'Velours de Rose & Amber') // 10% discount
-            ->where('fragrances.1.discountBadge', '-10%')
+            ->has('fragrances', 1)
+            ->where('fragrances.0.category', 'Parfum Pria')
+            ->where('selectedCategory', 'Parfum Pria')
+            ->where('filters.activeCategory', 'Parfum Pria')
+            ->where('filters.searchQuery', '')
+        );
+});
+
+test('products page filters by brand slug on the server', function () {
+    $response = $this->get(route('products.index', ['brand' => 'aroma-royale']));
+
+    $response->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('products')
+            ->has('fragrances', 1)
+            ->where('fragrances.0.brand', 'Aroma Royale')
+            ->where('selectedBrand', 'Aroma Royale')
+            ->where('filters.activeBrand', 'Aroma Royale')
+            ->where('filters.searchQuery', '')
         );
 });

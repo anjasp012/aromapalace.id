@@ -59,13 +59,31 @@ class ProductController extends Controller
         // 2. Category
         $selectedCategory = (string) $request->input('category', 'All');
         if ($selectedCategory !== '' && $selectedCategory !== 'All') {
-            $query->whereHas('categoryRelation', fn ($c) => $c->where('name', $selectedCategory)->orWhere('slug', $selectedCategory));
+            $catModel = Category::where('slug', $selectedCategory)
+                ->orWhere('name', $selectedCategory)
+                ->first();
+
+            if ($catModel) {
+                $selectedCategory = $catModel->name;
+                $query->where('category_id', $catModel->id);
+            } else {
+                $query->whereHas('categoryRelation', fn ($c) => $c->where('name', $selectedCategory)->orWhere('slug', $selectedCategory));
+            }
         }
 
         // 3. Brand
         $selectedBrand = (string) $request->input('brand', 'All');
         if ($selectedBrand !== '' && $selectedBrand !== 'All') {
-            $query->whereHas('brandRelation', fn ($b) => $b->where('name', $selectedBrand)->orWhere('slug', $selectedBrand));
+            $brandModel = Brand::where('slug', $selectedBrand)
+                ->orWhere('name', $selectedBrand)
+                ->first();
+
+            if ($brandModel) {
+                $selectedBrand = $brandModel->name;
+                $query->where('brand_id', $brandModel->id);
+            } else {
+                $query->whereHas('brandRelation', fn ($b) => $b->where('name', $selectedBrand)->orWhere('slug', $selectedBrand));
+            }
         }
 
         // 4. Price Tier & Custom Min/Max
