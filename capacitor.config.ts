@@ -41,6 +41,14 @@ const config: CapacitorConfig = {
   },
   android: {
     allowMixedContent: false,
+    // @capacitor/splash-screen is left out on Android: Android 12+ only allows a small icon there.
+    // MainActivity shows the full-screen splash artwork instead. Add any new Capacitor plugin here too.
+    includePlugins: [
+      '@capacitor/app',
+      '@capacitor/network',
+      '@capacitor/push-notifications',
+      '@capacitor/status-bar',
+    ],
   },
   plugins: {
     SplashScreen: {
