@@ -20,6 +20,13 @@ export interface ShippingLabelOrder {
     courier_service_type?: string | null;
     courier_logo?: string | null;
     tracking_number?: string | null;
+    shipping_payment_code?: string | null;
+    shipping?: {
+        id?: number;
+        shipping_payment_code?: string | null;
+        awb?: string | null;
+        [key: string]: any;
+    } | null;
     total_amount: number;
     payment_method?: string;
     payment_channel?: string;
@@ -350,7 +357,7 @@ export default function ShippingLabel({ order, className = '' }: ShippingLabelPr
                         Catatan: {order.notes || '-'}
                     </div>
                     <div className="p-1.5 text-center font-black text-xs text-black tracking-wider truncate">
-                        OID-{order.order_number}
+                        {order.shipping?.shipping_payment_code || order.shipping_payment_code || order.order_number}
                     </div>
                 </div>
             </div>
