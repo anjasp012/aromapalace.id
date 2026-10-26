@@ -199,6 +199,9 @@ class MembershipService
             $voucherCode = 'REW-'.strtoupper(Str::random(6));
 
             $voucher = Voucher::create([
+                'user_id' => $user->id,
+                'voucher_type' => 'reward',
+                'applicable_type' => 'all',
                 'code' => $voucherCode,
                 'name' => "Reward Royale: {$reward->name}",
                 'description' => "Voucher hasil penukaran {$reward->points_required} loyalty points oleh {$user->name}.",

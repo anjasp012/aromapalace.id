@@ -1332,39 +1332,37 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
                                 </ul>
                             </div>
 
-                            {/* Desktop & Tablet only: Unduh Aplikasi (Disembunyikan di Mobile) */}
-                            <div className="hidden sm:block sm:col-span-2 lg:col-span-3 space-y-3">
+                            {/* Unduh Aplikasi */}
+                            <div className="col-span-2 sm:col-span-2 lg:col-span-3 space-y-3">
                                 <h5 className="text-xs font-semibold uppercase tracking-wider text-white">{isEn ? 'Download App' : 'Unduh Aplikasi'}</h5>
                                 <p className="text-xs leading-relaxed text-white/70">
                                     {isEn ? 'Download our application for exclusive access to the Dubai perfume catalog.' : 'Unduh aplikasi kami untuk akses eksklusif katalog parfum Dubai.'}
                                 </p>
-                                <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-2.5 pt-1">
+                                <div className="flex flex-row sm:flex-row lg:flex-col xl:flex-row items-center gap-3 pt-1">
                                     <button
                                         type="button"
                                         onClick={() => triggerToast(isEn ? 'Aroma Palace app for iOS will be available soon on the App Store!' : 'Aplikasi Aroma Palace untuk iOS akan segera tersedia di App Store!')}
-                                        className="flex items-center gap-2.5 px-3 py-2 rounded border border-white/15 bg-white/5 hover:bg-white/10 hover:border-white/30 transition text-left cursor-pointer group shadow-none"
+                                        className="transition-all duration-200 hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] cursor-pointer inline-flex focus:outline-none focus:ring-2 focus:ring-[#E5A844]/50 rounded-lg group"
+                                        aria-label="Download on the App Store"
                                     >
-                                        <svg className="w-5 h-5 shrink-0 fill-current text-white group-hover:scale-105 transition-transform" viewBox="0 0 24 24">
-                                            <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.38c.62-.75 1.04-1.8 1.01-2.88-.93.04-2.07.62-2.73 1.39-.58.67-.99 1.74-.93 2.79 1.05.08 2.03-.55 2.65-1.3" />
-                                        </svg>
-                                        <div className="leading-tight">
-                                            <span className="text-[9px] uppercase tracking-wider block text-white/60">{isEn ? 'Download on' : 'Unduh di'}</span>
-                                            <span className="text-xs font-semibold text-white">App Store</span>
-                                        </div>
+                                        <img
+                                            src="/images/download-apple-store.png"
+                                            alt="Download on the App Store"
+                                            className="h-9.5 sm:h-10 w-auto object-contain transition-transform"
+                                        />
                                     </button>
 
                                     <button
                                         type="button"
                                         onClick={() => triggerToast(isEn ? 'Aroma Palace app for Android will be available soon on Google Play Store!' : 'Aplikasi Aroma Palace untuk Android akan segera tersedia di Google Play Store!')}
-                                        className="flex items-center gap-2.5 px-3 py-2 rounded border border-white/15 bg-white/5 hover:bg-white/10 hover:border-white/30 transition text-left cursor-pointer group shadow-none"
+                                        className="transition-all duration-200 hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] cursor-pointer inline-flex focus:outline-none focus:ring-2 focus:ring-[#E5A844]/50 rounded-lg group"
+                                        aria-label="Get it on Google Play"
                                     >
-                                        <svg className="w-5 h-5 shrink-0 fill-current text-white group-hover:scale-105 transition-transform" viewBox="0 0 24 24">
-                                            <path d="M3.609 1.814L13.792 12 3.61 22.186a1.5 1.5 0 0 1-.61-.986V2.8a1.5 1.5 0 0 1 .609-.986zm11.242 11.245l2.454 2.454-11.836 6.833 9.382-9.287zm0-2.118L5.469 1.654l11.836 6.833-2.454 2.454zm1.06 1.059l3.523 2.034a1.2 1.2 0 0 0 0-2.08l-3.523-2.034 1.06 2.08z" />
-                                        </svg>
-                                        <div className="leading-tight">
-                                            <span className="text-[9px] uppercase tracking-wider block text-white/60">{isEn ? 'Get it on' : 'Temukan di'}</span>
-                                            <span className="text-xs font-semibold text-white">Google Play</span>
-                                        </div>
+                                        <img
+                                            src="/images/download-google-play.png"
+                                            alt="Get it on Google Play"
+                                            className="h-9.5 sm:h-10 w-auto object-contain transition-transform"
+                                        />
                                     </button>
                                 </div>
                             </div>

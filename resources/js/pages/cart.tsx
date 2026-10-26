@@ -8,7 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { cn, formatVolume } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Ticket } from 'lucide-react';
+import VoucherSelectorModal, { AvailableVoucher } from '@/components/VoucherSelectorModal';
 
 interface FragranceProduct {
     id: number;
@@ -37,17 +38,6 @@ interface CartItemData {
     product: FragranceProduct;
 }
 
-interface AvailableVoucherCart {
-    id: number;
-    code: string;
-    name: string;
-    type: 'percentage' | 'fixed';
-    value: number;
-    min_order_amount: number;
-    min_order_amount_formatted: string;
-    max_discount_amount?: number | null;
-}
-
 interface CartPageProps {
     items: CartItemData[];
     subtotal: number;
@@ -57,7 +47,7 @@ interface CartPageProps {
     total: number;
     total_formatted: string;
     initial_voucher?: string;
-    available_vouchers?: AvailableVoucherCart[];
+    available_vouchers?: AvailableVoucher[];
 }
 
 export default function CartPage({
@@ -90,6 +80,7 @@ export default function CartPage({
     const [voucherDiscount, setVoucherDiscount] = useState(0);
     const [voucherError, setVoucherError] = useState<string | null>(null);
     const [voucherSuccess, setVoucherSuccess] = useState<string | null>(null);
+    const [showVoucherModal, setShowVoucherModal] = useState(false);
 
     // Auto apply saved voucher on initial load or prop change
     useEffect(() => {
@@ -101,25 +92,34 @@ export default function CartPage({
 
         if (codeToApply && available_vouchers && available_vouchers.length > 0) {
             const found = available_vouchers.find((v) => v.code.toUpperCase() === codeToApply);
-            if (found && subtotal >= found.min_order_amount) {
-                let disc = 0;
-                if (found.type === 'fixed') {
-                    disc = Math.min(subtotal, found.value);
-                } else {
-                    disc = Math.round(subtotal * (found.value / 100));
-                    if (found.max_discount_amount && found.max_discount_amount > 0) {
-                        disc = Math.min(disc, found.max_discount_amount);
-                    }
+            if (found) {
+                let applicableSubtotal = subtotal;
+                if (found.applicable_type === 'specific' && found.applicable_product_ids && found.applicable_product_ids.length > 0) {
+                    const matchingItems = (items || []).filter((it) => found.applicable_product_ids?.includes(it.product_id));
+                    if (matchingItems.length === 0) return;
+                    applicableSubtotal = matchingItems.reduce((acc, it) => acc + it.total_price, 0);
                 }
-                setVoucherCode(found.code);
-                setVoucherApplied(true);
-                setVoucherDiscount(disc);
-                if (typeof window !== 'undefined') {
-                    localStorage.setItem('aromapalace_applied_voucher', found.code);
+
+                if (applicableSubtotal >= found.min_order_amount) {
+                    let disc = 0;
+                    if (found.type === 'fixed') {
+                        disc = Math.min(applicableSubtotal, found.value);
+                    } else {
+                        disc = Math.round(applicableSubtotal * (found.value / 100));
+                        if (found.max_discount_amount && found.max_discount_amount > 0) {
+                            disc = Math.min(disc, found.max_discount_amount);
+                        }
+                    }
+                    setVoucherCode(found.code);
+                    setVoucherApplied(true);
+                    setVoucherDiscount(disc);
+                    if (typeof window !== 'undefined') {
+                        localStorage.setItem('aromapalace_applied_voucher', found.code);
+                    }
                 }
             }
         }
-    }, [initial_voucher, available_vouchers, subtotal]);
+    }, [initial_voucher, available_vouchers, subtotal, items]);
 
     const handleUpdateQuantity = (item: CartItemData, newQty: number) => {
         if (newQty < 1 || newQty > 20) return;
@@ -184,7 +184,22 @@ export default function CartPage({
             return;
         }
 
-        if (subtotal < found.min_order_amount) {
+        let applicableSubtotal = subtotal;
+        if (found.applicable_type === 'specific' && found.applicable_product_ids && found.applicable_product_ids.length > 0) {
+            const matchingItems = (items || []).filter((it) => found.applicable_product_ids?.includes(it.product_id));
+            if (matchingItems.length === 0) {
+                setVoucherApplied(false);
+                setVoucherDiscount(0);
+                const errMsg = isEn
+                    ? 'Voucher only applies to specific products that are not currently in your cart.'
+                    : `Voucher "${found.code}" hanya berlaku untuk produk tertentu yang belum ada di keranjang.`;
+                setVoucherError(errMsg);
+                return;
+            }
+            applicableSubtotal = matchingItems.reduce((acc, it) => acc + it.total_price, 0);
+        }
+
+        if (applicableSubtotal < found.min_order_amount) {
             setVoucherApplied(false);
             setVoucherDiscount(0);
             const errMsg = isEn
@@ -197,9 +212,9 @@ export default function CartPage({
         // Calculate discount amount immediately
         let disc = 0;
         if (found.type === 'fixed') {
-            disc = Math.min(subtotal, found.value);
+            disc = Math.min(applicableSubtotal, found.value);
         } else {
-            disc = Math.round(subtotal * (found.value / 100));
+            disc = Math.round(applicableSubtotal * (found.value / 100));
             if (found.max_discount_amount && found.max_discount_amount > 0) {
                 disc = Math.min(disc, found.max_discount_amount);
             }
@@ -509,25 +524,29 @@ export default function CartPage({
                                 {/* Voucher input form (hanya muncul jika belum pasang voucher) */}
                                 {(!voucherApplied || voucherDiscount <= 0) && (
                                     <div className="pt-3 border-t border-border/70 space-y-1.5">
-                                        <form onSubmit={handleApplyVoucher} className="flex gap-2">
-                                            <Input
-                                                type="text"
-                                                placeholder={isEn ? 'Promo Voucher Code' : 'Kode Voucher Promo'}
-                                                value={voucherCode}
-                                                onChange={(e) => {
-                                                    setVoucherCode(e.target.value);
-                                                    if (voucherError) setVoucherError(null);
-                                                }}
-                                                className="h-9 rounded-md border border-border/80 bg-background/80 text-xs uppercase tracking-wider focus:border-[#4A070B] focus:ring-1 focus:ring-[#4A070B]/25 shadow-none"
-                                            />
+                                        <div className="flex gap-2">
+                                            <div
+                                                onClick={() => setShowVoucherModal(true)}
+                                                className="relative flex-1 cursor-pointer"
+                                            >
+                                                <Input
+                                                    type="text"
+                                                    placeholder={isEn ? 'Choose Promo / Reward Voucher' : 'Pilih Voucher Promo / Reward'}
+                                                    value={voucherCode}
+                                                    readOnly
+                                                    className="h-9 pr-8 rounded-md border border-border/80 bg-background/80 text-xs uppercase tracking-wider focus:border-[#4A070B] focus:ring-1 focus:ring-[#4A070B]/25 shadow-none cursor-pointer"
+                                                />
+                                                <Ticket className="w-4 h-4 text-[#4A070B] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                                            </div>
                                             <Button
-                                                type="submit"
+                                                type="button"
+                                                onClick={() => setShowVoucherModal(true)}
                                                 variant="outline"
                                                 className="h-9 px-3 rounded-md border border-[#4A070B] text-[#4A070B] hover:bg-[#4A070B] hover:text-white text-xs font-semibold shadow-none cursor-pointer shrink-0 transition-colors"
                                             >
-                                                {isEn ? 'Apply' : 'Terapkan'}
+                                                {isEn ? 'Choose Voucher' : 'Pilih Voucher'}
                                             </Button>
-                                        </form>
+                                        </div>
                                         {voucherError && (
                                             <p className="text-[11px] text-destructive font-medium flex items-center gap-1 animate-in fade-in duration-150">
                                                 <span>⚠</span> {voucherError}
@@ -619,36 +638,30 @@ export default function CartPage({
                                     </div>
                                 ) : (
                                     <div className="space-y-1">
-                                        <form onSubmit={handleApplyVoucher} className="flex items-center gap-2">
+                                        <div
+                                            onClick={() => setShowVoucherModal(true)}
+                                            className="flex items-center gap-2 cursor-pointer"
+                                        >
                                             <div className="relative flex-1">
-                                                <svg
-                                                    className="w-3.5 h-3.5 text-[#E5A844] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    viewBox="0 0 24 24"
-                                                >
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                                                </svg>
+                                                <Ticket className="w-3.5 h-3.5 text-[#E5A844] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                                                 <Input
                                                     type="text"
-                                                    placeholder={isEn ? 'Have a Promo Voucher?' : 'Punya Kode Voucher Promo?'}
+                                                    placeholder={isEn ? 'Choose Promo Voucher' : 'Pilih Voucher Promo / Reward'}
                                                     value={voucherCode}
-                                                    onChange={(e) => {
-                                                        setVoucherCode(e.target.value);
-                                                        if (voucherError) setVoucherError(null);
-                                                    }}
-                                                    className="h-8.5 pl-8 pr-2.5 rounded-md border border-border/80 bg-background text-xs uppercase tracking-wider focus:border-[#4A070B] focus:ring-1 focus:ring-[#4A070B]/25 shadow-none"
+                                                    readOnly
+                                                    className="h-8.5 pl-8 pr-2.5 rounded-md border border-border/80 bg-background text-xs uppercase tracking-wider focus:border-[#4A070B] focus:ring-1 focus:ring-[#4A070B]/25 shadow-none cursor-pointer"
                                                 />
                                             </div>
                                             <Button
-                                                type="submit"
+                                                type="button"
+                                                onClick={() => setShowVoucherModal(true)}
                                                 variant="outline"
                                                 size="sm"
                                                 className="h-8.5 px-3 rounded-md border border-[#4A070B] text-[#4A070B] hover:bg-[#4A070B] hover:text-white text-xs font-semibold shadow-none cursor-pointer shrink-0 transition-colors"
                                             >
-                                                {isEn ? 'Apply' : 'Terapkan'}
+                                                {isEn ? 'Choose' : 'Pilih'}
                                             </Button>
-                                        </form>
+                                        </div>
                                         {voucherError && (
                                             <p className="text-[10.5px] text-destructive font-medium flex items-center gap-1">
                                                 <span>⚠</span> {voucherError}
@@ -711,6 +724,21 @@ export default function CartPage({
                         : mobileCartBar;
                 })()}
             </div>
+
+            {/* Voucher Selection Modal */}
+            <VoucherSelectorModal
+                open={showVoucherModal}
+                onOpenChange={setShowVoucherModal}
+                vouchers={available_vouchers}
+                appliedVoucherCode={voucherApplied ? voucherCode : ''}
+                onSelectVoucher={(code) => {
+                    handleApplyVoucher(undefined, code);
+                }}
+                onApplyManualCode={(code) => {
+                    handleApplyVoucher(undefined, code);
+                }}
+                subtotal={subtotal}
+            />
         </Layout>
     );
 }

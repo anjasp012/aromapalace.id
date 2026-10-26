@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Product;
 use App\Models\Voucher;
 use App\Services\FirebaseNotificationService;
 use Illuminate\Http\RedirectResponse;
@@ -67,7 +68,9 @@ class VoucherController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('admin/vouchers/create');
+        return Inertia::render('admin/vouchers/create', [
+            'products' => Product::query()->orderBy('name')->get(['id', 'name']),
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -86,11 +89,20 @@ class VoucherController extends Controller
             'starts_at' => ['nullable', 'date'],
             'expires_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
             'is_active' => ['nullable', 'boolean'],
+            'voucher_type' => ['nullable', 'string', 'in:biasa,reward'],
+            'applicable_type' => ['nullable', 'string', 'in:all,specific'],
+            'applicable_product_ids' => ['nullable', 'array'],
+            'applicable_product_ids.*' => ['integer'],
         ]);
 
         $validated['code'] = Str::upper($validated['code']);
         $validated['min_order_amount'] = $validated['min_order_amount'] ?? 0;
         $validated['is_active'] = $request->boolean('is_active', true);
+        $validated['voucher_type'] = $validated['voucher_type'] ?? 'biasa';
+        $validated['applicable_type'] = $validated['applicable_type'] ?? 'all';
+        $validated['applicable_product_ids'] = ($validated['applicable_type'] === 'specific')
+            ? array_values(array_map('intval', $validated['applicable_product_ids'] ?? []))
+            : null;
 
         $voucher = Voucher::create($validated);
 
@@ -105,6 +117,7 @@ class VoucherController extends Controller
     {
         return Inertia::render('admin/vouchers/edit', [
             'voucher' => $voucher,
+            'products' => Product::query()->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -124,11 +137,20 @@ class VoucherController extends Controller
             'starts_at' => ['nullable', 'date'],
             'expires_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
             'is_active' => ['nullable', 'boolean'],
+            'voucher_type' => ['nullable', 'string', 'in:biasa,reward'],
+            'applicable_type' => ['nullable', 'string', 'in:all,specific'],
+            'applicable_product_ids' => ['nullable', 'array'],
+            'applicable_product_ids.*' => ['integer'],
         ]);
 
         $validated['code'] = Str::upper($validated['code']);
         $validated['min_order_amount'] = $validated['min_order_amount'] ?? 0;
         $validated['is_active'] = $request->boolean('is_active', true);
+        $validated['voucher_type'] = $validated['voucher_type'] ?? 'biasa';
+        $validated['applicable_type'] = $validated['applicable_type'] ?? 'all';
+        $validated['applicable_product_ids'] = ($validated['applicable_type'] === 'specific')
+            ? array_values(array_map('intval', $validated['applicable_product_ids'] ?? []))
+            : null;
 
         $voucher->update($validated);
 

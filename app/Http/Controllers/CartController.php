@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\CartItem;
+use App\Models\LoyaltyPointHistory;
 use App\Models\Order;
+use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Voucher;
 use App\Services\CatalogService;
@@ -63,6 +65,7 @@ class CartController extends Controller
 
         $usedVoucherIds = [];
         $usedVoucherCodes = [];
+        $userRedeemedCodes = [];
         if ($user) {
             $usedOrders = Order::where('user_id', $user->id)
                 ->where('status', '!=', 'dibatalkan')
@@ -71,9 +74,18 @@ class CartController extends Controller
 
             $usedVoucherIds = $usedOrders->pluck('voucher_id')->filter()->all();
             $usedVoucherCodes = $usedOrders->pluck('voucher_code')->filter()->map(fn ($c) => strtoupper(trim((string) $c)))->all();
+
+            if ($user->membership) {
+                $userRedeemedCodes = LoyaltyPointHistory::where('membership_id', $user->membership->id)
+                    ->where('type', 'redeemed')
+                    ->whereNotNull('reference_id')
+                    ->pluck('reference_id')
+                    ->map(fn ($c) => strtoupper(trim((string) $c)))
+                    ->all();
+            }
         }
 
-        $availableVouchers = Voucher::query()
+        $vouchers = Voucher::query()
             ->where('is_active', true)
             ->where(function ($q) {
                 $q->whereNull('starts_at')->orWhere('starts_at', '<=', now());
@@ -84,20 +96,94 @@ class CartController extends Controller
             ->where(function ($q) {
                 $q->whereNull('usage_limit')->orWhereColumn('used_count', '<', 'usage_limit');
             })
+            ->where(function ($q) use ($user, $userRedeemedCodes) {
+                $q->where(function ($sq) {
+                    $sq->where('voucher_type', 'biasa')
+                        ->where('code', 'not like', 'REW-%')
+                        ->whereNull('user_id');
+                });
+                if ($user) {
+                    $q->orWhere(function ($sq) use ($user, $userRedeemedCodes) {
+                        $sq->where(function ($rw) {
+                            $rw->where('voucher_type', 'reward')
+                                ->orWhere('code', 'like', 'REW-%');
+                        })->where(function ($rw) use ($user, $userRedeemedCodes) {
+                            $rw->where('user_id', $user->id);
+                            if (! empty($userRedeemedCodes)) {
+                                $rw->orWhereIn('code', $userRedeemedCodes);
+                            }
+                        });
+                    });
+                }
+            })
             ->get()
-            ->filter(fn (Voucher $v) => ! in_array($v->id, $usedVoucherIds, true) && ! in_array(strtoupper(trim($v->code)), $usedVoucherCodes, true))
-            ->map(fn (Voucher $v) => [
+            ->filter(fn (Voucher $v) => ! in_array($v->id, $usedVoucherIds, true) && ! in_array(strtoupper(trim($v->code)), $usedVoucherCodes, true));
+
+        $allProductIds = $vouchers->pluck('applicable_product_ids')
+            ->filter()
+            ->flatten()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->all();
+
+        $productNames = ! empty($allProductIds)
+            ? Product::whereIn('id', $allProductIds)->pluck('name', 'id')->all()
+            : [];
+
+        $availableVouchers = $vouchers->map(function (Voucher $v) use ($userRedeemedCodes, $subtotal, $items, $productNames) {
+            $isReward = $v->voucher_type === 'reward' || in_array(strtoupper(trim($v->code)), $userRedeemedCodes, true) || str_starts_with($v->code, 'REW-');
+            $applicableIds = ! empty($v->applicable_product_ids) ? array_map('intval', (array) $v->applicable_product_ids) : [];
+
+            $applicableProductNames = [];
+            foreach ($applicableIds as $pid) {
+                if (isset($productNames[$pid])) {
+                    $applicableProductNames[] = $productNames[$pid];
+                }
+            }
+
+            $hasApplicableItems = true;
+            $applicableSubtotal = $subtotal;
+            if ($v->applicable_type === 'specific' && ! empty($applicableIds)) {
+                $matchingItems = array_filter($items, fn ($it) => in_array((int) $it['product_id'], $applicableIds, true));
+                $hasApplicableItems = ! empty($matchingItems);
+                $applicableSubtotal = array_sum(array_column($matchingItems, 'total_price'));
+            }
+
+            $meetsMinOrder = $applicableSubtotal >= $v->min_order_amount;
+            $isEligible = $hasApplicableItems && $meetsMinOrder;
+            $shortageAmount = max(0, $v->min_order_amount - $applicableSubtotal);
+
+            $reasonIneligible = null;
+            if (! $hasApplicableItems) {
+                $reasonIneligible = 'Khusus produk: '.implode(', ', $applicableProductNames);
+            } elseif (! $meetsMinOrder) {
+                $reasonIneligible = 'Kurang Rp '.number_format($shortageAmount, 0, ',', '.').' lagi';
+            }
+
+            return [
                 'id' => $v->id,
                 'code' => $v->code,
                 'name' => $v->name,
+                'description' => $v->description,
+                'terms' => $v->terms ?? [],
                 'type' => $v->type,
                 'value' => (int) $v->value,
                 'min_order_amount' => (int) $v->min_order_amount,
-                'min_order_amount_formatted' => 'Rp '.number_format($v->min_order_amount, 0, ',', '.'),
-                'max_discount_amount' => $v->max_discount_amount,
-            ])
-            ->values()
-            ->all();
+                'min_order_amount_formatted' => $v->min_order_amount > 0 ? 'Rp '.number_format($v->min_order_amount, 0, ',', '.') : 'Tanpa Min. Belanja',
+                'max_discount_amount' => $v->max_discount_amount ? (int) $v->max_discount_amount : null,
+                'formatted_discount' => $v->type === 'percentage' ? $v->value.'%' : 'Rp '.number_format($v->value, 0, ',', '.'),
+                'expires_at' => $v->expires_at?->format('d M Y'),
+                'voucher_type' => $isReward ? 'reward' : 'biasa',
+                'category' => $isReward ? 'hanya_untuk_anda' : 'voucher_biasa',
+                'category_label' => $isReward ? 'Hanya Untuk Anda' : 'Voucher Biasa',
+                'applicable_type' => $v->applicable_type ?? 'all',
+                'applicable_product_ids' => $applicableIds,
+                'applicable_product_names' => $applicableProductNames,
+                'is_eligible' => $isEligible,
+                'shortage_amount' => $shortageAmount,
+                'reason_ineligible' => $reasonIneligible,
+            ];
+        })->values()->all();
 
         $appliedVoucher = session('applied_voucher', '');
         if ($request->query('voucher')) {
@@ -229,6 +315,34 @@ class CartController extends Controller
             if ($voucher) {
                 if ($request->user() && $voucher->hasBeenUsedBy($request->user())) {
                     return back()->with('error', "Voucher {$voucher->code} hanya dapat digunakan 1 kali per akun dan sudah pernah Anda gunakan.");
+                }
+
+                if ($voucher->voucher_type === 'reward' || str_starts_with($voucher->code, 'REW-')) {
+                    $userId = $request->user()?->id;
+                    $isOwner = false;
+                    if ($userId) {
+                        if ($voucher->user_id && (int) $voucher->user_id === (int) $userId) {
+                            $isOwner = true;
+                        } else {
+                            $isOwner = LoyaltyPointHistory::where('user_id', $userId)
+                                ->where('type', 'redeemed')
+                                ->where('reference_id', $voucher->code)
+                                ->exists();
+                        }
+                    }
+
+                    if (! $isOwner) {
+                        return back()->with('error', "Voucher '{$voucher->code}' merupakan voucher khusus reward milik akun lain.");
+                    }
+                }
+
+                if ($voucher->applicable_type === 'specific' && ! empty($voucher->applicable_product_ids)) {
+                    $user = $request->user();
+                    $cartProductIds = $user ? $user->cartItems()->pluck('product_id')->map(fn ($id) => (int) $id)->all() : [];
+                    $allowedIds = array_map('intval', (array) $voucher->applicable_product_ids);
+                    if (empty(array_intersect($cartProductIds, $allowedIds))) {
+                        return back()->with('error', "Voucher '{$voucher->code}' hanya berlaku untuk produk tertentu.");
+                    }
                 }
 
                 session(['applied_voucher' => $voucher->code]);

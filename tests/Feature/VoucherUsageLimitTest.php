@@ -191,3 +191,51 @@ test('available vouchers on checkout excludes already used voucher for that user
         ->where('available_vouchers', fn ($vouchers) => ! collect($vouchers)->contains('code', 'PROMOEXCLUDE'))
     );
 });
+
+test('voucher with applicable_type specific only applies to specified products', function () {
+    $user = User::factory()->create();
+    $voucher = Voucher::factory()->create([
+        'code' => 'SPECIFIC10',
+        'type' => 'percentage',
+        'value' => 10,
+        'min_order_amount' => 0,
+        'voucher_type' => 'biasa',
+        'applicable_type' => 'specific',
+        'applicable_product_ids' => [101, 102],
+    ]);
+
+    // Cart with non-applicable product
+    $itemsWithout = [
+        ['product_id' => 999, 'total_price' => 500000],
+    ];
+    expect($voucher->isValidFor(500000, $user, $itemsWithout))->toBeFalse();
+    expect($voucher->calculateDiscount(500000, $user, $itemsWithout))->toBe(0);
+
+    // Cart with applicable product (only ID 101 should be discounted)
+    $itemsWith = [
+        ['product_id' => 101, 'total_price' => 300000],
+        ['product_id' => 999, 'total_price' => 200000],
+    ];
+    expect($voucher->isValidFor(500000, $user, $itemsWith))->toBeTrue();
+    // 10% of 300,000 = 30,000 (not 10% of 500,000)
+    expect($voucher->calculateDiscount(500000, $user, $itemsWith))->toBe(30000);
+});
+
+test('reward voucher can only be used by the assigned user', function () {
+    $owner = User::factory()->create();
+    $otherUser = User::factory()->create();
+
+    $rewardVoucher = Voucher::factory()->create([
+        'code' => 'REW-SPECIAL50',
+        'type' => 'fixed',
+        'value' => 50000,
+        'min_order_amount' => 0,
+        'voucher_type' => 'reward',
+        'user_id' => $owner->id,
+        'applicable_type' => 'all',
+    ]);
+
+    expect($rewardVoucher->isValidFor(100000, $owner))->toBeTrue();
+    expect($rewardVoucher->isValidFor(100000, $otherUser))->toBeFalse();
+    expect($rewardVoucher->calculateDiscount(100000, $otherUser))->toBe(0);
+});

@@ -40,13 +40,17 @@ interface VoucherData {
     starts_at?: string | null;
     expires_at?: string | null;
     is_active: boolean;
+    voucher_type?: 'biasa' | 'reward';
+    applicable_type?: 'all' | 'specific';
+    applicable_product_ids?: number[] | null;
 }
 
 interface AdminVoucherEditProps {
     voucher: VoucherData;
+    products?: { id: number; name: string }[];
 }
 
-export default function AdminVoucherEdit({ voucher }: AdminVoucherEditProps) {
+export default function AdminVoucherEdit({ voucher, products = [] }: AdminVoucherEditProps) {
     const formatDateForInput = (dateString?: string | null) => {
         if (!dateString) return '';
         try {
@@ -71,6 +75,9 @@ export default function AdminVoucherEdit({ voucher }: AdminVoucherEditProps) {
         starts_at: string;
         expires_at: string;
         is_active: boolean;
+        voucher_type: 'biasa' | 'reward';
+        applicable_type: 'all' | 'specific';
+        applicable_product_ids: number[];
     }>({
         code: voucher.code || '',
         name: voucher.name || '',
@@ -84,7 +91,10 @@ export default function AdminVoucherEdit({ voucher }: AdminVoucherEditProps) {
         usage_limit: voucher.usage_limit || '',
         starts_at: formatDateForInput(voucher.starts_at),
         expires_at: formatDateForInput(voucher.expires_at),
-        is_active: Boolean(voucher.is_active),
+        is_active: voucher.is_active ?? true,
+        voucher_type: voucher.voucher_type || 'biasa',
+        applicable_type: voucher.applicable_type || 'all',
+        applicable_product_ids: voucher.applicable_product_ids ? voucher.applicable_product_ids.map(Number) : [],
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -273,6 +283,86 @@ export default function AdminVoucherEdit({ voucher }: AdminVoucherEditProps) {
                                 {errors.value && <p className="text-destructive text-xs">{errors.value}</p>}
                             </div>
                         </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-border">
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-semibold text-foreground">Kategori Tipe Voucher *</label>
+                                <Select
+                                    value={data.voucher_type}
+                                    onValueChange={(val: 'biasa' | 'reward') => setData('voucher_type', val)}
+                                >
+                                    <SelectTrigger className="h-9 text-xs">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="biasa">Voucher Biasa (Promo Toko Umum)</SelectItem>
+                                        <SelectItem value="reward">Voucher Reward (Penukaran Membership)</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <p className="text-[11px] text-muted-foreground">Voucher Biasa dapat digunakan semua pelanggan, sedangkan Voucher Reward khusus penukaran reward Royale Club.</p>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-semibold text-foreground">Jangkauan Produk *</label>
+                                <Select
+                                    value={data.applicable_type}
+                                    onValueChange={(val: 'all' | 'specific') => setData('applicable_type', val)}
+                                >
+                                    <SelectTrigger className="h-9 text-xs">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Semua Produk (Katalog Keseluruhan)</SelectItem>
+                                        <SelectItem value="specific">Hanya Produk Tertentu</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <p className="text-[11px] text-muted-foreground">Tentukan apakah voucher dapat dipakai untuk semua produk atau parfum tertentu.</p>
+                            </div>
+                        </div>
+
+                        {data.applicable_type === 'specific' && (
+                            <div className="p-3.5 rounded-lg border border-border/80 bg-muted/30 space-y-2">
+                                <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                                    <span>Pilih Produk yang Berlaku ({data.applicable_product_ids.length} dipilih)</span>
+                                    <span className="text-[11px] text-muted-foreground font-normal">Centang produk yang ingin disertakan</span>
+                                </label>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
+                                    {products.map((prod) => {
+                                        const isChecked = data.applicable_product_ids.includes(prod.id);
+                                        return (
+                                            <label
+                                                key={prod.id}
+                                                className={`flex items-center gap-2.5 p-2 rounded-md border text-xs cursor-pointer transition-colors ${
+                                                    isChecked
+                                                        ? 'border-[#4A070B] bg-[#4A070B]/5 font-medium text-foreground'
+                                                        : 'border-border bg-background hover:bg-muted/50 text-muted-foreground'
+                                                }`}
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isChecked}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) {
+                                                            setData('applicable_product_ids', [...data.applicable_product_ids, prod.id]);
+                                                        } else {
+                                                            setData(
+                                                                'applicable_product_ids',
+                                                                data.applicable_product_ids.filter((id) => id !== prod.id)
+                                                            );
+                                                        }
+                                                    }}
+                                                    className="rounded border-border text-[#4A070B] focus:ring-[#4A070B]"
+                                                />
+                                                <span className="truncate">{prod.name}</span>
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                                {errors.applicable_product_ids && (
+                                    <p className="text-destructive text-xs">{errors.applicable_product_ids}</p>
+                                )}
+                            </div>
+                        )}
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="space-y-1.5">

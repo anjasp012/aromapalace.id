@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Cache;
 
@@ -29,9 +30,14 @@ use Illuminate\Support\Facades\Cache;
  * @property Carbon|null $starts_at
  * @property Carbon|null $expires_at
  * @property bool $is_active
+ * @property string $voucher_type
+ * @property int|null $user_id
+ * @property string $applicable_type
+ * @property array<int, int>|null $applicable_product_ids
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Collection<int, Order> $orders
+ * @property-read User|null $user
  */
 #[Fillable([
     'code',
@@ -49,6 +55,10 @@ use Illuminate\Support\Facades\Cache;
     'starts_at',
     'expires_at',
     'is_active',
+    'voucher_type',
+    'user_id',
+    'applicable_type',
+    'applicable_product_ids',
 ])]
 class Voucher extends Model
 {
@@ -84,7 +94,16 @@ class Voucher extends Model
             'starts_at' => 'datetime',
             'expires_at' => 'datetime',
             'is_active' => 'boolean',
+            'applicable_product_ids' => 'array',
         ];
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     /**
@@ -113,9 +132,9 @@ class Voucher extends Model
     }
 
     /**
-     * Check if voucher is currently valid for a given subtotal and optional user.
+     * Check if voucher is currently valid for a given subtotal, optional user, and optional cart items.
      */
-    public function isValidFor(int $subtotal, User|int|null $user = null): bool
+    public function isValidFor(int $subtotal, User|int|null $user = null, ?array $items = null): bool
     {
         if (! $this->is_active) {
             return false;
@@ -141,30 +160,82 @@ class Voucher extends Model
             return false;
         }
 
+        // Specific product applicability check
+        if ($this->applicable_type === 'specific' && ! empty($this->applicable_product_ids)) {
+            $allowedIds = array_map('intval', $this->applicable_product_ids);
+            if ($items !== null) {
+                $hasApplicableProduct = false;
+                $applicableSubtotal = 0;
+                foreach ($items as $item) {
+                    $pid = (int) ($item['product_id'] ?? 0);
+                    if (in_array($pid, $allowedIds, true)) {
+                        $hasApplicableProduct = true;
+                        $applicableSubtotal += (int) ($item['total_price'] ?? 0);
+                    }
+                }
+                if (! $hasApplicableProduct) {
+                    return false;
+                }
+                if ($this->min_order_amount > 0 && $applicableSubtotal < $this->min_order_amount) {
+                    return false;
+                }
+            }
+        }
+
+        // Reward voucher ownership check
+        if ($this->voucher_type === 'reward' || str_starts_with($this->code, 'REW-')) {
+            $userId = $user instanceof User ? $user->id : $user;
+            if (! $userId) {
+                return false;
+            }
+            if ($this->user_id && (int) $this->user_id !== (int) $userId) {
+                return false;
+            }
+            $hasClaimed = LoyaltyPointHistory::where('user_id', $userId)
+                ->where('type', 'redeemed')
+                ->where('reference_id', $this->code)
+                ->exists();
+            if (! $hasClaimed && ! $this->user_id) {
+                return false;
+            }
+        }
+
         return true;
     }
 
     /**
-     * Calculate discount amount for a given subtotal and optional user.
+     * Calculate discount amount for a given subtotal, optional user, and optional cart items.
      */
-    public function calculateDiscount(int $subtotal, User|int|null $user = null): int
+    public function calculateDiscount(int $subtotal, User|int|null $user = null, ?array $items = null): int
     {
-        if (! $this->isValidFor($subtotal, $user)) {
+        if (! $this->isValidFor($subtotal, $user, $items)) {
             return 0;
         }
 
+        $applicableSubtotal = $subtotal;
+        if ($this->applicable_type === 'specific' && ! empty($this->applicable_product_ids) && $items !== null) {
+            $allowedIds = array_map('intval', $this->applicable_product_ids);
+            $applicableSubtotal = 0;
+            foreach ($items as $item) {
+                $pid = (int) ($item['product_id'] ?? 0);
+                if (in_array($pid, $allowedIds, true)) {
+                    $applicableSubtotal += (int) ($item['total_price'] ?? 0);
+                }
+            }
+        }
+
         if ($this->type === 'fixed') {
-            return min($subtotal, $this->value);
+            return min($applicableSubtotal, $this->value);
         }
 
         // Percentage discount
-        $discount = (int) round($subtotal * ($this->value / 100));
+        $discount = (int) round($applicableSubtotal * ($this->value / 100));
 
         if ($this->max_discount_amount !== null && $this->max_discount_amount > 0) {
             $discount = min($discount, $this->max_discount_amount);
         }
 
-        return min($subtotal, $discount);
+        return min($applicableSubtotal, $discount);
     }
 
     /**
