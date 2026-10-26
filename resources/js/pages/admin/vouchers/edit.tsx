@@ -41,6 +41,7 @@ interface VoucherData {
     expires_at?: string | null;
     is_active: boolean;
     voucher_type?: 'biasa' | 'reward';
+    user_id?: number | null;
     applicable_type?: 'all' | 'specific';
     applicable_product_ids?: number[] | null;
 }
@@ -48,9 +49,10 @@ interface VoucherData {
 interface AdminVoucherEditProps {
     voucher: VoucherData;
     products?: { id: number; name: string }[];
+    users?: { id: number; name: string; email: string }[];
 }
 
-export default function AdminVoucherEdit({ voucher, products = [] }: AdminVoucherEditProps) {
+export default function AdminVoucherEdit({ voucher, products = [], users = [] }: AdminVoucherEditProps) {
     const formatDateForInput = (dateString?: string | null) => {
         if (!dateString) return '';
         try {
@@ -76,6 +78,7 @@ export default function AdminVoucherEdit({ voucher, products = [] }: AdminVouche
         expires_at: string;
         is_active: boolean;
         voucher_type: 'biasa' | 'reward';
+        user_id: number | string;
         applicable_type: 'all' | 'specific';
         applicable_product_ids: number[];
     }>({
@@ -93,6 +96,7 @@ export default function AdminVoucherEdit({ voucher, products = [] }: AdminVouche
         expires_at: formatDateForInput(voucher.expires_at),
         is_active: voucher.is_active ?? true,
         voucher_type: voucher.voucher_type || 'biasa',
+        user_id: voucher.user_id || '',
         applicable_type: voucher.applicable_type || 'all',
         applicable_product_ids: voucher.applicable_product_ids ? voucher.applicable_product_ids.map(Number) : [],
     });
@@ -289,7 +293,13 @@ export default function AdminVoucherEdit({ voucher, products = [] }: AdminVouche
                                 <label className="text-xs font-semibold text-foreground">Kategori Tipe Voucher *</label>
                                 <Select
                                     value={data.voucher_type}
-                                    onValueChange={(val: 'biasa' | 'reward') => setData('voucher_type', val)}
+                                    onValueChange={(val: 'biasa' | 'reward') => {
+                                        setData((prev) => ({
+                                            ...prev,
+                                            voucher_type: val,
+                                            user_id: val === 'reward' ? prev.user_id : '',
+                                        }));
+                                    }}
                                 >
                                     <SelectTrigger className="h-9 text-xs">
                                         <SelectValue />
@@ -300,6 +310,24 @@ export default function AdminVoucherEdit({ voucher, products = [] }: AdminVouche
                                     </SelectContent>
                                 </Select>
                                 <p className="text-[11px] text-muted-foreground">Voucher Biasa dapat digunakan semua pelanggan, sedangkan Voucher Reward khusus penukaran reward Royale Club.</p>
+                                {data.voucher_type === 'reward' && (
+                                    <div className="pt-2 space-y-1">
+                                        <label className="text-[11px] font-medium text-foreground">Pemilik Voucher (Opsional)</label>
+                                        <select
+                                            value={data.user_id}
+                                            onChange={(e) => setData('user_id', e.target.value)}
+                                            className="w-full h-8 rounded-md border border-input bg-background px-2.5 py-1 text-xs text-foreground focus:ring-1 focus:ring-primary"
+                                        >
+                                            <option value="">Semua Anggota (Bebas Ditukar)</option>
+                                            {users.map((u) => (
+                                                <option key={u.id} value={u.id}>
+                                                    {u.name} ({u.email})
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <p className="text-[10px] text-muted-foreground">Kosongkan jika voucher reward ini bisa ditukarkan oleh semua member.</p>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="space-y-1.5">

@@ -43,6 +43,12 @@ interface VoucherItem {
     starts_at?: string | null;
     expires_at?: string | null;
     is_active: boolean;
+    voucher_type?: 'biasa' | 'reward';
+    user_id?: number | null;
+    user?: { id: number; name: string; email: string } | null;
+    applicable_type?: 'all' | 'specific';
+    applicable_product_ids?: number[] | null;
+    applicable_product_names?: string[];
     created_at?: string;
 }
 
@@ -63,12 +69,17 @@ interface VouchersIndexProps {
     filters: {
         search: string;
         status: string;
+        voucher_type?: string;
+        applicable_type?: string;
     };
     metrics: {
         total_vouchers: number;
         active_vouchers: number;
         expired_vouchers: number;
         total_used: number;
+        total_biasa?: number;
+        total_reward?: number;
+        total_specific?: number;
     };
 }
 
@@ -79,6 +90,8 @@ export default function AdminVouchersIndex({
 }: VouchersIndexProps) {
     const [search, setSearch] = useState(filters.search || '');
     const [statusFilter, setStatusFilter] = useState(filters.status || 'all');
+    const [typeFilter, setTypeFilter] = useState(filters.voucher_type || 'all');
+    const [scopeFilter, setScopeFilter] = useState(filters.applicable_type || 'all');
     const [deleteTarget, setDeleteTarget] = useState<VoucherItem | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
@@ -95,12 +108,24 @@ export default function AdminVouchersIndex({
         applyFilter({ search });
     };
 
-    const applyFilter = (newVals: { search?: string; status?: string }) => {
+    const applyFilter = (newVals: {
+        search?: string;
+        status?: string;
+        voucher_type?: string;
+        applicable_type?: string;
+    }) => {
+        const nextStatus = newVals.status !== undefined ? newVals.status : statusFilter;
+        const nextType = newVals.voucher_type !== undefined ? newVals.voucher_type : typeFilter;
+        const nextScope = newVals.applicable_type !== undefined ? newVals.applicable_type : scopeFilter;
+        const nextSearch = newVals.search !== undefined ? newVals.search : search;
+
         router.get(
             '/manajemen-voucher',
             {
-                search: newVals.search !== undefined ? newVals.search : (search || undefined),
-                status: newVals.status !== undefined ? (newVals.status !== 'all' ? newVals.status : undefined) : (statusFilter !== 'all' ? statusFilter : undefined),
+                search: nextSearch || undefined,
+                status: nextStatus !== 'all' ? nextStatus : undefined,
+                voucher_type: nextType !== 'all' ? nextType : undefined,
+                applicable_type: nextScope !== 'all' ? nextScope : undefined,
             },
             { preserveState: true }
         );
@@ -111,9 +136,21 @@ export default function AdminVouchersIndex({
         applyFilter({ status });
     };
 
+    const handleTypeFilterChange = (voucher_type: string) => {
+        setTypeFilter(voucher_type);
+        applyFilter({ voucher_type });
+    };
+
+    const handleScopeFilterChange = (applicable_type: string) => {
+        setScopeFilter(applicable_type);
+        applyFilter({ applicable_type });
+    };
+
     const handleResetFilter = () => {
         setSearch('');
         setStatusFilter('all');
+        setTypeFilter('all');
+        setScopeFilter('all');
         router.get('/manajemen-voucher');
     };
 
@@ -190,9 +227,9 @@ export default function AdminVouchersIndex({
                 </div>
 
                 {/* Filter and Actions */}
-                <Card className="p-4">
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-                        <form onSubmit={handleSearchSubmit} className="flex-1 w-full sm:max-w-md flex items-center gap-2">
+                <Card className="p-4 space-y-3">
+                    <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+                        <form onSubmit={handleSearchSubmit} className="flex-1 w-full lg:max-w-md flex items-center gap-2">
                             <div className="relative flex-1">
                                 <Search className="size-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                                 <Input
@@ -208,7 +245,8 @@ export default function AdminVouchersIndex({
                             </Button>
                         </form>
 
-                        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                        <div className="flex flex-wrap items-center gap-2">
+                            {/* Filter Status */}
                             <div className="flex rounded-md border p-0.5 bg-muted/40">
                                 <Button
                                     type="button"
@@ -239,13 +277,35 @@ export default function AdminVouchersIndex({
                                 </Button>
                             </div>
 
-                            {(search !== '' || statusFilter !== 'all') && (
+                            {/* Filter Tipe */}
+                            <select
+                                value={typeFilter}
+                                onChange={(e) => handleTypeFilterChange(e.target.value)}
+                                className="h-8 rounded-md border border-input bg-background px-2 py-1 text-xs text-foreground cursor-pointer"
+                            >
+                                <option value="all">Semua Tipe</option>
+                                <option value="biasa">Voucher Biasa</option>
+                                <option value="reward">Voucher Reward</option>
+                            </select>
+
+                            {/* Filter Cakupan Produk */}
+                            <select
+                                value={scopeFilter}
+                                onChange={(e) => handleScopeFilterChange(e.target.value)}
+                                className="h-8 rounded-md border border-input bg-background px-2 py-1 text-xs text-foreground cursor-pointer"
+                            >
+                                <option value="all">Semua Cakupan</option>
+                                <option value="all">Katalog Semua Produk</option>
+                                <option value="specific">Khusus Produk Tertentu</option>
+                            </select>
+
+                            {(search !== '' || statusFilter !== 'all' || typeFilter !== 'all' || scopeFilter !== 'all') && (
                                 <Button
                                     type="button"
                                     variant="outline"
                                     size="sm"
                                     onClick={handleResetFilter}
-                                    className="h-9 cursor-pointer"
+                                    className="h-8 cursor-pointer text-xs"
                                     title="Reset Pencarian"
                                 >
                                     <RefreshCw className="size-3.5 mr-1" />
@@ -253,7 +313,7 @@ export default function AdminVouchersIndex({
                                 </Button>
                             )}
 
-                            <Button size="sm" asChild className="h-9 cursor-pointer">
+                            <Button size="sm" asChild className="h-8 cursor-pointer">
                                 <Link href="/manajemen-voucher/create">
                                     <Plus className="size-4 mr-1.5" />
                                     <span>Tambah Voucher</span>
@@ -270,6 +330,8 @@ export default function AdminVouchersIndex({
                             <thead className="border-b bg-muted/50 text-muted-foreground">
                                 <tr className="border-b transition-colors text-xs">
                                     <th className="h-10 px-4 text-left font-medium">Kode &amp; Nama</th>
+                                    <th className="h-10 px-4 text-left font-medium">Tipe &amp; Pemilik</th>
+                                    <th className="h-10 px-4 text-left font-medium">Cakupan Produk</th>
                                     <th className="h-10 px-4 text-left font-medium">Potongan Diskon</th>
                                     <th className="h-10 px-4 text-left font-medium">Syarat Belanja</th>
                                     <th className="h-10 px-4 text-left font-medium">Pemakaian</th>
@@ -281,13 +343,15 @@ export default function AdminVouchersIndex({
                             <tbody className="divide-y text-xs">
                                 {vouchers.data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={7} className="p-8 text-center text-muted-foreground">
+                                        <td colSpan={9} className="p-8 text-center text-muted-foreground">
                                             Tidak ada voucher promo ditemukan.
                                         </td>
                                     </tr>
                                 ) : (
                                     vouchers.data.map((v) => {
                                         const isExpired = v.expires_at ? new Date(v.expires_at) < new Date() : false;
+                                        const isReward = v.voucher_type === 'reward' || v.code.startsWith('REW-');
+                                        const isSpecific = v.applicable_type === 'specific';
                                         return (
                                             <tr key={v.id} className="hover:bg-muted/50 transition-colors">
                                                 <td className="p-4 align-middle">
@@ -299,6 +363,41 @@ export default function AdminVouchersIndex({
                                                         <div className="text-[11px] text-muted-foreground italic font-normal">
                                                             EN: {v.name_en}
                                                         </div>
+                                                    )}
+                                                </td>
+                                                <td className="p-4 align-middle">
+                                                    {isReward ? (
+                                                        <div>
+                                                            <Badge variant="secondary" className="bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30 text-[10px] font-semibold">
+                                                                Reward Royale Club
+                                                            </Badge>
+                                                            {v.user && (
+                                                                <div className="text-[11px] text-muted-foreground mt-1">
+                                                                    <span className="font-medium text-foreground">{v.user.name}</span>
+                                                                    <span className="block text-[10px] opacity-80">{v.user.email}</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                                                            Voucher Biasa
+                                                        </Badge>
+                                                    )}
+                                                </td>
+                                                <td className="p-4 align-middle max-w-[200px]">
+                                                    {isSpecific ? (
+                                                        <div>
+                                                            <Badge variant="secondary" className="bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-500/30 text-[10px] font-semibold">
+                                                                Khusus {v.applicable_product_names?.length || v.applicable_product_ids?.length || 0} Produk
+                                                            </Badge>
+                                                            {v.applicable_product_names && v.applicable_product_names.length > 0 && (
+                                                                <div className="text-[11px] text-muted-foreground mt-1 line-clamp-2" title={v.applicable_product_names.join(', ')}>
+                                                                    {v.applicable_product_names.join(', ')}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-muted-foreground text-[11px]">Semua Produk</span>
                                                     )}
                                                 </td>
                                                 <td className="p-4 align-middle">

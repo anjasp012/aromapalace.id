@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Models\User;
 use App\Models\Voucher;
 use App\Services\FirebaseNotificationService;
 use Illuminate\Http\RedirectResponse;
@@ -19,8 +20,11 @@ class VoucherController extends Controller
     {
         $search = $request->string('search')->trim()->value();
         $status = $request->string('status')->value() ?: 'all';
+        $voucherType = $request->string('voucher_type')->value() ?: 'all';
+        $applicableType = $request->string('applicable_type')->value() ?: 'all';
 
         $vouchersQuery = Voucher::query()
+            ->with('user:id,name,email')
             ->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('code', 'like', "%{$search}%")
@@ -39,9 +43,43 @@ class VoucherController extends Controller
                 $query->whereNotNull('expires_at')
                     ->where('expires_at', '<', now());
             })
+            ->when($voucherType && $voucherType !== 'all', function ($query) use ($voucherType) {
+                $query->where('voucher_type', $voucherType);
+            })
+            ->when($applicableType && $applicableType !== 'all', function ($query) use ($applicableType) {
+                $query->where('applicable_type', $applicableType);
+            })
             ->latest('id');
 
         $vouchers = $vouchersQuery->paginate(15)->withQueryString();
+
+        // Attach applicable product names for specific vouchers
+        $allProductIds = collect($vouchers->items())
+            ->where('applicable_type', 'specific')
+            ->pluck('applicable_product_ids')
+            ->flatten()
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        $productNamesMap = ! empty($allProductIds)
+            ? Product::whereIn('id', $allProductIds)->pluck('name', 'id')->all()
+            : [];
+
+        $vouchers->through(function ($v) use ($productNamesMap) {
+            $prodNames = [];
+            if ($v->applicable_type === 'specific' && ! empty($v->applicable_product_ids)) {
+                foreach ($v->applicable_product_ids as $pid) {
+                    if (isset($productNamesMap[$pid])) {
+                        $prodNames[] = $productNamesMap[$pid];
+                    }
+                }
+            }
+            $v->applicable_product_names = $prodNames;
+
+            return $v;
+        });
 
         $metrics = [
             'total_vouchers' => Voucher::count(),
@@ -54,6 +92,9 @@ class VoucherController extends Controller
                 ->where('expires_at', '<', now())
                 ->count(),
             'total_used' => (int) Voucher::sum('used_count'),
+            'total_biasa' => Voucher::where('voucher_type', 'biasa')->count(),
+            'total_reward' => Voucher::where('voucher_type', 'reward')->count(),
+            'total_specific' => Voucher::where('applicable_type', 'specific')->count(),
         ];
 
         return Inertia::render('admin/vouchers/index', [
@@ -61,6 +102,8 @@ class VoucherController extends Controller
             'filters' => [
                 'search' => $search,
                 'status' => $status,
+                'voucher_type' => $voucherType,
+                'applicable_type' => $applicableType,
             ],
             'metrics' => $metrics,
         ]);
@@ -70,6 +113,7 @@ class VoucherController extends Controller
     {
         return Inertia::render('admin/vouchers/create', [
             'products' => Product::query()->orderBy('name')->get(['id', 'name']),
+            'users' => User::query()->orderBy('name')->get(['id', 'name', 'email']),
         ]);
     }
 
@@ -90,6 +134,7 @@ class VoucherController extends Controller
             'expires_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
             'is_active' => ['nullable', 'boolean'],
             'voucher_type' => ['nullable', 'string', 'in:biasa,reward'],
+            'user_id' => ['nullable', 'integer', 'exists:users,id'],
             'applicable_type' => ['nullable', 'string', 'in:all,specific'],
             'applicable_product_ids' => ['nullable', 'array'],
             'applicable_product_ids.*' => ['integer'],
@@ -99,6 +144,7 @@ class VoucherController extends Controller
         $validated['min_order_amount'] = $validated['min_order_amount'] ?? 0;
         $validated['is_active'] = $request->boolean('is_active', true);
         $validated['voucher_type'] = $validated['voucher_type'] ?? 'biasa';
+        $validated['user_id'] = ($validated['voucher_type'] === 'reward') ? ($validated['user_id'] ?? null) : null;
         $validated['applicable_type'] = $validated['applicable_type'] ?? 'all';
         $validated['applicable_product_ids'] = ($validated['applicable_type'] === 'specific')
             ? array_values(array_map('intval', $validated['applicable_product_ids'] ?? []))
@@ -116,8 +162,9 @@ class VoucherController extends Controller
     public function edit(Voucher $voucher): Response
     {
         return Inertia::render('admin/vouchers/edit', [
-            'voucher' => $voucher,
+            'voucher' => $voucher->load('user:id,name,email'),
             'products' => Product::query()->orderBy('name')->get(['id', 'name']),
+            'users' => User::query()->orderBy('name')->get(['id', 'name', 'email']),
         ]);
     }
 
@@ -138,6 +185,7 @@ class VoucherController extends Controller
             'expires_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
             'is_active' => ['nullable', 'boolean'],
             'voucher_type' => ['nullable', 'string', 'in:biasa,reward'],
+            'user_id' => ['nullable', 'integer', 'exists:users,id'],
             'applicable_type' => ['nullable', 'string', 'in:all,specific'],
             'applicable_product_ids' => ['nullable', 'array'],
             'applicable_product_ids.*' => ['integer'],
@@ -147,6 +195,7 @@ class VoucherController extends Controller
         $validated['min_order_amount'] = $validated['min_order_amount'] ?? 0;
         $validated['is_active'] = $request->boolean('is_active', true);
         $validated['voucher_type'] = $validated['voucher_type'] ?? 'biasa';
+        $validated['user_id'] = ($validated['voucher_type'] === 'reward') ? ($validated['user_id'] ?? null) : null;
         $validated['applicable_type'] = $validated['applicable_type'] ?? 'all';
         $validated['applicable_product_ids'] = ($validated['applicable_type'] === 'specific')
             ? array_values(array_map('intval', $validated['applicable_product_ids'] ?? []))

@@ -100,7 +100,7 @@ export default function VoucherSelectorModal({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-xl p-0 overflow-hidden rounded-2xl border border-border/80 shadow-2xl bg-card">
+            <DialogContent className="w-[calc(100vw-32px)] max-w-[calc(100vw-32px)] sm:w-full sm:max-w-2xl p-0 overflow-hidden rounded-2xl border border-border/80 shadow-2xl bg-card">
                 {/* Header */}
                 <DialogHeader className="p-5 pb-4 border-b border-border/70 bg-gradient-to-r from-[#4A070B]/5 via-background to-[#E8D0BA]/10">
                     <div className="flex items-center gap-2.5">
