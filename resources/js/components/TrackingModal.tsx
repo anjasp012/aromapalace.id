@@ -257,6 +257,7 @@ export default function TrackingModal({
         setTimeout(() => setCopied(false), 2000);
     };
     const displayCourier = data?.courier || initialData?.courier || 'Kurir Pengiriman';
+    const courierLogoUrl = getCourierLogo(data?.courier_logo || initialData?.courier_logo, displayCourier);
     const displaySenderName = data?.sender?.name || initialData?.sender?.name || 'Aroma Palace Official';
     const displayRecipientName = data?.recipient?.name || initialData?.recipient?.name || 'Penerima';
     const displayRecipientPhone = data?.recipient?.phone || initialData?.recipient?.phone || '';

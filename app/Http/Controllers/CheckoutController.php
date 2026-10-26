@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\PaymentMethod;
 use App\Models\ProductVariant;
 use App\Models\Store;
+use App\Models\User;
 use App\Models\Voucher;
 use App\Services\CatalogService;
 use App\Services\FirebaseNotificationService;
@@ -660,7 +661,7 @@ class CheckoutController extends Controller
     /**
      * Calculate discount amount from a promo code for a given user.
      */
-    private function calculateDiscount(string $code, int $subtotal, \App\Models\User|int|null $user = null): int
+    private function calculateDiscount(string $code, int $subtotal, User|int|null $user = null): int
     {
         $code = strtoupper(trim($code));
         if ($code === '') {

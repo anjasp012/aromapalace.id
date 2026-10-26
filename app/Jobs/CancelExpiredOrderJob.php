@@ -33,8 +33,12 @@ class CancelExpiredOrderJob implements ShouldQueue
             return;
         }
 
-        // Cancel order if still pending, restore stock, and push FCM notification
+        // Cancel order if still pending and expired (older than 23+ hours)
         if ($order->payment_status === 'pending') {
+            if ($order->created_at && $order->created_at->gt(now()->subHours(23))) {
+                return;
+            }
+
             Log::info("Delayed Job: Auto-canceling expired order #{$order->order_number} after 24 hours.");
             $orderService->cancelOrder($order, 'Batas waktu pembayaran 24 jam telah berakhir.');
         }
