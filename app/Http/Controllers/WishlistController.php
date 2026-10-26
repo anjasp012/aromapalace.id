@@ -53,8 +53,10 @@ class WishlistController extends Controller
         $productId = (int) $validated['product_id'];
         $product = CatalogService::find($productId);
 
+        $isEn = app()->getLocale() === 'en';
+
         if (! $product) {
-            return back()->with('error', 'Produk wewangian tidak ditemukan.');
+            return back()->with('error', $isEn ? 'Fragrance product not found.' : 'Produk wewangian tidak ditemukan.');
         }
 
         $userId = $request->user()->id;
@@ -65,7 +67,7 @@ class WishlistController extends Controller
         if ($existing) {
             $existing->delete();
 
-            return back()->with('success', 'Dihapus dari wishlist.');
+            return back()->with('success', $isEn ? 'Removed from wishlist.' : 'Dihapus dari wishlist.');
         }
 
         Wishlist::create([
@@ -73,7 +75,7 @@ class WishlistController extends Controller
             'product_id' => $productId,
         ]);
 
-        return back()->with('success', 'Ditambahkan ke wishlist.');
+        return back()->with('success', $isEn ? 'Added to wishlist.' : 'Ditambahkan ke wishlist.');
     }
 
     /**
@@ -81,14 +83,15 @@ class WishlistController extends Controller
      */
     public function destroy(Request $request, int $productId): RedirectResponse
     {
+        $isEn = app()->getLocale() === 'en';
         $deleted = Wishlist::where('user_id', $request->user()->id)
             ->where('product_id', $productId)
             ->delete();
 
         if ($deleted) {
-            return back()->with('success', 'Dihapus dari wishlist.');
+            return back()->with('success', $isEn ? 'Removed from wishlist.' : 'Dihapus dari wishlist.');
         }
 
-        return back()->with('error', 'Wewangian tidak ditemukan di wishlist Anda.');
+        return back()->with('error', $isEn ? 'Fragrance not found in your wishlist.' : 'Wewangian tidak ditemukan di wishlist Anda.');
     }
 }

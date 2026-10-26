@@ -97,15 +97,17 @@ class UserAddressController extends Controller
             return $addr;
         });
 
+        $isEn = app()->getLocale() === 'en';
+
         if ($request->wantsJson()) {
             return response()->json([
                 'status' => true,
-                'message' => 'Alamat pengiriman berhasil disimpan.',
+                'message' => $isEn ? 'Shipping address saved successfully.' : 'Alamat pengiriman berhasil disimpan.',
                 'data' => $address,
             ]);
         }
 
-        return back()->with('success', 'Alamat pengiriman berhasil disimpan.');
+        return back()->with('success', $isEn ? 'Shipping address saved successfully.' : 'Alamat pengiriman berhasil disimpan.');
     }
 
     /**
@@ -188,15 +190,17 @@ class UserAddressController extends Controller
             }
         });
 
+        $isEn = app()->getLocale() === 'en';
+
         if ($request->wantsJson()) {
             return response()->json([
                 'status' => true,
-                'message' => 'Alamat pengiriman berhasil diperbarui.',
+                'message' => $isEn ? 'Shipping address updated successfully.' : 'Alamat pengiriman berhasil diperbarui.',
                 'data' => $address->fresh(),
             ]);
         }
 
-        return back()->with('success', 'Alamat pengiriman berhasil diperbarui.');
+        return back()->with('success', $isEn ? 'Shipping address updated successfully.' : 'Alamat pengiriman berhasil diperbarui.');
     }
 
     /**
@@ -222,14 +226,16 @@ class UserAddressController extends Controller
             }
         });
 
+        $isEn = app()->getLocale() === 'en';
+
         if ($request->wantsJson()) {
             return response()->json([
                 'status' => true,
-                'message' => 'Alamat berhasil dihapus.',
+                'message' => $isEn ? 'Address deleted successfully.' : 'Alamat berhasil dihapus.',
             ]);
         }
 
-        return back()->with('success', 'Alamat berhasil dihapus.');
+        return back()->with('success', $isEn ? 'Address deleted successfully.' : 'Alamat berhasil dihapus.');
     }
 
     /**
@@ -251,14 +257,16 @@ class UserAddressController extends Controller
             }
         });
 
+        $isEn = app()->getLocale() === 'en';
+
         if ($request->wantsJson()) {
             return response()->json([
                 'status' => true,
-                'message' => 'Alamat utama berhasil diubah.',
+                'message' => $isEn ? 'Primary address updated.' : 'Alamat utama berhasil diubah.',
                 'data' => $address->fresh(),
             ]);
         }
 
-        return back()->with('success', 'Alamat utama berhasil diubah.');
+        return back()->with('success', $isEn ? 'Primary address updated.' : 'Alamat utama berhasil diubah.');
     }
 }

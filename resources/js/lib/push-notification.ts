@@ -70,6 +70,61 @@ export async function registerNotificationServiceWorker(): Promise<ServiceWorker
     }
 }
 
+export function isCurrentLocaleEn(): boolean {
+    if (typeof window === 'undefined') return false;
+    const fromStorage = localStorage.getItem('aromapalace_locale');
+    if (fromStorage) return fromStorage === 'en';
+    const match = document.cookie.match(/(?:^|;\s*)locale=([^;]+)/);
+    return match ? match[1] === 'en' : false;
+}
+
+export function translatePushTitle(title: string): string {
+    if (!title) return 'Aroma Palace';
+    const t = title.trim();
+    if (t.includes('Pesanan Baru Masuk')) return t.replace('Pesanan Baru Masuk', 'New Order Received');
+    if (t.includes('Pesanan Berhasil Dibuat')) return t.replace('Pesanan Berhasil Dibuat', 'Order Created Successfully');
+    if (t.includes('Pembayaran Berhasil')) return t.replace('Pembayaran Berhasil', 'Payment Successful');
+    if (t.includes('Pembayaran Diterima')) return t.replace('Pembayaran Diterima', 'Payment Received');
+    if (t.includes('Pesanan Anda Sedang Dikirim') || t.includes('Pesanan Sedang Dikirim')) return 'Your Order is On the Way!';
+    if (t.includes('Pesanan Siap Diambil di Butik')) return 'Your Order is Ready for Boutique Pickup!';
+    if (t.includes('Pesanan Telah Sampai')) return t.replace('Pesanan Telah Sampai', 'Your Order Has Arrived');
+    if (t.includes('Pesanan Selesai')) return t.replace('Pesanan Selesai', 'Order Completed');
+    if (t.includes('Pesanan Dibatalkan')) return t.replace('Pesanan Dibatalkan', 'Order Canceled');
+    if (t.includes('Voucher Spesial Baru')) return t.replace('Voucher Spesial Baru', 'New Special Voucher');
+    if (t.includes('Promo Spesial')) return t.replace('Promo Spesial', 'Special Promo');
+    return t;
+}
+
+export function translatePushBody(body: string): string {
+    if (!body) return 'You have a new notification.';
+    let b = body;
+    if (b.includes('sedang menunggu pembayaran')) {
+        b = b.replace(/Pesanan #(\S+) sedang menunggu pembayaran (.+)\./, 'Order #$1 is awaiting payment of $2.');
+    }
+    if (b.includes('telah lunas. Pesanan Anda sedang disiapkan dan dikemas.')) {
+        b = b.replace(/Pembayaran (.+) telah lunas\. Pesanan Anda sedang disiapkan dan dikemas\./, 'Payment of $1 is confirmed. Your luxury order is being prepared and packed.');
+    }
+    if (b.includes('telah diserahkan kepada')) {
+        b = b.replace(/Pesanan #(\S+) telah diserahkan kepada (.+)\. Nantikan aroma mewah Anda segera tiba\./, 'Order #$1 has been handed over to $2. Look forward to your luxury fragrance soon.');
+    }
+    if (b.includes('sudah siap diambil di')) {
+        b = b.replace(/Wewangian mewah pesanan Anda #(\S+) sudah siap diambil di (.+)\./, 'Your luxury fragrance order #$1 is ready for pickup at $2.');
+    }
+    if (b.includes('telah sampai di tujuan')) {
+        b = b.replace(/Paket pesanan #(\S+) telah sampai di tujuan\. Pesanan otomatis selesai pada (.+)\. Silakan periksa produk Anda\./, 'Package for order #$1 has arrived at destination. Automatically completes on $2. Please check your products.');
+    }
+    if (b.includes('telah selesai. Terima kasih telah berbelanja di Aroma Palace!')) {
+        b = b.replace(/Pesanan wewangian mewah #(\S+) telah selesai\. Terima kasih telah berbelanja di Aroma Palace!/, 'Your luxury fragrance order #$1 has been completed. Thank you for shopping with Aroma Palace!');
+    }
+    if (b.includes('telah dibatalkan otomatis karena')) {
+        b = b.replace(/Pesanan wewangian Anda telah dibatalkan otomatis karena (.+)/, 'Your fragrance order was automatically canceled due to: $1');
+    }
+    if (b.includes('Gunakan kode')) {
+        b = b.replace(/Gunakan kode (\S+) untuk (.+) di Aroma Palace\. Jangan lewatkan!/, 'Use code $1 for $2 at Aroma Palace. Don\'t miss out!');
+    }
+    return b;
+}
+
 let nativeListenersRegistered = false;
 
 function setupNativePushListeners(csrfToken?: string, onNotificationReceived?: (payload: any) => void) {
@@ -130,9 +185,19 @@ function setupNativePushListeners(csrfToken?: string, onNotificationReceived?: (
             onNotificationReceived(notification);
         }
 
+        const isEn = isCurrentLocaleEn();
+        const data = notification.data || {};
+        let title = isEn && data?.title_en ? data.title_en : (notification.title || 'Aroma Palace');
+        let body = isEn && data?.body_en ? data.body_en : (notification.body || (isEn ? 'You have a new notification.' : 'Anda memiliki notifikasi baru.'));
+
+        if (isEn && !data?.title_en) {
+            title = translatePushTitle(title);
+        }
+        if (isEn && !data?.body_en) {
+            body = translatePushBody(body);
+        }
+
         // Show in-app banner/toast if helper available
-        const title = notification.title || 'Aroma Palace';
-        const body = notification.body || 'Anda memiliki notifikasi baru.';
         window.showPromoToast?.(`${title}: ${body}`);
     });
 
@@ -171,8 +236,18 @@ export async function initFirebaseForegroundListener(
         const messaging = getMessaging(app);
 
         const unsubscribe = onMessage(messaging, (payload) => {
-            const title = payload.notification?.title || payload.data?.title || 'Aroma Palace';
-            const body = payload.notification?.body || payload.data?.body || 'Anda memiliki notifikasi baru.';
+            const isEn = isCurrentLocaleEn();
+            const data = payload.data || {};
+            let title = isEn && data?.title_en ? data.title_en : (payload.notification?.title || data?.title || 'Aroma Palace');
+            let body = isEn && data?.body_en ? data.body_en : (payload.notification?.body || data?.body || (isEn ? 'You have a new notification.' : 'Anda memiliki notifikasi baru.'));
+
+            if (isEn && !data?.title_en) {
+                title = translatePushTitle(title);
+            }
+            if (isEn && !data?.body_en) {
+                body = translatePushBody(body);
+            }
+
             const url = payload.data?.url || payload.notification?.click_action || '/';
             const tag = payload.data?.order_number
                 ? 'order-' + payload.data.order_number
@@ -195,6 +270,9 @@ export async function initFirebaseForegroundListener(
 
             showSystemNotification(title, body, url, tag);
 
+            // Also show real-time in-app toast banner
+            window.showPromoToast?.(`${title}: ${body}`);
+
             if (onNotificationReceived) {
                 onNotificationReceived(payload);
             }
@@ -211,10 +289,13 @@ export async function initFirebaseForegroundListener(
  * Request notification permission, obtain token, and send to Laravel backend
  */
 export async function enablePushNotifications(csrfToken?: string): Promise<{ success: boolean; message: string }> {
+    const isEn = isCurrentLocaleEn();
     if (!isPushNotificationSupported()) {
         return {
             success: false,
-            message: 'Perangkat atau browser Anda belum mendukung notifikasi push.',
+            message: isEn
+                ? 'Your device or browser does not support push notifications.'
+                : 'Perangkat atau browser Anda belum mendukung notifikasi push.',
         };
     }
 
@@ -231,7 +312,9 @@ export async function enablePushNotifications(csrfToken?: string): Promise<{ suc
             if (perm.receive !== 'granted') {
                 return {
                     success: false,
-                    message: 'Izin notifikasi belum diaktifkan di iPhone Anda. Silakan buka Pengaturan iPhone > Aroma Palace > Pemberitahuan.',
+                    message: isEn
+                        ? 'Notification permission is not enabled. Please open Settings > Aroma Palace > Notifications.'
+                        : 'Izin notifikasi belum diaktifkan di iPhone Anda. Silakan buka Pengaturan iPhone > Aroma Palace > Pemberitahuan.',
                 };
             }
 
@@ -336,7 +419,9 @@ export async function enablePushNotifications(csrfToken?: string): Promise<{ suc
                 localStorage.removeItem('aromapalace_fcm_token');
                 return {
                     success: false,
-                    message: 'Gagal memperoleh token notifikasi dari Firebase.',
+                    message: isEn
+                        ? 'Failed to obtain notification token from Firebase.'
+                        : 'Gagal memperoleh token notifikasi dari Firebase.',
                 };
             }
         }
@@ -345,18 +430,18 @@ export async function enablePushNotifications(csrfToken?: string): Promise<{ suc
         if (synced) {
             return {
                 success: true,
-                message: 'Notifikasi berhasil diaktifkan.',
+                message: isEn ? 'Notifications enabled successfully.' : 'Notifikasi berhasil diaktifkan.',
             };
         }
 
         return {
             success: true,
-            message: 'Izin notifikasi browser aktif.',
+            message: isEn ? 'Browser notification permission active.' : 'Izin notifikasi browser aktif.',
         };
     } catch (err: any) {
         return {
             success: false,
-            message: err?.message || 'Terjadi kesalahan saat mengaktifkan notifikasi.',
+            message: err?.message || (isEn ? 'An error occurred while enabling notifications.' : 'Terjadi kesalahan saat mengaktifkan notifikasi.'),
         };
     }
 }
@@ -439,12 +524,12 @@ export async function disablePushNotifications(csrfToken?: string): Promise<{ su
         localStorage.setItem('aromapalace_notifications_enabled', 'false');
         return {
             success: true,
-            message: 'Notifikasi berhasil dinonaktifkan.',
+            message: isEn ? 'Notifications disabled successfully.' : 'Notifikasi berhasil dinonaktifkan.',
         };
     } catch (err: any) {
         return {
             success: false,
-            message: err?.message || 'Gagal menonaktifkan notifikasi.',
+            message: err?.message || (isEn ? 'Failed to disable notifications.' : 'Gagal menonaktifkan notifikasi.'),
         };
     }
 }

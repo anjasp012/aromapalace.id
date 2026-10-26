@@ -90,20 +90,8 @@ export function redirectToAppOrStore(force = false): void {
             }
         }, 1200);
     } else if (platform === 'android') {
-        // Intent URI format standard for Android Chrome & mobile browsers
-        const fallbackEncoded = encodeURIComponent(PLAY_STORE_URL);
-        const intentUrl = `intent://${currentHost}/${cleanPath}${search}#Intent;scheme=https;package=${ANDROID_PACKAGE_ID};S.browser_fallback_url=${fallbackEncoded};end`;
-
-        const startTime = Date.now();
-        window.location.href = intentUrl;
-
-        // Fallback for browsers that do not process intent URLs
-        setTimeout(() => {
-            const timeElapsed = Date.now() - startTime;
-            if (!document.hidden && timeElapsed < 2500) {
-                window.location.href = PLAY_STORE_URL;
-            }
-        }, 1200);
+        // Android browser auto-redirect to Play Store is disabled in favor of in-app APK download confirmation popup
+        return;
     }
 }
 

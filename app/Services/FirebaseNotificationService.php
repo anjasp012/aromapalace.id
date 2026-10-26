@@ -345,12 +345,26 @@ class FirebaseNotificationService
 
         // Notifikasi ke Customer
         if ($order->user_id) {
+            $isEn = app()->getLocale() === 'en';
+            $titleId = 'Pesanan Berhasil Dibuat!';
+            $bodyId = "Pesanan #{$order->order_number} sedang menunggu pembayaran {$formattedTotal}.";
+            $titleEn = "Order Created Successfully! #{$order->order_number}";
+            $bodyEn = "Order #{$order->order_number} is awaiting payment of {$formattedTotal}.";
+
             $this->sendToUser(
                 user: $order->user_id,
-                title: 'Pesanan Berhasil Dibuat!',
-                body: "Pesanan #{$order->order_number} sedang menunggu pembayaran {$formattedTotal}.",
+                title: $isEn ? $titleEn : $titleId,
+                body: $isEn ? $bodyEn : $bodyId,
                 url: url('/payment/'.$order->order_number),
-                data: ['order_id' => (string) $order->id, 'type' => 'order_created']
+                data: [
+                    'order_id' => (string) $order->id,
+                    'order_number' => (string) $order->order_number,
+                    'type' => 'order_created',
+                    'title_en' => $titleEn,
+                    'body_en' => $bodyEn,
+                    'title_id' => $titleId,
+                    'body_id' => $bodyId,
+                ]
             );
         }
     }
@@ -381,15 +395,25 @@ class FirebaseNotificationService
 
         // Ke Customer
         if ($order->user_id) {
+            $isEn = app()->getLocale() === 'en';
+            $titleId = 'Pembayaran Berhasil! #'.$order->order_number;
+            $bodyId = "Pembayaran {$formattedTotal} telah lunas. Pesanan Anda sedang disiapkan dan dikemas.";
+            $titleEn = 'Payment Confirmed! #'.$order->order_number;
+            $bodyEn = "Payment of {$formattedTotal} is confirmed. Your luxury order is being prepared and packed.";
+
             $this->sendToUser(
                 user: $order->user_id,
-                title: 'Pembayaran Berhasil! #'.$order->order_number,
-                body: "Pembayaran {$formattedTotal} telah lunas. Pesanan Anda sedang disiapkan dan dikemas.",
+                title: $isEn ? $titleEn : $titleId,
+                body: $isEn ? $bodyEn : $bodyId,
                 url: url('/account/orders'),
                 data: [
                     'order_id' => (string) $order->id,
                     'order_number' => (string) $order->order_number,
                     'type' => 'payment_success',
+                    'title_en' => $titleEn,
+                    'body_en' => $bodyEn,
+                    'title_id' => $titleId,
+                    'body_id' => $bodyId,
                 ]
             );
         }
@@ -417,19 +441,30 @@ class FirebaseNotificationService
             return;
         }
 
-        $courierName = $order->courier ?: 'Kurir Rekanan';
-        $trackingText = $order->tracking_number ? " (No. Resi: {$order->tracking_number})" : '';
+        $isEn = app()->getLocale() === 'en';
+        $courierName = $order->courier ?: ($isEn ? 'Partner Courier' : 'Kurir Rekanan');
+        $trackingTextId = $order->tracking_number ? " (No. Resi: {$order->tracking_number})" : '';
+        $trackingTextEn = $order->tracking_number ? " (Tracking No: {$order->tracking_number})" : '';
+
+        $titleId = 'Pesanan Anda Sedang Dikirim!';
+        $bodyId = "Pesanan #{$order->order_number} telah diserahkan kepada {$courierName}{$trackingTextId}. Nantikan aroma mewah Anda segera tiba.";
+        $titleEn = 'Your Order is On the Way!';
+        $bodyEn = "Order #{$order->order_number} has been handed over to {$courierName}{$trackingTextEn}. Look forward to your luxury fragrance soon.";
 
         $this->sendToUser(
             user: $order->user_id,
-            title: 'Pesanan Anda Sedang Dikirim!',
-            body: "Pesanan #{$order->order_number} telah diserahkan kepada {$courierName}{$trackingText}. Nantikan aroma mewah Anda segera tiba.",
+            title: $isEn ? $titleEn : $titleId,
+            body: $isEn ? $bodyEn : $bodyId,
             url: url('/account/orders'),
             data: [
                 'order_id' => (string) $order->id,
                 'order_number' => (string) $order->order_number,
                 'tracking_number' => (string) ($order->tracking_number ?? ''),
                 'type' => 'order_shipped',
+                'title_en' => $titleEn,
+                'body_en' => $bodyEn,
+                'title_id' => $titleId,
+                'body_id' => $bodyId,
             ]
         );
     }
@@ -444,14 +479,28 @@ class FirebaseNotificationService
             return;
         }
 
-        $storeName = $order->store ? $order->store->name : 'Butik Resmi Aroma Palace';
+        $isEn = app()->getLocale() === 'en';
+        $storeName = $order->store ? $order->store->name : ($isEn ? 'Aroma Palace Official Boutique' : 'Butik Resmi Aroma Palace');
+
+        $titleId = 'Pesanan Siap Diambil di Butik!';
+        $bodyId = "Wewangian mewah pesanan Anda #{$order->order_number} sudah siap diambil di {$storeName}.";
+        $titleEn = 'Your Order is Ready for Boutique Pickup!';
+        $bodyEn = "Your luxury fragrance order #{$order->order_number} is ready for pickup at {$storeName}.";
 
         $this->sendToUser(
             user: $order->user_id,
-            title: 'Pesanan Siap Diambil di Butik!',
-            body: "Wewangian mewah pesanan Anda #{$order->order_number} sudah siap diambil di {$storeName}.",
+            title: $isEn ? $titleEn : $titleId,
+            body: $isEn ? $bodyEn : $bodyId,
             url: url('/account/orders'),
-            data: ['order_id' => (string) $order->id, 'type' => 'store_pickup_ready']
+            data: [
+                'order_id' => (string) $order->id,
+                'order_number' => (string) $order->order_number,
+                'type' => 'store_pickup_ready',
+                'title_en' => $titleEn,
+                'body_en' => $bodyEn,
+                'title_id' => $titleId,
+                'body_id' => $bodyId,
+            ]
         );
     }
 
@@ -473,13 +522,27 @@ class FirebaseNotificationService
      */
     public function notifyNewVoucher(Voucher $voucher): int
     {
-        $discountInfo = $voucher->type === 'percentage' ? "Diskon {$voucher->value}%" : 'Potongan Rp '.number_format($voucher->value, 0, ',', '.');
+        $isEn = app()->getLocale() === 'en';
+        $discountInfoId = $voucher->type === 'percentage' ? "Diskon {$voucher->value}%" : 'Potongan Rp '.number_format($voucher->value, 0, ',', '.');
+        $discountInfoEn = $voucher->type === 'percentage' ? "{$voucher->value}% Discount" : 'Rp '.number_format($voucher->value, 0, ',', '.').' Off';
+
+        $titleId = 'Voucher Spesial Baru: '.$voucher->code;
+        $bodyId = "Gunakan kode {$voucher->code} untuk {$discountInfoId} di Aroma Palace. Jangan lewatkan!";
+        $titleEn = 'New Special Voucher: '.$voucher->code;
+        $bodyEn = "Use code {$voucher->code} for {$discountInfoEn} at Aroma Palace. Don't miss out!";
 
         return $this->sendBroadcast(
-            title: 'Voucher Spesial Baru: '.$voucher->code,
-            body: "Gunakan kode {$voucher->code} untuk {$discountInfo} di Aroma Palace. Jangan lewatkan!",
+            title: $isEn ? $titleEn : $titleId,
+            body: $isEn ? $bodyEn : $bodyId,
             url: url('/products'),
-            data: ['voucher_code' => $voucher->code, 'type' => 'voucher_reward']
+            data: [
+                'voucher_code' => $voucher->code,
+                'type' => 'voucher_reward',
+                'title_en' => $titleEn,
+                'body_en' => $bodyEn,
+                'title_id' => $titleId,
+                'body_id' => $bodyId,
+            ]
         );
     }
 
@@ -497,15 +560,27 @@ class FirebaseNotificationService
         Cache::put($cacheKey, true, now()->addMinutes(10));
 
         if ($order->user_id) {
+            $isEn = app()->getLocale() === 'en';
+            $reasonEn = $reason === 'Batas waktu pembayaran 24 jam telah berakhir.' ? '24-hour payment deadline has expired.' : $reason;
+
+            $titleId = 'Pesanan Dibatalkan #'.$order->order_number;
+            $bodyId = "Pesanan wewangian Anda telah dibatalkan otomatis karena {$reason}";
+            $titleEn = 'Order Canceled #'.$order->order_number;
+            $bodyEn = "Your luxury fragrance order was canceled automatically: {$reasonEn}";
+
             $this->sendToUser(
                 user: $order->user_id,
-                title: 'Pesanan Dibatalkan #'.$order->order_number,
-                body: "Pesanan wewangian Anda telah dibatalkan otomatis karena {$reason}",
+                title: $isEn ? $titleEn : $titleId,
+                body: $isEn ? $bodyEn : $bodyId,
                 url: url('/account/orders'),
                 data: [
                     'order_id' => (string) $order->id,
                     'order_number' => (string) $order->order_number,
                     'type' => 'order_canceled',
+                    'title_en' => $titleEn,
+                    'body_en' => $bodyEn,
+                    'title_id' => $titleId,
+                    'body_id' => $bodyId,
                 ]
             );
         }
@@ -543,16 +618,26 @@ class FirebaseNotificationService
             ? $shippingModel->auto_completes_at->format('d/m/Y')
             : now()->addDays(3)->format('d/m/Y');
 
+        $isEn = app()->getLocale() === 'en';
+        $titleId = 'Pesanan Telah Sampai! #'.$order->order_number;
+        $bodyId = "Paket pesanan #{$order->order_number} telah sampai di tujuan. Pesanan otomatis selesai pada {$autoCompleteDate}. Silakan periksa produk Anda.";
+        $titleEn = 'Your Order Has Arrived! #'.$order->order_number;
+        $bodyEn = "Package for order #{$order->order_number} has arrived at destination. It will automatically complete on {$autoCompleteDate}. Please check your products.";
+
         $this->sendToUser(
             user: $order->user_id,
-            title: 'Pesanan Telah Sampai! #'.$order->order_number,
-            body: "Paket pesanan #{$order->order_number} telah sampai di tujuan. Pesanan otomatis selesai pada {$autoCompleteDate}. Silakan periksa produk Anda.",
+            title: $isEn ? $titleEn : $titleId,
+            body: $isEn ? $bodyEn : $bodyId,
             url: url('/account/orders'),
             data: [
                 'order_id' => (string) $order->id,
                 'order_number' => (string) $order->order_number,
                 'auto_completes_at' => (string) ($shippingModel?->auto_completes_at?->toIso8601String() ?? now()->addDays(3)->toIso8601String()),
                 'type' => 'order_delivered',
+                'title_en' => $titleEn,
+                'body_en' => $bodyEn,
+                'title_id' => $titleId,
+                'body_id' => $bodyId,
             ]
         );
     }
@@ -573,15 +658,25 @@ class FirebaseNotificationService
         }
         Cache::put($cacheKey, true, now()->addMinutes(30));
 
+        $isEn = app()->getLocale() === 'en';
+        $titleId = 'Pesanan Selesai! #'.$order->order_number;
+        $bodyId = "Pesanan wewangian mewah #{$order->order_number} telah selesai. Terima kasih telah berbelanja di Aroma Palace!";
+        $titleEn = 'Order Completed! #'.$order->order_number;
+        $bodyEn = "Your luxury fragrance order #{$order->order_number} is completed. Thank you for shopping with Aroma Palace!";
+
         $this->sendToUser(
             user: $order->user_id,
-            title: 'Pesanan Selesai! #'.$order->order_number,
-            body: "Pesanan wewangian mewah #{$order->order_number} telah selesai. Terima kasih telah berbelanja di Aroma Palace!",
+            title: $isEn ? $titleEn : $titleId,
+            body: $isEn ? $bodyEn : $bodyId,
             url: url('/account/orders'),
             data: [
                 'order_id' => (string) $order->id,
                 'order_number' => (string) $order->order_number,
                 'type' => 'order_completed',
+                'title_en' => $titleEn,
+                'body_en' => $bodyEn,
+                'title_id' => $titleId,
+                'body_id' => $bodyId,
             ]
         );
     }

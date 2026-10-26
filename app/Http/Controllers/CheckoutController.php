@@ -738,17 +738,21 @@ class CheckoutController extends Controller
                 CancelExpiredOrderJob::dispatch($order->id)->delay(now()->addHours(24));
             }
 
+            $isEn = app()->getLocale() === 'en';
+
             return redirect()->route('payment.show', ['order' => $order->order_number])
-                ->with('success', 'Pesanan wewangian mewah Anda berhasil dibuat!');
+                ->with('success', $isEn ? 'Your luxury fragrance order has been placed successfully!' : 'Pesanan wewangian mewah Anda berhasil dibuat!');
         } catch (\Throwable $e) {
             Log::error('Checkout process error: '.$e->getMessage(), [
                 'user_id' => $user->id,
                 'trace' => $e->getTraceAsString(),
             ]);
 
+            $isEn = app()->getLocale() === 'en';
+
             return redirect()->route('checkout.index')
                 ->withInput()
-                ->with('error', $e->getMessage() ?: 'Terjadi kesalahan saat memproses pesanan. Silakan periksa kembali keranjang Anda.');
+                ->with('error', $e->getMessage() ?: ($isEn ? 'An error occurred while processing your order. Please check your cart.' : 'Terjadi kesalahan saat memproses pesanan. Silakan periksa kembali keranjang Anda.'));
         } finally {
             $lock->release();
         }

@@ -180,7 +180,7 @@ export default function MembershipPage({
     });
 
     return (
-        <Layout showFooter={false}>
+        <Layout>
             <Head title={`Royale Points & Rewards • Aroma Palace`} />
 
             <div className="min-h-screen bg-[#F8F9FA] dark:bg-background">

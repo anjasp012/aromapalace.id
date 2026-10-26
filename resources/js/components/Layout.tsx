@@ -52,6 +52,10 @@ import {
     Globe,
     ChevronDown,
     Check,
+    Download,
+    Smartphone,
+    ShieldCheck,
+    Sparkles,
 } from 'lucide-react';
 import { autoRequestNotificationPermission, initFirebaseForegroundListener } from '@/lib/push-notification';
 import { clearUserClientCache } from '@/lib/cache-cleanup';
@@ -59,6 +63,7 @@ import { playMenuTapSound } from '@/lib/sound-effects';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { getAdminUrl } from '@/lib/route-resolver';
+import { isRunningInNativeApp } from '@/lib/app-redirect';
 import PullToRefresh from '@/components/PullToRefresh';
 
 import { App as CapApp } from '@capacitor/app';
@@ -144,6 +149,7 @@ declare global {
         openInfoModal?: (tab?: string) => void;
         openStoreModal?: () => void;
         openContactModal?: () => void;
+        openAndroidApkModal?: () => void;
         showWishlistToast?: (message: string, isAdded?: boolean) => void;
         showCartToast?: (message: string) => void;
         showPromoToast?: (message: string) => void;
@@ -246,7 +252,71 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
     const [infoActiveTab, setInfoActiveTab] = useState<string>('faq');
     const [storeModalOpen, setStoreModalOpen] = useState(false);
     const [contactModalOpen, setContactModalOpen] = useState(false);
+    const [androidApkModalOpen, setAndroidApkModalOpen] = useState(false);
     const headerRef = useRef<HTMLElement>(null);
+
+    const handleDownloadApk = () => {
+        try {
+            sessionStorage.setItem('android_apk_download_prompt_dismissed', '1');
+        } catch {
+            // ignore
+        }
+        setAndroidApkModalOpen(false);
+
+        const link = document.createElement('a');
+        link.href = '/app-release.apk';
+        link.download = 'Aroma-Palace.apk';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        if (window.showPromoToast) {
+            window.showPromoToast(
+                isEn
+                    ? 'Downloading Aroma Palace APK...'
+                    : 'Mengunduh aplikasi Aroma Palace APK...'
+            );
+        }
+    };
+
+    const handleDismissApkModal = () => {
+        try {
+            sessionStorage.setItem('android_apk_download_prompt_dismissed', '1');
+        } catch {
+            // ignore
+        }
+        setAndroidApkModalOpen(false);
+    };
+
+    const [isAndroidBrowser, setIsAndroidBrowser] = useState(false);
+
+    // Auto-prompt download confirmation popup on Android browsers
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+
+        const ua = navigator.userAgent || navigator.vendor || '';
+        const isAndroid = /Android/i.test(ua);
+        const isAndroidInBrowser = isAndroid && !isRunningInNativeApp();
+        setIsAndroidBrowser(isAndroidInBrowser);
+
+        if (!isAndroidInBrowser) return;
+
+        const currentPath = window.location.pathname;
+        if (currentPath.startsWith('/admin')) return;
+
+        const SESSION_KEY = 'android_apk_download_prompt_dismissed';
+        try {
+            if (sessionStorage.getItem(SESSION_KEY)) return;
+        } catch {
+            // ignore
+        }
+
+        const timer = setTimeout(() => {
+            setAndroidApkModalOpen(true);
+        }, 1200);
+
+        return () => clearTimeout(timer);
+    }, []);
 
     // Toast States
     const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -509,10 +579,87 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
         setSpotlightOpen(false);
     };
 
+    // Translate toast message to English when isEn is active
+    const translateToast = (msg: string, enMode: boolean): string => {
+        if (!enMode || !msg) return msg;
+
+        const exactMap: Record<string, string> = {
+            'Berhasil ditambahkan ke keranjang.': 'Added to cart.',
+            'Jumlah produk diperbarui.': 'Cart item quantity updated.',
+            'Produk dihapus.': 'Item removed from cart.',
+            'Keranjang dikosongkan.': 'Cart cleared.',
+            'Dihapus dari wishlist.': 'Removed from wishlist.',
+            'Ditambahkan ke wishlist.': 'Added to wishlist.',
+            'Wewangian tidak ditemukan di wishlist Anda.': 'Fragrance not found in your wishlist.',
+            'Produk wewangian tidak ditemukan.': 'Fragrance product not found.',
+            'Kode voucher tidak valid atau sudah tidak berlaku.': 'Invalid or expired voucher code.',
+            'Voucher dilepas.': 'Voucher removed.',
+            'Alamat pengiriman berhasil disimpan.': 'Shipping address saved successfully.',
+            'Alamat pengiriman berhasil diperbarui.': 'Shipping address updated successfully.',
+            'Alamat berhasil dihapus.': 'Address removed successfully.',
+            'Alamat utama berhasil diubah.': 'Primary address updated.',
+            'Notifikasi berhasil diaktifkan.': 'Notifications enabled successfully.',
+            'Notifikasi dinonaktifkan.': 'Notifications disabled.',
+            'Terima kasih! Pesanan Anda telah berhasil diselesaikan.': 'Thank you! Your order has been completed.',
+            'Pesanan wewangian mewah Anda berhasil dibuat!': 'Your luxury fragrance order has been placed successfully!',
+            'Selamat! Anda resmi menjadi anggota Royale Club dan mendapatkan 100 Poin Sambutan.': 'Congratulations! You are officially a Royale Club member with 100 Welcome Points.',
+            'Tautan filter berhasil disalin! Siap dibagikan.': 'Filter link copied! Ready to share.',
+            'Gagal menyalin tautan.': 'Failed to copy link.',
+            'Tautan wewangian berhasil disalin ke clipboard.': 'Fragrance link copied to clipboard.',
+            'Terima kasih! Ulasan wewangian Anda berhasil diterbitkan.': 'Thank you! Your fragrance review has been submitted.',
+            'Poin Anda tidak mencukupi untuk menukar reward ini.': 'Insufficient points to redeem this reward.',
+            'Reward tidak ditemukan atau sudah tidak aktif.': 'Reward not found or no longer active.',
+            'Reward voucher berhasil ditukarkan! Cek menu Akun / Voucher Anda.': 'Reward voucher successfully redeemed! Check your Account / Vouchers.',
+            'Silakan masuk terlebih dahulu untuk menukarkan poin reward.': 'Please sign in first to redeem reward points.',
+            'Silakan masuk terlebih dahulu untuk bergabung ke Royale Club.': 'Please sign in first to join Royale Club.',
+            'Anda belum terdaftar sebagai anggota Royale Club. Silakan aktifkan keanggotaan terlebih dahulu.': 'You are not yet registered as a Royale Club member. Please activate your membership first.',
+            'Pesanan ini sudah selesai.': 'This order is already completed.',
+            'Pesanan yang telah dibatalkan tidak dapat diselesaikan.': 'Cancelled orders cannot be completed.',
+            'Terjadi kesalahan saat memproses pesanan. Silakan periksa kembali keranjang Anda.': 'An error occurred while processing your order. Please check your cart.',
+            'Browser tidak mendukung pendeteksian lokasi GPS.': 'Your browser does not support GPS location detection.',
+            'Tidak dapat mendeteksi lokasi. Pastikan izin GPS diizinkan pada browser Anda.': 'Unable to detect location. Please ensure GPS permission is granted in your browser.',
+        };
+
+        if (exactMap[msg]) {
+            return exactMap[msg];
+        }
+
+        if (/^Kode\s+"([^"]+)"\s+disalin!$/i.test(msg)) {
+            return msg.replace(/^Kode\s+"([^"]+)"\s+disalin!$/i, 'Code "$1" copied!');
+        }
+        if (/^Kode\s+"([^"]+)"\s+berhasil\s+disalin!$/i.test(msg)) {
+            return msg.replace(/^Kode\s+"([^"]+)"\s+berhasil\s+disalin!$/i, 'Code "$1" copied successfully!');
+        }
+        if (/^Voucher\s+([A-Z0-9_-]+)\s+diterapkan\.$/i.test(msg)) {
+            return msg.replace(/^Voucher\s+([A-Z0-9_-]+)\s+diterapkan\.$/i, 'Voucher $1 applied.');
+        }
+        if (/^Voucher\s+'([^']+)'\s+berhasil\s+ditambahkan\.$/i.test(msg)) {
+            return msg.replace(/^Voucher\s+'([^']+)'\s+berhasil\s+ditambahkan\.$/i, 'Voucher \'$1\' added successfully.');
+        }
+        if (/hanya dapat digunakan 1 kali per akun dan sudah pernah Anda gunakan/i.test(msg)) {
+            return msg.replace(/Voucher\s+([A-Z0-9_-]+)\s+hanya dapat digunakan 1 kali per akun dan sudah pernah Anda gunakan\./i, 'Voucher $1 can only be used once per account and has already been redeemed.');
+        }
+        if (/merupakan voucher khusus reward milik akun lain/i.test(msg)) {
+            return msg.replace(/Voucher\s+'([^']+)'\s+merupakan voucher khusus reward milik akun lain\./i, 'Voucher \'$1\' is an exclusive reward voucher belonging to another account.');
+        }
+        if (/hanya berlaku untuk produk tertentu/i.test(msg)) {
+            return msg.replace(/Voucher\s+'([^']+)'\s+hanya berlaku untuk produk tertentu\./i, 'Voucher \'$1\' is only valid for specific products.');
+        }
+        if (/^Selamat!\s+Voucher\s+(.+?)\s+berhasil\s+diklaim\s+dengan\s+kode:\s*(.+)$/i.test(msg)) {
+            return msg.replace(/^Selamat!\s+Voucher\s+(.+?)\s+berhasil\s+diklaim\s+dengan\s+kode:\s*(.+)$/i, 'Congratulations! Voucher $1 claimed successfully with code: $2');
+        }
+        if (/kurang\s+(\d+)\s+poin\s+lagi/i.test(msg)) {
+            return msg.replace(/Poin Anda tidak mencukupi untuk reward ini\s+\(kurang\s+(\d+)\s+poin\s+lagi\)\./i, 'You do not have enough points for this reward ($1 more points needed).');
+        }
+
+        return msg;
+    };
+
     // Toasts logic
     const triggerToast = (msg: string) => {
         if (!msg) return;
-        setToastMessage(msg);
+        const localizedMsg = translateToast(msg, isEn);
+        setToastMessage(localizedMsg);
         setTimeout(() => setToastMessage(null), 2500);
     };
 
@@ -534,11 +681,12 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
         };
         window.openStoreModal = () => setStoreModalOpen(true);
         window.openContactModal = () => setContactModalOpen(true);
+        window.openAndroidApkModal = () => setAndroidApkModalOpen(true);
         window.showWishlistToast = (msg) => triggerToast(msg);
         window.showCartToast = (msg) => triggerToast(msg);
         window.showPromoToast = (msg) => triggerToast(msg);
         window.copyPromoCode = copyPromoCode;
-    }, []);
+    }, [isEn]);
 
     // Customer Realtime Push Notification & Foreground Listener
     useEffect(() => {
@@ -1178,8 +1326,14 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
             </PullToRefresh>
 
             {/* Modern Clean Footer with Rich Burgundy Gradient matching Produk Diskon */}
-            {showFooter && (
-                <footer className="hidden md:block bg-gradient-to-br from-[#4A070B] via-[#52090F] to-[#360407] text-white/80 border-t border-[#360407] mt-12 sm:mt-16">
+            {(showFooter || (isAndroidBrowser && !url.includes('/checkout'))) && (
+                <footer
+                    className={cn(
+                        "bg-gradient-to-br from-[#4A070B] via-[#52090F] to-[#360407] text-white/80 border-t border-[#360407] mt-12 sm:mt-16",
+                        isAndroidBrowser ? "block" : "hidden md:block",
+                        shouldShowBottomNav && isAndroidBrowser ? "pb-20 md:pb-0" : ""
+                    )}
+                >
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-14">
                         <div className="grid grid-cols-2 lg:grid-cols-12 gap-8 pb-8 sm:pb-10 border-b border-white/10">
                             {/* Baris 1 di Mobile / Col 1 di Desktop: Brand Info */}
@@ -1873,6 +2027,75 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
                     <div className="flex justify-end pt-1">
                         <Button variant="outline" size="sm" onClick={() => setContactModalOpen(false)}>
                             {isEn ? 'Close' : 'Tutup'}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* POPUP 6: ANDROID APK DOWNLOAD CONFIRMATION MODAL (shadcn Dialog) */}
+            <Dialog
+                open={androidApkModalOpen}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        handleDismissApkModal();
+                    } else {
+                        setAndroidApkModalOpen(true);
+                    }
+                }}
+            >
+                <DialogContent className="w-[calc(100vw-32px)] max-w-[calc(100vw-32px)] sm:w-full sm:max-w-md p-5 sm:p-6 rounded-2xl">
+                    <DialogHeader className="text-left space-y-2">
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#4A070B] via-[#630B10] to-[#8C1D24] text-white flex items-center justify-center shadow-md shrink-0">
+                                <Smartphone className="w-6 h-6 text-[#E5A844]" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                                <Badge variant="outline" className="text-[10px] font-semibold border-amber-500/40 text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 mb-1">
+                                    Android Application
+                                </Badge>
+                                <DialogTitle className="text-base sm:text-lg font-bold text-foreground leading-snug">
+                                    {isEn ? 'Download Aroma Palace App' : 'Unduh Aplikasi Aroma Palace'}
+                                </DialogTitle>
+                            </div>
+                        </div>
+
+                        <DialogDescription className="text-xs text-muted-foreground leading-relaxed pt-1">
+                            {isEn
+                                ? 'Experience lightning-fast browsing, exclusive discount vouchers, and live order tracking with our official Android app.'
+                                : 'Nikmati akses belanja lebih cepat, diskon & voucher eksklusif member, serta pelacakan kurir real-time langsung di Android Anda.'}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="my-3 space-y-2 bg-[#FDF8EE] dark:bg-amber-950/20 border border-amber-200/70 dark:border-amber-800/40 rounded-xl p-3 text-xs">
+                        <div className="flex items-center gap-2.5 text-foreground font-medium">
+                            <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+                            <span>{isEn ? 'Exclusive member promos & instant updates' : 'Voucher & promo diskon member eksklusif'}</span>
+                        </div>
+                        <div className="flex items-center gap-2.5 text-foreground font-medium">
+                            <Package className="w-4 h-4 text-emerald-600 shrink-0" />
+                            <span>{isEn ? 'Live shipping tracking with instant push alerts' : 'Pelacakan kurir & status pesanan langsung'}</span>
+                        </div>
+                        <div className="flex items-center gap-2.5 text-foreground font-medium">
+                            <ShieldCheck className="w-4 h-4 text-sky-600 shrink-0" />
+                            <span>{isEn ? 'Official APK file • 100% Safe & Verified' : 'File APK Resmi • 100% Aman & Terverifikasi'}</span>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col gap-2 pt-1">
+                        <Button
+                            onClick={handleDownloadApk}
+                            className="w-full bg-[#4A070B] hover:bg-[#360407] text-white font-bold text-xs sm:text-sm h-11 rounded-xl shadow-xs cursor-pointer flex items-center justify-center gap-2"
+                        >
+                            <Download className="w-4 h-4 text-[#E5A844]" />
+                            <span>{isEn ? 'Download APK Now' : 'Download APK Sekarang'}</span>
+                        </Button>
+
+                        <Button
+                            variant="ghost"
+                            onClick={handleDismissApkModal}
+                            className="w-full text-xs text-muted-foreground hover:text-foreground h-9 cursor-pointer"
+                        >
+                            {isEn ? 'Continue in Web Browser' : 'Lanjutkan di Web Browser'}
                         </Button>
                     </div>
                 </DialogContent>

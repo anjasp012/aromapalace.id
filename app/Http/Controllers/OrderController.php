@@ -436,16 +436,21 @@ class OrderController extends Controller
             abort(403);
         }
 
+        $isEn = app()->getLocale() === 'en';
+
         if ($order->status === 'selesai') {
-            return back()->with('info', 'Pesanan ini sudah selesai.');
+            return back()->with('info', $isEn ? 'This order is already completed.' : 'Pesanan ini sudah selesai.');
         }
 
         if ($order->status === 'dibatalkan') {
-            return back()->with('error', 'Pesanan yang telah dibatalkan tidak dapat diselesaikan.');
+            return back()->with('error', $isEn ? 'Cancelled orders cannot be completed.' : 'Pesanan yang telah dibatalkan tidak dapat diselesaikan.');
         }
 
-        app(OrderService::class)->completeOrder($order, 'Pesanan dikonfirmasi selesai oleh pelanggan.');
+        app(OrderService::class)->completeOrder(
+            $order,
+            $isEn ? 'Order confirmed completed by customer.' : 'Pesanan dikonfirmasi selesai oleh pelanggan.'
+        );
 
-        return back()->with('success', 'Terima kasih! Pesanan Anda telah berhasil diselesaikan.');
+        return back()->with('success', $isEn ? 'Thank you! Your order has been completed.' : 'Terima kasih! Pesanan Anda telah berhasil diselesaikan.');
     }
 }

@@ -221,8 +221,10 @@ class CartController extends Controller
         $productId = (int) $validated['product_id'];
         $product = CatalogService::find($productId);
 
+        $isEn = app()->getLocale() === 'en';
+
         if (! $product) {
-            return back()->with('error', 'Produk wewangian tidak ditemukan.');
+            return back()->with('error', $isEn ? 'Fragrance product not found.' : 'Produk wewangian tidak ditemukan.');
         }
 
         $quantity = isset($validated['quantity']) ? (int) $validated['quantity'] : 1;
@@ -263,7 +265,7 @@ class CartController extends Controller
             ]);
         }
 
-        return back()->with('success', 'Berhasil ditambahkan ke keranjang.');
+        return back()->with('success', $isEn ? 'Added to cart.' : 'Berhasil ditambahkan ke keranjang.');
     }
 
     /**
@@ -280,7 +282,9 @@ class CartController extends Controller
             'quantity' => (int) $validated['quantity'],
         ]);
 
-        return back()->with('success', 'Jumlah produk diperbarui.');
+        $isEn = app()->getLocale() === 'en';
+
+        return back()->with('success', $isEn ? 'Product quantity updated.' : 'Jumlah produk diperbarui.');
     }
 
     /**
@@ -291,7 +295,9 @@ class CartController extends Controller
         $item = $request->user()->cartItems()->findOrFail($id);
         $item->delete();
 
-        return back()->with('success', 'Produk dihapus.');
+        $isEn = app()->getLocale() === 'en';
+
+        return back()->with('success', $isEn ? 'Product removed.' : 'Produk dihapus.');
     }
 
     /**
@@ -301,7 +307,9 @@ class CartController extends Controller
     {
         $request->user()->cartItems()->delete();
 
-        return back()->with('success', 'Keranjang dikosongkan.');
+        $isEn = app()->getLocale() === 'en';
+
+        return back()->with('success', $isEn ? 'Cart cleared.' : 'Keranjang dikosongkan.');
     }
 
     /**
@@ -309,12 +317,13 @@ class CartController extends Controller
      */
     public function applyVoucher(Request $request): RedirectResponse
     {
+        $isEn = app()->getLocale() === 'en';
         $code = strtoupper(trim((string) $request->input('code', '')));
         if ($code !== '') {
             $voucher = Voucher::where('code', $code)->where('is_active', true)->first();
             if ($voucher) {
                 if ($request->user() && $voucher->hasBeenUsedBy($request->user())) {
-                    return back()->with('error', "Voucher {$voucher->code} hanya dapat digunakan 1 kali per akun dan sudah pernah Anda gunakan.");
+                    return back()->with('error', $isEn ? "Voucher {$voucher->code} can only be used once per account and has already been used." : "Voucher {$voucher->code} hanya dapat digunakan 1 kali per akun dan sudah pernah Anda gunakan.");
                 }
 
                 if ($voucher->voucher_type === 'reward' || str_starts_with($voucher->code, 'REW-')) {
@@ -332,7 +341,7 @@ class CartController extends Controller
                     }
 
                     if (! $isOwner) {
-                        return back()->with('error', "Voucher '{$voucher->code}' merupakan voucher khusus reward milik akun lain.");
+                        return back()->with('error', $isEn ? "Voucher '{$voucher->code}' is a reward voucher belonging to another account." : "Voucher '{$voucher->code}' merupakan voucher khusus reward milik akun lain.");
                     }
                 }
 
@@ -341,17 +350,17 @@ class CartController extends Controller
                     $cartProductIds = $user ? $user->cartItems()->pluck('product_id')->map(fn ($id) => (int) $id)->all() : [];
                     $allowedIds = array_map('intval', (array) $voucher->applicable_product_ids);
                     if (empty(array_intersect($cartProductIds, $allowedIds))) {
-                        return back()->with('error', "Voucher '{$voucher->code}' hanya berlaku untuk produk tertentu.");
+                        return back()->with('error', $isEn ? "Voucher '{$voucher->code}' is only valid for specific products." : "Voucher '{$voucher->code}' hanya berlaku untuk produk tertentu.");
                     }
                 }
 
                 session(['applied_voucher' => $voucher->code]);
 
-                return back()->with('success', "Voucher {$voucher->code} diterapkan.");
+                return back()->with('success', $isEn ? "Voucher {$voucher->code} applied." : "Voucher {$voucher->code} diterapkan.");
             }
         }
 
-        return back()->with('error', 'Kode voucher tidak valid atau sudah tidak berlaku.');
+        return back()->with('error', $isEn ? 'Invalid or expired voucher code.' : 'Kode voucher tidak valid atau sudah tidak berlaku.');
     }
 
     /**
@@ -361,6 +370,8 @@ class CartController extends Controller
     {
         $request->session()->forget('applied_voucher');
 
-        return back()->with('success', 'Voucher dilepas.');
+        $isEn = app()->getLocale() === 'en';
+
+        return back()->with('success', $isEn ? 'Voucher removed.' : 'Voucher dilepas.');
     }
 }

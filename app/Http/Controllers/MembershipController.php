@@ -142,13 +142,14 @@ class MembershipController extends Controller
     public function join(Request $request): RedirectResponse
     {
         $user = $request->user();
+        $isEn = app()->getLocale() === 'en';
         if (! $user) {
-            return redirect()->route('login')->with('notice', 'Silakan masuk terlebih dahulu untuk bergabung ke Royale Club.');
+            return redirect()->route('login')->with('notice', $isEn ? 'Please sign in first to join Royale Club.' : 'Silakan masuk terlebih dahulu untuk bergabung ke Royale Club.');
         }
 
         $this->membershipService->join($user);
 
-        return back()->with('success', 'Selamat! Anda resmi menjadi anggota Royale Club dan mendapatkan 100 Poin Sambutan.');
+        return back()->with('success', $isEn ? 'Congratulations! You are officially a Royale Club member with 100 Welcome Points.' : 'Selamat! Anda resmi menjadi anggota Royale Club dan mendapatkan 100 Poin Sambutan.');
     }
 
     /**

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import { MapPin, Locate, Crosshair } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/lib/i18n';
 
 interface AddressMapPickerProps {
     latitude: number | string | null | undefined;
@@ -18,6 +19,7 @@ export default function AddressMapPicker({
     height = '230px',
     targetZoom = 15,
 }: AddressMapPickerProps) {
+    const { isEn } = useTranslation();
     const mapContainerRef = useRef<HTMLDivElement | null>(null);
     const mapInstanceRef = useRef<L.Map | null>(null);
     const markerRef = useRef<L.Marker | null>(null);
@@ -123,7 +125,11 @@ export default function AddressMapPicker({
 
     const handleLocateMe = () => {
         if (!navigator.geolocation) {
-            alert('Browser tidak mendukung pendeteksian lokasi GPS.');
+            alert(
+                isEn
+                    ? 'Browser does not support GPS location detection.'
+                    : 'Browser tidak mendukung pendeteksian lokasi GPS.'
+            );
             return;
         }
 
@@ -141,7 +147,11 @@ export default function AddressMapPicker({
             },
             () => {
                 setIsLocating(false);
-                alert('Tidak dapat mendeteksi lokasi. Pastikan izin GPS diizinkan pada browser Anda.');
+                alert(
+                    isEn
+                        ? 'Unable to detect location. Please ensure GPS permission is granted in your browser.'
+                        : 'Tidak dapat mendeteksi lokasi. Pastikan izin GPS diizinkan pada browser Anda.'
+                );
             },
             { timeout: 10000 }
         );
@@ -152,7 +162,11 @@ export default function AddressMapPicker({
             <div className="flex items-center justify-between">
                 <span className="text-[11px] font-semibold text-foreground flex items-center gap-1.5">
                     <MapPin className="size-3.5 text-[#4A070B] dark:text-[#E8D0BA]" />
-                    <span>Titik Lokasi Pengiriman (Otomatis Zoom / Geser Pin)</span>
+                    <span>
+                        {isEn
+                            ? 'Delivery Location Pin (Auto Zoom / Drag Pin)'
+                            : 'Titik Lokasi Pengiriman (Otomatis Zoom / Geser Pin)'}
+                    </span>
                 </span>
                 <Button
                     type="button"
@@ -163,7 +177,7 @@ export default function AddressMapPicker({
                     className="h-6 px-2 text-[10.5px] gap-1 cursor-pointer border-border/80"
                 >
                     <Locate className="size-3 text-[#4A070B] dark:text-[#E8D0BA]" />
-                    <span>{isLocating ? 'Mendeteksi...' : 'Lokasi Saya'}</span>
+                    <span>{isLocating ? (isEn ? 'Detecting...' : 'Mendeteksi...') : (isEn ? 'My Location' : 'Lokasi Saya')}</span>
                 </Button>
             </div>
 
@@ -179,7 +193,7 @@ export default function AddressMapPicker({
                     <div className="bg-background/95 backdrop-blur-xs px-2.5 py-1.5 rounded-md border border-border/80 text-[10.5px] flex items-center justify-between text-muted-foreground shadow-xs pointer-events-auto">
                         <span className="font-mono flex items-center gap-1 text-foreground/80">
                             <Crosshair className="size-3 text-primary shrink-0" />
-                            {hasValidCoords ? `${parsedLat.toFixed(6)}, ${parsedLng.toFixed(6)}` : 'Geser pin atau klik peta'}
+                            {hasValidCoords ? `${parsedLat.toFixed(6)}, ${parsedLng.toFixed(6)}` : (isEn ? 'Drag pin or click on map' : 'Geser pin atau klik peta')}
                         </span>
                         <span className="text-[10px] text-muted-foreground/70">Leaflet OpenStreetMap</span>
                     </div>

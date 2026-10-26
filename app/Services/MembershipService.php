@@ -174,10 +174,13 @@ class MembershipService
     public function redeemReward(User $user, LoyaltyReward $reward): array
     {
         $membership = $user->membership()->first();
+        $isEn = app()->getLocale() === 'en';
         if (! $membership) {
             return [
                 'success' => false,
-                'message' => 'Anda belum terdaftar sebagai anggota Royale Club. Silakan aktifkan keanggotaan terlebih dahulu.',
+                'message' => $isEn
+                    ? 'You are not yet registered as a Royale Club member. Please activate your membership first.'
+                    : 'Anda belum terdaftar sebagai anggota Royale Club. Silakan aktifkan keanggotaan terlebih dahulu.',
             ];
         }
 
@@ -186,11 +189,13 @@ class MembershipService
 
             return [
                 'success' => false,
-                'message' => "Poin Anda tidak mencukupi untuk reward ini (kurang {$shortage} poin lagi).",
+                'message' => $isEn
+                    ? "You do not have enough points for this reward ({$shortage} more points needed)."
+                    : "Poin Anda tidak mencukupi untuk reward ini (kurang {$shortage} poin lagi).",
             ];
         }
 
-        return DB::transaction(function () use ($user, $membership, $reward) {
+        return DB::transaction(function () use ($user, $membership, $reward, $isEn) {
             // Deduct points
             $membership->points -= $reward->points_required;
             $membership->save();
@@ -230,7 +235,9 @@ class MembershipService
 
             return [
                 'success' => true,
-                'message' => "Selamat! Voucher {$reward->name} berhasil diklaim dengan kode: {$voucherCode}",
+                'message' => $isEn
+                    ? "Congratulations! Voucher {$reward->name} claimed successfully with code: {$voucherCode}"
+                    : "Selamat! Voucher {$reward->name} berhasil diklaim dengan kode: {$voucherCode}",
                 'voucher' => $voucher,
             ];
         });

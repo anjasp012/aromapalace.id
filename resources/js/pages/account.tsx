@@ -147,14 +147,18 @@ export default function AccountPage({
                 setNotificationStatus(updated);
                 if (res.success && updated === 'granted') {
                     setNotificationEnabled(true);
-                    window.showPromoToast?.('Notifikasi berhasil diaktifkan.');
+                    window.showPromoToast?.(
+                        isEn ? 'Notifications enabled successfully.' : 'Notifikasi berhasil diaktifkan.'
+                    );
                 } else {
                     setNotificationEnabled(false);
                 }
             } else {
                 await disablePushNotifications();
                 setNotificationEnabled(false);
-                window.showPromoToast?.('Notifikasi dinonaktifkan.');
+                window.showPromoToast?.(
+                    isEn ? 'Notifications disabled.' : 'Notifikasi dinonaktifkan.'
+                );
             }
         } catch {
             setNotificationEnabled(false);
