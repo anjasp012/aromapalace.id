@@ -1339,9 +1339,10 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
                                     {isEn ? 'Download our application for exclusive access to the Dubai perfume catalog.' : 'Unduh aplikasi kami untuk akses eksklusif katalog parfum Dubai.'}
                                 </p>
                                 <div className="flex flex-row sm:flex-row lg:flex-col xl:flex-row items-center gap-3 pt-1">
-                                    <button
-                                        type="button"
-                                        onClick={() => triggerToast(isEn ? 'Aroma Palace app for iOS will be available soon on the App Store!' : 'Aplikasi Aroma Palace untuk iOS akan segera tersedia di App Store!')}
+                                    <a
+                                        href="https://apps.apple.com/id/app/aroma-palace/id6825154655"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
                                         className="transition-all duration-200 hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] cursor-pointer inline-flex focus:outline-none focus:ring-2 focus:ring-[#E5A844]/50 rounded-lg group"
                                         aria-label="Download on the App Store"
                                     >
@@ -1350,20 +1351,20 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
                                             alt="Download on the App Store"
                                             className="h-9.5 sm:h-10 w-auto object-contain transition-transform"
                                         />
-                                    </button>
+                                    </a>
 
-                                    <button
-                                        type="button"
-                                        onClick={() => triggerToast(isEn ? 'Aroma Palace app for Android will be available soon on Google Play Store!' : 'Aplikasi Aroma Palace untuk Android akan segera tersedia di Google Play Store!')}
+                                    <a
+                                        href="/app-release.apk"
+                                        download="Aroma-Palace.apk"
                                         className="transition-all duration-200 hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] cursor-pointer inline-flex focus:outline-none focus:ring-2 focus:ring-[#E5A844]/50 rounded-lg group"
-                                        aria-label="Get it on Google Play"
+                                        aria-label="Download Android APK"
                                     >
                                         <img
                                             src="/images/download-google-play.png"
                                             alt="Get it on Google Play"
                                             className="h-9.5 sm:h-10 w-auto object-contain transition-transform"
                                         />
-                                    </button>
+                                    </a>
                                 </div>
                             </div>
                         </div>
