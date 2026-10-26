@@ -101,14 +101,16 @@ class HomeController extends Controller
             'artisanal-attar' => 'https://images.unsplash.com/photo-1547887537-6158d64c35b3?auto=format&fit=crop&w=400&q=80',
         ];
 
-        $categories = Category::all()->map(function (Category $c) use ($categoryImages) {
+        $categories = Category::withCount('products')->get()->map(function (Category $c) use ($categoryImages) {
             return [
+                'id' => $c->id,
                 'name' => $c->name,
                 'name_en' => $c->name_en,
                 'slug' => $c->slug,
                 'description' => $c->description,
                 'description_en' => $c->description_en,
-                'image' => $categoryImages[$c->slug] ?? 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=400&q=80',
+                'productsCount' => (int) $c->products_count,
+                'image' => $c->thumbnail ?: ($categoryImages[$c->slug] ?? 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=400&q=80'),
             ];
         })->values()->all();
 

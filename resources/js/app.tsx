@@ -67,6 +67,14 @@ function initSwipeBack(): void {
 
     window.addEventListener('touchstart', (e) => {
         if (e.touches.length !== 1) return;
+
+        // Khusus halaman utama (Home /), nonaktifkan gesture swipe back dari tepi kiri
+        const pathname = window.location.pathname;
+        if (pathname === '/' || pathname === '') {
+            isEdgeSwipe = false;
+            return;
+        }
+
         const touch = e.touches[0];
         if (touch.clientX <= 30) {
             touchStartX = touch.clientX;
@@ -80,6 +88,12 @@ function initSwipeBack(): void {
     window.addEventListener('touchend', (e) => {
         if (!isEdgeSwipe) return;
         isEdgeSwipe = false;
+
+        const pathname = window.location.pathname;
+        if (pathname === '/' || pathname === '') {
+            return;
+        }
+
         if (e.changedTouches.length !== 1) return;
         const touch = e.changedTouches[0];
         const deltaX = touch.clientX - touchStartX;
