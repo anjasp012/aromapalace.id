@@ -12,8 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('shipping', function (Blueprint $table) {
-            $table->timestamp('delivered_at')->nullable()->after('histories');
-            $table->timestamp('auto_completes_at')->nullable()->after('delivered_at');
+            if (! Schema::hasColumn('shipping', 'delivered_at')) {
+                $table->timestamp('delivered_at')->nullable()->after('histories');
+            }
+            if (! Schema::hasColumn('shipping', 'auto_completes_at')) {
+                $table->timestamp('auto_completes_at')->nullable()->after('delivered_at');
+            }
         });
     }
 
@@ -23,7 +27,16 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('shipping', function (Blueprint $table) {
-            $table->dropColumn(['delivered_at', 'auto_completes_at']);
+            $columnsToDrop = [];
+            if (Schema::hasColumn('shipping', 'delivered_at')) {
+                $columnsToDrop[] = 'delivered_at';
+            }
+            if (Schema::hasColumn('shipping', 'auto_completes_at')) {
+                $columnsToDrop[] = 'auto_completes_at';
+            }
+            if (! empty($columnsToDrop)) {
+                $table->dropColumn($columnsToDrop);
+            }
         });
     }
 };

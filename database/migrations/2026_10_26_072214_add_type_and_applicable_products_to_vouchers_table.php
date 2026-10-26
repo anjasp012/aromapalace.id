@@ -12,10 +12,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('vouchers', function (Blueprint $table) {
-            $table->string('voucher_type')->default('biasa')->after('terms');
-            $table->foreignId('user_id')->nullable()->after('voucher_type')->constrained('users')->nullOnDelete();
-            $table->string('applicable_type')->default('all')->after('user_id');
-            $table->json('applicable_product_ids')->nullable()->after('applicable_type');
+            if (! Schema::hasColumn('vouchers', 'voucher_type')) {
+                $table->string('voucher_type')->default('biasa')->after('terms');
+            }
+            if (! Schema::hasColumn('vouchers', 'user_id')) {
+                $table->foreignId('user_id')->nullable()->after('voucher_type')->constrained('users')->nullOnDelete();
+            }
+            if (! Schema::hasColumn('vouchers', 'applicable_type')) {
+                $table->string('applicable_type')->default('all')->after('user_id');
+            }
+            if (! Schema::hasColumn('vouchers', 'applicable_product_ids')) {
+                $table->json('applicable_product_ids')->nullable()->after('applicable_type');
+            }
         });
     }
 
@@ -25,8 +33,18 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('vouchers', function (Blueprint $table) {
-            $table->dropForeign(['user_id']);
-            $table->dropColumn(['voucher_type', 'user_id', 'applicable_type', 'applicable_product_ids']);
+            if (Schema::hasColumn('vouchers', 'user_id')) {
+                $table->dropForeign(['user_id']);
+            }
+            $columns = [];
+            foreach (['voucher_type', 'user_id', 'applicable_type', 'applicable_product_ids'] as $col) {
+                if (Schema::hasColumn('vouchers', $col)) {
+                    $columns[] = $col;
+                }
+            }
+            if (! empty($columns)) {
+                $table->dropColumn($columns);
+            }
         });
     }
 };
