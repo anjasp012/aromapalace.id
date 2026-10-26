@@ -94,7 +94,8 @@ class FirebaseNotificationService
                                         'title' => $title,
                                         'body' => $body,
                                     ],
-                                    'sound' => env('FCM_IOS_SOUND', 'default'),
+                                    // Custom sound bundled in the iOS app (ios/App/App/notif.wav). 'default' = system sound.
+                                    'sound' => env('FCM_IOS_SOUND', 'notif.wav'),
                                     'badge' => 1,
                                 ],
                             ],
