@@ -118,7 +118,7 @@ export default function ProductQuickViewModal({
         if (/<[a-z][\s\S]*>/i.test(desc)) {
             return (
                 <div
-                    className="prose prose-neutral dark:prose-invert max-w-none text-xs sm:text-sm leading-relaxed text-muted-foreground [&_p]:my-1"
+                    className="prose prose-neutral dark:prose-invert max-w-none text-xs sm:text-sm leading-relaxed text-muted-foreground [&_p]:my-1.5 [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_strong]:text-foreground [&_a]:text-primary"
                     dangerouslySetInnerHTML={{ __html: desc }}
                 />
             );

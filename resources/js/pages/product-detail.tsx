@@ -388,6 +388,7 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
     };
 
     const activeDescription = pickText(product.description, product.description_en);
+    const plainMetaDescription = activeDescription ? activeDescription.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() : '';
 
     const renderDescription = (desc?: string) => {
         if (!desc) {
@@ -421,7 +422,7 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
                 <meta
                     name="description"
                     content={
-                        activeDescription ||
+                        plainMetaDescription ||
                         (isEn
                             ? `Order artisanal fragrance ${product.name} with pure concentration ${product.concentration} from Aroma Palace.`
                             : `Pesan parfum artisanal ${product.name} dengan konsentrasi murni ${product.concentration} dari Aroma Palace.`)

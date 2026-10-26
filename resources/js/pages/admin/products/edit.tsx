@@ -16,7 +16,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { TextEditor } from '@/components/ui/text-editor';
 import {
     Select,
     SelectContent,
@@ -382,23 +382,23 @@ export default function AdminProductEdit({
                                     </div>
 
                                     <TabsContent value="id" className="space-y-1.5 mt-0">
-                                        <Textarea
-                                            rows={4}
+                                        <TextEditor
                                             value={data.description}
-                                            onChange={(e) => setData('description', e.target.value)}
+                                            onChange={(val) => setData('description', val)}
                                             placeholder="Penjelasan aroma, piramida notes wewangian, dan karakter parfum dalam Bahasa Indonesia..."
-                                            className="min-h-28 text-xs"
+                                            error={errors.description}
+                                            minHeight="220px"
                                         />
                                         {errors.description && <p className="text-destructive text-[11px]">{errors.description}</p>}
                                     </TabsContent>
 
                                     <TabsContent value="en" className="space-y-1.5 mt-0">
-                                        <Textarea
-                                            rows={4}
+                                        <TextEditor
                                             value={data.description_en}
-                                            onChange={(e) => setData('description_en', e.target.value)}
+                                            onChange={(val) => setData('description_en', val)}
                                             placeholder="Fragrance notes pyramid, olfactory character, and inspiration in English..."
-                                            className="min-h-28 text-xs"
+                                            error={errors.description_en}
+                                            minHeight="220px"
                                         />
                                         {errors.description_en && <p className="text-destructive text-[11px]">{errors.description_en}</p>}
                                     </TabsContent>

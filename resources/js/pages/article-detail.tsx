@@ -261,7 +261,7 @@ export default function ArticleDetail({
                     </header>
 
                     {/* 4. MAIN ARTICLE CONTENT */}
-                    <div className="max-w-3xl w-full mx-auto px-4 sm:px-6 order-3">
+                    <div className="max-w-3xl w-full mx-auto px-4 sm:px-6 order-3 pb-4">
                         <div className="prose prose-neutral dark:prose-invert max-w-none">
                             {renderFormattedContent(activeContent)}
                         </div>
