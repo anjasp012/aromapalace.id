@@ -6,24 +6,30 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\User;
 
-test('guest cannot access admin product routes and is redirected to login', function () {
-    $this->get('/admin/products')->assertRedirect('/login');
-    $this->get('/admin/products/create')->assertRedirect('/login');
+beforeEach(function () {
+    $this->withServerVariables([
+        'HTTP_HOST' => config('app.admin_domain', 'admin.aromapalace.id'),
+    ]);
 });
 
-test('regular customer receives 403 forbidden when accessing product management', function () {
+test('guest cannot access admin product routes and is redirected to login', function () {
+    $this->get(route('admin.products.index'))->assertRedirect(route('admin.login'));
+    $this->get(route('admin.products.create'))->assertRedirect(route('admin.login'));
+});
+
+test('regular customer receives 403 or redirect to login when accessing product management', function () {
     $customer = User::factory()->create(['role' => 'customer']);
 
     $this->actingAs($customer)
-        ->get('/admin/products')
-        ->assertForbidden();
+        ->get(route('admin.products.index'))
+        ->assertRedirect(route('admin.login'));
 });
 
 test('admin can view products index with metrics', function () {
     $admin = User::factory()->admin()->create();
 
     $response = $this->actingAs($admin)
-        ->get('/admin/products');
+        ->get(route('admin.products.index'));
 
     $response->assertOk()
         ->assertInertia(fn ($page) => $page
@@ -39,7 +45,7 @@ test('admin can view product create page', function () {
     $admin = User::factory()->admin()->create();
 
     $response = $this->actingAs($admin)
-        ->get('/admin/products/create');
+        ->get(route('admin.products.create'));
 
     $response->assertOk()
         ->assertInertia(fn ($page) => $page
@@ -59,7 +65,7 @@ test('admin can store a new product with multiple variants and galleries', funct
         'slug' => 'majestic-amber-gold',
         'category_id' => $category->id,
         'brand_id' => $brand->id,
-        'description' => 'A luxurious oriental fragrance with warm amber and smoky vanilla.',
+        'description' => '<p>A luxurious oriental fragrance with <strong>warm amber</strong> and smoky vanilla.</p>',
         'images' => [
             'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=800&q=80',
         ],
@@ -86,9 +92,9 @@ test('admin can store a new product with multiple variants and galleries', funct
     ];
 
     $response = $this->actingAs($admin)
-        ->post('/admin/products', $payload);
+        ->post(route('admin.products.store'), $payload);
 
-    $response->assertRedirect('/admin/products')
+    $response->assertRedirect(route('admin.products.index'))
         ->assertSessionHas('success');
 
     $this->assertDatabaseHas('products', [
@@ -140,7 +146,7 @@ test('product creation rejects duplicate volumes in the same request', function 
     ];
 
     $response = $this->actingAs($admin)
-        ->post('/admin/products', $payload);
+        ->post(route('admin.products.store'), $payload);
 
     $response->assertSessionHasErrors(['variants']);
 });
@@ -151,7 +157,7 @@ test('admin can view product edit page and update product and variants', functio
     $product = Product::create([
         'name' => 'Royal Saffron Noir',
         'slug' => 'royal-saffron-noir-'.uniqid(),
-        'description' => 'Original saffron description',
+        'description' => '<p>Original saffron description</p>',
     ]);
 
     $variant1 = ProductVariant::create([
@@ -163,7 +169,7 @@ test('admin can view product edit page and update product and variants', functio
     ]);
 
     $editResponse = $this->actingAs($admin)
-        ->get("/admin/products/{$product->id}/edit");
+        ->get(route('admin.products.edit', $product));
 
     $editResponse->assertOk()
         ->assertInertia(fn ($page) => $page
@@ -176,7 +182,7 @@ test('admin can view product edit page and update product and variants', functio
     $updatePayload = [
         'name' => 'Royal Saffron Noir Intense',
         'slug' => $product->slug,
-        'description' => 'Updated rich saffron notes',
+        'description' => '<p>Updated rich saffron notes with <em>floral heart</em>.</p>',
         'variants' => [
             [
                 'id' => $variant1->id,
@@ -195,9 +201,9 @@ test('admin can view product edit page and update product and variants', functio
     ];
 
     $response = $this->actingAs($admin)
-        ->put("/admin/products/{$product->id}", $updatePayload);
+        ->put(route('admin.products.update', $product), $updatePayload);
 
-    $response->assertRedirect('/admin/products')
+    $response->assertRedirect(route('admin.products.index'))
         ->assertSessionHas('success');
 
     $product->refresh();
@@ -227,7 +233,7 @@ test('admin can quickly update a variant stock via patch endpoint', function () 
     ]);
 
     $response = $this->actingAs($admin)
-        ->patch("/admin/products/{$product->id}/variants/{$variant->id}/stock", [
+        ->patch(route('admin.products.variants.update-stock', [$product, $variant]), [
             'stock' => 45,
         ]);
 
@@ -254,9 +260,9 @@ test('admin can delete a product and its variants are cascaded', function () {
     ]);
 
     $response = $this->actingAs($admin)
-        ->delete("/admin/products/{$product->id}");
+        ->delete(route('admin.products.destroy', $product));
 
-    $response->assertRedirect('/admin/products')
+    $response->assertRedirect(route('admin.products.index'))
         ->assertSessionHas('success');
 
     $this->assertDatabaseMissing('products', ['id' => $product->id]);
