@@ -63,7 +63,7 @@ import { playMenuTapSound } from '@/lib/sound-effects';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { getAdminUrl } from '@/lib/route-resolver';
-import { isRunningInNativeApp } from '@/lib/app-redirect';
+import { isRunningInNativeApp, isAdminContext } from '@/lib/app-redirect';
 import PullToRefresh from '@/components/PullToRefresh';
 
 import { App as CapApp } from '@capacitor/app';
@@ -302,7 +302,7 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
         if (!isAndroidInBrowser) return;
 
         const currentPath = window.location.pathname;
-        if (currentPath.startsWith('/admin')) return;
+        if (currentPath.startsWith('/admin') || isAdminContext()) return;
 
         const SESSION_KEY = 'android_apk_download_prompt_dismissed';
         try {

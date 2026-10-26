@@ -8,7 +8,17 @@
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="default">
         <meta name="format-detection" content="telephone=no">
-        <meta name="apple-itunes-app" content="app-id=6825154655">
+        @php
+            $currentHost = request()->getHost();
+            $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
+            $isAdminDomain = $currentHost === $adminDomain || str_starts_with($currentHost, 'admin.') || request()->is('admin*') || request()->is('manajemen-*');
+        @endphp
+
+        @if (! $isAdminDomain)
+            <meta name="apple-itunes-app" content="app-id=6825154655">
+        @else
+            <meta name="admin-cms" content="true">
+        @endif
 
         <link rel="icon" type="image/png" href="/images/logo.png">
         <link rel="manifest" href="/manifest.json">

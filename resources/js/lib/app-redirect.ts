@@ -44,6 +44,62 @@ export function getMobilePlatform(): 'ios' | 'android' | null {
 }
 
 /**
+ * Detects if the current page/environment is within the Admin CMS Panel.
+ */
+export function isAdminContext(): boolean {
+    if (typeof window === 'undefined') return false;
+
+    const hostname = (window.location.hostname || '').toLowerCase();
+    const pathname = (window.location.pathname || '').toLowerCase();
+
+    // 1. Admin subdomain or admin hostname (e.g. admin.aromapalace.id, admin.aromapalace.test, admin.localhost)
+    if (
+        hostname.startsWith('admin.') ||
+        hostname === 'admin' ||
+        hostname.split('.')[0] === 'admin' ||
+        hostname.includes('admin')
+    ) {
+        return true;
+    }
+
+    // 2. Admin URL path patterns
+    if (
+        pathname.startsWith('/admin') ||
+        pathname.startsWith('/manajemen-') ||
+        pathname.startsWith('/pengaturan') ||
+        pathname === '/dashboard' ||
+        pathname.startsWith('/dashboard/')
+    ) {
+        return true;
+    }
+
+    // 3. Admin meta tag indicator
+    if (document.querySelector('meta[name="admin-cms"]')) {
+        return true;
+    }
+
+    // 4. Inertia dataset page inspection
+    try {
+        const pageEl = document.getElementById('app');
+        if (pageEl?.dataset?.page) {
+            const pageData = JSON.parse(pageEl.dataset.page);
+            if (pageData?.component && typeof pageData.component === 'string') {
+                if (pageData.component.startsWith('admin/') || pageData.component.startsWith('Admin/')) {
+                    return true;
+                }
+            }
+            if (pageData?.props?.auth?.is_admin || pageData?.props?.is_admin_page) {
+                return true;
+            }
+        }
+    } catch {
+        // ignore
+    }
+
+    return false;
+}
+
+/**
  * Redirects the mobile browser to the native app, or to the store if not installed.
  *
  * @param force If true, bypasses the session-check (e.g. when user clicks a button)
@@ -51,15 +107,15 @@ export function getMobilePlatform(): 'ios' | 'android' | null {
 export function redirectToAppOrStore(force = false): void {
     if (typeof window === 'undefined') return;
 
+    // Do nothing on admin panel
+    if (isAdminContext()) return;
+
     // Do nothing if already inside the native app
     if (isRunningInNativeApp()) return;
 
     // Do nothing on desktop
     const platform = getMobilePlatform();
     if (!platform) return;
-
-    // Do nothing on admin pages
-    if (window.location.pathname.startsWith('/admin')) return;
 
     // Check if user specifically requested web version or already attempted in this session
     const urlParams = new URLSearchParams(window.location.search);
@@ -73,7 +129,6 @@ export function redirectToAppOrStore(force = false): void {
 
     const cleanPath = window.location.pathname.replace(/^\/+/, '');
     const search = window.location.search || '';
-    const currentHost = window.location.host || 'aromapalace.id';
 
     if (platform === 'ios') {
         const appUrl = `${CUSTOM_SCHEME}://${cleanPath}${search}`;
@@ -101,14 +156,19 @@ export function redirectToAppOrStore(force = false): void {
 export function initAppRedirect(): void {
     if (typeof window === 'undefined') return;
 
+    // Do nothing on admin panel
+    if (isAdminContext()) return;
+
     // Run automatically when the DOM is ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
+            if (isAdminContext()) return;
             redirectToAppOrStore(false);
         });
     } else {
         // Delay slightly so the page starts rendering before browser handles the redirect/app switch
         setTimeout(() => {
+            if (isAdminContext()) return;
             redirectToAppOrStore(false);
         }, 300);
     }

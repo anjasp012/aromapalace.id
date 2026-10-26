@@ -12,6 +12,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class AuthController extends Controller
 {
@@ -40,7 +41,7 @@ class AuthController extends Controller
     /**
      * Authenticate an administrator session.
      */
-    public function authenticate(Request $request): RedirectResponse
+    public function authenticate(Request $request): SymfonyResponse
     {
         $credentials = $request->validate([
             'email' => ['required', 'string', 'email'],
@@ -90,7 +91,7 @@ class AuthController extends Controller
     /**
      * Terminate the administrator session.
      */
-    public function logout(Request $request): \Symfony\Component\HttpFoundation\Response
+    public function logout(Request $request): SymfonyResponse
     {
         $deviceToken = $request->input('device_token') ?: $request->header('X-Device-Token');
         if ($deviceToken) {
