@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { router } from '@inertiajs/react';
-import { playSwipeRefreshSound } from '@/lib/sound-effects';
+import { playSwipeRefreshSound, unlockAudioContext } from '@/lib/sound-effects';
 
 interface PullToRefreshProps {
     children: React.ReactNode;
@@ -62,6 +62,9 @@ export default function PullToRefresh({
 
     const handleTouchStart = (e: React.TouchEvent) => {
         if (disabled || isRefreshingRef.current) return;
+
+        // Proactively wake up and unlock AudioContext on user gesture start
+        unlockAudioContext();
 
         // Do not activate if a modal/dialog/sheet is currently open
         if (

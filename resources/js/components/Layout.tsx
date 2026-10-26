@@ -2115,6 +2115,7 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
                                     <a
                                         key={item.label}
                                         href={item.href}
+                                        onPointerDown={playMenuTapSound}
                                         onClick={playMenuTapSound}
                                         className={`h-full flex flex-col items-center justify-center gap-0.5 px-1 transition relative select-none active:scale-95 duration-150 ${isActive
                                             ? `${item.activeColor} font-bold`
@@ -2140,6 +2141,7 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
                                     component={item.component}
                                     prefetch={['mount', 'hover']}
                                     cacheFor="2m"
+                                    onPointerDown={playMenuTapSound}
                                     onClick={playMenuTapSound}
                                     className={`h-full flex flex-col items-center justify-center gap-0.5 px-1 transition relative select-none active:scale-95 duration-150 ${isActive
                                         ? `${item.activeColor} font-bold`
