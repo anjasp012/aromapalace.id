@@ -62,27 +62,15 @@ interface ShippingLabelProps {
     className?: string;
 }
 
-// KiriminAja Brand Logo (Purple arrow mark + text)
+// KiriminAja Brand Logo (Official logo)
 function KiriminAjaLogo() {
     return (
-        <div className="flex items-center gap-1.5 select-none">
-            {/* KiriminAja Vector Icon */}
-            <svg viewBox="0 0 40 40" className="w-8 h-8 shrink-0" fill="none">
-                <path
-                    d="M12 28C10 24 11 18 16 13L24 7C25 6 27 7 27 9L26 15C31 16 35 19 35 24C35 29 30 33 24 33C19 33 14 31 12 28Z"
-                    fill="#6D28D9"
-                />
-                <path
-                    d="M18 19L27 12L24 20L21 21L18 19Z"
-                    fill="#C4B5FD"
-                />
-                <circle cx="15" cy="27" r="3" fill="#4C1D95" />
-            </svg>
-            <div className="flex flex-col">
-                <span className="font-extrabold text-lg sm:text-xl text-[#581C87] tracking-tight leading-none font-sans">
-                    kirimin<span className="text-[#7C3AED]">aja</span>
-                </span>
-            </div>
+        <div className="flex items-center select-none">
+            <img
+                src="/images/kiriminajalogo.png"
+                alt="KiriminAja"
+                className="h-7 sm:h-8 max-h-8 w-auto max-w-[130px] object-contain"
+            />
         </div>
     );
 }
