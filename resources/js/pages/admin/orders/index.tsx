@@ -320,7 +320,7 @@ export default function AdminOrdersIndex({
                                 <tr className="border-b transition-colors text-xs">
                                     <th className="h-10 px-4 text-left font-medium">No. Pesanan</th>
                                     <th className="h-10 px-4 text-left font-medium">Pelanggan</th>
-                                    <th className="h-10 px-4 text-left font-medium">Metode</th>
+                                    <th className="h-10 px-4 text-left font-medium">Metode Pengiriman</th>
                                     <th className="h-10 px-4 text-left font-medium">Produk</th>
                                     <th className="h-10 px-4 text-left font-medium">Total</th>
                                     <th className="h-10 px-4 text-left font-medium">Status</th>

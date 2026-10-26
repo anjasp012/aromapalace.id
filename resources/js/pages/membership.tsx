@@ -342,68 +342,6 @@ export default function MembershipPage({
                     {/* TAB CONTENT 1: REWARDS CATALOG */}
                     {activeTab === 'rewards' && (
                         <div className="space-y-3.5">
-                            {/* Active Vouchers Claimed by User */}
-                            {user_vouchers.length > 0 && (
-                                <div className="rounded-2xl border border-amber-300/60 dark:border-amber-800/40 bg-[#FDF8EE] dark:bg-amber-950/20 p-4 space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <Sparkles className="w-4 h-4 text-amber-600" />
-                                            <h3 className="text-xs sm:text-sm font-bold text-foreground">
-                                                {isEn ? 'Your Active Vouchers' : 'Voucher Aktif Anda'} ({user_vouchers.length})
-                                            </h3>
-                                        </div>
-                                        <Link href="/products" className="text-xs font-semibold text-[#4A070B] dark:text-[#E8D0BA] hover:underline flex items-center gap-0.5">
-                                            <span>{isEn ? 'Shop' : 'Belanja'}</span>
-                                            <ChevronRight className="w-3 h-3" />
-                                        </Link>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        {user_vouchers.map((v) => (
-                                            <div
-                                                key={v.id}
-                                                className="p-3 rounded-xl border border-border/80 bg-card text-card-foreground shadow-2xs flex items-center justify-between gap-3"
-                                            >
-                                                <div className="min-w-0 flex-1">
-                                                    <div className="flex items-center gap-1.5 mb-1">
-                                                        <Badge className="text-[10px] px-2 py-0 bg-[#4A070B] text-white font-bold">
-                                                            {v.formatted_discount}
-                                                        </Badge>
-                                                        <span className="text-[10px] text-muted-foreground truncate">
-                                                            {isEn ? 'until' : 's/d'} {v.expires_at || (isEn ? 'Lifetime' : 'Selamanya')}
-                                                        </span>
-                                                    </div>
-                                                    <h4 className="text-xs font-bold text-foreground truncate">{pickText(v.name, v.name_en)}</h4>
-                                                    <p className="text-[11px] text-muted-foreground truncate">{v.min_order_amount_formatted}</p>
-                                                </div>
-
-                                                <div className="text-right shrink-0">
-                                                    <div className="font-mono text-xs font-bold text-foreground mb-1">{v.code}</div>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() => handleCopy(v.code)}
-                                                        className="h-7 text-xs px-2.5 cursor-pointer"
-                                                    >
-                                                        {copiedCode === v.code ? (
-                                                            <>
-                                                                <Check className="w-3 h-3 mr-1 text-emerald-500" />
-                                                                {isEn ? 'Copied' : 'Tersalin'}
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <Copy className="w-3 h-3 mr-1" />
-                                                                {isEn ? 'Copy' : 'Salin'}
-                                                            </>
-                                                        )}
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
                             {/* Available Catalog Rewards */}
                             <div className="space-y-2.5">
                                 <div className="px-1 flex items-center justify-between text-xs text-muted-foreground">
