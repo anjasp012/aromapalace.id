@@ -311,21 +311,27 @@ export default function AdminVoucherEdit({ voucher, products = [], users = [] }:
                                 </Select>
                                 <p className="text-[11px] text-muted-foreground">Voucher Biasa dapat digunakan semua pelanggan, sedangkan Voucher Reward khusus penukaran reward Royale Club.</p>
                                 {data.voucher_type === 'reward' && (
-                                    <div className="pt-2 space-y-1">
-                                        <label className="text-[11px] font-medium text-foreground">Pemilik Voucher (Opsional)</label>
-                                        <select
-                                            value={data.user_id}
-                                            onChange={(e) => setData('user_id', e.target.value)}
-                                            className="w-full h-8 rounded-md border border-input bg-background px-2.5 py-1 text-xs text-foreground focus:ring-1 focus:ring-primary"
+                                    <div className="pt-2 space-y-1.5">
+                                        <label className="text-xs font-semibold text-foreground">Pemilik Voucher (Opsional)</label>
+                                        <Select
+                                            value={data.user_id ? String(data.user_id) : 'all_members'}
+                                            onValueChange={(val) => setData('user_id', val === 'all_members' ? '' : val)}
                                         >
-                                            <option value="">Semua Anggota (Bebas Ditukar)</option>
-                                            {users.map((u) => (
-                                                <option key={u.id} value={u.id}>
-                                                    {u.name} ({u.email})
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <p className="text-[10px] text-muted-foreground">Kosongkan jika voucher reward ini bisa ditukarkan oleh semua member.</p>
+                                            <SelectTrigger className="h-9 text-xs">
+                                                <SelectValue placeholder="Pilih pemilik voucher..." />
+                                            </SelectTrigger>
+                                            <SelectContent className="max-h-60">
+                                                <SelectItem value="all_members">
+                                                    Semua Anggota (Bebas Ditukar)
+                                                </SelectItem>
+                                                {users.map((u) => (
+                                                    <SelectItem key={u.id} value={String(u.id)}>
+                                                        {u.name} ({u.email})
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <p className="text-[11px] text-muted-foreground">Kosongkan jika voucher reward ini bisa ditukarkan oleh semua member.</p>
                                     </div>
                                 )}
                             </div>

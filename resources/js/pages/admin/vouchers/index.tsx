@@ -19,6 +19,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import {
     Dialog,
     DialogContent,
     DialogHeader,
@@ -278,26 +285,33 @@ export default function AdminVouchersIndex({
                             </div>
 
                             {/* Filter Tipe */}
-                            <select
+                            <Select
                                 value={typeFilter}
-                                onChange={(e) => handleTypeFilterChange(e.target.value)}
-                                className="h-8 rounded-md border border-input bg-background px-2 py-1 text-xs text-foreground cursor-pointer"
+                                onValueChange={(val) => handleTypeFilterChange(val)}
                             >
-                                <option value="all">Semua Tipe</option>
-                                <option value="biasa">Voucher Biasa</option>
-                                <option value="reward">Voucher Reward</option>
-                            </select>
+                                <SelectTrigger className="h-8 text-xs w-[130px]">
+                                    <SelectValue placeholder="Semua Tipe" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Semua Tipe</SelectItem>
+                                    <SelectItem value="biasa">Voucher Biasa</SelectItem>
+                                    <SelectItem value="reward">Voucher Reward</SelectItem>
+                                </SelectContent>
+                            </Select>
 
                             {/* Filter Cakupan Produk */}
-                            <select
+                            <Select
                                 value={scopeFilter}
-                                onChange={(e) => handleScopeFilterChange(e.target.value)}
-                                className="h-8 rounded-md border border-input bg-background px-2 py-1 text-xs text-foreground cursor-pointer"
+                                onValueChange={(val) => handleScopeFilterChange(val)}
                             >
-                                <option value="all">Semua Cakupan</option>
-                                <option value="all">Katalog Semua Produk</option>
-                                <option value="specific">Khusus Produk Tertentu</option>
-                            </select>
+                                <SelectTrigger className="h-8 text-xs w-[150px]">
+                                    <SelectValue placeholder="Semua Cakupan" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Semua Cakupan</SelectItem>
+                                    <SelectItem value="specific">Khusus Produk</SelectItem>
+                                </SelectContent>
+                            </Select>
 
                             {(search !== '' || statusFilter !== 'all' || typeFilter !== 'all' || scopeFilter !== 'all') && (
                                 <Button
