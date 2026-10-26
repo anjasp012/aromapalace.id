@@ -181,6 +181,14 @@ xcodebuild -exportArchive -archivePath build/AromaPalace.xcarchive \
   -exportOptionsPlist ExportOptions.plist -exportPath build/export $AUTH
 ```
 
+Kalau export gagal dengan `Account credentials have expired` (akun Apple ID lain di Xcode kedaluwarsa), export IPA lokal lalu upload terpisah:
+
+```bash
+sed 's#<string>upload</string>#<string>export</string>#' ExportOptions.plist > /tmp/ExportLocal.plist
+xcodebuild -exportArchive -archivePath build/AromaPalace.xcarchive -exportOptionsPlist /tmp/ExportLocal.plist -exportPath build/export $AUTH
+xcrun altool --upload-app -f build/export/App.ipa -t ios --apiKey <KEY_ID> --apiIssuer <ISSUER_ID>
+```
+
 `ios/App/ExportOptions.plist` memakai `method=app-store-connect` dan `destination=upload`, jadi build langsung terkirim ke App Store Connect. Nomor build dinaikkan otomatis.
 
 Catatan review Apple:
