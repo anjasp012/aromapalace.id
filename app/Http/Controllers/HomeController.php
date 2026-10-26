@@ -41,7 +41,7 @@ class HomeController extends Controller
         ])
             ->withCount('reviews')
             ->orderByDesc('reviews_count')
-            ->take(10)
+            ->take(5)
             ->get()
             ->map(function (Product $p) {
                 $formatted = CatalogService::formatProduct($p);
@@ -72,7 +72,7 @@ class HomeController extends Controller
             $discountedProducts = $popularProducts;
         }
 
-        // 3. Recommended Products from DB
+        // 3. Recommended Products from DB (Curated Just For You - Limit 5)
         $recommendedProducts = Product::with([
             'variants',
             'galleries',
@@ -82,7 +82,7 @@ class HomeController extends Controller
             'brandRelation',
         ])
             ->latest('id')
-            ->take(10)
+            ->take(5)
             ->get()
             ->map(fn (Product $p) => CatalogService::formatProduct($p))
             ->values()
@@ -92,7 +92,7 @@ class HomeController extends Controller
             $recommendedProducts = $popularProducts;
         }
 
-        // 4. Categories from DB
+        // 4. Categories from DB (Product Categories - Limit 9)
         $categoryImages = [
             'parfum-pria' => 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?auto=format&fit=crop&w=400&q=80',
             'parfum-wanita' => 'https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?auto=format&fit=crop&w=400&q=80',
@@ -101,30 +101,36 @@ class HomeController extends Controller
             'artisanal-attar' => 'https://images.unsplash.com/photo-1547887537-6158d64c35b3?auto=format&fit=crop&w=400&q=80',
         ];
 
-        $categories = Category::withCount('products')->get()->map(function (Category $c) use ($categoryImages) {
-            return [
-                'id' => $c->id,
-                'name' => $c->name,
-                'name_en' => $c->name_en,
-                'slug' => $c->slug,
-                'description' => $c->description,
-                'description_en' => $c->description_en,
-                'productsCount' => (int) $c->products_count,
-                'image' => $c->thumbnail ?: ($categoryImages[$c->slug] ?? 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=400&q=80'),
-            ];
-        })->values()->all();
+        $categories = Category::withCount('products')
+            ->take(9)
+            ->get()
+            ->map(function (Category $c) use ($categoryImages) {
+                return [
+                    'id' => $c->id,
+                    'name' => $c->name,
+                    'name_en' => $c->name_en,
+                    'slug' => $c->slug,
+                    'description' => $c->description,
+                    'description_en' => $c->description_en,
+                    'productsCount' => (int) $c->products_count,
+                    'image' => $c->thumbnail ?: ($categoryImages[$c->slug] ?? 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=400&q=80'),
+                ];
+            })->values()->all();
 
-        // 5. Brands from DB
-        $brands = Brand::withCount('products')->get()->map(function (Brand $b) {
-            return [
-                'name' => $b->name,
-                'slug' => $b->slug,
-                'description' => $b->description ?? '',
-                'description_en' => $b->description_en ?? '',
-                'collectionsCount' => $b->products_count,
-                'image' => $b->thumbnail ?? 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=200&q=80',
-            ];
-        })->values()->all();
+        // 5. Brands from DB (Featured Brands - Limit 5)
+        $brands = Brand::withCount('products')
+            ->take(5)
+            ->get()
+            ->map(function (Brand $b) {
+                return [
+                    'name' => $b->name,
+                    'slug' => $b->slug,
+                    'description' => $b->description ?? '',
+                    'description_en' => $b->description_en ?? '',
+                    'collectionsCount' => $b->products_count,
+                    'image' => $b->thumbnail ?? 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=200&q=80',
+                ];
+            })->values()->all();
 
         // 6. Vouchers from DB
         $vouchers = Voucher::where('is_active', true)

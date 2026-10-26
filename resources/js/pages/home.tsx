@@ -252,23 +252,23 @@ export default function Home({
         }
     }, [propPopularProducts, propDiscountedProducts, propRecommendedProducts, propCategories, propBrands, propVouchers, propArticles, propSliderPromos]);
 
-    // Products Datasets from Database (fallback to cached data if offline / props empty)
-    const popularProducts: ProductItem[] = propPopularProducts.length > 0
+    // Products Datasets from Database (enforcing limits: categories 9, popular 5, recommended 5, brands 5)
+    const popularProducts: ProductItem[] = (propPopularProducts.length > 0
         ? propPopularProducts
-        : (cachedHome?.popularProducts || []);
-    const recommendedProducts: ProductItem[] = propRecommendedProducts.length > 0
+        : (cachedHome?.popularProducts || [])).slice(0, 5);
+    const recommendedProducts: ProductItem[] = (propRecommendedProducts.length > 0
         ? propRecommendedProducts
-        : (cachedHome?.recommendedProducts?.length > 0 ? cachedHome.recommendedProducts : popularProducts);
+        : (cachedHome?.recommendedProducts?.length > 0 ? cachedHome.recommendedProducts : popularProducts)).slice(0, 5);
     const discountedProducts: ProductItem[] = propDiscountedProducts.length > 0
         ? propDiscountedProducts
         : (cachedHome?.discountedProducts || []);
 
-    const categoriesList: CategoryItem[] = propCategories.length > 0
+    const categoriesList: CategoryItem[] = (propCategories.length > 0
         ? propCategories
-        : (cachedHome?.categories || []);
-    const brandList: BrandItem[] = propBrands.length > 0
+        : (cachedHome?.categories || [])).slice(0, 9);
+    const brandList: BrandItem[] = (propBrands.length > 0
         ? propBrands
-        : (cachedHome?.brands || []);
+        : (cachedHome?.brands || [])).slice(0, 5);
     const activeVouchers = propVouchers.length > 0
         ? propVouchers
         : (cachedHome?.vouchers || []);
@@ -707,7 +707,7 @@ export default function Home({
                             </Button>
                         </div>
 
-                        <div className="-mx-4 px-4 sm:mx-0 sm:px-0 scroll-pl-4 sm:scroll-pl-0 flex sm:grid overflow-x-auto sm:overflow-visible gap-3 sm:gap-4 pb-2 sm:pb-0 scrollbar-none snap-x snap-mandatory sm:grid-cols-3 lg:grid-cols-6">
+                        <div className="-mx-4 px-4 sm:mx-0 sm:px-0 scroll-pl-4 sm:scroll-pl-0 flex sm:grid overflow-x-auto sm:overflow-visible gap-3 sm:gap-4 pb-2 sm:pb-0 scrollbar-none snap-x snap-mandatory sm:grid-cols-3 lg:grid-cols-5">
                             {brandList.map((b) => (
                                 <BrandCard
                                     key={b.slug}
