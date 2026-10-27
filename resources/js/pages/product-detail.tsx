@@ -713,57 +713,57 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
                             {renderDescription(activeDescription)}
                         </div>
 
-                        {/* SIZE / VOLUME VARIANT SELECTION (OPTIONAL) */}
-                        <div className="space-y-2.5">
-                            <div className="flex items-center justify-between text-xs">
-                                <span className="font-bold text-foreground uppercase tracking-wider text-[11px]">
-                                    {isEn ? 'Select Variant / Bottle Size:' : 'Pilih Varian / Ukuran Botol:'}
-                                </span>
-                                <span className="text-muted-foreground text-[11px]">
-                                    {currentPriceInfo.title}
-                                </span>
-                            </div>
+                        {/* SIZE / VOLUME VARIANT SELECTION (ONLY IF MULTIPLE VARIANTS EXIST) */}
+                        {availableSizes.length > 1 && (
+                            <div className="space-y-2.5">
+                                <div className="flex items-center justify-between text-xs">
+                                    <span className="font-bold text-foreground uppercase tracking-wider text-[11px]">
+                                        {isEn ? 'Select Variant / Bottle Size:' : 'Pilih Varian / Ukuran Botol:'}
+                                    </span>
+                                    <span className="text-muted-foreground text-[11px]">
+                                        {currentPriceInfo.title}
+                                    </span>
+                                </div>
 
-                            <div className={cn(
-                                "grid gap-2.5",
-                                availableSizes.length === 1
-                                    ? "grid-cols-1 max-w-xs"
-                                    : availableSizes.length === 2
+                                <div className={cn(
+                                    "grid gap-2.5",
+                                    availableSizes.length === 2
                                         ? "grid-cols-2"
                                         : "grid-cols-2 sm:grid-cols-3"
-                            )}>
-                                {availableSizes.map((opt, idx) => (
-                                    <button
-                                        key={opt.id ?? (opt.label + idx)}
-                                        type="button"
-                                        onClick={() => setSelectedSizeIndex(idx)}
-                                        className={cn(
-                                            'p-2.5 rounded-md border text-left transition-all cursor-pointer shadow-none',
-                                            selectedSizeIndex === idx
-                                                ? 'border-[#4A070B] bg-[#4A070B]/5 ring-1 ring-[#4A070B]/30'
-                                                : 'border-border/80 hover:border-border hover:bg-muted/40'
-                                        )}
-                                    >
-                                        <div className="flex items-center justify-between gap-1">
-                                            <span className="font-bold text-xs text-foreground truncate" title={opt.title}>
-                                                {opt.title || opt.label}
-                                            </span>
-                                            <span className="text-[10.5px] font-semibold text-[#4A070B] dark:text-[#E8D0BA] shrink-0">
-                                                {opt.price}
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center justify-between text-[10px] text-muted-foreground mt-0.5">
-                                            <span className="font-medium">{opt.label}</span>
-                                            {opt.stock !== undefined && (
-                                                <span className={opt.stock <= 5 ? 'text-amber-600 dark:text-amber-400 font-medium' : ''}>
-                                                    {opt.stock > 0 ? `Stok: ${opt.stock}` : 'Habis'}
-                                                </span>
+                                )}>
+                                    {availableSizes.map((opt, idx) => (
+                                        <button
+                                            key={opt.id ?? (opt.label + idx)}
+                                            type="button"
+                                            onClick={() => setSelectedSizeIndex(idx)}
+                                            className={cn(
+                                                'p-2.5 rounded-md border text-left transition-all cursor-pointer shadow-none',
+                                                selectedSizeIndex === idx
+                                                    ? 'border-[#4A070B] bg-[#4A070B]/5 ring-1 ring-[#4A070B]/30'
+                                                    : 'border-border/80 hover:border-border hover:bg-muted/40'
                                             )}
-                                        </div>
-                                    </button>
-                                ))}
+                                        >
+                                            <div className="flex items-center justify-between gap-1">
+                                                <span className="font-bold text-xs text-foreground truncate" title={opt.title}>
+                                                    {opt.title || opt.label}
+                                                </span>
+                                                <span className="text-[10.5px] font-semibold text-[#4A070B] dark:text-[#E8D0BA] shrink-0">
+                                                    {opt.price}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center justify-between text-[10px] text-muted-foreground mt-0.5">
+                                                <span className="font-medium">{opt.label}</span>
+                                                {opt.stock !== undefined && (
+                                                    <span className={opt.stock <= 5 ? 'text-amber-600 dark:text-amber-400 font-medium' : ''}>
+                                                        {opt.stock > 0 ? `Stok: ${opt.stock}` : 'Habis'}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         {/* QUANTITY & PRIMARY ACTION BUTTONS */}
                         <div className="space-y-3 pt-2">

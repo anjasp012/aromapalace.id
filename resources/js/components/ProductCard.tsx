@@ -6,6 +6,22 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useTranslation, formatCategoryName } from '@/lib/i18n';
 
+export interface ProductVariantItem {
+    id: number;
+    product_id: number;
+    name: string;
+    volume: number | string;
+    price: string;
+    raw_price?: number;
+    original_price?: string | null;
+    raw_original_price?: number | null;
+    discount_percent?: number | null;
+    discount_badge?: string | null;
+    sku?: string;
+    stock: number;
+    in_stock: boolean;
+}
+
 export interface ProductItem {
     id: number;
     name: string;
@@ -37,6 +53,8 @@ export interface ProductItem {
     };
     description?: string;
     description_en?: string;
+    variants?: ProductVariantItem[];
+    has_variants?: boolean;
 }
 
 interface ProductCardProps {

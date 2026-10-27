@@ -18,7 +18,7 @@ interface ProductQuickViewModalProps {
     product: ProductItem | null;
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onAddToCart?: (product: ProductItem, quantity: number) => void;
+    onAddToCart?: (product: ProductItem, quantity: number, variant?: any) => void;
 }
 
 export default function ProductQuickViewModal({
@@ -33,12 +33,14 @@ export default function ProductQuickViewModal({
     const { t, pickText, isEn } = useTranslation();
 
     const [quantity, setQuantity] = useState(1);
+    const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
     const [isAdding, setIsAdding] = useState(false);
     const [isAdded, setIsAdded] = useState(false);
 
     useEffect(() => {
         if (open) {
             setQuantity(1);
+            setSelectedVariantIndex(0);
             setIsAdding(false);
             setIsAdded(false);
         }
@@ -46,8 +48,20 @@ export default function ProductQuickViewModal({
 
     if (!product) return null;
 
+    const variants = product.variants && product.variants.length > 0 ? product.variants : [];
+    const hasMultipleVariants = variants.length > 1;
+    const currentVariant = variants[selectedVariantIndex] || variants[0] || null;
+
+    const displayPrice = currentVariant ? currentVariant.price : product.price;
+    const displayOriginalPrice = currentVariant ? (currentVariant.original_price || null) : (product.originalPrice || null);
+    const displayDiscountBadge = currentVariant?.discount_badge || product.discountBadge;
+    const displayVolume = currentVariant ? formatVolume(currentVariant.volume) : formatVolume(product.volume || 50);
+
+    const maxStock = currentVariant && typeof currentVariant.stock === 'number' ? currentVariant.stock : 20;
+    const isOutOfStock = currentVariant ? currentVariant.stock <= 0 : product.in_stock === false;
+
     const handleAdd = () => {
-        if (isAdmin) return;
+        if (isAdmin || isOutOfStock) return;
         if (!user) {
             router.visit(
                 '/login?notice=' +
@@ -65,7 +79,7 @@ export default function ProductQuickViewModal({
         setIsAdding(true);
 
         if (onAddToCart) {
-            onAddToCart(product, quantity);
+            onAddToCart(product, quantity, currentVariant);
             setIsAdding(false);
             setIsAdded(true);
             setTimeout(() => {
@@ -77,8 +91,9 @@ export default function ProductQuickViewModal({
                 '/cart',
                 {
                     product_id: product.id,
+                    variant_id: currentVariant?.id,
                     quantity: quantity,
-                    volume: product.volume || 50,
+                    volume: currentVariant ? currentVariant.volume : (product.volume || 50),
                 },
                 {
                     preserveScroll: true,
@@ -163,24 +178,80 @@ export default function ProductQuickViewModal({
                                 {product.name}
                             </DialogTitle>
                             <DialogDescription className="text-xs">
-                                {t('catalog.concentration')}: {product.concentration || 'Eau de Parfum'} &bull; {formatVolume(product.volume || 50)}
+                                {t('catalog.concentration')}: {product.concentration || 'Eau de Parfum'} &bull; {displayVolume}
                             </DialogDescription>
                         </DialogHeader>
 
                         <div className="flex items-baseline gap-2 border-y border-border py-2.5">
                             <span className="text-xl sm:text-2xl font-bold text-foreground">
-                                {product.price}
+                                {displayPrice}
                             </span>
-                            {product.originalPrice && (
+                            {displayOriginalPrice && (
                                 <span className="text-xs line-through text-muted-foreground">
-                                    {product.originalPrice}
+                                    {displayOriginalPrice}
                                 </span>
+                            )}
+                            {displayDiscountBadge && (
+                                <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-4">
+                                    {displayDiscountBadge}
+                                </Badge>
                             )}
                         </div>
 
                         <div className="text-xs sm:text-sm text-muted-foreground leading-relaxed pt-1">
                             {renderDescription(activeDescription)}
                         </div>
+
+                        {/* Variant Selection (Only if multiple variants exist) */}
+                        {hasMultipleVariants && (
+                            <div className="space-y-2 pt-2 border-t border-border/60">
+                                <div className="flex items-center justify-between text-xs">
+                                    <span className="font-semibold text-foreground text-[11px] uppercase tracking-wider">
+                                        {isEn ? 'Select Variant / Size:' : 'Pilih Varian / Ukuran:'}
+                                    </span>
+                                    {currentVariant && (
+                                        <span className="text-muted-foreground text-[11px] truncate max-w-[160px]">
+                                            {currentVariant.name}
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {variants.map((v, idx) => (
+                                        <button
+                                            key={v.id || idx}
+                                            type="button"
+                                            onClick={() => {
+                                                setSelectedVariantIndex(idx);
+                                                setQuantity(1);
+                                            }}
+                                            className={cn(
+                                                'p-2 rounded-md border text-left transition-all cursor-pointer shadow-none text-xs',
+                                                selectedVariantIndex === idx
+                                                    ? 'border-[#4A070B] bg-[#4A070B]/5 ring-1 ring-[#4A070B]/30'
+                                                    : 'border-border/80 hover:border-border hover:bg-muted/40'
+                                            )}
+                                        >
+                                            <div className="flex items-center justify-between gap-1">
+                                                <span className="font-bold text-xs text-foreground truncate" title={v.name}>
+                                                    {v.name}
+                                                </span>
+                                                <span className="text-[10px] font-semibold text-[#4A070B] dark:text-[#E8D0BA] shrink-0">
+                                                    {v.price}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center justify-between text-[10px] text-muted-foreground mt-0.5">
+                                                <span className="font-medium">{formatVolume(v.volume)}</span>
+                                                {v.stock !== undefined && (
+                                                    <span className={v.stock <= 5 ? 'text-amber-600 dark:text-amber-400 font-medium' : ''}>
+                                                        {v.stock > 0 ? `Stok: ${v.stock}` : (isEn ? 'Out of stock' : 'Habis')}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         <div className="space-y-3 pt-2">
                             {!isAdmin ? (
@@ -192,6 +263,7 @@ export default function ProductQuickViewModal({
                                                 variant="ghost"
                                                 size="sm"
                                                 onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
+                                                disabled={quantity <= 1 || isOutOfStock}
                                                 className="h-7 w-7 p-0 cursor-pointer"
                                                 aria-label={isEn ? "Decrease quantity" : "Kurangi jumlah"}
                                             >
@@ -201,7 +273,8 @@ export default function ProductQuickViewModal({
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                onClick={() => setQuantity((prev) => prev + 1)}
+                                                onClick={() => setQuantity((prev) => Math.min(Math.max(1, maxStock), prev + 1))}
+                                                disabled={quantity >= maxStock || isOutOfStock}
                                                 className="h-7 w-7 p-0 cursor-pointer"
                                                 aria-label={isEn ? "Increase quantity" : "Tambah jumlah"}
                                             >
@@ -213,13 +286,15 @@ export default function ProductQuickViewModal({
                                     <div className="grid grid-cols-2 gap-2">
                                         <Button
                                             onClick={handleAdd}
-                                            disabled={isAdding}
+                                            disabled={isAdding || isOutOfStock}
                                             size="sm"
                                             className={cn(
                                                 "cursor-pointer shadow-none transition-all duration-300",
-                                                isAdded
-                                                    ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-900/20"
-                                                    : "bg-[#4A070B] hover:bg-[#360407] text-white"
+                                                isOutOfStock
+                                                    ? "bg-muted text-muted-foreground cursor-not-allowed opacity-80"
+                                                    : isAdded
+                                                        ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-900/20"
+                                                        : "bg-[#4A070B] hover:bg-[#360407] text-white"
                                             )}
                                         >
                                             {isAdding ? (
@@ -232,6 +307,8 @@ export default function ProductQuickViewModal({
                                                     <Check className="w-3.5 h-3.5 stroke-[2.5] animate-in zoom-in-75" />
                                                     <span className="truncate">{isEn ? 'Added!' : 'Berhasil!'}</span>
                                                 </span>
+                                            ) : isOutOfStock ? (
+                                                <span>{isEn ? 'Out of Stock' : 'Stok Habis'}</span>
                                             ) : (
                                                 t('product.add_to_cart')
                                             )}
