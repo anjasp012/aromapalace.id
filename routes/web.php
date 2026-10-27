@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AboutController;
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\AppUpdateController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BrandController;
@@ -29,6 +30,8 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::match(['get', 'post'], '/locale/{lang?}', [LocaleController::class, 'setLocale'])->name('locale.set');
+Route::get('/api/app-update', [AppUpdateController::class, 'check'])->name('app.update.check');
+Route::get('/api/app-version', [AppUpdateController::class, 'check'])->name('app.version.check');
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');

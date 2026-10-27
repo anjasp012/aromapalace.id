@@ -20,6 +20,9 @@ import {
     EyeOff,
     ExternalLink,
     Compass,
+    Smartphone,
+    ArrowUpCircle,
+    ShieldAlert,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -77,6 +80,15 @@ export default function SettingsIndex({
         shipping_longitude: settings.shipping_longitude !== undefined && settings.shipping_longitude !== null && settings.shipping_longitude !== ''
             ? settings.shipping_longitude
             : (settings.longitude ?? ''),
+
+        // Mobile App Update (Capacitor)
+        app_min_version: settings.app_min_version || '1.0.0',
+        app_latest_version: settings.app_latest_version || '1.0.0',
+        app_force_update: Boolean(settings.app_force_update === '1' || settings.app_force_update === true || settings.app_force_update === 1),
+        app_update_title: settings.app_update_title || 'Pembaruan Aplikasi Tersedia',
+        app_update_message: settings.app_update_message || 'Versi baru aplikasi Aroma Palace telah tersedia dengan peningkatan fitur dan stabilitas. Mohon perbarui aplikasi Anda untuk melanjutkan berbelanja.',
+        app_playstore_url: settings.app_playstore_url || 'https://play.google.com/store/apps/details?id=com.aromapalace.app',
+        app_appstore_url: settings.app_appstore_url || 'https://apps.apple.com/app/aromapalace/id6740000000',
     });
 
     const [showApiKey, setShowApiKey] = useState(false);
@@ -634,6 +646,164 @@ export default function SettingsIndex({
                                     )}
                                 </div>
 
+                            </CardContent>
+                        </Card>
+
+                        {/* BAGIAN TAMBAHAN: PEMBARUAN APLIKASI MOBILE (CAPACITOR) */}
+                        <Card className="shadow-xs border-border/80">
+                            <CardHeader className="pb-4">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2 text-[#4A070B] dark:text-red-400">
+                                        <Smartphone className="size-4.5" />
+                                        <CardTitle className="text-base font-bold">Pembaruan Aplikasi Mobile</CardTitle>
+                                    </div>
+                                    <Badge variant="outline" className="bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-300 gap-1 text-[11px]">
+                                        <ArrowUpCircle className="size-3" />
+                                        Capacitor OTA
+                                    </Badge>
+                                </div>
+                                <CardDescription className="text-xs">
+                                    Kontrol versi aplikasi mobile Android &amp; iOS. Atur versi rilis terbaru dan tentukan apakah pembaruan bersifat wajib (force update modal tidak bisa ditutup) atau opsional.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {/* Toggle Wajib Update */}
+                                <label className="flex items-start gap-3 p-3 rounded-xl border border-border/80 bg-muted/20 cursor-pointer hover:bg-muted/40 transition-colors">
+                                    <input
+                                        type="checkbox"
+                                        checked={Boolean(data.app_force_update)}
+                                        onChange={(e) => setData('app_force_update', e.target.checked)}
+                                        className="size-4 mt-0.5 rounded border-gray-300 text-[#4A070B] focus:ring-[#4A070B]"
+                                    />
+                                    <div className="flex-1 space-y-1">
+                                        <div className="text-xs font-semibold text-foreground flex items-center gap-2">
+                                            <span>Wajib Update (Kunci Aplikasi)</span>
+                                            {data.app_force_update ? (
+                                                <Badge variant="destructive" className="text-[10px] py-0 px-1.5 h-4">
+                                                    Wajib Aktif
+                                                </Badge>
+                                            ) : (
+                                                <Badge variant="outline" className="text-[10px] py-0 px-1.5 h-4 text-muted-foreground">
+                                                    Opsional
+                                                </Badge>
+                                            )}
+                                        </div>
+                                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                            Bila diaktifkan, dialog pembaruan di aplikasi mobile tidak dapat ditutup dan tombol back dinonaktifkan sampai pengguna memperbarui aplikasi.
+                                        </p>
+                                    </div>
+                                </label>
+
+                                {/* Input Versi */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                                            <span>Versi Minimum yang Diizinkan</span>
+                                            <span className="text-[10px] text-muted-foreground font-mono">Semver</span>
+                                        </label>
+                                        <Input
+                                            type="text"
+                                            placeholder="1.0.0"
+                                            value={data.app_min_version}
+                                            onChange={(e) => setData('app_min_version', e.target.value)}
+                                            className="h-9 text-xs font-mono"
+                                        />
+                                        <p className="text-[10px] text-muted-foreground">
+                                            Versi di bawah ini otomatis dipaksa update (wajib).
+                                        </p>
+                                        {errors.app_min_version && (
+                                            <p className="text-xs text-destructive">{errors.app_min_version}</p>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                                            <span>Versi Terbaru di App Store</span>
+                                            <span className="text-[10px] text-muted-foreground font-mono">Semver</span>
+                                        </label>
+                                        <Input
+                                            type="text"
+                                            placeholder="1.1.0"
+                                            value={data.app_latest_version}
+                                            onChange={(e) => setData('app_latest_version', e.target.value)}
+                                            className="h-9 text-xs font-mono"
+                                        />
+                                        <p className="text-[10px] text-muted-foreground">
+                                            Nomor versi rilis terbaru yang siap diunduh.
+                                        </p>
+                                        {errors.app_latest_version && (
+                                            <p className="text-xs text-destructive">{errors.app_latest_version}</p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Judul & Pesan Update */}
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-foreground">
+                                        Judul Notifikasi Pembaruan
+                                    </label>
+                                    <Input
+                                        type="text"
+                                        placeholder="Pembaruan Aplikasi Tersedia"
+                                        value={data.app_update_title}
+                                        onChange={(e) => setData('app_update_title', e.target.value)}
+                                        className="h-9 text-xs"
+                                    />
+                                    {errors.app_update_title && (
+                                        <p className="text-xs text-destructive">{errors.app_update_title}</p>
+                                    )}
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-foreground">
+                                        Pesan Pembaruan / Catatan Rilis
+                                    </label>
+                                    <Textarea
+                                        rows={3}
+                                        placeholder="Tuliskan catatan rilis fitur baru atau perbaikan bug..."
+                                        value={data.app_update_message}
+                                        onChange={(e) => setData('app_update_message', e.target.value)}
+                                        className="text-xs resize-none"
+                                    />
+                                    {errors.app_update_message && (
+                                        <p className="text-xs text-destructive">{errors.app_update_message}</p>
+                                    )}
+                                </div>
+
+                                {/* URL Store */}
+                                <div className="space-y-3 pt-1">
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-semibold text-foreground">
+                                            URL Google Play Store (Android)
+                                        </label>
+                                        <Input
+                                            type="url"
+                                            placeholder="https://play.google.com/store/apps/details?id=com.aromapalace.app"
+                                            value={data.app_playstore_url}
+                                            onChange={(e) => setData('app_playstore_url', e.target.value)}
+                                            className="h-9 text-xs font-mono"
+                                        />
+                                        {errors.app_playstore_url && (
+                                            <p className="text-xs text-destructive">{errors.app_playstore_url}</p>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-semibold text-foreground">
+                                            URL Apple App Store (iOS)
+                                        </label>
+                                        <Input
+                                            type="url"
+                                            placeholder="https://apps.apple.com/app/aromapalace/id6740000000"
+                                            value={data.app_appstore_url}
+                                            onChange={(e) => setData('app_appstore_url', e.target.value)}
+                                            className="h-9 text-xs font-mono"
+                                        />
+                                        {errors.app_appstore_url && (
+                                            <p className="text-xs text-destructive">{errors.app_appstore_url}</p>
+                                        )}
+                                    </div>
+                                </div>
                             </CardContent>
                         </Card>
                     </div>

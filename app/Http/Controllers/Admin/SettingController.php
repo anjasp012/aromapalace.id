@@ -30,6 +30,15 @@ class SettingController extends Controller
         $settings['latitude'] = $settings['shipping_latitude'];
         $settings['longitude'] = $settings['shipping_longitude'];
 
+        // Ensure defaults for Mobile App & Update settings
+        $settings['app_min_version'] = $settings['app_min_version'] ?? '1.0.0';
+        $settings['app_latest_version'] = $settings['app_latest_version'] ?? '1.0.0';
+        $settings['app_force_update'] = filter_var($settings['app_force_update'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $settings['app_update_title'] = $settings['app_update_title'] ?? 'Pembaruan Aplikasi Tersedia';
+        $settings['app_update_message'] = $settings['app_update_message'] ?? 'Versi baru aplikasi Aroma Palace telah tersedia dengan peningkatan fitur dan stabilitas. Mohon perbarui aplikasi Anda untuk melanjutkan berbelanja.';
+        $settings['app_playstore_url'] = $settings['app_playstore_url'] ?? 'https://play.google.com/store/apps/details?id=com.aromapalace.app';
+        $settings['app_appstore_url'] = $settings['app_appstore_url'] ?? 'https://apps.apple.com/app/aromapalace/id6740000000';
+
         $kiriminAja = app(KiriminAjaService::class);
         $fetchWithRetry = function (callable $callback): array {
             $res = $callback();
@@ -111,6 +120,15 @@ class SettingController extends Controller
             'kiriminaja_api_key' => ['nullable', 'string', 'max:500'],
             'kiriminaja_prefix' => ['nullable', 'string', 'max:20'],
             'kiriminaja_pin' => ['nullable', 'string', 'max:10'],
+
+            // Mobile App & Update Settings
+            'app_min_version' => ['nullable', 'string', 'max:25'],
+            'app_latest_version' => ['nullable', 'string', 'max:25'],
+            'app_force_update' => ['nullable', 'boolean'],
+            'app_update_title' => ['nullable', 'string', 'max:255'],
+            'app_update_message' => ['nullable', 'string', 'max:1000'],
+            'app_playstore_url' => ['nullable', 'url', 'max:500'],
+            'app_appstore_url' => ['nullable', 'url', 'max:500'],
         ], [
             'shipping_sender_phone.regex' => 'Nomor telepon pengirim harus dimulai dengan 08, 628, +628, atau 02 dan hanya berisi angka.',
             'store_phone.regex' => 'Nomor telepon toko harus dimulai dengan 08, 628, +628, atau 02 dan hanya berisi angka.',
@@ -136,6 +154,10 @@ class SettingController extends Controller
         }
         if (isset($validated['kiriminaja_pin'])) {
             $validated['kiriminaja_pin'] = trim((string) $validated['kiriminaja_pin']);
+        }
+
+        if ($request->has('app_force_update')) {
+            $validated['app_force_update'] = $request->boolean('app_force_update') ? '1' : '0';
         }
 
         $settingConfigs = [
@@ -164,6 +186,13 @@ class SettingController extends Controller
             'kiriminaja_api_key' => ['group' => 'shipping', 'type' => 'string'],
             'kiriminaja_prefix' => ['group' => 'shipping', 'type' => 'string'],
             'kiriminaja_pin' => ['group' => 'shipping', 'type' => 'string'],
+            'app_min_version' => ['group' => 'app_update', 'type' => 'string'],
+            'app_latest_version' => ['group' => 'app_update', 'type' => 'string'],
+            'app_force_update' => ['group' => 'app_update', 'type' => 'boolean'],
+            'app_update_title' => ['group' => 'app_update', 'type' => 'string'],
+            'app_update_message' => ['group' => 'app_update', 'type' => 'string'],
+            'app_playstore_url' => ['group' => 'app_update', 'type' => 'string'],
+            'app_appstore_url' => ['group' => 'app_update', 'type' => 'string'],
         ];
 
         foreach ($settingConfigs as $key => $config) {

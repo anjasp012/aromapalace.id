@@ -65,6 +65,7 @@ import { cn } from '@/lib/utils';
 import { getAdminUrl } from '@/lib/route-resolver';
 import { isRunningInNativeApp, isAdminContext } from '@/lib/app-redirect';
 import PullToRefresh from '@/components/PullToRefresh';
+import AppUpdateModal from '@/components/AppUpdateModal';
 
 import { App as CapApp } from '@capacitor/app';
 
@@ -2168,6 +2169,9 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
                     </div>
                 </nav>
             )}
+
+            {/* Mobile App Update Notification & Mandatory Force Update Dialog */}
+            <AppUpdateModal />
         </div>
     );
 }

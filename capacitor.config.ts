@@ -48,6 +48,7 @@ const config: CapacitorConfig = {
       '@capacitor/network',
       '@capacitor/push-notifications',
       '@capacitor/status-bar',
+      '@capawesome/capacitor-app-update',
     ],
   },
   plugins: {
