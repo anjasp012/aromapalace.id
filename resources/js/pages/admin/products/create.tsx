@@ -81,22 +81,13 @@ export default function AdminProductCreate({
         images: [],
         variants: [
             {
-                name: 'Signature Atelier (50ml)',
-                volume: '50',
-                price: 1850000,
+                name: '',
+                volume: '',
+                price: '',
                 original_price: '',
                 discount_percent: '',
                 sku: '',
-                stock: 25,
-            },
-            {
-                name: 'Grand Decanter (100ml)',
-                volume: '100',
-                price: 2950000,
-                original_price: '',
-                discount_percent: '',
-                sku: '',
-                stock: 15,
+                stock: '',
             },
         ],
     });
@@ -148,15 +139,14 @@ export default function AdminProductCreate({
     };
 
     const handleAddVariant = () => {
-        const vol = String((data.variants.length + 1) * 50);
         const newVariant: VariantFormItem = {
-            name: `Edisi Koleksi (${vol}ml)`,
-            volume: vol,
-            price: 1500000,
+            name: '',
+            volume: '',
+            price: '',
             original_price: '',
             discount_percent: '',
             sku: '',
-            stock: 20,
+            stock: '',
         };
         setData('variants', [...data.variants, newVariant]);
     };
@@ -468,7 +458,9 @@ export default function AdminProductCreate({
                             {data.variants.map((variant, idx) => (
                                 <div key={idx} className="rounded-lg border p-4 space-y-3 bg-muted/20">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-xs font-semibold">Varian #{idx + 1} ({variant.volume ? `${variant.volume}ml` : 'Volume'})</span>
+                                        <span className="text-xs font-semibold">
+                                            Varian #{idx + 1}{variant.name ? ` - ${variant.name}` : ''}{variant.volume ? ` (${variant.volume}ml)` : ''}
+                                        </span>
                                         {data.variants.length > 1 && (
                                             <Button
                                                 type="button"
@@ -488,6 +480,7 @@ export default function AdminProductCreate({
                                             <label className="font-medium text-foreground">Label Varian *</label>
                                             <Input
                                                 type="text"
+                                                placeholder="cth: Varian Oren, 50ml Reguler, dll"
                                                 value={variant.name}
                                                 onChange={(e) => handleVariantChange(idx, 'name', e.target.value)}
                                                 className="h-8 text-xs"
@@ -500,7 +493,7 @@ export default function AdminProductCreate({
                                             <Input
                                                 type="number"
                                                 min={1}
-                                                placeholder="cth: 50, 100, 500, 1000"
+                                                placeholder="cth: 50, 100"
                                                 value={variant.volume}
                                                 onChange={(e) => handleVariantChange(idx, 'volume', e.target.value)}
                                                 className="h-8 text-xs font-medium"
@@ -512,6 +505,7 @@ export default function AdminProductCreate({
                                             <label className="font-medium text-foreground">SKU</label>
                                             <Input
                                                 type="text"
+                                                placeholder="cth: SKU-001 (opsional)"
                                                 value={variant.sku}
                                                 onChange={(e) => handleVariantChange(idx, 'sku', e.target.value)}
                                                 className="h-8 text-xs font-mono"
@@ -523,6 +517,7 @@ export default function AdminProductCreate({
                                             <Input
                                                 type="number"
                                                 min={0}
+                                                placeholder="cth: 1500000"
                                                 value={variant.price}
                                                 onChange={(e) => handleVariantChange(idx, 'price', e.target.value)}
                                                 className="h-8 text-xs font-semibold"
@@ -535,6 +530,7 @@ export default function AdminProductCreate({
                                             <Input
                                                 type="number"
                                                 min={0}
+                                                placeholder="cth: 1800000 (opsional)"
                                                 value={variant.original_price}
                                                 onChange={(e) => handleVariantChange(idx, 'original_price', e.target.value)}
                                                 className="h-8 text-xs"
@@ -547,6 +543,7 @@ export default function AdminProductCreate({
                                                 type="number"
                                                 min={0}
                                                 max={100}
+                                                placeholder="cth: 15"
                                                 value={variant.discount_percent}
                                                 onChange={(e) => handleVariantChange(idx, 'discount_percent', e.target.value)}
                                                 className="h-8 text-xs"
@@ -558,6 +555,7 @@ export default function AdminProductCreate({
                                             <Input
                                                 type="number"
                                                 min={0}
+                                                placeholder="cth: 20"
                                                 value={variant.stock}
                                                 onChange={(e) => handleVariantChange(idx, 'stock', e.target.value)}
                                                 className="h-8 text-xs font-semibold"
