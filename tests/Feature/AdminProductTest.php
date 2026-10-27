@@ -2,6 +2,8 @@
 
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\User;
@@ -124,20 +126,56 @@ test('admin can store a new product with multiple variants and galleries', funct
     ]);
 });
 
-test('product creation rejects duplicate volumes in the same request', function () {
+test('admin can store a product with multiple variants having the same volume but different names', function () {
     $admin = User::factory()->admin()->create();
 
     $payload = [
-        'name' => 'Duplicate Volume Test',
+        'name' => 'Chameleon Color Edition',
+        'slug' => 'chameleon-color-edition',
         'variants' => [
             [
-                'name' => 'Variant 1 (50ml)',
+                'name' => 'Varian Oren (50ml)',
+                'volume' => 50,
+                'price' => 1250000,
+                'stock' => 15,
+            ],
+            [
+                'name' => 'Varian Hijau (50ml)',
+                'volume' => 50,
+                'price' => 1350000,
+                'stock' => 20,
+            ],
+        ],
+    ];
+
+    $response = $this->actingAs($admin)
+        ->post(route('admin.products.store'), $payload);
+
+    $response->assertRedirect(route('admin.products.index'))
+        ->assertSessionHas('success');
+
+    $product = Product::where('slug', 'chameleon-color-edition')->first();
+    expect($product)->not->toBeNull()
+        ->and($product->variants()->count())->toBe(2);
+
+    expect($product->variants()->where('name', 'Varian Oren (50ml)')->first()->volume)->toBe(50);
+    expect($product->variants()->where('name', 'Varian Hijau (50ml)')->first()->volume)->toBe(50);
+});
+
+test('product creation rejects duplicate variant names in the same request', function () {
+    $admin = User::factory()->admin()->create();
+
+    $payload = [
+        'name' => 'Duplicate Variant Name Test',
+        'variants' => [
+            [
+                'name' => 'Varian Identik (50ml)',
                 'volume' => '50ml',
                 'price' => 1000000,
                 'stock' => 10,
             ],
             [
-                'name' => 'Variant 2 (50ml)',
+                'name' => 'Varian Identik (50ml)',
                 'volume' => '50ml',
                 'price' => 1200000,
                 'stock' => 5,
@@ -243,7 +281,7 @@ test('admin can quickly update a variant stock via patch endpoint', function () 
     expect($variant->stock)->toBe(45);
 });
 
-test('admin can delete a product and its variants are cascaded', function () {
+test('admin can delete a product and its variants are soft deleted without deleting order history', function () {
     $admin = User::factory()->admin()->create();
 
     $product = Product::create([
@@ -259,12 +297,165 @@ test('admin can delete a product and its variants are cascaded', function () {
         'stock' => 10,
     ]);
 
+    // Create an order item referencing this product
+    $customer = User::factory()->create();
+    $order = Order::create([
+        'order_number' => 'AP-TEST-DEL-'.uniqid(),
+        'user_id' => $customer->id,
+        'recipient_name' => 'Test Recipient',
+        'recipient_phone' => '08123456789',
+        'address' => 'Jl. Kemang Raya No. 10',
+        'payment_method' => 'qris',
+        'payment_status' => 'paid',
+        'status' => 'selesai',
+        'subtotal' => 900000,
+        'total_amount' => 900000,
+    ]);
+
+    $orderItem = OrderItem::create([
+        'order_id' => $order->id,
+        'product_id' => $product->id,
+        'variant_id' => $variant->id,
+        'product_name' => 'Delete Me Perfume',
+        'variant_name' => '50ml',
+        'volume' => 50,
+        'price' => 900000,
+        'quantity' => 1,
+        'total_price' => 900000,
+    ]);
+
     $response = $this->actingAs($admin)
         ->delete(route('admin.products.destroy', $product));
 
     $response->assertRedirect(route('admin.products.index'))
         ->assertSessionHas('success');
 
-    $this->assertDatabaseMissing('products', ['id' => $product->id]);
-    $this->assertDatabaseMissing('product_variants', ['id' => $variant->id]);
+    $this->assertSoftDeleted('products', ['id' => $product->id]);
+    $this->assertSoftDeleted('product_variants', ['id' => $variant->id]);
+
+    // The order item MUST NOT be deleted - preserving 1 item in the order!
+    $this->assertDatabaseHas('order_items', [
+        'id' => $orderItem->id,
+        'order_id' => $order->id,
+        'product_name' => 'Delete Me Perfume',
+    ]);
+    expect($order->refresh()->items()->count())->toBe(1);
+});
+
+test('admin cannot delete product that is part of an active order', function () {
+    $admin = User::factory()->admin()->create();
+
+    $product = Product::create([
+        'name' => 'Active Perfume',
+        'slug' => 'active-perfume-'.uniqid(),
+    ]);
+
+    $variant = ProductVariant::create([
+        'product_id' => $product->id,
+        'name' => '50ml',
+        'volume' => '50ml',
+        'price' => 500000,
+        'stock' => 10,
+    ]);
+
+    $customer = User::factory()->create();
+    $activeOrder = Order::create([
+        'order_number' => 'AP-TEST-ACT-'.uniqid(),
+        'user_id' => $customer->id,
+        'recipient_name' => 'Active Customer',
+        'recipient_phone' => '08123456789',
+        'address' => 'Jl. Kemang Raya No. 10',
+        'payment_method' => 'qris',
+        'payment_status' => 'paid',
+        'status' => 'diproses',
+        'subtotal' => 500000,
+        'total_amount' => 500000,
+    ]);
+
+    OrderItem::create([
+        'order_id' => $activeOrder->id,
+        'product_id' => $product->id,
+        'variant_id' => $variant->id,
+        'product_name' => 'Active Perfume',
+        'variant_name' => '50ml',
+        'volume' => 50,
+        'price' => 500000,
+        'quantity' => 1,
+        'total_price' => 500000,
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->delete(route('admin.products.destroy', $product));
+
+    $response->assertRedirect(route('admin.products.index'))
+        ->assertSessionHas('error');
+
+    $this->assertDatabaseHas('products', ['id' => $product->id, 'deleted_at' => null]);
+});
+
+test('admin can create product with multiple variants sharing the exact same volume if names differ', function () {
+    $admin = User::factory()->admin()->create();
+
+    $payload = [
+        'name' => 'Rainbow Scent Collection',
+        'description' => '<p>Different colored editions, same volume</p>',
+        'variants' => [
+            [
+                'name' => 'Varian Oren',
+                'volume' => '50',
+                'price' => 450000,
+                'stock' => 20,
+            ],
+            [
+                'name' => 'Varian Hijau',
+                'volume' => '50',
+                'price' => 450000,
+                'stock' => 25,
+            ],
+        ],
+    ];
+
+    $response = $this->actingAs($admin)
+        ->post(route('admin.products.store'), $payload);
+
+    $response->assertRedirect(route('admin.products.index'))
+        ->assertSessionHas('success');
+
+    $product = Product::where('name', 'Rainbow Scent Collection')->first();
+    expect($product)->not->toBeNull()
+        ->and($product->variants()->count())->toBe(2);
+
+    $vOren = $product->variants()->where('name', 'Varian Oren')->first();
+    $vHijau = $product->variants()->where('name', 'Varian Hijau')->first();
+
+    expect($vOren->volume)->toBe(50)
+        ->and($vHijau->volume)->toBe(50)
+        ->and($vOren->sku)->not->toBe($vHijau->sku);
+});
+
+test('admin cannot create product with duplicate variant names', function () {
+    $admin = User::factory()->admin()->create();
+
+    $payload = [
+        'name' => 'Duplicate Variant Scent',
+        'variants' => [
+            [
+                'name' => 'Varian Oren',
+                'volume' => '50',
+                'price' => 450000,
+                'stock' => 20,
+            ],
+            [
+                'name' => 'Varian Oren',
+                'volume' => '100',
+                'price' => 850000,
+                'stock' => 15,
+            ],
+        ],
+    ];
+
+    $response = $this->actingAs($admin)
+        ->post(route('admin.products.store'), $payload);
+
+    $response->assertSessionHasErrors('variants');
 });

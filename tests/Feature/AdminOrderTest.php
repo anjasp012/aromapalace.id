@@ -325,3 +325,59 @@ test('admin receives flash error when kiriminaja request pickup fails', function
     expect($order->status)->toBe('diproses')
         ->and($order->shipping)->toBeNull();
 });
+
+test('admin cannot delete an active or completed order', function () {
+    $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
+    $admin = User::factory()->admin()->create();
+    $customer = User::factory()->create();
+
+    $order = Order::create([
+        'order_number' => 'ARPL-ACTIVE-'.uniqid(),
+        'user_id' => $customer->id,
+        'recipient_name' => 'Active Customer',
+        'recipient_phone' => '08123456789',
+        'address' => 'Jl. Kemang Raya No. 10',
+        'payment_method' => 'qris',
+        'payment_status' => 'paid',
+        'status' => 'diproses',
+        'subtotal' => 200000,
+        'total_amount' => 200000,
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->delete("http://{$adminDomain}/manajemen-pesanan/{$order->order_number}");
+
+    $response->assertSessionHas('error');
+    $this->assertDatabaseHas('orders', [
+        'id' => $order->id,
+        'deleted_at' => null,
+    ]);
+});
+
+test('admin can delete a cancelled order with soft delete', function () {
+    $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
+    $admin = User::factory()->admin()->create();
+    $customer = User::factory()->create();
+
+    $order = Order::create([
+        'order_number' => 'ARPL-CANCEL-'.uniqid(),
+        'user_id' => $customer->id,
+        'recipient_name' => 'Cancelled Customer',
+        'recipient_phone' => '08123456789',
+        'address' => 'Jl. Kemang Raya No. 10',
+        'payment_method' => 'qris',
+        'payment_status' => 'cancelled',
+        'status' => 'dibatalkan',
+        'subtotal' => 200000,
+        'total_amount' => 200000,
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->delete("http://{$adminDomain}/manajemen-pesanan/{$order->order_number}");
+
+    $response->assertRedirect("http://{$adminDomain}/manajemen-pesanan")
+        ->assertSessionHas('success');
+    $this->assertSoftDeleted('orders', [
+        'id' => $order->id,
+    ]);
+});

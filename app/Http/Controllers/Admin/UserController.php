@@ -348,7 +348,24 @@ class UserController extends Controller
             return back()->with('error', 'Akun admin tidak dapat dihapus melalui panel ini.');
         }
 
+        $hasActiveOrders = $user->orders()
+            ->where(function ($q) {
+                $q->whereIn('status', ['menunggu_pembayaran', 'diproses', 'dikirim'])
+                    ->orWhere(fn ($sub) => $sub->whereNull('status')->whereIn('payment_status', ['pending', 'paid']));
+            })
+            ->exists();
+
+        if ($hasActiveOrders) {
+            return back()->with('error', "Pengguna \"{$user->name}\" tidak dapat dihapus saat ini karena masih memiliki pesanan yang sedang aktif.");
+        }
+
         $name = $user->name;
+
+        // Clean up cart and wishlist
+        $user->cartItems()->delete();
+        $user->wishlists()->delete();
+
+        // Soft delete user (past orders retain user snapshot and history)
         $user->delete();
 
         return redirect()->route('admin.users.index')->with('success', "Akun {$name} berhasil dihapus.");

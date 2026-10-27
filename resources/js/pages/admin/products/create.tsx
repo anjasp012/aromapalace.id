@@ -452,7 +452,7 @@ export default function AdminProductCreate({
                     <CardHeader className="flex flex-row items-center justify-between pb-3">
                         <div>
                             <CardTitle className="text-base font-semibold">3. Varian Ukuran &amp; Stok</CardTitle>
-                            <CardDescription>Wajib memiliki minimal 1 varian (volume unik).</CardDescription>
+                            <CardDescription>Wajib memiliki minimal 1 varian. Volume boleh sama asalkan nama/edisi varian berbeda (cth: Varian Oren 50ml, Varian Hijau 50ml).</CardDescription>
                         </div>
                         <Button type="button" variant="outline" size="sm" onClick={handleAddVariant} className="h-8">
                             <Plus className="size-3.5 mr-1" />

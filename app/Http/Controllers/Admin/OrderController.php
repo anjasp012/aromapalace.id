@@ -311,6 +311,27 @@ class OrderController extends Controller
     }
 
     /**
+     * Delete/archive a cancelled order.
+     */
+    public function destroy(string $order): RedirectResponse
+    {
+        $orderModel = Order::where(function ($q) use ($order) {
+            $q->where('order_number', $order)->orWhere('id', $order);
+        })->firstOrFail();
+
+        $status = $orderModel->status ?: $orderModel->payment_status;
+        if (! in_array($status, ['dibatalkan', 'cancelled'])) {
+            return redirect()->route('admin.orders.index')->with('error', "Pesanan #{$orderModel->order_number} tidak dapat dihapus karena masih aktif atau telah selesai. Hanya pesanan yang dibatalkan yang dapat dihapus.");
+        }
+
+        $orderNumber = $orderModel->order_number;
+        $orderModel->delete();
+
+        return redirect()->route('admin.orders.index')
+            ->with('success', "Pesanan #{$orderNumber} berhasil dihapus.");
+    }
+
+    /**
      * Map order for summary list views.
      *
      * @return array<string, mixed>

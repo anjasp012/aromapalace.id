@@ -51,6 +51,7 @@ class CartController extends Controller
                 'variant_id' => $record->variant_id,
                 'quantity' => $record->quantity,
                 'volume' => $volume,
+                'volume_label' => $volumeLabel,
                 'variant_name' => $variant?->name,
                 'unit_price' => $unitPrice,
                 'unit_price_formatted' => 'Rp '.number_format($unitPrice, 0, ',', '.'),

@@ -4,23 +4,29 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\User;
 
-test('guest cannot access admin category routes and is redirected to login', function () {
-    $this->get('/admin/categories')->assertRedirect('/login');
+beforeEach(function () {
+    $this->withServerVariables([
+        'HTTP_HOST' => config('app.admin_domain', 'admin.aromapalace.id'),
+    ]);
 });
 
-test('regular customer receives 403 forbidden when accessing category management', function () {
+test('guest cannot access admin category routes and is redirected to login', function () {
+    $this->get(route('admin.categories.index'))->assertRedirect(route('admin.login'));
+});
+
+test('regular customer receives 403 or redirect when accessing category management', function () {
     $customer = User::factory()->create(['role' => 'customer']);
 
     $this->actingAs($customer)
-        ->get('/admin/categories')
-        ->assertForbidden();
+        ->get(route('admin.categories.index'))
+        ->assertRedirect(route('admin.login'));
 });
 
 test('admin can view categories index with metrics', function () {
     $admin = User::factory()->admin()->create();
 
     $response = $this->actingAs($admin)
-        ->get('/admin/categories');
+        ->get(route('admin.categories.index'));
 
     $response->assertOk()
         ->assertInertia(fn ($page) => $page
@@ -34,13 +40,13 @@ test('admin can store a new category', function () {
     $admin = User::factory()->admin()->create();
 
     $response = $this->actingAs($admin)
-        ->post('/admin/categories', [
+        ->post(route('admin.categories.store'), [
             'name' => 'Gourmand Delight',
             'slug' => 'gourmand-delight',
             'description' => 'Aroma manis vanila, kopi, dan karamel.',
         ]);
 
-    $response->assertRedirect('/admin/categories');
+    $response->assertRedirect(route('admin.categories.index'));
     $this->assertDatabaseHas('categories', [
         'name' => 'Gourmand Delight',
         'slug' => 'gourmand-delight',
@@ -55,13 +61,13 @@ test('admin can update an existing category', function () {
     ]);
 
     $response = $this->actingAs($admin)
-        ->put("/admin/categories/{$category->id}", [
+        ->put(route('admin.categories.update', $category), [
             'name' => 'Updated Category Name',
             'slug' => 'updated-category-name',
             'description' => 'Deskripsi baru.',
         ]);
 
-    $response->assertRedirect('/admin/categories');
+    $response->assertRedirect(route('admin.categories.index'));
     $this->assertDatabaseHas('categories', [
         'id' => $category->id,
         'name' => 'Updated Category Name',
@@ -77,9 +83,9 @@ test('admin can delete an empty category', function () {
     ]);
 
     $response = $this->actingAs($admin)
-        ->delete("/admin/categories/{$category->id}");
+        ->delete(route('admin.categories.destroy', $category));
 
-    $response->assertRedirect('/admin/categories');
+    $response->assertRedirect(route('admin.categories.index'));
     $this->assertDatabaseMissing('categories', [
         'id' => $category->id,
     ]);
@@ -99,9 +105,10 @@ test('admin cannot delete a category that still has products', function () {
     ]);
 
     $response = $this->actingAs($admin)
-        ->delete("/admin/categories/{$category->id}");
+        ->delete(route('admin.categories.destroy', $category));
 
-    $response->assertRedirect('/admin/categories');
+    $response->assertRedirect(route('admin.categories.index'))
+        ->assertSessionHas('error');
     $this->assertDatabaseHas('categories', [
         'id' => $category->id,
     ]);

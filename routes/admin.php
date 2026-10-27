@@ -46,6 +46,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/manajemen-pesanan/{order}', [OrderController::class, 'show'])->name('orders.show');
     Route::get('/manajemen-pesanan/{order}/shipping-label', [OrderController::class, 'shippingLabel'])->name('orders.shipping-label');
     Route::patch('/manajemen-pesanan/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
+    Route::delete('/manajemen-pesanan/{order}', [OrderController::class, 'destroy'])->name('orders.destroy');
     Route::post('/manajemen-pesanan/{order}/sync-resi', [OrderController::class, 'syncResi'])->name('orders.sync-resi');
     Route::get('/api/shipping/track/{awb}', [ShippingController::class, 'track'])->name('admin.shipping.track');
     Route::get('/api/coverage/provinces', [CoverageAreaController::class, 'provinces'])->name('coverage.provinces');

@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Support\Carbon;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * @property int $id
@@ -45,7 +45,7 @@ use Illuminate\Support\Carbon;
 class Product extends Model
 {
     /** @use HasFactory<UserFactory> */
-    use FlushesCatalogCache, HasFactory;
+    use FlushesCatalogCache, HasFactory, SoftDeletes;
 
     /**
      * @return array<string, string>

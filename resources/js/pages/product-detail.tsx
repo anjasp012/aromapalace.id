@@ -734,7 +734,7 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
                             )}>
                                 {availableSizes.map((opt, idx) => (
                                     <button
-                                        key={opt.label + idx}
+                                        key={opt.id ?? (opt.label + idx)}
                                         type="button"
                                         onClick={() => setSelectedSizeIndex(idx)}
                                         className={cn(
@@ -745,12 +745,21 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
                                         )}
                                     >
                                         <div className="flex items-center justify-between gap-1">
-                                            <span className="font-bold text-xs text-foreground">{opt.label}</span>
-                                            <span className="text-[10.5px] font-semibold text-[#4A070B] dark:text-[#E8D0BA]">
+                                            <span className="font-bold text-xs text-foreground truncate" title={opt.title}>
+                                                {opt.title || opt.label}
+                                            </span>
+                                            <span className="text-[10.5px] font-semibold text-[#4A070B] dark:text-[#E8D0BA] shrink-0">
                                                 {opt.price}
                                             </span>
                                         </div>
-                                        <div className="text-[10px] text-muted-foreground truncate mt-0.5">{opt.title}</div>
+                                        <div className="flex items-center justify-between text-[10px] text-muted-foreground mt-0.5">
+                                            <span className="font-medium">{opt.label}</span>
+                                            {opt.stock !== undefined && (
+                                                <span className={opt.stock <= 5 ? 'text-amber-600 dark:text-amber-400 font-medium' : ''}>
+                                                    {opt.stock > 0 ? `Stok: ${opt.stock}` : 'Habis'}
+                                                </span>
+                                            )}
+                                        </div>
                                     </button>
                                 ))}
                             </div>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductGallery;
 use App\Models\ProductVariant;
@@ -183,10 +184,10 @@ class ProductController extends Controller
             'variants.*.stock' => ['required', 'integer', 'min:0'],
         ]);
 
-        // Validate unique volume within the same request
-        $volumes = array_map(fn ($v) => (int) filter_var($v['volume'], FILTER_SANITIZE_NUMBER_INT), $validated['variants']);
-        if (count($volumes) !== count(array_unique($volumes))) {
-            return back()->withErrors(['variants' => 'Setiap varian dalam satu produk harus memiliki volume yang berbeda.'])->withInput();
+        // Validate that variant names within the same request are distinct
+        $variantNames = array_map(fn ($v) => trim(mb_strtolower($v['name'])), $validated['variants']);
+        if (count($variantNames) !== count(array_unique($variantNames))) {
+            return back()->withErrors(['variants' => 'Setiap varian dalam satu produk harus memiliki nama varian yang berbeda (contoh: Varian Oren, Varian Hijau).'])->withInput();
         }
 
         DB::transaction(function () use ($validated, $request) {
@@ -242,7 +243,7 @@ class ProductController extends Controller
             }
 
             // Save variants
-            foreach ($validated['variants'] as $v) {
+            foreach ($validated['variants'] as $index => $v) {
                 $price = (int) $v['price'];
                 $originalPrice = ! empty($v['original_price']) ? (int) $v['original_price'] : null;
 
@@ -252,9 +253,10 @@ class ProductController extends Controller
                 }
 
                 $volInt = (int) filter_var($v['volume'], FILTER_SANITIZE_NUMBER_INT);
+                $variantSlug = Str::slug($v['name']) ?: 'v'.($index + 1);
                 $sku = ! empty($v['sku'])
                     ? trim($v['sku'])
-                    : 'AP-'.$volInt.'-'.$product->id;
+                    : 'AP-'.$product->id.'-'.$volInt.'-'.$variantSlug;
 
                 ProductVariant::create([
                     'product_id' => $product->id,
@@ -341,10 +343,10 @@ class ProductController extends Controller
             'variants.*.stock' => ['required', 'integer', 'min:0'],
         ]);
 
-        // Validate unique volume within the same request
-        $volumes = array_map(fn ($v) => (int) filter_var($v['volume'], FILTER_SANITIZE_NUMBER_INT), $validated['variants']);
-        if (count($volumes) !== count(array_unique($volumes))) {
-            return back()->withErrors(['variants' => 'Setiap varian dalam satu produk harus memiliki volume yang berbeda.'])->withInput();
+        // Validate that variant names within the same request are distinct
+        $variantNames = array_map(fn ($v) => trim(mb_strtolower($v['name'])), $validated['variants']);
+        if (count($variantNames) !== count(array_unique($variantNames))) {
+            return back()->withErrors(['variants' => 'Setiap varian dalam satu produk harus memiliki nama varian yang berbeda (contoh: Varian Oren, Varian Hijau).'])->withInput();
         }
 
         DB::transaction(function () use ($validated, $request, $product) {
@@ -406,7 +408,7 @@ class ProductController extends Controller
 
             // Sync variants
             $submittedVariantIds = [];
-            foreach ($validated['variants'] as $v) {
+            foreach ($validated['variants'] as $index => $v) {
                 $price = (int) $v['price'];
                 $originalPrice = ! empty($v['original_price']) ? (int) $v['original_price'] : null;
 
@@ -416,9 +418,10 @@ class ProductController extends Controller
                 }
 
                 $volInt = (int) filter_var($v['volume'], FILTER_SANITIZE_NUMBER_INT);
+                $variantSlug = Str::slug($v['name']) ?: 'v'.($index + 1);
                 $sku = ! empty($v['sku'])
                     ? trim($v['sku'])
-                    : 'AP-'.$volInt.'-'.$product->id;
+                    : 'AP-'.$product->id.'-'.$volInt.'-'.$variantSlug;
 
                 if (! empty($v['id'])) {
                     $existingVariant = ProductVariant::where('product_id', $product->id)
@@ -467,7 +470,26 @@ class ProductController extends Controller
      */
     public function destroy(Product $product): RedirectResponse
     {
+        // Prevent deleting product if it's currently in an active order
+        $hasActiveOrders = OrderItem::where('product_id', $product->id)
+            ->whereHas('order', function ($query) {
+                $query->whereIn('status', ['menunggu_pembayaran', 'diproses', 'dikirim'])
+                    ->orWhere(fn ($q) => $q->whereNull('status')->whereIn('payment_status', ['pending', 'paid']));
+            })
+            ->exists();
+
+        if ($hasActiveOrders) {
+            return redirect()->route('admin.products.index')->with('error', "Produk \"{$product->name}\" tidak dapat dihapus saat ini karena sedang berada dalam transaksi pesanan aktif yang belum selesai.");
+        }
+
         $name = $product->name;
+
+        // Clean up wishlist and cart entries for this discontinued product
+        $product->wishlists()->delete();
+        $product->cartItems()->delete();
+
+        // Soft delete variants and product (historical order items remain intact)
+        $product->variants()->delete();
         $product->delete();
 
         return redirect()->route('admin.products.index')
