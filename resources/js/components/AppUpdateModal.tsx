@@ -13,15 +13,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-    Smartphone,
-    ArrowUpCircle,
     Download,
     ShieldAlert,
     Sparkles,
-    CheckCircle2,
     Loader2,
-    RefreshCw,
-    ExternalLink,
 } from 'lucide-react';
 
 export interface AppUpdateConfig {
@@ -346,7 +341,7 @@ export default function AppUpdateModal() {
                         <DialogTitle className="text-xl sm:text-2xl font-bold tracking-tight text-white leading-tight">
                             {displayTitle}
                         </DialogTitle>
-                        <DialogDescription className="text-xs sm:text-sm text-zinc-300/90 leading-relaxed font-sans">
+                        <DialogDescription className="text-xs sm:text-sm text-zinc-300/90 leading-relaxed font-sans whitespace-pre-line">
                             {displayMessage}
                         </DialogDescription>
                     </div>
@@ -360,18 +355,6 @@ export default function AppUpdateModal() {
                             </div>
                         </div>
                     )}
-
-                    {/* Highlights / Features Pill */}
-                    <div className="grid grid-cols-2 gap-2 text-[11px] text-zinc-300 font-medium">
-                        <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/5 border border-white/5">
-                            <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
-                            <span>Perbaikan Stabilitas</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/5 border border-white/5">
-                            <CheckCircle2 className="size-3.5 text-amber-400 shrink-0" />
-                            <span>Fitur Belanja Terbaru</span>
-                        </div>
-                    </div>
 
                     {/* Action Buttons */}
                     <div className="space-y-2 pt-2">
