@@ -1246,12 +1246,10 @@ export default function Products({
                                             <SelectValue placeholder={isEn ? 'Select Sort' : 'Pilih Urutan'} />
                                         </SelectTrigger>
                                         <SelectContent align="end" className="rounded-md border-border/80 bg-background shadow-md">
-                                            <SelectItem value="featured">{isEn ? 'Featured' : 'Unggulan'}</SelectItem>
-                                            <SelectItem value="popular">{isEn ? 'Most Popular' : 'Paling Populer'}</SelectItem>
-                                            <SelectItem value="price-asc">{isEn ? 'Price: Low to High' : 'Harga: Rendah ke Tinggi'}</SelectItem>
-                                            <SelectItem value="price-desc">{isEn ? 'Price: High to Low' : 'Harga: Tinggi ke Rendah'}</SelectItem>
-                                            <SelectItem value="rating">{isEn ? 'Highest Rated' : 'Rating Terbaik'}</SelectItem>
-                                            <SelectItem value="discount">{isEn ? 'Biggest Discount' : 'Diskon Terbesar'}</SelectItem>
+                                            <SelectItem value="price-asc">{isEn ? 'Price: Low to High' : 'Harga Terendah'}</SelectItem>
+                                            <SelectItem value="price-desc">{isEn ? 'Price: High to Low' : 'Harga Tertinggi'}</SelectItem>
+                                            <SelectItem value="name-asc">{isEn ? 'Name: A - Z' : 'Nama A - Z'}</SelectItem>
+                                            <SelectItem value="name-desc">{isEn ? 'Name: Z - A' : 'Nama Z - A'}</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
