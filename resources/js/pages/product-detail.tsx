@@ -582,6 +582,25 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
                                 </div>
                             )}
 
+                            {/* Product Labels: Top Left */}
+                            <div className="absolute top-3 left-3 flex flex-col gap-1 items-start pointer-events-none z-10">
+                                {(product.is_new_arrivals || product.isNew) && (
+                                    <Badge className="text-[10px] bg-emerald-600 hover:bg-emerald-600 text-white font-medium border-0 shadow-xs">
+                                        New Arrival
+                                    </Badge>
+                                )}
+                                {product.is_best_sellers && (
+                                    <Badge className="text-[10px] bg-amber-500 hover:bg-amber-500 text-amber-950 font-bold border-0 shadow-xs">
+                                        Best Seller
+                                    </Badge>
+                                )}
+                                {product.is_special_offers && (
+                                    <Badge className="text-[10px] bg-[#4A070B] hover:bg-[#4A070B] text-white font-medium border-0 shadow-xs">
+                                        Special Offer
+                                    </Badge>
+                                )}
+                            </div>
+
                             {/* Top Right Actions: Love, Share & Zoom */}
                             <div className="absolute top-3 right-3 flex flex-col gap-2 z-10">
                                 {!isAdmin && (
@@ -674,6 +693,21 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
                                 <Badge variant="outline" className="text-[11px] rounded-md border-border/80 font-normal shadow-none">
                                     {formatCategoryName(product.family, isEn)}
                                 </Badge>
+                                {(product.is_new_arrivals || product.isNew) && (
+                                    <Badge className="text-[11px] bg-emerald-600 hover:bg-emerald-600 text-white font-medium border-0 shadow-none">
+                                        New Arrival
+                                    </Badge>
+                                )}
+                                {product.is_best_sellers && (
+                                    <Badge className="text-[11px] bg-amber-500 hover:bg-amber-500 text-amber-950 font-bold border-0 shadow-none">
+                                        Best Seller
+                                    </Badge>
+                                )}
+                                {product.is_special_offers && (
+                                    <Badge className="text-[11px] bg-[#4A070B] hover:bg-[#4A070B] text-white font-medium border-0 shadow-none">
+                                        Special Offer
+                                    </Badge>
+                                )}
                             </div>
 
                             {/* Title */}
@@ -716,11 +750,6 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
                                 {currentPriceInfo.originalPrice && (
                                     <span className="text-sm line-through text-muted-foreground">
                                         {currentPriceInfo.originalPrice}
-                                    </span>
-                                )}
-                                {product.discountBadge && (
-                                    <span className="text-xs px-2 py-0.5 rounded-md bg-destructive/10 text-destructive font-bold">
-                                        {isEn ? 'Discount' : 'Diskon'} {product.discountBadge}
                                     </span>
                                 )}
                             </div>

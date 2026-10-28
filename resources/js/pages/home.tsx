@@ -269,9 +269,9 @@ export default function Home({
     const categoriesList: CategoryItem[] = (propCategories.length > 0
         ? propCategories
         : (cachedHome?.categories || [])).slice(0, 9);
-    const scentsList: ScentItem[] = propScents.length > 0
+    const scentsList: ScentItem[] = (propScents.length > 0
         ? propScents
-        : (propCategories.length > 0 ? propCategories : (cachedHome?.scents || cachedHome?.categories || []));
+        : (propCategories.length > 0 ? propCategories : (cachedHome?.scents || cachedHome?.categories || []))).slice(0, 5);
     const brandList: BrandItem[] = (propBrands.length > 0
         ? propBrands
         : (cachedHome?.brands || [])).slice(0, 5);
@@ -453,7 +453,7 @@ export default function Home({
                             </Button>
                         </div>
 
-                        <div className="-mx-4 px-4 sm:mx-0 sm:px-0 scroll-pl-4 sm:scroll-pl-0 flex sm:grid overflow-x-auto sm:overflow-visible gap-2.5 sm:gap-3.5 lg:gap-4 pb-2 sm:pb-0 scrollbar-none snap-x snap-mandatory sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                        <div className="-mx-4 px-4 sm:mx-0 sm:px-0 scroll-pl-4 sm:scroll-pl-0 flex sm:grid overflow-x-auto sm:overflow-visible gap-2.5 sm:gap-3.5 lg:gap-4 pb-2 sm:pb-0 scrollbar-none snap-x snap-mandatory sm:grid-cols-3 lg:grid-cols-5">
                             {scentsList.map((scent, idx) => (
                                 <ScentCard
                                     key={scent.slug}
