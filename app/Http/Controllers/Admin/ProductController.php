@@ -120,6 +120,9 @@ class ProductController extends Controller
                     'in_stock' => $variant->stock > 0,
                 ]),
                 'variants_count' => $product->variants->count(),
+                'is_new_arrivals' => (bool) $product->is_new_arrivals,
+                'is_best_sellers' => (bool) $product->is_best_sellers,
+                'is_special_offers' => (bool) $product->is_special_offers,
                 'created_at' => $product->created_at?->format('d M Y'),
             ];
         });
@@ -182,6 +185,9 @@ class ProductController extends Controller
             'brand_id' => ['nullable', 'integer', 'exists:brands,id'],
             'description' => ['nullable', 'string'],
             'description_en' => ['nullable', 'string'],
+            'is_new_arrivals' => ['nullable', 'boolean'],
+            'is_best_sellers' => ['nullable', 'boolean'],
+            'is_special_offers' => ['nullable', 'boolean'],
             'images' => ['nullable', 'array'],
             'images.*' => ['nullable'],
             'variants' => ['required', 'array', 'min:1'],
@@ -211,6 +217,9 @@ class ProductController extends Controller
                 'brand_id' => $validated['brand_id'] ?? null,
                 'description' => $validated['description'] ?? null,
                 'description_en' => $validated['description_en'] ?? null,
+                'is_new_arrivals' => $request->boolean('is_new_arrivals'),
+                'is_best_sellers' => $request->boolean('is_best_sellers'),
+                'is_special_offers' => $request->boolean('is_special_offers'),
             ]);
 
             // Sync categories (supports category_ids array or single category_id)
@@ -316,6 +325,9 @@ class ProductController extends Controller
                 'brand_id' => $product->brand_id,
                 'description' => $product->description,
                 'description_en' => $product->description_en,
+                'is_new_arrivals' => (bool) $product->is_new_arrivals,
+                'is_best_sellers' => (bool) $product->is_best_sellers,
+                'is_special_offers' => (bool) $product->is_special_offers,
                 'images' => $product->galleries->pluck('image')->all(),
                 'variants' => $product->variants->map(fn (ProductVariant $variant) => [
                     'id' => $variant->id,
@@ -352,6 +364,9 @@ class ProductController extends Controller
             'brand_id' => ['nullable', 'integer', 'exists:brands,id'],
             'description' => ['nullable', 'string'],
             'description_en' => ['nullable', 'string'],
+            'is_new_arrivals' => ['nullable', 'boolean'],
+            'is_best_sellers' => ['nullable', 'boolean'],
+            'is_special_offers' => ['nullable', 'boolean'],
             'existing_images' => ['nullable', 'array'],
             'existing_images.*' => ['string'],
             'images' => ['nullable', 'array'],
@@ -384,6 +399,9 @@ class ProductController extends Controller
                 'brand_id' => $validated['brand_id'] ?? null,
                 'description' => $validated['description'] ?? null,
                 'description_en' => $validated['description_en'] ?? null,
+                'is_new_arrivals' => $request->boolean('is_new_arrivals'),
+                'is_best_sellers' => $request->boolean('is_best_sellers'),
+                'is_special_offers' => $request->boolean('is_special_offers'),
             ]);
 
             // Sync categories (supports category_ids array or single category_id)

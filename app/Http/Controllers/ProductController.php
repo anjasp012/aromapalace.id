@@ -22,6 +22,7 @@ class ProductController extends Controller
             'search', 'q', 'category', 'brand', 'gender', 'concentration', 'scent', 'scent_profile',
             'price', 'price_tier', 'min_price', 'min',
             'max_price', 'max', 'rating', 'min_rating', 'discount', 'promo', 'sort', 'sortBy',
+            'tag', 'collection', 'new_arrivals', 'best_sellers', 'special_offers', 'is_new_arrivals', 'is_best_sellers', 'is_special_offers',
         ]);
 
         return Inertia::render('products', CatalogCache::remember(
@@ -207,6 +208,19 @@ class ProductController extends Controller
             $query->whereHas('variants', fn ($v) => $v->whereNotNull('original_price')->whereColumn('original_price', '>', 'price'));
         }
 
+        // 10. Tag / Collection Filter (new arrivals, best sellers, special offers)
+        $tag = (string) $request->input('tag', $request->input('collection', ''));
+        if ($tag === 'new-arrivals' || $tag === 'new_arrivals' || $request->boolean('new_arrivals') || $request->boolean('is_new_arrivals')) {
+            $query->where('is_new_arrivals', true);
+        } elseif ($tag === 'best-sellers' || $tag === 'best_sellers' || $request->boolean('best_sellers') || $request->boolean('is_best_sellers')) {
+            $query->where('is_best_sellers', true);
+        } elseif ($tag === 'special-offers' || $tag === 'special_offers' || $request->boolean('special_offers') || $request->boolean('is_special_offers')) {
+            $query->where(function ($q) {
+                $q->where('is_special_offers', true)
+                    ->orWhereHas('variants', fn ($v) => $v->whereNotNull('original_price')->whereColumn('original_price', '>', 'price'));
+            });
+        }
+
         // 10. Sorting
         $sortBy = (string) $request->input('sort', $request->input('sortBy', 'featured'));
         match ($sortBy) {
@@ -299,6 +313,7 @@ class ProductController extends Controller
                 'minRating' => $minRating,
                 'onlyDiscount' => $onlyDiscount,
                 'sortBy' => $sortBy,
+                'tag' => $tag ?: null,
             ],
             'totalCount' => count($fragrances),
         ];

@@ -13,6 +13,7 @@ import {
     Upload,
     Check,
     Tags,
+    Sparkles,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -60,6 +61,9 @@ interface ProductDetailProps {
     brand_id: number | null;
     description: string | null;
     description_en?: string | null;
+    is_new_arrivals?: boolean;
+    is_best_sellers?: boolean;
+    is_special_offers?: boolean;
     images: string[];
     variants: VariantFormItem[];
 }
@@ -92,6 +96,9 @@ export default function AdminProductEdit({
         brand_id: string;
         description: string;
         description_en: string;
+        is_new_arrivals: boolean;
+        is_best_sellers: boolean;
+        is_special_offers: boolean;
         existing_images: string[];
         images: File[];
         variants: VariantFormItem[];
@@ -105,6 +112,9 @@ export default function AdminProductEdit({
         brand_id: product.brand_id ? String(product.brand_id) : '',
         description: product.description || '',
         description_en: product.description_en || '',
+        is_new_arrivals: Boolean(product.is_new_arrivals),
+        is_best_sellers: Boolean(product.is_best_sellers),
+        is_special_offers: Boolean(product.is_special_offers),
         existing_images: product.images || [],
         images: [],
         variants: product.variants.map((v) => ({
@@ -509,6 +519,105 @@ export default function AdminProductEdit({
                                     </SelectContent>
                                 </Select>
                                 {errors.brand_id && <p className="text-destructive text-[11px]">{errors.brand_id}</p>}
+                            </div>
+
+                            {/* Section: Tag & Highlight Produk */}
+                            <div className="space-y-3 lg:col-span-6 pt-3 border-t border-border/70">
+                                <div>
+                                    <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                                        <Sparkles className="size-3.5 text-amber-500" />
+                                        <span>Highlight & Label Produk (Navbar & Badge)</span>
+                                    </label>
+                                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                                        Tentukan apakah produk ini masuk ke menu koleksi khusus dan mendapatkan badge label di card produk.
+                                    </p>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                                    {/* New Arrivals */}
+                                    <div
+                                        onClick={() => setData('is_new_arrivals', !data.is_new_arrivals)}
+                                        className={`p-3 rounded-xl border cursor-pointer transition-all flex items-start gap-3 select-none ${
+                                            data.is_new_arrivals
+                                                ? 'bg-emerald-500/10 border-emerald-500/50 dark:bg-emerald-950/20'
+                                                : 'bg-card hover:bg-muted/40 border-border/70'
+                                        }`}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={data.is_new_arrivals}
+                                            onChange={(e) => setData('is_new_arrivals', e.target.checked)}
+                                            className="mt-0.5 rounded text-emerald-600 focus:ring-emerald-500"
+                                        />
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="font-semibold text-xs text-foreground">New Arrivals</span>
+                                                <Badge className="text-[9px] bg-emerald-600 hover:bg-emerald-600 text-white border-0 py-0 h-4">
+                                                    Baru
+                                                </Badge>
+                                            </div>
+                                            <p className="text-[10px] text-muted-foreground leading-snug">
+                                                Tampil di menu NEW ARRIVALS & tampilkan badge Baru pada foto produk.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Best Sellers */}
+                                    <div
+                                        onClick={() => setData('is_best_sellers', !data.is_best_sellers)}
+                                        className={`p-3 rounded-xl border cursor-pointer transition-all flex items-start gap-3 select-none ${
+                                            data.is_best_sellers
+                                                ? 'bg-amber-500/10 border-amber-500/50 dark:bg-amber-950/20'
+                                                : 'bg-card hover:bg-muted/40 border-border/70'
+                                        }`}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={data.is_best_sellers}
+                                            onChange={(e) => setData('is_best_sellers', e.target.checked)}
+                                            className="mt-0.5 rounded text-amber-600 focus:ring-amber-500"
+                                        />
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="font-semibold text-xs text-foreground">Best Sellers</span>
+                                                <Badge className="text-[9px] bg-amber-500 hover:bg-amber-500 text-amber-950 font-bold border-0 py-0 h-4">
+                                                    Terlaris
+                                                </Badge>
+                                            </div>
+                                            <p className="text-[10px] text-muted-foreground leading-snug">
+                                                Tampil di menu BEST SELLERS & tampilkan badge Terlaris pada foto produk.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Special Offers */}
+                                    <div
+                                        onClick={() => setData('is_special_offers', !data.is_special_offers)}
+                                        className={`p-3 rounded-xl border cursor-pointer transition-all flex items-start gap-3 select-none ${
+                                            data.is_special_offers
+                                                ? 'bg-[#4A070B]/10 border-[#4A070B]/40 dark:bg-rose-950/20'
+                                                : 'bg-card hover:bg-muted/40 border-border/70'
+                                        }`}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={data.is_special_offers}
+                                            onChange={(e) => setData('is_special_offers', e.target.checked)}
+                                            className="mt-0.5 rounded text-[#4A070B] focus:ring-[#4A070B]"
+                                        />
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="font-semibold text-xs text-foreground">Special Offers</span>
+                                                <Badge className="text-[9px] bg-[#4A070B] hover:bg-[#4A070B] text-white border-0 py-0 h-4">
+                                                    Spesial
+                                                </Badge>
+                                            </div>
+                                            <p className="text-[10px] text-muted-foreground leading-snug">
+                                                Tampil di menu SPECIAL OFFERS & tampilkan badge Spesial pada foto produk.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="lg:col-span-4 pt-2 border-t border-border">

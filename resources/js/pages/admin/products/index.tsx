@@ -66,6 +66,9 @@ interface ProductItem {
     max_price_formatted: string;
     variants: ProductVariantItem[];
     variants_count: number;
+    is_new_arrivals?: boolean;
+    is_best_sellers?: boolean;
+    is_special_offers?: boolean;
     created_at?: string;
 }
 
@@ -371,15 +374,37 @@ export default function AdminProductsIndex({
                                                     <div className="text-[11px] font-mono text-muted-foreground mt-0.5">
                                                         /{product.slug}
                                                     </div>
-                                                    <a
-                                                        href={getStorefrontUrl(`/products/${product.slug}`)}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline mt-1"
-                                                    >
-                                                        <span>Lihat Toko</span>
-                                                        <ExternalLink className="size-2.5" />
-                                                    </a>
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <a
+                                                            href={getStorefrontUrl(`/products/${product.slug}`)}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline"
+                                                        >
+                                                            <span>Lihat Toko</span>
+                                                            <ExternalLink className="size-2.5" />
+                                                        </a>
+                                                    </div>
+
+                                                    {(product.is_new_arrivals || product.is_best_sellers || product.is_special_offers) && (
+                                                        <div className="flex flex-wrap gap-1 mt-1.5">
+                                                            {product.is_new_arrivals && (
+                                                                <Badge className="text-[9px] bg-emerald-600 hover:bg-emerald-600 text-white border-0 py-0 h-4">
+                                                                    New Arrival
+                                                                </Badge>
+                                                            )}
+                                                            {product.is_best_sellers && (
+                                                                <Badge className="text-[9px] bg-amber-500 hover:bg-amber-500 text-amber-950 font-bold border-0 py-0 h-4">
+                                                                    Best Seller
+                                                                </Badge>
+                                                            )}
+                                                            {product.is_special_offers && (
+                                                                <Badge className="text-[9px] bg-[#4A070B] hover:bg-[#4A070B] text-white border-0 py-0 h-4">
+                                                                    Special Offer
+                                                                </Badge>
+                                                            )}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         </td>
@@ -433,7 +458,9 @@ export default function AdminProductsIndex({
                                                             <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
                                                                 {formatVolume(v.volume)}
                                                             </Badge>
-                                                            <span className="font-medium">{v.price_formatted}</span>
+                                                            <span className={v.discount_percent ? "font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 px-1 py-0.2 rounded" : "font-medium"}>
+                                                                {v.price_formatted}
+                                                            </span>
                                                             {v.discount_percent && (
                                                                 <Badge variant="destructive" className="px-1 py-0 text-[9px]">
                                                                     -{v.discount_percent}%

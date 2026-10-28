@@ -183,7 +183,7 @@ export default function ProductQuickViewModal({
                         </DialogHeader>
 
                         <div className="flex items-baseline gap-2 border-y border-border py-2.5">
-                            <span className="text-xl sm:text-2xl font-bold text-foreground">
+                            <span className={cn('text-xl sm:text-2xl font-bold', displayOriginalPrice ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 px-2 py-0.5 rounded' : 'text-foreground')}>
                                 {displayPrice}
                             </span>
                             {displayOriginalPrice && (

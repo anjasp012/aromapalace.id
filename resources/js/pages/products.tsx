@@ -44,6 +44,9 @@ export interface Fragrance {
     discountBadge?: string;
     isNew?: boolean;
     isPopular?: boolean;
+    is_new_arrivals?: boolean;
+    is_best_sellers?: boolean;
+    is_special_offers?: boolean;
     raw_price: number;
     rating: number;
     reviews_count: number;
@@ -102,6 +105,7 @@ interface ProductsProps {
         minRating?: number;
         onlyDiscount?: boolean;
         sortBy?: 'featured' | 'popular' | 'price-asc' | 'price-desc' | 'rating' | 'discount';
+        tag?: string;
     };
     totalCount?: number;
 }

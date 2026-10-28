@@ -43,6 +43,9 @@ use Illuminate\Support\Carbon;
     'brand_id',
     'description',
     'description_en',
+    'is_new_arrivals',
+    'is_best_sellers',
+    'is_special_offers',
 ])]
 class Product extends Model
 {
@@ -56,6 +59,9 @@ class Product extends Model
     {
         return [
             'brand_id' => 'integer',
+            'is_new_arrivals' => 'boolean',
+            'is_best_sellers' => 'boolean',
+            'is_special_offers' => 'boolean',
         ];
     }
 

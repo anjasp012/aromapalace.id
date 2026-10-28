@@ -34,6 +34,9 @@ export interface ProductItem {
     discountBadge?: string;
     isNew?: boolean;
     isPopular?: boolean;
+    is_new_arrivals?: boolean;
+    is_best_sellers?: boolean;
+    is_special_offers?: boolean;
     rating: number;
     reviewsCount?: number;
     reviews_count?: number;
@@ -104,16 +107,26 @@ export default function ProductCard({
                     )}
                 </Link>
 
-                {/* Discount & New Badges */}
-                <div className="absolute top-2 left-2 flex flex-col gap-1 pointer-events-none">
+                {/* Badges Container */}
+                <div className="absolute top-2 left-2 flex flex-col gap-1 items-start pointer-events-none z-10">
                     {product.discountBadge && (
-                        <Badge variant="destructive" className="text-[10px]">
+                        <Badge variant="destructive" className="text-[10px] shadow-xs">
                             {product.discountBadge}
                         </Badge>
                     )}
-                    {product.isNew && (
-                        <Badge variant="secondary" className="text-[10px]">
+                    {(product.is_new_arrivals || product.isNew) && (
+                        <Badge className="text-[10px] bg-emerald-600 hover:bg-emerald-600 text-white font-medium border-0 shadow-xs">
                             {isEn ? 'New' : 'Baru'}
+                        </Badge>
+                    )}
+                    {product.is_best_sellers && (
+                        <Badge className="text-[10px] bg-amber-500 hover:bg-amber-500 text-amber-950 font-bold border-0 shadow-xs">
+                            {isEn ? 'Best Seller' : 'Terlaris'}
+                        </Badge>
+                    )}
+                    {product.is_special_offers && (
+                        <Badge className="text-[10px] bg-[#4A070B] hover:bg-[#4A070B] text-white font-medium border-0 shadow-xs">
+                            {isEn ? 'Special Offer' : 'Spesial'}
                         </Badge>
                     )}
                 </div>
@@ -188,7 +201,14 @@ export default function ProductCard({
 
                 {/* Harga — tepat di bawah nama produk (mobile: atas-bawah, desktop: berdampingan) */}
                 <div className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-2 pt-0.5">
-                    <span className={cn('font-bold text-xs sm:text-sm leading-tight', darkTheme ? 'text-white' : 'text-foreground')}>
+                    <span
+                        className={cn(
+                            'text-xs sm:text-sm leading-tight transition-colors',
+                            product.originalPrice
+                                ? 'text-red-600 dark:text-red-400 font-extrabold bg-red-50 dark:bg-red-950/50 px-1.5 py-0.5 rounded w-fit'
+                                : cn('font-bold', darkTheme ? 'text-white' : 'text-foreground')
+                        )}
+                    >
                         {product.price}
                     </span>
                     {product.originalPrice && (

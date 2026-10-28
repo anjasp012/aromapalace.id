@@ -1209,7 +1209,7 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
 
                             <DropdownMenu>
                                 <DropdownMenuTrigger
-                                    className={`inline-flex items-center gap-1 py-2.5 sm:py-3.5 border-b-2 -mb-px transition cursor-pointer outline-none whitespace-nowrap ${(url.startsWith('/products') && !url.includes('popular') && !url.includes('discount')) || url.startsWith('/categories') || url.startsWith('/brands')
+                                    className={`inline-flex items-center gap-1 py-2.5 sm:py-3.5 border-b-2 -mb-px transition cursor-pointer outline-none whitespace-nowrap ${(url.startsWith('/products') && !url.includes('new-arrivals') && !url.includes('new_arrivals') && !url.includes('best-sellers') && !url.includes('best_sellers') && !url.includes('special-offers') && !url.includes('special_offers') && !url.includes('popular') && !url.includes('discount')) || url.startsWith('/categories') || url.startsWith('/brands')
                                         ? 'text-[#4A070B] font-bold border-[#4A070B]'
                                         : 'text-muted-foreground hover:text-foreground border-transparent hover:border-[#4A070B]/30'
                                         }`}
@@ -1233,10 +1233,22 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
                             </DropdownMenu>
 
                             <Link
-                                href="/products?sort=popular"
+                                href="/products?tag=new-arrivals"
                                 prefetch="hover"
                                 cacheFor={['30s', '2m']}
-                                className={`inline-flex items-center py-2.5 sm:py-3.5 border-b-2 -mb-px transition whitespace-nowrap ${url.includes('popular')
+                                className={`inline-flex items-center py-2.5 sm:py-3.5 border-b-2 -mb-px transition whitespace-nowrap ${url.includes('new-arrivals') || url.includes('new_arrivals')
+                                    ? 'text-[#4A070B] font-bold border-[#4A070B]'
+                                    : 'text-muted-foreground hover:text-foreground border-transparent hover:border-[#4A070B]/30'
+                                    }`}
+                            >
+                                {isEn ? 'NEW ARRIVALS' : 'PRODUK BARU'}
+                            </Link>
+
+                            <Link
+                                href="/products?tag=best-sellers"
+                                prefetch="hover"
+                                cacheFor={['30s', '2m']}
+                                className={`inline-flex items-center py-2.5 sm:py-3.5 border-b-2 -mb-px transition whitespace-nowrap ${url.includes('best-sellers') || url.includes('best_sellers') || url.includes('popular')
                                     ? 'text-[#4A070B] font-bold border-[#4A070B]'
                                     : 'text-muted-foreground hover:text-foreground border-transparent hover:border-[#4A070B]/30'
                                     }`}
@@ -1245,10 +1257,10 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
                             </Link>
 
                             <Link
-                                href="/products?discount=1"
+                                href="/products?tag=special-offers"
                                 prefetch="hover"
                                 cacheFor={['30s', '2m']}
-                                className={`inline-flex items-center py-2.5 sm:py-3.5 border-b-2 -mb-px transition whitespace-nowrap ${url.includes('discount')
+                                className={`inline-flex items-center py-2.5 sm:py-3.5 border-b-2 -mb-px transition whitespace-nowrap ${url.includes('special-offers') || url.includes('special_offers') || url.includes('discount')
                                     ? 'text-[#4A070B] font-bold border-[#4A070B]'
                                     : 'text-muted-foreground hover:text-foreground border-transparent hover:border-[#4A070B]/30'
                                     }`}

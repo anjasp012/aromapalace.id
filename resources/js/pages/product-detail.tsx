@@ -687,7 +687,7 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
                                 {isEn ? 'Fragrance Investment' : 'Harga Investasi Aroma'}
                             </div>
                             <div className="flex flex-wrap items-baseline gap-3">
-                                <span className="text-2xl sm:text-3xl font-extrabold text-[#4A070B] dark:text-[#E8D0BA]">
+                                <span className={cn('text-2xl sm:text-3xl font-extrabold', currentPriceInfo.originalPrice ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 px-2 py-0.5 rounded' : 'text-[#4A070B] dark:text-[#E8D0BA]')}>
                                     {currentPriceInfo.price}
                                 </span>
                                 {currentPriceInfo.originalPrice && (
