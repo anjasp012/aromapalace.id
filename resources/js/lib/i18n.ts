@@ -1224,19 +1224,20 @@ export function formatCategoryName(name?: string | null, isEn?: boolean): string
         if (lower === 'all genders') return 'Semua Gender';
         if (lower === 'all concentrations') return 'Semua Konsentrasi';
         if (lower === 'all scents' || lower === 'all scent profiles') return 'Semua Profil Aroma';
-        if (lower === 'men fragrance' || lower === "men's perfume" || lower === 'men') return 'Parfum Pria';
-        if (lower === 'women fragrance' || lower === "women's perfume" || lower === 'women') return 'Parfum Wanita';
+        if (lower === 'men fragrance' || lower === "men's perfume" || lower === "men's fragrance" || lower === 'men' || lower === 'parfum-pria') return 'Parfum Pria';
+        if (lower === 'women fragrance' || lower === "women's perfume" || lower === "women's fragrance" || lower === 'women' || lower === 'parfum-wanita') return 'Parfum Wanita';
+        if (lower === 'unisex' || lower === 'unisex fragrance' || lower === 'unisex-fragrance') return 'Parfum Unisex';
         return name;
     }
 
     if (lower === 'all' || lower === 'semua' || lower === 'semua kategori') return 'All Categories';
-    if (lower === 'semua brand') return 'All Brands';
-    if (lower === 'semua gender') return 'All Genders';
-    if (lower === 'semua konsentrasi') return 'All Concentrations';
-    if (lower === 'semua aroma' || lower === 'semua profil aroma') return 'All Scent Profiles';
-    if (lower === 'parfum pria' || lower === 'pria' || lower === "men's perfume" || lower === 'men') return "Men's Perfume";
-    if (lower === 'parfum wanita' || lower === 'wanita' || lower === "women's perfume" || lower === 'women') return "Women's Perfume";
-    if (lower === 'unisex' || lower === 'unisex fragrance') return 'Unisex Fragrance';
+    if (lower === 'semua brand' || lower === 'all brands') return 'All Brands';
+    if (lower === 'semua gender' || lower === 'all genders') return 'All Genders';
+    if (lower === 'semua konsentrasi' || lower === 'all concentrations') return 'All Concentrations';
+    if (lower === 'semua aroma' || lower === 'semua profil aroma' || lower === 'all scents' || lower === 'all scent profiles') return 'All Scent Profiles';
+    if (lower === 'parfum pria' || lower === 'pria' || lower === "men's perfume" || lower === "men's fragrance" || lower === 'men' || lower === 'parfum-pria') return "Men's Perfume";
+    if (lower === 'parfum wanita' || lower === 'wanita' || lower === "women's perfume" || lower === "women's fragrance" || lower === 'women' || lower === 'parfum-wanita') return "Women's Perfume";
+    if (lower === 'unisex' || lower === 'unisex fragrance' || lower === 'parfum unisex' || lower === 'unisex-fragrance') return 'Unisex Fragrance';
     if (lower === 'discovery' || lower.includes('discovery set')) return 'Discovery Sets & Vials';
     if (lower.includes('attar')) return 'Artisanal Attar';
     return name;
