@@ -344,7 +344,8 @@ export default function AdminProductsIndex({
                             <thead className="border-b bg-muted/50 text-muted-foreground">
                                 <tr className="border-b transition-colors text-xs">
                                     <th className="h-10 px-4 text-left font-medium">Parfum &amp; Foto</th>
-                                    <th className="h-10 px-4 text-left font-medium">Kategori &amp; Brand</th>
+                                    <th className="h-10 px-4 text-left font-medium">Brand</th>
+                                    <th className="h-10 px-4 text-left font-medium">Kategori</th>
                                     <th className="h-10 px-4 text-left font-medium">Varian &amp; Harga</th>
                                     <th className="h-10 px-4 text-center font-medium">Total Stok</th>
                                     <th className="h-10 px-4 text-right font-medium">Aksi</th>
@@ -384,7 +385,17 @@ export default function AdminProductsIndex({
                                         </td>
 
                                         <td className="p-4 whitespace-nowrap align-middle">
-                                            <div className="flex flex-wrap gap-1 max-w-[200px] mb-1">
+                                            {product.brand?.name ? (
+                                                <span className="font-medium text-foreground">
+                                                    {product.brand.name}
+                                                </span>
+                                            ) : (
+                                                <span className="text-muted-foreground">-</span>
+                                            )}
+                                        </td>
+
+                                        <td className="p-4 align-middle">
+                                            <div className="flex flex-wrap gap-1 max-w-[220px]">
                                                 {product.categories && product.categories.length > 0 ? (
                                                     product.categories.map((c) => (
                                                         <Badge
@@ -408,9 +419,6 @@ export default function AdminProductsIndex({
                                                         {product.category?.name || 'Tanpa Kategori'}
                                                     </Badge>
                                                 )}
-                                            </div>
-                                            <div className="text-[11px] text-muted-foreground">
-                                                {product.brand?.name || '-'}
                                             </div>
                                         </td>
 
@@ -492,7 +500,7 @@ export default function AdminProductsIndex({
 
                                 {products.data.length === 0 && (
                                     <tr>
-                                        <td colSpan={5} className="p-8 text-center text-muted-foreground">
+                                        <td colSpan={6} className="p-8 text-center text-muted-foreground">
                                             Tidak ada produk yang sesuai filter.
                                         </td>
                                     </tr>
