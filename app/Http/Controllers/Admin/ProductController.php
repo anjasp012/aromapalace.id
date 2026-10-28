@@ -196,6 +196,7 @@ class ProductController extends Controller
             'variants.*.price' => ['required', 'integer', 'min:0'],
             'variants.*.original_price' => ['nullable', 'integer', 'min:0'],
             'variants.*.discount_percent' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'variants.*.discount_price' => ['nullable', 'integer', 'min:0'],
             'variants.*.sku' => ['nullable', 'string', 'max:100'],
             'variants.*.stock' => ['required', 'integer', 'min:0'],
         ]);
@@ -269,12 +270,27 @@ class ProductController extends Controller
 
             // Save variants
             foreach ($validated['variants'] as $index => $v) {
-                $price = (int) $v['price'];
-                $originalPrice = ! empty($v['original_price']) ? (int) $v['original_price'] : null;
+                $inputPrice = (int) $v['price'];
+                $inputOriginalPrice = ! empty($v['original_price']) ? (int) $v['original_price'] : null;
+                $inputDiscountPrice = ! empty($v['discount_price']) ? (int) $v['discount_price'] : null;
+                $discountPercent = ! empty($v['discount_percent']) ? (int) $v['discount_percent'] : null;
 
-                $discountPercent = $v['discount_percent'] ?? null;
-                if ($originalPrice && $originalPrice > $price && ! $discountPercent) {
-                    $discountPercent = (int) round((($originalPrice - $price) / $originalPrice) * 100);
+                if ($inputDiscountPrice !== null && $inputDiscountPrice > 0 && $inputDiscountPrice < $inputPrice) {
+                    $price = $inputDiscountPrice;
+                    $originalPrice = $inputPrice;
+                    if (! $discountPercent) {
+                        $discountPercent = (int) round((($originalPrice - $price) / $originalPrice) * 100);
+                    }
+                } elseif ($inputOriginalPrice && $inputOriginalPrice > $inputPrice) {
+                    $price = $inputPrice;
+                    $originalPrice = $inputOriginalPrice;
+                    if (! $discountPercent) {
+                        $discountPercent = (int) round((($originalPrice - $price) / $originalPrice) * 100);
+                    }
+                } else {
+                    $price = $inputPrice;
+                    $originalPrice = null;
+                    $discountPercent = null;
                 }
 
                 $volInt = (int) filter_var($v['volume'], FILTER_SANITIZE_NUMBER_INT);
@@ -333,9 +349,10 @@ class ProductController extends Controller
                     'id' => $variant->id,
                     'name' => $variant->name,
                     'volume' => $variant->volume,
-                    'price' => $variant->price,
+                    'price' => $variant->original_price && $variant->original_price > $variant->price ? $variant->original_price : $variant->price,
                     'original_price' => $variant->original_price,
-                    'discount_percent' => $variant->discount_percent,
+                    'discount_price' => $variant->original_price && $variant->original_price > $variant->price ? $variant->price : '',
+                    'discount_percent' => $variant->discount_percent ?? '',
                     'sku' => $variant->sku,
                     'stock' => $variant->stock,
                 ]),
@@ -378,6 +395,7 @@ class ProductController extends Controller
             'variants.*.price' => ['required', 'integer', 'min:0'],
             'variants.*.original_price' => ['nullable', 'integer', 'min:0'],
             'variants.*.discount_percent' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'variants.*.discount_price' => ['nullable', 'integer', 'min:0'],
             'variants.*.sku' => ['nullable', 'string', 'max:100'],
             'variants.*.stock' => ['required', 'integer', 'min:0'],
         ]);
@@ -457,12 +475,27 @@ class ProductController extends Controller
             // Sync variants
             $submittedVariantIds = [];
             foreach ($validated['variants'] as $index => $v) {
-                $price = (int) $v['price'];
-                $originalPrice = ! empty($v['original_price']) ? (int) $v['original_price'] : null;
+                $inputPrice = (int) $v['price'];
+                $inputOriginalPrice = ! empty($v['original_price']) ? (int) $v['original_price'] : null;
+                $inputDiscountPrice = ! empty($v['discount_price']) ? (int) $v['discount_price'] : null;
+                $discountPercent = ! empty($v['discount_percent']) ? (int) $v['discount_percent'] : null;
 
-                $discountPercent = $v['discount_percent'] ?? null;
-                if ($originalPrice && $originalPrice > $price && ! $discountPercent) {
-                    $discountPercent = (int) round((($originalPrice - $price) / $originalPrice) * 100);
+                if ($inputDiscountPrice !== null && $inputDiscountPrice > 0 && $inputDiscountPrice < $inputPrice) {
+                    $price = $inputDiscountPrice;
+                    $originalPrice = $inputPrice;
+                    if (! $discountPercent) {
+                        $discountPercent = (int) round((($originalPrice - $price) / $originalPrice) * 100);
+                    }
+                } elseif ($inputOriginalPrice && $inputOriginalPrice > $inputPrice) {
+                    $price = $inputPrice;
+                    $originalPrice = $inputOriginalPrice;
+                    if (! $discountPercent) {
+                        $discountPercent = (int) round((($originalPrice - $price) / $originalPrice) * 100);
+                    }
+                } else {
+                    $price = $inputPrice;
+                    $originalPrice = null;
+                    $discountPercent = null;
                 }
 
                 $volInt = (int) filter_var($v['volume'], FILTER_SANITIZE_NUMBER_INT);

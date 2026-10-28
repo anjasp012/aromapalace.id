@@ -45,8 +45,9 @@ interface VariantFormItem {
     name: string;
     volume: number | string;
     price: number | string;
-    original_price: number | string;
+    original_price?: number | string;
     discount_percent: number | string;
+    discount_price?: number | string;
     sku: string;
     stock: number | string;
 }
@@ -124,6 +125,7 @@ export default function AdminProductEdit({
             price: v.price,
             original_price: v.original_price ?? '',
             discount_percent: v.discount_percent ?? '',
+            discount_price: (v as any).discount_price ?? '',
             sku: v.sku ?? '',
             stock: v.stock,
         })),
@@ -194,6 +196,7 @@ export default function AdminProductEdit({
             price: '',
             original_price: '',
             discount_percent: '',
+            discount_price: '',
             sku: '',
             stock: '',
         };
@@ -215,14 +218,50 @@ export default function AdminProductEdit({
         const newVariants = [...data.variants];
         const currentVariant = { ...newVariants[index], [field]: value };
 
-        // Auto-calculate discount if original_price & price change
-        if (field === 'price' || field === 'original_price') {
-            const p = parseInt(String(field === 'price' ? value : currentVariant.price)) || 0;
-            const op = parseInt(String(field === 'original_price' ? value : currentVariant.original_price)) || 0;
-            if (op > p && p > 0) {
-                currentVariant.discount_percent = Math.round(((op - p) / op) * 100);
-            } else if (op <= p) {
+        if (field === 'price') {
+            const p = parseInt(String(value)) || 0;
+            const discPercent = parseInt(String(currentVariant.discount_percent)) || 0;
+            const discPrice = parseInt(String(currentVariant.discount_price)) || 0;
+
+            if (p > 0) {
+                if (discPercent > 0) {
+                    currentVariant.discount_price = Math.round(p * (1 - discPercent / 100));
+                } else if (discPrice > 0 && discPrice < p) {
+                    currentVariant.discount_percent = Math.round(((p - discPrice) / p) * 100);
+                }
+            } else {
                 currentVariant.discount_percent = '';
+                currentVariant.discount_price = '';
+            }
+        } else if (field === 'discount_percent') {
+            const rawVal = String(value).trim();
+            if (rawVal === '') {
+                currentVariant.discount_percent = '';
+                currentVariant.discount_price = '';
+            } else {
+                const disc = Math.min(100, Math.max(0, parseInt(rawVal) || 0));
+                currentVariant.discount_percent = disc > 0 ? disc : '';
+                const p = parseInt(String(currentVariant.price)) || 0;
+                if (p > 0 && disc > 0) {
+                    currentVariant.discount_price = Math.round(p * (1 - disc / 100));
+                } else {
+                    currentVariant.discount_price = '';
+                }
+            }
+        } else if (field === 'discount_price') {
+            const rawVal = String(value).trim();
+            if (rawVal === '') {
+                currentVariant.discount_price = '';
+                currentVariant.discount_percent = '';
+            } else {
+                const dp = parseInt(rawVal) || 0;
+                currentVariant.discount_price = dp > 0 ? dp : '';
+                const p = parseInt(String(currentVariant.price)) || 0;
+                if (p > 0 && dp > 0 && dp < p) {
+                    currentVariant.discount_percent = Math.round(((p - dp) / p) * 100);
+                } else {
+                    currentVariant.discount_percent = '';
+                }
             }
         }
 
@@ -342,8 +381,8 @@ export default function AdminProductEdit({
                         <CardDescription>Nama, URL slug, kategori, dan deskripsi parfum.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4 text-xs">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div className="space-y-1.5 lg:col-span-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div className="space-y-1.5">
                                 <label className="font-medium text-foreground">Nama Parfum *</label>
                                 <Input
                                     type="text"
@@ -355,7 +394,27 @@ export default function AdminProductEdit({
                                 {errors.name && <p className="text-destructive text-[11px]">{errors.name}</p>}
                             </div>
 
-                            <div className="space-y-1.5 lg:col-span-2">
+                            <div className="space-y-1.5">
+                                <label className="font-medium text-foreground">Brand</label>
+                                <Select
+                                    value={data.brand_id || undefined}
+                                    onValueChange={(val) => setData('brand_id', val)}
+                                >
+                                    <SelectTrigger className="h-9 w-full text-xs">
+                                        <SelectValue placeholder="Pilih Brand" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {brands.map((b) => (
+                                            <SelectItem key={b.id} value={String(b.id)}>
+                                                {b.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {errors.brand_id && <p className="text-destructive text-[11px]">{errors.brand_id}</p>}
+                            </div>
+
+                            <div className="space-y-1.5">
                                 <label className="font-medium text-foreground">URL Slug</label>
                                 <Input
                                     type="text"
@@ -366,7 +425,7 @@ export default function AdminProductEdit({
                                 {errors.slug && <p className="text-destructive text-[11px]">{errors.slug}</p>}
                             </div>
 
-                            <div className="space-y-3 lg:col-span-4 p-4 rounded-xl border border-border bg-card">
+                            <div className="space-y-3 col-span-full p-4 rounded-xl border border-border bg-card">
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <label className="font-semibold text-foreground flex items-center gap-2 text-sm">
@@ -501,28 +560,8 @@ export default function AdminProductEdit({
                                 {errors.category_ids && <p className="text-destructive text-[11px]">{errors.category_ids}</p>}
                             </div>
 
-                            <div className="space-y-1.5 lg:col-span-2">
-                                <label className="font-medium text-foreground">Brand</label>
-                                <Select
-                                    value={data.brand_id || undefined}
-                                    onValueChange={(val) => setData('brand_id', val)}
-                                >
-                                    <SelectTrigger className="h-9 w-full text-xs">
-                                        <SelectValue placeholder="Pilih Brand" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {brands.map((b) => (
-                                            <SelectItem key={b.id} value={String(b.id)}>
-                                                {b.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                {errors.brand_id && <p className="text-destructive text-[11px]">{errors.brand_id}</p>}
-                            </div>
-
                             {/* Section: Tag & Highlight Produk */}
-                            <div className="space-y-3 lg:col-span-6 pt-3 border-t border-border/70">
+                            <div className="space-y-3 col-span-full pt-3 border-t border-border/70">
                                 <div>
                                     <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                                         <Sparkles className="size-3.5 text-amber-500" />
@@ -620,7 +659,7 @@ export default function AdminProductEdit({
                                 </div>
                             </div>
 
-                            <div className="lg:col-span-4 pt-2 border-t border-border">
+                            <div className="col-span-full pt-2 border-t border-border">
                                 <Tabs defaultValue="id" className="w-full">
                                     <div className="flex items-center justify-between mb-3">
                                         <label className="font-medium text-foreground">Deskripsi Parfum</label>
@@ -793,7 +832,7 @@ export default function AdminProductEdit({
                     <CardHeader className="flex flex-row items-center justify-between pb-3">
                         <div>
                             <CardTitle className="text-base font-semibold">3. Varian Ukuran &amp; Stok</CardTitle>
-                            <CardDescription>Atur volume, harga jual, harga coret, dan stok tiap varian.</CardDescription>
+                            <CardDescription>Atur volume, harga jual, diskon, harga diskon, dan stok tiap varian.</CardDescription>
                         </div>
                         <Button type="button" variant="outline" size="sm" onClick={handleAddVariant} className="h-8">
                             <Plus className="size-3.5 mr-1" />
@@ -877,18 +916,6 @@ export default function AdminProductEdit({
                                         </div>
 
                                         <div className="space-y-1">
-                                            <label className="font-medium text-foreground">Harga Coret (Rp)</label>
-                                            <Input
-                                                type="number"
-                                                min={0}
-                                                placeholder="cth: 1800000 (opsional)"
-                                                value={variant.original_price}
-                                                onChange={(e) => handleVariantChange(idx, 'original_price', e.target.value)}
-                                                className="h-8 text-xs"
-                                            />
-                                        </div>
-
-                                        <div className="space-y-1">
                                             <label className="font-medium text-foreground">Diskon (%)</label>
                                             <Input
                                                 type="number"
@@ -898,6 +925,18 @@ export default function AdminProductEdit({
                                                 value={variant.discount_percent}
                                                 onChange={(e) => handleVariantChange(idx, 'discount_percent', e.target.value)}
                                                 className="h-8 text-xs"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1">
+                                            <label className="font-medium text-foreground">Harga Diskon (Rp)</label>
+                                            <Input
+                                                type="number"
+                                                min={0}
+                                                placeholder="cth: 1275000 (otomatis)"
+                                                value={variant.discount_price ?? ''}
+                                                onChange={(e) => handleVariantChange(idx, 'discount_price', e.target.value)}
+                                                className="h-8 text-xs font-medium text-emerald-600 dark:text-emerald-400"
                                             />
                                         </div>
 

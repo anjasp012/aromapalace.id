@@ -42,8 +42,9 @@ interface VariantFormItem {
     name: string;
     volume: number | string;
     price: number | string;
-    original_price: number | string;
+    original_price?: number | string;
     discount_percent: number | string;
+    discount_price?: number | string;
     sku: string;
     stock: number | string;
 }
@@ -96,6 +97,7 @@ export default function AdminProductCreate({
                 price: '',
                 original_price: '',
                 discount_percent: '',
+                discount_price: '',
                 sku: '',
                 stock: '',
             },
@@ -155,6 +157,7 @@ export default function AdminProductCreate({
             price: '',
             original_price: '',
             discount_percent: '',
+            discount_price: '',
             sku: '',
             stock: '',
         };
@@ -176,13 +179,50 @@ export default function AdminProductCreate({
         const newVariants = [...data.variants];
         const currentVariant = { ...newVariants[index], [field]: value };
 
-        if (field === 'price' || field === 'original_price') {
-            const p = parseInt(String(field === 'price' ? value : currentVariant.price)) || 0;
-            const op = parseInt(String(field === 'original_price' ? value : currentVariant.original_price)) || 0;
-            if (op > p && p > 0) {
-                currentVariant.discount_percent = Math.round(((op - p) / op) * 100);
-            } else if (op <= p) {
+        if (field === 'price') {
+            const p = parseInt(String(value)) || 0;
+            const discPercent = parseInt(String(currentVariant.discount_percent)) || 0;
+            const discPrice = parseInt(String(currentVariant.discount_price)) || 0;
+
+            if (p > 0) {
+                if (discPercent > 0) {
+                    currentVariant.discount_price = Math.round(p * (1 - discPercent / 100));
+                } else if (discPrice > 0 && discPrice < p) {
+                    currentVariant.discount_percent = Math.round(((p - discPrice) / p) * 100);
+                }
+            } else {
                 currentVariant.discount_percent = '';
+                currentVariant.discount_price = '';
+            }
+        } else if (field === 'discount_percent') {
+            const rawVal = String(value).trim();
+            if (rawVal === '') {
+                currentVariant.discount_percent = '';
+                currentVariant.discount_price = '';
+            } else {
+                const disc = Math.min(100, Math.max(0, parseInt(rawVal) || 0));
+                currentVariant.discount_percent = disc > 0 ? disc : '';
+                const p = parseInt(String(currentVariant.price)) || 0;
+                if (p > 0 && disc > 0) {
+                    currentVariant.discount_price = Math.round(p * (1 - disc / 100));
+                } else {
+                    currentVariant.discount_price = '';
+                }
+            }
+        } else if (field === 'discount_price') {
+            const rawVal = String(value).trim();
+            if (rawVal === '') {
+                currentVariant.discount_price = '';
+                currentVariant.discount_percent = '';
+            } else {
+                const dp = parseInt(rawVal) || 0;
+                currentVariant.discount_price = dp > 0 ? dp : '';
+                const p = parseInt(String(currentVariant.price)) || 0;
+                if (p > 0 && dp > 0 && dp < p) {
+                    currentVariant.discount_percent = Math.round(((p - dp) / p) * 100);
+                } else {
+                    currentVariant.discount_percent = '';
+                }
             }
         }
 
@@ -776,18 +816,6 @@ export default function AdminProductCreate({
                                         </div>
 
                                         <div className="space-y-1">
-                                            <label className="font-medium text-foreground">Harga Coret (Rp)</label>
-                                            <Input
-                                                type="number"
-                                                min={0}
-                                                placeholder="cth: 1800000 (opsional)"
-                                                value={variant.original_price}
-                                                onChange={(e) => handleVariantChange(idx, 'original_price', e.target.value)}
-                                                className="h-8 text-xs"
-                                            />
-                                        </div>
-
-                                        <div className="space-y-1">
                                             <label className="font-medium text-foreground">Diskon (%)</label>
                                             <Input
                                                 type="number"
@@ -797,6 +825,18 @@ export default function AdminProductCreate({
                                                 value={variant.discount_percent}
                                                 onChange={(e) => handleVariantChange(idx, 'discount_percent', e.target.value)}
                                                 className="h-8 text-xs"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1">
+                                            <label className="font-medium text-foreground">Harga Diskon (Rp)</label>
+                                            <Input
+                                                type="number"
+                                                min={0}
+                                                placeholder="cth: 1275000 (otomatis)"
+                                                value={variant.discount_price ?? ''}
+                                                onChange={(e) => handleVariantChange(idx, 'discount_price', e.target.value)}
+                                                className="h-8 text-xs font-medium text-emerald-600 dark:text-emerald-400"
                                             />
                                         </div>
 
