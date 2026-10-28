@@ -104,9 +104,12 @@ export default function CategoryCard({ category, colorIndex, className }: Catego
     const rawName = pickText(category.name, category.name_en);
     const displayName = formatCategoryName(rawName, isEn);
     const initial = getInitialLetter(displayName);
-    const palette = getPalette(colorIndex, category.slug || category.name);
     const href = category.type === 'scents'
         ? `/products?scent=${encodeURIComponent(category.slug)}`
+        : category.type === 'concentrates'
+        ? `/products?concentration=${encodeURIComponent(category.slug)}`
+        : category.type === 'genders'
+        ? `/products?gender=${encodeURIComponent(category.slug)}`
         : `/products?category=${encodeURIComponent(category.slug)}`;
 
     return (

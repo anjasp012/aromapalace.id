@@ -37,21 +37,29 @@ class CategoryController extends Controller
             });
         }
 
+        $allCategories = $query->get()->map(function (Category $c) use ($categoryImages) {
+            return [
+                'id' => $c->id,
+                'name' => $c->name,
+                'name_en' => $c->name_en,
+                'slug' => $c->slug,
+                'type' => $c->type,
+                'description' => $c->description ?? '',
+                'description_en' => $c->description_en ?? '',
+                'productsCount' => (int) $c->products_count,
+                'image' => $c->thumbnail ?: ($categoryImages[$c->slug] ?? null),
+            ];
+        });
+
+        $genders = $allCategories->where('type', 'genders')->values()->all();
+        $concentrates = $allCategories->where('type', 'concentrates')->values()->all();
+        $scents = $allCategories->where('type', 'scents')->values()->all();
+
         return Inertia::render('categories', [
-            'categories' => Inertia::defer(function () use ($query, $categoryImages) {
-                return $query->get()->map(function (Category $c) use ($categoryImages) {
-                    return [
-                        'id' => $c->id,
-                        'name' => $c->name,
-                        'name_en' => $c->name_en,
-                        'slug' => $c->slug,
-                        'description' => $c->description ?? '',
-                        'description_en' => $c->description_en ?? '',
-                        'productsCount' => (int) $c->products_count,
-                        'image' => $c->thumbnail ?: ($categoryImages[$c->slug] ?? 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=600&q=80'),
-                    ];
-                })->values()->all();
-            }),
+            'genders' => $genders,
+            'concentrates' => $concentrates,
+            'scents' => $scents,
+            'categories' => $allCategories->values()->all(),
             'searchQuery' => $search,
         ]);
     }

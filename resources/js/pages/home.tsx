@@ -271,7 +271,7 @@ export default function Home({
         : (cachedHome?.categories || [])).slice(0, 9);
     const scentsList: ScentItem[] = (propScents.length > 0
         ? propScents
-        : (propCategories.length > 0 ? propCategories : (cachedHome?.scents || cachedHome?.categories || []))).slice(0, 5);
+        : (propCategories.length > 0 ? propCategories : (cachedHome?.scents || cachedHome?.categories || []))).slice(0, 8);
     const brandList: BrandItem[] = (propBrands.length > 0
         ? propBrands
         : (cachedHome?.brands || [])).slice(0, 5);
@@ -453,13 +453,13 @@ export default function Home({
                             </Button>
                         </div>
 
-                        <div className="-mx-4 px-4 sm:mx-0 sm:px-0 scroll-pl-4 sm:scroll-pl-0 flex sm:grid overflow-x-auto sm:overflow-visible gap-2.5 sm:gap-3.5 lg:gap-4 pb-2 sm:pb-0 scrollbar-none snap-x snap-mandatory sm:grid-cols-3 lg:grid-cols-5">
+                        <div className="-mx-4 px-4 sm:mx-0 sm:px-0 scroll-pl-4 sm:scroll-pl-0 flex sm:grid overflow-x-auto sm:overflow-visible gap-2.5 sm:gap-3.5 lg:gap-4 pb-2 sm:pb-0 scrollbar-none snap-x snap-mandatory sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
                             {scentsList.map((scent, idx) => (
                                 <ScentCard
                                     key={scent.slug}
                                     scent={scent}
                                     colorIndex={idx}
-                                    className="w-[calc((100%-24px)/3.2)] sm:w-auto shrink-0 sm:shrink snap-start"
+                                    className="w-[calc((100%-24px)/3.5)] sm:w-auto shrink-0 sm:shrink snap-start"
                                 />
                             ))}
                         </div>
