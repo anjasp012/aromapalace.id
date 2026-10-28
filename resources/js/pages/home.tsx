@@ -442,7 +442,7 @@ export default function Home({
                     <section id="scents">
                         <div className="flex items-center justify-between mb-4 sm:mb-6">
                             <h2 className="text-xl sm:text-2xl tracking-tight text-foreground">
-                                <span className="font-normal">{isEn ? 'Product by' : 'Pilihan'}</span>{' '}
+                                <span className="font-normal">{isEn ? 'Product by' : 'Produk Berdasarkan'}</span>{' '}
                                 <span className="font-bold">{isEn ? 'Scents' : 'Aroma'}</span>
                             </h2>
                             <Button asChild variant="ghost" size="sm" className="text-xs">
@@ -453,13 +453,13 @@ export default function Home({
                             </Button>
                         </div>
 
-                        <div className="-mx-4 px-4 sm:mx-0 sm:px-0 scroll-pl-4 sm:scroll-pl-0 flex sm:grid overflow-x-auto sm:overflow-visible gap-2.5 sm:gap-3.5 lg:gap-4 pb-2 sm:pb-0 scrollbar-none snap-x snap-mandatory sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 justify-center justify-items-center">
+                        <div className="-mx-4 px-4 sm:mx-0 sm:px-0 scroll-pl-4 sm:scroll-pl-0 flex sm:grid overflow-x-auto sm:overflow-visible gap-3 sm:gap-5 pb-3 sm:pb-0 scrollbar-none snap-x snap-mandatory sm:grid-cols-4 md:grid-cols-8 lg:grid-cols-8 justify-center justify-items-center">
                             {scentsList.map((scent, idx) => (
                                 <ScentCard
                                     key={scent.slug}
                                     scent={scent}
                                     colorIndex={idx}
-                                    className="w-[calc((100%-24px)/3.5)] sm:w-auto shrink-0 sm:shrink snap-start"
+                                    className="w-[calc((100%-24px)/3.5)] sm:w-full shrink-0 sm:shrink snap-start"
                                 />
                             ))}
                         </div>

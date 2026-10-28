@@ -104,6 +104,7 @@ export default function CategoryCard({ category, colorIndex, className }: Catego
     const rawName = pickText(category.name, category.name_en);
     const displayName = formatCategoryName(rawName, isEn);
     const initial = getInitialLetter(displayName);
+    const palette = getPalette(colorIndex, category.slug || category.name);
     const href = category.type === 'scents'
         ? `/products?scent=${encodeURIComponent(category.slug)}`
         : category.type === 'concentrates'
@@ -130,15 +131,10 @@ export default function CategoryCard({ category, colorIndex, className }: Catego
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent pointer-events-none" />
-                        <div className="absolute inset-x-0 bottom-0 p-2 sm:p-3 text-left pointer-events-none">
+                        <div className="absolute inset-x-0 bottom-0 p-2 sm:p-3 text-center pointer-events-none">
                             <h3 className="text-[10px] sm:text-xs font-semibold text-white tracking-tight leading-tight line-clamp-1 sm:line-clamp-2">
                                 {displayName}
                             </h3>
-                            {category.productsCount !== undefined && (
-                                <p className="text-[9px] sm:text-[10px] text-white/80 mt-0.5 font-medium">
-                                    {category.productsCount} {isEn ? 'Products' : 'Produk'}
-                                </p>
-                            )}
                         </div>
                     </>
                 ) : (
@@ -149,12 +145,6 @@ export default function CategoryCard({ category, colorIndex, className }: Catego
                     )}>
                         <div className={cn('absolute -top-6 -right-6 w-24 h-24 rounded-full bg-gradient-to-br blur-xl opacity-60 pointer-events-none', palette.glow)} />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-white/10 pointer-events-none" />
-
-                        <div className="w-full flex justify-end relative z-10">
-                            <span className="text-[8px] sm:text-[9px] uppercase tracking-widest text-white/50 font-mono font-medium">
-                                {category.type === 'scents' ? 'SCENT' : 'COLLECTION'}
-                            </span>
-                        </div>
 
                         <div className="flex-1 flex items-center justify-center relative z-10 my-auto">
                             <div className={cn(
@@ -171,11 +161,6 @@ export default function CategoryCard({ category, colorIndex, className }: Catego
                             <h3 className="text-[10px] sm:text-xs font-bold text-white tracking-tight leading-tight line-clamp-1">
                                 {displayName}
                             </h3>
-                            {category.productsCount !== undefined && (
-                                <p className="text-[9px] sm:text-[10px] text-white/75 mt-0.5 font-medium">
-                                    {category.productsCount} {isEn ? 'Products' : 'Produk'}
-                                </p>
-                            )}
                         </div>
                     </div>
                 )}
@@ -188,9 +173,8 @@ export function CategoryCardSkeleton({ className }: { className?: string }) {
     return (
         <Card className={cn('overflow-hidden relative aspect-square py-0 gap-0 shadow-none rounded-xl w-full h-full bg-muted/60', className)}>
             <Skeleton className="w-full h-full" />
-            <div className="absolute inset-x-0 bottom-0 p-2 sm:p-3 space-y-1.5 pointer-events-none">
+            <div className="absolute inset-x-0 bottom-0 p-2.5 sm:p-3 pointer-events-none">
                 <Skeleton className="h-3 w-3/4 bg-white/40 dark:bg-white/20 mx-auto" />
-                <Skeleton className="h-2 w-1/3 bg-white/30 dark:bg-white/10 mx-auto" />
             </div>
         </Card>
     );
