@@ -283,16 +283,16 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                         </div>
 
                         <Link
-                            href="/manajemen-produk"
+                            href="/manajemen-brand"
                             onClick={() => setSidebarOpen(false)}
                             className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
-                                isProducts
+                                isBrands
                                     ? 'bg-muted text-primary font-semibold'
                                     : 'text-muted-foreground hover:text-primary hover:bg-muted'
                             }`}
                         >
-                            <Package className="size-4" />
-                            <span>Produk &amp; Varian</span>
+                            <Sparkles className="size-4" />
+                            <span>Brand</span>
                         </Link>
 
                         <div className="space-y-0.5">
@@ -359,16 +359,16 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                         </div>
 
                         <Link
-                            href="/manajemen-brand"
+                            href="/manajemen-produk"
                             onClick={() => setSidebarOpen(false)}
                             className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
-                                isBrands
+                                isProducts
                                     ? 'bg-muted text-primary font-semibold'
                                     : 'text-muted-foreground hover:text-primary hover:bg-muted'
                             }`}
                         >
-                            <Sparkles className="size-4" />
-                            <span>Brand</span>
+                            <Package className="size-4" />
+                            <span>Produk &amp; Varian</span>
                         </Link>
 
                         <Separator className="my-2" />
