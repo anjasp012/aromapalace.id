@@ -9,22 +9,25 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
  * @property string $name
  * @property string $slug
- * @property int|null $category_id
  * @property int|null $brand_id
  * @property string|null $description
  * @property string|null $description_en
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property-read Category|null $category
- * @property-read Category|null $categoryRelation
+ * @property-read Collection<int, Category> $categories
+ * @property-read Collection<int, Category> $genders
+ * @property-read Collection<int, Category> $concentrates
+ * @property-read Collection<int, Category> $scents
  * @property-read Brand|null $brand
  * @property-read Brand|null $brandRelation
  * @property-read Collection<int, ProductVariant> $variants
@@ -37,7 +40,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[Fillable([
     'name',
     'slug',
-    'category_id',
     'brand_id',
     'description',
     'description_en',
@@ -53,25 +55,46 @@ class Product extends Model
     protected function casts(): array
     {
         return [
-            'category_id' => 'integer',
             'brand_id' => 'integer',
         ];
     }
 
     /**
-     * @return BelongsTo<Category, $this>
+     * @return BelongsToMany<Category, $this>
      */
-    public function category(): BelongsTo
+    public function categories(): BelongsToMany
     {
-        return $this->belongsTo(Category::class, 'category_id');
+        return $this->belongsToMany(Category::class, 'categories_product');
     }
 
     /**
-     * @return BelongsTo<Category, $this>
+     * Genders categories relation.
+     *
+     * @return BelongsToMany<Category, $this>
      */
-    public function categoryRelation(): BelongsTo
+    public function genders(): BelongsToMany
     {
-        return $this->category();
+        return $this->belongsToMany(Category::class, 'categories_product')->where('type', 'genders');
+    }
+
+    /**
+     * Concentrates categories relation.
+     *
+     * @return BelongsToMany<Category, $this>
+     */
+    public function concentrates(): BelongsToMany
+    {
+        return $this->belongsToMany(Category::class, 'categories_product')->where('type', 'concentrates');
+    }
+
+    /**
+     * Scents categories relation.
+     *
+     * @return BelongsToMany<Category, $this>
+     */
+    public function scents(): BelongsToMany
+    {
+        return $this->belongsToMany(Category::class, 'categories_product')->where('type', 'scents');
     }
 
     /**

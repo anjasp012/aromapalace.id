@@ -38,7 +38,7 @@ class ProductController extends Controller
     {
         $query = Product::with([
             'variants',
-            'categoryRelation',
+            'categories',
             'brandRelation',
             'galleries',
             'primaryImage',
@@ -52,7 +52,7 @@ class ProductController extends Controller
                 $sub->where('name', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%")
                     ->orWhereHas('brandRelation', fn ($b) => $b->where('name', 'like', "%{$search}%"))
-                    ->orWhereHas('categoryRelation', fn ($c) => $c->where('name', 'like', "%{$search}%"));
+                    ->orWhereHas('categories', fn ($c) => $c->where('name', 'like', "%{$search}%"));
             });
         }
 
@@ -65,9 +65,9 @@ class ProductController extends Controller
 
             if ($catModel) {
                 $selectedCategory = $catModel->name;
-                $query->where('category_id', $catModel->id);
+                $query->whereHas('categories', fn ($c) => $c->where('categories.id', $catModel->id));
             } else {
-                $query->whereHas('categoryRelation', fn ($c) => $c->where('name', $selectedCategory)->orWhere('slug', $selectedCategory));
+                $query->whereHas('categories', fn ($c) => $c->where('name', $selectedCategory)->orWhere('slug', $selectedCategory));
             }
         }
 

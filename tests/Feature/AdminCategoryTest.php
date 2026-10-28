@@ -98,11 +98,11 @@ test('admin cannot delete a category that still has products', function () {
         'slug' => 'category-with-product',
     ]);
 
-    Product::create([
+    $product = Product::create([
         'name' => 'Test Perfume',
         'slug' => 'test-perfume-cat-guard',
-        'category_id' => $category->id,
     ]);
+    $product->categories()->attach($category->id);
 
     $response = $this->actingAs($admin)
         ->delete(route('admin.categories.destroy', $category));

@@ -53,7 +53,8 @@ interface ProductItem {
     id: number;
     name: string;
     slug: string;
-    category?: { id: number; name: string } | null;
+    category?: { id: number; name: string; type?: string } | null;
+    categories?: Array<{ id: number; name: string; type?: string }>;
     brand?: { id: number; name: string } | null;
     description?: string | null;
     primary_image: string;
@@ -84,7 +85,7 @@ interface ProductsIndexProps {
         from: number | null;
         to: number | null;
     };
-    categories: Array<{ id: number; name: string }>;
+    categories: Array<{ id: number; name: string; type?: string }>;
     brands: Array<{ id: number; name: string }>;
     filters: {
         search: string;
@@ -272,14 +273,21 @@ export default function AdminProductsIndex({
                                     applyFilters({ category_id: val });
                                 }}
                             >
-                                <SelectTrigger className="h-9 w-[160px] text-xs">
+                                <SelectTrigger className="h-9 w-[180px] text-xs">
                                     <SelectValue placeholder="Semua Kategori" />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="max-h-72">
                                     <SelectItem value="all">Semua Kategori</SelectItem>
                                     {categories.map((c) => (
                                         <SelectItem key={c.id} value={String(c.id)}>
-                                            {c.name}
+                                            <div className="flex items-center gap-1.5">
+                                                <span>{c.name}</span>
+                                                {c.type && (
+                                                    <span className="text-[10px] text-muted-foreground uppercase opacity-75">
+                                                        ({c.type})
+                                                    </span>
+                                                )}
+                                            </div>
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -376,9 +384,31 @@ export default function AdminProductsIndex({
                                         </td>
 
                                         <td className="p-4 whitespace-nowrap align-middle">
-                                            <Badge variant="outline" className="mb-1">
-                                                {product.category?.name || 'Uncategorized'}
-                                            </Badge>
+                                            <div className="flex flex-wrap gap-1 max-w-[200px] mb-1">
+                                                {product.categories && product.categories.length > 0 ? (
+                                                    product.categories.map((c) => (
+                                                        <Badge
+                                                            key={c.id}
+                                                            variant="secondary"
+                                                            className={`text-[10px] px-1.5 py-0 border ${
+                                                                c.type === 'genders'
+                                                                    ? 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800'
+                                                                    : c.type === 'concentrates'
+                                                                    ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800'
+                                                                    : c.type === 'scents'
+                                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
+                                                                    : ''
+                                                            }`}
+                                                        >
+                                                            {c.name}
+                                                        </Badge>
+                                                    ))
+                                                ) : (
+                                                    <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                                                        {product.category?.name || 'Tanpa Kategori'}
+                                                    </Badge>
+                                                )}
+                                            </div>
                                             <div className="text-[11px] text-muted-foreground">
                                                 {product.brand?.name || '-'}
                                             </div>

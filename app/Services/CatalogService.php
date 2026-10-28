@@ -17,7 +17,7 @@ class CatalogService
         'galleries',
         'primaryImage',
         'reviews',
-        'categoryRelation',
+        'categories',
         'brandRelation',
     ];
 
@@ -111,7 +111,13 @@ class CatalogService
             : true;
 
         $brandName = $p->brandRelation?->name ?? 'Aroma Palace';
-        $categoryName = $p->categoryRelation?->name ?? 'Fragrance';
+        $categories = $p->categories;
+        $categoryName = $categories->first()?->name ?? 'Fragrance';
+        $categoryIds = $categories->pluck('id')->all();
+        $genders = $categories->where('type', 'genders')->pluck('name')->values()->all();
+        $concentrates = $categories->where('type', 'concentrates')->pluck('name')->values()->all();
+        $scents = $categories->where('type', 'scents')->pluck('name')->values()->all();
+        $concentrationName = ! empty($concentrates) ? implode(', ', $concentrates) : null;
 
         // Pricing derived from primary/first variant (ordered by id)
         $primaryVariant = $p->variants->sortBy('id')->first();
@@ -136,13 +142,23 @@ class CatalogService
             'id' => $p->id,
             'name' => $p->name,
             'slug' => $p->slug,
-            'category_id' => $p->category_id,
+            'category_id' => $categories->first()?->id,
+            'category_ids' => $categoryIds,
+            'categories' => $categories->map(fn ($c) => [
+                'id' => $c->id,
+                'name' => $c->name,
+                'slug' => $c->slug,
+                'type' => $c->type,
+            ])->values()->all(),
+            'genders' => $genders,
+            'concentrates' => $concentrates,
+            'scents' => $scents,
             'brand_id' => $p->brand_id,
             'brand' => $brandName,
             'family' => $categoryName,
             'category' => $categoryName,
             'volume' => $volume,
-            'concentration' => null,
+            'concentration' => $concentrationName,
             'price' => $formattedPrice,
             'raw_price' => $rawPrice,
             'originalPrice' => $formattedOriginalPrice,

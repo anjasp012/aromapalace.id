@@ -12,6 +12,7 @@ import {
     CheckCircle2,
     AlertCircle,
     ChevronRight,
+    ChevronDown,
     Tags,
     Sparkles,
     Ticket,
@@ -158,6 +159,18 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
     const isUsers = url.startsWith('/manajemen-pengguna');
     const isProducts = url.startsWith('/manajemen-produk');
     const isCategories = url.startsWith('/manajemen-kategori');
+    const isCategoriesGenders = url.includes('type=genders');
+    const isCategoriesConcentrates = url.includes('type=concentrates');
+    const isCategoriesScents = url.includes('type=scents');
+    const isCategoriesAll = isCategories && !isCategoriesGenders && !isCategoriesConcentrates && !isCategoriesScents;
+
+    const [categoriesMenuOpen, setCategoriesMenuOpen] = useState(isCategories);
+
+    useEffect(() => {
+        if (isCategories) {
+            setCategoriesMenuOpen(true);
+        }
+    }, [isCategories]);
     const isBrands = url.startsWith('/manajemen-brand');
     const isVouchers = url.startsWith('/manajemen-voucher');
     const isArticles = url.startsWith('/manajemen-artikel');
@@ -282,18 +295,80 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                             <span>Produk &amp; Varian</span>
                         </Link>
 
-                        <Link
-                            href="/manajemen-kategori"
-                            onClick={() => setSidebarOpen(false)}
-                            className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
-                                isCategories
-                                    ? 'bg-muted text-primary font-semibold'
-                                    : 'text-muted-foreground hover:text-primary hover:bg-muted'
-                            }`}
-                        >
-                            <Tags className="size-4" />
-                            <span>Kategori</span>
-                        </Link>
+                        <div className="space-y-0.5">
+                            <button
+                                type="button"
+                                onClick={() => setCategoriesMenuOpen((prev) => !prev)}
+                                className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-left transition-all ${
+                                    isCategories
+                                        ? 'bg-muted text-primary font-semibold'
+                                        : 'text-muted-foreground hover:text-primary hover:bg-muted'
+                                }`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <Tags className="size-4 shrink-0" />
+                                    <span>Kategori</span>
+                                </div>
+                                <ChevronDown
+                                    className={`size-3.5 transition-transform duration-200 shrink-0 ${
+                                        categoriesMenuOpen ? 'rotate-180' : ''
+                                    }`}
+                                />
+                            </button>
+
+                            {categoriesMenuOpen && (
+                                <div className="ml-7 mt-1 space-y-1 border-l border-border/60 pl-2.5 text-xs">
+                                    <Link
+                                        href="/manajemen-kategori"
+                                        onClick={() => setSidebarOpen(false)}
+                                        className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 transition-colors ${
+                                            isCategoriesAll
+                                                ? 'bg-primary/10 text-primary font-medium'
+                                                : 'text-muted-foreground hover:text-primary hover:bg-muted/50'
+                                        }`}
+                                    >
+                                        <span className="size-1.5 rounded-full bg-primary/40" />
+                                        <span>Semua Kategori</span>
+                                    </Link>
+                                    <Link
+                                        href="/manajemen-kategori?type=genders"
+                                        onClick={() => setSidebarOpen(false)}
+                                        className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 transition-colors ${
+                                            isCategoriesGenders
+                                                ? 'bg-primary/10 text-primary font-medium'
+                                                : 'text-muted-foreground hover:text-primary hover:bg-muted/50'
+                                        }`}
+                                    >
+                                        <span className="size-1.5 rounded-full bg-sky-500" />
+                                        <span>Gender</span>
+                                    </Link>
+                                    <Link
+                                        href="/manajemen-kategori?type=concentrates"
+                                        onClick={() => setSidebarOpen(false)}
+                                        className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 transition-colors ${
+                                            isCategoriesConcentrates
+                                                ? 'bg-primary/10 text-primary font-medium'
+                                                : 'text-muted-foreground hover:text-primary hover:bg-muted/50'
+                                        }`}
+                                    >
+                                        <span className="size-1.5 rounded-full bg-amber-500" />
+                                        <span>Concentrate</span>
+                                    </Link>
+                                    <Link
+                                        href="/manajemen-kategori?type=scents"
+                                        onClick={() => setSidebarOpen(false)}
+                                        className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 transition-colors ${
+                                            isCategoriesScents
+                                                ? 'bg-primary/10 text-primary font-medium'
+                                                : 'text-muted-foreground hover:text-primary hover:bg-muted/50'
+                                        }`}
+                                    >
+                                        <span className="size-1.5 rounded-full bg-emerald-500" />
+                                        <span>Scent</span>
+                                    </Link>
+                                </div>
+                            )}
+                        </div>
 
                         <Link
                             href="/manajemen-brand"

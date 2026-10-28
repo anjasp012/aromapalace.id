@@ -26,7 +26,7 @@ class SearchController extends Controller
 
         $products = Product::with([
             'variants',
-            'categoryRelation',
+            'categories',
             'brandRelation',
             'galleries',
             'primaryImage',
@@ -36,6 +36,9 @@ class SearchController extends Controller
                 $sub->where('name', 'like', "%{$q}%")
                     ->orWhereHas('brandRelation', function ($b) use ($q) {
                         $b->where('name', 'like', "%{$q}%");
+                    })
+                    ->orWhereHas('categories', function ($c) use ($q) {
+                        $c->where('name', 'like', "%{$q}%");
                     });
             })
             ->take(6)

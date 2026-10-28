@@ -11,6 +11,8 @@ import {
     Save,
     ExternalLink,
     Upload,
+    Check,
+    Tags,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,6 +31,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 interface CategoryOption {
     id: number;
     name: string;
+    type?: string;
 }
 
 interface BrandOption {
@@ -51,7 +54,9 @@ interface ProductDetailProps {
     id: number;
     name: string;
     slug: string;
-    category_id: number | null;
+    category_id?: number | null;
+    category_ids?: number[];
+    categories?: Array<{ id: number; name: string; type?: string }>;
     brand_id: number | null;
     description: string | null;
     description_en?: string | null;
@@ -83,7 +88,7 @@ export default function AdminProductEdit({
         _method: string;
         name: string;
         slug: string;
-        category_id: string;
+        category_ids: number[];
         brand_id: string;
         description: string;
         description_en: string;
@@ -94,7 +99,9 @@ export default function AdminProductEdit({
         _method: 'put',
         name: product.name || '',
         slug: product.slug || '',
-        category_id: product.category_id ? String(product.category_id) : '',
+        category_ids: product.category_ids && product.category_ids.length > 0
+            ? product.category_ids
+            : (product.categories ? product.categories.map((c) => c.id) : (product.category_id ? [product.category_id] : [])),
         brand_id: product.brand_id ? String(product.brand_id) : '',
         description: product.description || '',
         description_en: product.description_en || '',
@@ -223,6 +230,31 @@ export default function AdminProductEdit({
             .replace(/\-\-+/g, '-');
     };
 
+    const toggleCategory = (id: number) => {
+        setData('category_ids', data.category_ids.includes(id)
+            ? data.category_ids.filter((catId) => catId !== id)
+            : [...data.category_ids, id]
+        );
+    };
+
+    const groupedCategories = React.useMemo(() => {
+        const groups: Record<string, CategoryOption[]> = {
+            genders: [],
+            concentrates: [],
+            scents: [],
+            others: [],
+        };
+        categories.forEach((cat) => {
+            const t = (cat.type || 'others').toLowerCase();
+            if (groups[t]) {
+                groups[t].push(cat);
+            } else {
+                groups.others.push(cat);
+            }
+        });
+        return groups;
+    }, [categories]);
+
     const handleNameChange = (nameValue: string) => {
         setData((prev) => ({
             ...prev,
@@ -324,24 +356,139 @@ export default function AdminProductEdit({
                                 {errors.slug && <p className="text-destructive text-[11px]">{errors.slug}</p>}
                             </div>
 
-                            <div className="space-y-1.5 lg:col-span-2">
-                                <label className="font-medium text-foreground">Kategori</label>
-                                <Select
-                                    value={data.category_id || undefined}
-                                    onValueChange={(val) => setData('category_id', val)}
-                                >
-                                    <SelectTrigger className="h-9 w-full text-xs">
-                                        <SelectValue placeholder="Pilih Kategori" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {categories.map((c) => (
-                                            <SelectItem key={c.id} value={String(c.id)}>
-                                                {c.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                {errors.category_id && <p className="text-destructive text-[11px]">{errors.category_id}</p>}
+                            <div className="space-y-3 lg:col-span-4 p-4 rounded-xl border border-border bg-card">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <label className="font-semibold text-foreground flex items-center gap-2 text-sm">
+                                            <Tags className="size-4 text-primary" />
+                                            <span>Kategori Produk (Gender, Konsentrasi, Scent)</span>
+                                        </label>
+                                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                                            Pilih satu atau beberapa kategori untuk produk ini (bisa memilih gender, jenis konsentrasi, dan aroma).
+                                        </p>
+                                    </div>
+                                    <Badge variant="outline" className="font-mono text-[11px]">
+                                        {data.category_ids.length} dipilih
+                                    </Badge>
+                                </div>
+
+                                {/* Section 1: Genders */}
+                                {groupedCategories.genders.length > 0 && (
+                                    <div className="space-y-1.5 p-3 rounded-xl bg-muted/20 border border-border/60">
+                                        <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                                            Gender / Karakter Pengguna
+                                        </span>
+                                        <div className="flex flex-wrap gap-2 pt-1">
+                                            {groupedCategories.genders.map((c) => {
+                                                const isSelected = data.category_ids.includes(c.id);
+                                                return (
+                                                    <button
+                                                        key={c.id}
+                                                        type="button"
+                                                        onClick={() => toggleCategory(c.id)}
+                                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 border ${
+                                                            isSelected
+                                                                ? 'bg-[#4A070B] text-white border-[#4A070B] shadow-xs'
+                                                                : 'bg-card hover:bg-muted text-foreground border-border/80'
+                                                        }`}
+                                                    >
+                                                        {isSelected && <Check className="size-3.5" />}
+                                                        <span>{c.name}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Section 2: Concentrates */}
+                                {groupedCategories.concentrates.length > 0 && (
+                                    <div className="space-y-1.5 p-3 rounded-xl bg-muted/20 border border-border/60">
+                                        <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                                            Konsentrasi Parfum
+                                        </span>
+                                        <div className="flex flex-wrap gap-2 pt-1">
+                                            {groupedCategories.concentrates.map((c) => {
+                                                const isSelected = data.category_ids.includes(c.id);
+                                                return (
+                                                    <button
+                                                        key={c.id}
+                                                        type="button"
+                                                        onClick={() => toggleCategory(c.id)}
+                                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 border ${
+                                                            isSelected
+                                                                ? 'bg-amber-700 text-white border-amber-700 shadow-xs'
+                                                                : 'bg-card hover:bg-muted text-foreground border-border/80'
+                                                        }`}
+                                                    >
+                                                        {isSelected && <Check className="size-3.5" />}
+                                                        <span>{c.name}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Section 3: Scents */}
+                                {groupedCategories.scents.length > 0 && (
+                                    <div className="space-y-1.5 p-3 rounded-xl bg-muted/20 border border-border/60">
+                                        <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                                            Aroma / Scent Notes
+                                        </span>
+                                        <div className="flex flex-wrap gap-2 pt-1">
+                                            {groupedCategories.scents.map((c) => {
+                                                const isSelected = data.category_ids.includes(c.id);
+                                                return (
+                                                    <button
+                                                        key={c.id}
+                                                        type="button"
+                                                        onClick={() => toggleCategory(c.id)}
+                                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 border ${
+                                                            isSelected
+                                                                ? 'bg-purple-800 text-white border-purple-800 shadow-xs'
+                                                                : 'bg-card hover:bg-muted text-foreground border-border/80'
+                                                        }`}
+                                                    >
+                                                        {isSelected && <Check className="size-3.5" />}
+                                                        <span>{c.name}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Section 4: Others */}
+                                {groupedCategories.others.length > 0 && (
+                                    <div className="space-y-1.5 p-3 rounded-xl bg-muted/20 border border-border/60">
+                                        <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                                            Kategori Lainnya
+                                        </span>
+                                        <div className="flex flex-wrap gap-2 pt-1">
+                                            {groupedCategories.others.map((c) => {
+                                                const isSelected = data.category_ids.includes(c.id);
+                                                return (
+                                                    <button
+                                                        key={c.id}
+                                                        type="button"
+                                                        onClick={() => toggleCategory(c.id)}
+                                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 border ${
+                                                            isSelected
+                                                                ? 'bg-zinc-800 text-white border-zinc-800 shadow-xs'
+                                                                : 'bg-card hover:bg-muted text-foreground border-border/80'
+                                                        }`}
+                                                    >
+                                                        {isSelected && <Check className="size-3.5" />}
+                                                        <span>{c.name}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {errors.category_ids && <p className="text-destructive text-[11px]">{errors.category_ids}</p>}
                             </div>
 
                             <div className="space-y-1.5 lg:col-span-2">

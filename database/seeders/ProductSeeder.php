@@ -61,11 +61,22 @@ class ProductSeeder extends Seeder
                 [
                     'name' => $data['name'],
                     'slug' => $data['slug'],
-                    'category_id' => $category->id,
                     'brand_id' => $brand->id,
                     'description' => $data['description'] ?? null,
                 ]
             );
+
+            // Sync categories on product
+            $categoryIds = [$category->id];
+            if (! empty($data['concentration'])) {
+                $conc = Category::where('name', $data['concentration'])
+                    ->orWhere('slug', Str::slug($data['concentration']))
+                    ->first();
+                if ($conc) {
+                    $categoryIds[] = $conc->id;
+                }
+            }
+            $product->categories()->sync($categoryIds);
 
             // Seed gallery images for the product
             $allImages = array_values(array_unique(array_filter(array_merge(

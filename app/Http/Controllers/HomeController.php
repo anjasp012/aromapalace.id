@@ -36,7 +36,7 @@ class HomeController extends Controller
             'galleries',
             'primaryImage',
             'reviews',
-            'categoryRelation',
+            'categories',
             'brandRelation',
         ])
             ->withCount('reviews')
@@ -58,7 +58,7 @@ class HomeController extends Controller
             'galleries',
             'primaryImage',
             'reviews',
-            'categoryRelation',
+            'categories',
             'brandRelation',
         ])
             ->whereHas('variants', fn ($v) => $v->whereNotNull('original_price')->whereColumn('original_price', '>', 'price'))
@@ -78,7 +78,7 @@ class HomeController extends Controller
             'galleries',
             'primaryImage',
             'reviews',
-            'categoryRelation',
+            'categories',
             'brandRelation',
         ])
             ->latest('id')

@@ -31,7 +31,7 @@ class ProductController extends Controller
         $brandId = $request->query('brand_id');
         $stockFilter = (string) $request->query('stock_filter', 'all');
 
-        $query = Product::with(['category', 'brand', 'variants', 'galleries'])->latest('id');
+        $query = Product::with(['categories', 'brand', 'variants', 'galleries'])->latest('id');
 
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
@@ -45,14 +45,16 @@ class ProductController extends Controller
                     ->orWhereHas('brand', function ($bq) use ($search) {
                         $bq->where('name', 'like', "%{$search}%");
                     })
-                    ->orWhereHas('category', function ($cq) use ($search) {
+                    ->orWhereHas('categories', function ($cq) use ($search) {
                         $cq->where('name', 'like', "%{$search}%");
                     });
             });
         }
 
         if ($categoryId && $categoryId !== 'all') {
-            $query->where('category_id', $categoryId);
+            $query->whereHas('categories', function ($cq) use ($categoryId) {
+                $cq->where('categories.id', $categoryId);
+            });
         }
 
         if ($brandId && $brandId !== 'all') {
@@ -81,10 +83,16 @@ class ProductController extends Controller
                 'id' => $product->id,
                 'name' => $product->name,
                 'slug' => $product->slug,
-                'category' => $product->category ? [
-                    'id' => $product->category->id,
-                    'name' => $product->category->name,
+                'category' => $product->categories->first() ? [
+                    'id' => $product->categories->first()->id,
+                    'name' => $product->categories->first()->name,
+                    'type' => $product->categories->first()->type,
                 ] : null,
+                'categories' => $product->categories->map(fn (Category $c) => [
+                    'id' => $c->id,
+                    'name' => $c->name,
+                    'type' => $c->type,
+                ]),
                 'brand' => $product->brand ? [
                     'id' => $product->brand->id,
                     'name' => $product->brand->name,
@@ -122,7 +130,7 @@ class ProductController extends Controller
         $lowStockCount = Product::whereHas('variants', fn ($q) => $q->where('stock', '>', 0)->where('stock', '<=', 10))->count();
         $outOfStockCount = Product::whereDoesntHave('variants', fn ($q) => $q->where('stock', '>', 0))->count();
 
-        $categories = Category::select('id', 'name')->orderBy('name')->get();
+        $categories = Category::select('id', 'name', 'type')->orderBy('type')->orderBy('name')->get();
         $brands = Brand::select('id', 'name')->orderBy('name')->get();
 
         return Inertia::render('admin/products/index', [
@@ -151,7 +159,7 @@ class ProductController extends Controller
      */
     public function create(): Response
     {
-        $categories = Category::select('id', 'name')->orderBy('name')->get();
+        $categories = Category::select('id', 'name', 'type')->orderBy('type')->orderBy('name')->get();
         $brands = Brand::select('id', 'name')->orderBy('name')->get();
 
         return Inertia::render('admin/products/create', [
@@ -169,6 +177,8 @@ class ProductController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', 'unique:products,slug'],
             'category_id' => ['nullable', 'integer', 'exists:categories,id'],
+            'category_ids' => ['nullable', 'array'],
+            'category_ids.*' => ['integer', 'exists:categories,id'],
             'brand_id' => ['nullable', 'integer', 'exists:brands,id'],
             'description' => ['nullable', 'string'],
             'description_en' => ['nullable', 'string'],
@@ -198,11 +208,17 @@ class ProductController extends Controller
             $product = Product::create([
                 'name' => $validated['name'],
                 'slug' => $slug,
-                'category_id' => $validated['category_id'] ?? null,
                 'brand_id' => $validated['brand_id'] ?? null,
                 'description' => $validated['description'] ?? null,
                 'description_en' => $validated['description_en'] ?? null,
             ]);
+
+            // Sync categories (supports category_ids array or single category_id)
+            $catIds = $request->input('category_ids', []);
+            if (empty($catIds) && $request->filled('category_id')) {
+                $catIds = [(int) $request->input('category_id')];
+            }
+            $product->categories()->sync($catIds);
 
             // Save gallery images
             $hasGalleries = false;
@@ -280,9 +296,9 @@ class ProductController extends Controller
      */
     public function edit(Product $product): Response
     {
-        $product->load(['category', 'brand', 'variants', 'galleries']);
+        $product->load(['categories', 'brand', 'variants', 'galleries']);
 
-        $categories = Category::select('id', 'name')->orderBy('name')->get();
+        $categories = Category::select('id', 'name', 'type')->orderBy('type')->orderBy('name')->get();
         $brands = Brand::select('id', 'name')->orderBy('name')->get();
 
         return Inertia::render('admin/products/edit', [
@@ -290,7 +306,13 @@ class ProductController extends Controller
                 'id' => $product->id,
                 'name' => $product->name,
                 'slug' => $product->slug,
-                'category_id' => $product->category_id,
+                'category_id' => $product->categories->first()?->id,
+                'category_ids' => $product->categories->pluck('id')->all(),
+                'categories' => $product->categories->map(fn (Category $c) => [
+                    'id' => $c->id,
+                    'name' => $c->name,
+                    'type' => $c->type,
+                ]),
                 'brand_id' => $product->brand_id,
                 'description' => $product->description,
                 'description_en' => $product->description_en,
@@ -325,6 +347,8 @@ class ProductController extends Controller
                 Rule::unique('products', 'slug')->ignore($product->id),
             ],
             'category_id' => ['nullable', 'integer', 'exists:categories,id'],
+            'category_ids' => ['nullable', 'array'],
+            'category_ids.*' => ['integer', 'exists:categories,id'],
             'brand_id' => ['nullable', 'integer', 'exists:brands,id'],
             'description' => ['nullable', 'string'],
             'description_en' => ['nullable', 'string'],
@@ -357,11 +381,17 @@ class ProductController extends Controller
             $product->update([
                 'name' => $validated['name'],
                 'slug' => $slug,
-                'category_id' => $validated['category_id'] ?? null,
                 'brand_id' => $validated['brand_id'] ?? null,
                 'description' => $validated['description'] ?? null,
                 'description_en' => $validated['description_en'] ?? null,
             ]);
+
+            // Sync categories (supports category_ids array or single category_id)
+            $catIds = $request->input('category_ids', []);
+            if (empty($catIds) && $request->filled('category_id')) {
+                $catIds = [(int) $request->input('category_id')];
+            }
+            $product->categories()->sync($catIds);
 
             // Sync galleries
             // 1. Keep existing images passed by client

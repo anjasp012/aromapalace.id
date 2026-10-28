@@ -5,26 +5,27 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Services\CatalogService;
 
-test('seeder seeds exactly 5 products with category_id and brand_id', function () {
+test('seeder seeds exactly 5 products with categories and brand_id', function () {
     $this->assertDatabaseCount('products', 5);
 
-    $products = Product::with(['categoryRelation', 'brandRelation'])->get();
+    $products = Product::with(['categories', 'brandRelation'])->get();
     expect($products)->toHaveCount(5);
 
     foreach ($products as $product) {
-        expect($product->category_id)->not->toBeNull()
+        expect($product->categories)->not->toBeEmpty()
             ->and($product->brand_id)->not->toBeNull()
-            ->and($product->categoryRelation)->toBeInstanceOf(Category::class)
+            ->and($product->categories->first())->toBeInstanceOf(Category::class)
             ->and($product->brandRelation)->toBeInstanceOf(Brand::class);
     }
 });
 
-test('catalog service includes category_id and brand_id in formatted products', function () {
+test('catalog service includes categories and brand_id in formatted products', function () {
     $firstProduct = CatalogService::find(1);
     $model = Product::findOrFail(1);
 
     expect($firstProduct)->not->toBeNull()
-        ->and($firstProduct['category_id'])->toBe($model->category_id)
+        ->and($firstProduct['category_id'])->toBe($model->categories->first()?->id)
+        ->and($firstProduct['category_ids'])->toBe($model->categories->pluck('id')->all())
         ->and($firstProduct['brand_id'])->toBe($model->brand_id);
 });
 

@@ -102,8 +102,11 @@ test('admin can store a new product with multiple variants and galleries', funct
     $this->assertDatabaseHas('products', [
         'name' => 'Majestic Amber Gold',
         'slug' => 'majestic-amber-gold',
-        'category_id' => $category->id,
         'brand_id' => $brand->id,
+    ]);
+
+    $this->assertDatabaseHas('categories_product', [
+        'category_id' => $category->id,
     ]);
 
     $product = Product::where('slug', 'majestic-amber-gold')->first();

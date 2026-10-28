@@ -23,11 +23,19 @@ import {
     DialogDescription,
     DialogFooter,
 } from '@/components/ui/dialog';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 
 interface CategoryItem {
     id: number;
     name: string;
     name_en?: string | null;
+    type?: string | null;
     slug: string;
     thumbnail?: string | null;
     description?: string | null;
@@ -52,10 +60,14 @@ interface CategoriesIndexProps {
     };
     filters: {
         search: string;
+        type?: string;
     };
     metrics: {
         total_categories: number;
         categories_with_products: number;
+        total_genders?: number;
+        total_concentrates?: number;
+        total_scents?: number;
     };
 }
 
@@ -65,16 +77,37 @@ export default function AdminCategoriesIndex({
     metrics,
 }: CategoriesIndexProps) {
     const [search, setSearch] = useState(filters.search || '');
+    const [selectedType, setSelectedType] = useState(filters.type || 'all');
     const [deleteTarget, setDeleteTarget] = useState<CategoryItem | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        router.get('/manajemen-kategori', { search: search || undefined }, { preserveState: true });
+        router.get(
+            '/manajemen-kategori',
+            {
+                search: search || undefined,
+                type: selectedType !== 'all' ? selectedType : undefined,
+            },
+            { preserveState: true }
+        );
+    };
+
+    const handleTypeChange = (newType: string) => {
+        setSelectedType(newType);
+        router.get(
+            '/manajemen-kategori',
+            {
+                search: search || undefined,
+                type: newType !== 'all' ? newType : undefined,
+            },
+            { preserveState: true }
+        );
     };
 
     const handleResetSearch = () => {
         setSearch('');
+        setSelectedType('all');
         router.get('/manajemen-kategori');
     };
 
@@ -98,29 +131,51 @@ export default function AdminCategoriesIndex({
 
             <div className="space-y-6">
                 {/* Metrics Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Card className="py-4">
-                        <CardContent className="flex items-center justify-between p-0 px-6">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <Card className="py-3">
+                        <CardContent className="flex items-center justify-between p-0 px-4">
                             <div>
-                                <p className="text-xs font-medium text-muted-foreground">Total Kategori</p>
-                                <h3 className="text-2xl font-bold mt-1 text-foreground">{metrics.total_categories}</h3>
-                                <p className="text-[11px] text-muted-foreground mt-0.5">Klasifikasi aroma parfum</p>
+                                <p className="text-[11px] font-medium text-muted-foreground">Total Kategori</p>
+                                <h3 className="text-xl font-bold mt-0.5 text-foreground">{metrics.total_categories}</h3>
                             </div>
-                            <div className="size-11 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                                <Tags className="size-5" />
+                            <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                                <Tags className="size-4" />
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="py-4">
-                        <CardContent className="flex items-center justify-between p-0 px-6">
+                    <Card className="py-3">
+                        <CardContent className="flex items-center justify-between p-0 px-4">
                             <div>
-                                <p className="text-xs font-medium text-muted-foreground">Memiliki Produk</p>
-                                <h3 className="text-2xl font-bold mt-1 text-foreground">{metrics.categories_with_products}</h3>
-                                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-0.5">Aktif terhubung ke katalog</p>
+                                <p className="text-[11px] font-medium text-muted-foreground">Gender</p>
+                                <h3 className="text-xl font-bold mt-0.5 text-sky-600 dark:text-sky-400">{metrics.total_genders ?? 0}</h3>
                             </div>
-                            <div className="size-11 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-                                <Boxes className="size-5" />
+                            <div className="size-9 rounded-lg bg-sky-500/10 flex items-center justify-center text-sky-500">
+                                <span className="text-xs font-bold">GEN</span>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="py-3">
+                        <CardContent className="flex items-center justify-between p-0 px-4">
+                            <div>
+                                <p className="text-[11px] font-medium text-muted-foreground">Concentrate</p>
+                                <h3 className="text-xl font-bold mt-0.5 text-amber-600 dark:text-amber-400">{metrics.total_concentrates ?? 0}</h3>
+                            </div>
+                            <div className="size-9 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500">
+                                <span className="text-xs font-bold">CON</span>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="py-3">
+                        <CardContent className="flex items-center justify-between p-0 px-4">
+                            <div>
+                                <p className="text-[11px] font-medium text-muted-foreground">Scent</p>
+                                <h3 className="text-xl font-bold mt-0.5 text-emerald-600 dark:text-emerald-400">{metrics.total_scents ?? 0}</h3>
+                            </div>
+                            <div className="size-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                                <span className="text-xs font-bold">SCE</span>
                             </div>
                         </CardContent>
                     </Card>
@@ -128,32 +183,46 @@ export default function AdminCategoriesIndex({
 
                 {/* Filter & Action Toolbar */}
                 <Card className="p-4">
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                        <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 w-full sm:w-auto flex-1 max-w-md">
-                            <div className="relative w-full">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                                <Input
-                                    type="text"
-                                    placeholder="Cari nama, slug, atau deskripsi..."
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    className="pl-9 h-9 text-xs"
-                                />
-                            </div>
-                            <Button type="submit" size="sm" className="h-9 cursor-pointer">
-                                Cari
-                            </Button>
-                        </form>
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full sm:w-auto flex-1 max-w-xl">
+                            <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 w-full flex-1">
+                                <div className="relative w-full">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                                    <Input
+                                        type="text"
+                                        placeholder="Cari nama, slug, atau deskripsi..."
+                                        value={search}
+                                        onChange={(e) => setSearch(e.target.value)}
+                                        className="pl-9 h-9 text-xs"
+                                    />
+                                </div>
+                                <Button type="submit" size="sm" className="h-9 cursor-pointer">
+                                    Cari
+                                </Button>
+                            </form>
+
+                            <Select value={selectedType} onValueChange={handleTypeChange}>
+                                <SelectTrigger className="h-9 w-full sm:w-[170px] text-xs">
+                                    <SelectValue placeholder="Semua Tipe" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Semua Tipe</SelectItem>
+                                    <SelectItem value="genders">Gender</SelectItem>
+                                    <SelectItem value="concentrates">Concentrate</SelectItem>
+                                    <SelectItem value="scents">Scent</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
 
                         <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                            {search !== '' && (
+                            {(search !== '' || selectedType !== 'all') && (
                                 <Button
                                     type="button"
                                     variant="outline"
                                     size="sm"
                                     onClick={handleResetSearch}
                                     className="h-9 cursor-pointer"
-                                    title="Reset Pencarian"
+                                    title="Reset Pencarian & Filter"
                                 >
                                     <RefreshCw className="size-3.5 mr-1" />
                                     <span>Reset</span>
@@ -215,9 +284,20 @@ export default function AdminCategoriesIndex({
                                             </td>
 
                                             <td className="p-4 align-middle font-medium text-foreground">
-                                                <div>{cat.name}</div>
+                                                <div className="flex items-center gap-2">
+                                                    <span>{cat.name}</span>
+                                                    <Badge variant="outline" className={`text-[10px] py-0 px-1.5 uppercase font-semibold ${
+                                                        cat.type === 'concentrates'
+                                                            ? 'bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300'
+                                                            : cat.type === 'scents'
+                                                            ? 'bg-purple-50 text-purple-700 border-purple-300 dark:bg-purple-950/40 dark:text-purple-300'
+                                                            : 'bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-950/40 dark:text-blue-300'
+                                                    }`}>
+                                                        {cat.type || 'genders'}
+                                                    </Badge>
+                                                </div>
                                                 {cat.name_en && (
-                                                    <div className="text-[11px] text-muted-foreground font-normal italic">
+                                                    <div className="text-[11px] text-muted-foreground font-normal italic mt-0.5">
                                                         EN: {cat.name_en}
                                                     </div>
                                                 )}

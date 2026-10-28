@@ -18,9 +18,13 @@ class CategoryController extends Controller
     public function index(Request $request): Response
     {
         $search = $request->string('search')->trim()->value();
+        $type = $request->string('type')->trim()->value();
 
         $categoriesQuery = Category::query()
             ->withCount('products')
+            ->when($type && in_array($type, ['genders', 'concentrates', 'scents'], true), function ($query) use ($type) {
+                $query->where('type', $type);
+            })
             ->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
@@ -35,12 +39,16 @@ class CategoryController extends Controller
         $metrics = [
             'total_categories' => Category::count(),
             'categories_with_products' => Category::has('products')->count(),
+            'total_genders' => Category::where('type', 'genders')->count(),
+            'total_concentrates' => Category::where('type', 'concentrates')->count(),
+            'total_scents' => Category::where('type', 'scents')->count(),
         ];
 
         return Inertia::render('admin/categories/index', [
             'categories' => $categories,
             'filters' => [
                 'search' => $search,
+                'type' => $type ?: 'all',
             ],
             'metrics' => $metrics,
         ]);
@@ -56,11 +64,16 @@ class CategoryController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'name_en' => ['nullable', 'string', 'max:255'],
+            'type' => ['nullable', 'string', 'max:50'],
             'slug' => ['nullable', 'string', 'max:255', 'unique:categories,slug'],
             'thumbnail' => ['nullable'],
             'description' => ['nullable', 'string', 'max:1000'],
             'description_en' => ['nullable', 'string', 'max:1000'],
         ]);
+
+        if (empty($validated['type'])) {
+            $validated['type'] = 'genders';
+        }
 
         $thumbnail = null;
         if ($request->hasFile('thumbnail')) {
@@ -106,11 +119,16 @@ class CategoryController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'name_en' => ['nullable', 'string', 'max:255'],
+            'type' => ['nullable', 'string', 'max:50'],
             'slug' => ['nullable', 'string', 'max:255', Rule::unique('categories', 'slug')->ignore($category->id)],
             'thumbnail' => ['nullable'],
             'description' => ['nullable', 'string', 'max:1000'],
             'description_en' => ['nullable', 'string', 'max:1000'],
         ]);
+
+        if (empty($validated['type'])) {
+            $validated['type'] = $category->type ?: 'genders';
+        }
 
         $thumbnail = $category->thumbnail;
         if ($request->hasFile('thumbnail')) {

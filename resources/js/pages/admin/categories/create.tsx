@@ -24,6 +24,7 @@ export default function AdminCategoryCreate() {
     const { data, setData, post, processing, errors } = useForm<{
         name: string;
         name_en: string;
+        type: string;
         slug: string;
         thumbnail: File | string | null;
         description: string;
@@ -31,6 +32,7 @@ export default function AdminCategoryCreate() {
     }>({
         name: '',
         name_en: '',
+        type: 'genders',
         slug: '',
         thumbnail: null,
         description: '',
@@ -236,6 +238,55 @@ export default function AdminCategoryCreate() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-5">
+                        {/* Tipe / Klasifikasi Kategori */}
+                        <div className="space-y-2 pb-4 border-b border-border">
+                            <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                                <span>Tipe / Klasifikasi Kategori</span>
+                                <span className="text-[11px] text-muted-foreground font-mono">type: {data.type}</span>
+                            </label>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                                <button
+                                    type="button"
+                                    onClick={() => setData('type', 'genders')}
+                                    className={`p-3 rounded-xl border text-left transition-all ${
+                                        data.type === 'genders'
+                                            ? 'border-[#4A070B] bg-[#4A070B]/10 text-[#4A070B] dark:text-red-300 ring-1 ring-[#4A070B]'
+                                            : 'border-border/80 hover:bg-muted/40 text-muted-foreground'
+                                    }`}
+                                >
+                                    <div className="font-bold text-xs">Genders</div>
+                                    <div className="text-[10px] opacity-80 mt-0.5">Pria, Wanita, Unisex</div>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setData('type', 'concentrates')}
+                                    className={`p-3 rounded-xl border text-left transition-all ${
+                                        data.type === 'concentrates'
+                                            ? 'border-[#4A070B] bg-[#4A070B]/10 text-[#4A070B] dark:text-red-300 ring-1 ring-[#4A070B]'
+                                            : 'border-border/80 hover:bg-muted/40 text-muted-foreground'
+                                    }`}
+                                >
+                                    <div className="font-bold text-xs">Concentrates</div>
+                                    <div className="text-[10px] opacity-80 mt-0.5">Extrait, EDP, EDT, Attar</div>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setData('type', 'scents')}
+                                    className={`p-3 rounded-xl border text-left transition-all ${
+                                        data.type === 'scents'
+                                            ? 'border-[#4A070B] bg-[#4A070B]/10 text-[#4A070B] dark:text-red-300 ring-1 ring-[#4A070B]'
+                                            : 'border-border/80 hover:bg-muted/40 text-muted-foreground'
+                                    }`}
+                                >
+                                    <div className="font-bold text-xs">Scents</div>
+                                    <div className="text-[10px] opacity-80 mt-0.5">Woody, Floral, Citrus, dll.</div>
+                                </button>
+                            </div>
+                            {errors.type && <p className="text-destructive text-xs">{errors.type}</p>}
+                        </div>
+
                         <Tabs defaultValue="id" className="w-full">
                             <TabsList className="grid grid-cols-2 max-w-sm mb-4">
                                 <TabsTrigger value="id" className="flex items-center gap-2 text-xs">
