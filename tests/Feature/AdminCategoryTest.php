@@ -46,7 +46,7 @@ test('admin can store a new category', function () {
             'description' => 'Aroma manis vanila, kopi, dan karamel.',
         ]);
 
-    $response->assertRedirect(route('admin.categories.index'));
+    $response->assertRedirect(route('admin.categories.index', ['type' => 'genders']));
     $this->assertDatabaseHas('categories', [
         'name' => 'Gourmand Delight',
         'slug' => 'gourmand-delight',
@@ -58,16 +58,18 @@ test('admin can update an existing category', function () {
     $category = Category::create([
         'name' => 'Old Category Name',
         'slug' => 'old-category-name',
+        'type' => 'genders',
     ]);
 
     $response = $this->actingAs($admin)
         ->put(route('admin.categories.update', $category), [
             'name' => 'Updated Category Name',
             'slug' => 'updated-category-name',
+            'type' => 'genders',
             'description' => 'Deskripsi baru.',
         ]);
 
-    $response->assertRedirect(route('admin.categories.index'));
+    $response->assertRedirect(route('admin.categories.index', ['type' => 'genders']));
     $this->assertDatabaseHas('categories', [
         'id' => $category->id,
         'name' => 'Updated Category Name',
@@ -80,12 +82,13 @@ test('admin can delete an empty category', function () {
     $category = Category::create([
         'name' => 'To Be Deleted',
         'slug' => 'to-be-deleted',
+        'type' => 'genders',
     ]);
 
     $response = $this->actingAs($admin)
         ->delete(route('admin.categories.destroy', $category));
 
-    $response->assertRedirect(route('admin.categories.index'));
+    $response->assertRedirect(route('admin.categories.index', ['type' => 'genders']));
     $this->assertDatabaseMissing('categories', [
         'id' => $category->id,
     ]);
@@ -96,6 +99,7 @@ test('admin cannot delete a category that still has products', function () {
     $category = Category::create([
         'name' => 'Category With Product',
         'slug' => 'category-with-product',
+        'type' => 'genders',
     ]);
 
     $product = Product::create([
@@ -107,7 +111,7 @@ test('admin cannot delete a category that still has products', function () {
     $response = $this->actingAs($admin)
         ->delete(route('admin.categories.destroy', $category));
 
-    $response->assertRedirect(route('admin.categories.index'))
+    $response->assertRedirect(route('admin.categories.index', ['type' => 'genders']))
         ->assertSessionHas('error');
     $this->assertDatabaseHas('categories', [
         'id' => $category->id,

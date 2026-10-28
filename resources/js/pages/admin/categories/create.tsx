@@ -16,10 +16,19 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
-export default function AdminCategoryCreate() {
+const typeLabels: Record<string, string> = {
+    genders: 'Gender',
+    concentrates: 'Konsentrasi',
+    scents: 'Scent',
+};
+
+export default function AdminCategoryCreate({ type = 'genders' }: { type?: string }) {
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useState(false);
+
+    const currentType = type || 'genders';
+    const itemLabel = typeLabels[currentType] || 'Kategori';
 
     const { data, setData, post, processing, errors } = useForm<{
         name: string;
@@ -32,7 +41,7 @@ export default function AdminCategoryCreate() {
     }>({
         name: '',
         name_en: '',
-        type: 'genders',
+        type: currentType,
         slug: '',
         thumbnail: null,
         description: '',
@@ -105,28 +114,28 @@ export default function AdminCategoryCreate() {
 
     return (
         <AdminLayout
-            title="Tambah Kategori Baru"
-            subtitle="Tambahkan kategori koleksi parfum baru dengan thumbnail foto dan dukungan dwibahasa."
+            title={`Tambah ${itemLabel} Baru`}
+            subtitle={`Tambahkan data ${itemLabel.toLowerCase()} parfum baru dengan foto thumbnail dan dukungan dwibahasa.`}
         >
-            <Head title="Tambah Kategori - Admin Panel" />
+            <Head title={`Tambah ${itemLabel} - Admin Panel`} />
 
             <form onSubmit={handleSubmit} className="w-full space-y-6">
                 {/* Header Actions */}
                 <div className="flex items-center justify-between">
                     <Button variant="ghost" size="sm" asChild className="p-0 hover:bg-transparent">
-                        <Link href="/manajemen-kategori" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
+                        <Link href={`/manajemen-kategori?type=${currentType}`} className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
                             <ArrowLeft className="size-4" />
-                            <span>Kembali ke Daftar Kategori</span>
+                            <span>Kembali ke Kelola {itemLabel}</span>
                         </Link>
                     </Button>
 
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
-                            <Link href="/manajemen-kategori">Batal</Link>
+                            <Link href={`/manajemen-kategori?type=${currentType}`}>Batal</Link>
                         </Button>
                         <Button type="submit" size="sm" disabled={processing} className="cursor-pointer">
                             <Save className="size-4 mr-1.5" />
-                            <span>{processing ? 'Menyimpan...' : 'Simpan Kategori'}</span>
+                            <span>{processing ? 'Menyimpan...' : `Simpan ${itemLabel}`}</span>
                         </Button>
                     </div>
                 </div>
@@ -239,52 +248,14 @@ export default function AdminCategoryCreate() {
                     </CardHeader>
                     <CardContent className="space-y-5">
                         {/* Tipe / Klasifikasi Kategori */}
-                        <div className="space-y-2 pb-4 border-b border-border">
-                            <label className="text-xs font-semibold text-foreground flex items-center justify-between">
-                                <span>Tipe / Klasifikasi Kategori</span>
-                                <span className="text-[11px] text-muted-foreground font-mono">type: {data.type}</span>
-                            </label>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                                <button
-                                    type="button"
-                                    onClick={() => setData('type', 'genders')}
-                                    className={`p-3 rounded-xl border text-left transition-all ${
-                                        data.type === 'genders'
-                                            ? 'border-[#4A070B] bg-[#4A070B]/10 text-[#4A070B] dark:text-red-300 ring-1 ring-[#4A070B]'
-                                            : 'border-border/80 hover:bg-muted/40 text-muted-foreground'
-                                    }`}
-                                >
-                                    <div className="font-bold text-xs">Genders</div>
-                                    <div className="text-[10px] opacity-80 mt-0.5">Pria, Wanita, Unisex</div>
-                                </button>
-
-                                <button
-                                    type="button"
-                                    onClick={() => setData('type', 'concentrates')}
-                                    className={`p-3 rounded-xl border text-left transition-all ${
-                                        data.type === 'concentrates'
-                                            ? 'border-[#4A070B] bg-[#4A070B]/10 text-[#4A070B] dark:text-red-300 ring-1 ring-[#4A070B]'
-                                            : 'border-border/80 hover:bg-muted/40 text-muted-foreground'
-                                    }`}
-                                >
-                                    <div className="font-bold text-xs">Concentrates</div>
-                                    <div className="text-[10px] opacity-80 mt-0.5">Extrait, EDP, EDT, Attar</div>
-                                </button>
-
-                                <button
-                                    type="button"
-                                    onClick={() => setData('type', 'scents')}
-                                    className={`p-3 rounded-xl border text-left transition-all ${
-                                        data.type === 'scents'
-                                            ? 'border-[#4A070B] bg-[#4A070B]/10 text-[#4A070B] dark:text-red-300 ring-1 ring-[#4A070B]'
-                                            : 'border-border/80 hover:bg-muted/40 text-muted-foreground'
-                                    }`}
-                                >
-                                    <div className="font-bold text-xs">Scents</div>
-                                    <div className="text-[10px] opacity-80 mt-0.5">Woody, Floral, Citrus, dll.</div>
-                                </button>
+                        <div className="flex items-center justify-between p-3.5 rounded-xl bg-muted/30 border border-border">
+                            <div className="space-y-0.5">
+                                <span className="text-xs font-semibold text-foreground">Menu Klasifikasi</span>
+                                <p className="text-[11px] text-muted-foreground">Kategori ini otomatis tersimpan ke dalam modul {itemLabel}.</p>
                             </div>
-                            {errors.type && <p className="text-destructive text-xs">{errors.type}</p>}
+                            <Badge variant="secondary" className="font-semibold text-xs uppercase tracking-wider px-2.5 py-1">
+                                {itemLabel}
+                            </Badge>
                         </div>
 
                         <Tabs defaultValue="id" className="w-full">
