@@ -349,6 +349,7 @@ export default function AdminProductsIndex({
                                     <th className="h-10 px-4 text-left font-medium">Parfum &amp; Foto</th>
                                     <th className="h-10 px-4 text-left font-medium">Brand</th>
                                     <th className="h-10 px-4 text-left font-medium">Kategori</th>
+                                    <th className="h-10 px-4 text-left font-medium">Label Produk</th>
                                     <th className="h-10 px-4 text-left font-medium">Varian &amp; Harga</th>
                                     <th className="h-10 px-4 text-center font-medium">Total Stok</th>
                                     <th className="h-10 px-4 text-right font-medium">Aksi</th>
@@ -385,26 +386,6 @@ export default function AdminProductsIndex({
                                                             <ExternalLink className="size-2.5" />
                                                         </a>
                                                     </div>
-
-                                                    {(product.is_new_arrivals || product.is_best_sellers || product.is_special_offers) && (
-                                                        <div className="flex flex-wrap gap-1 mt-1.5">
-                                                            {product.is_new_arrivals && (
-                                                                <Badge className="text-[9px] bg-emerald-600 hover:bg-emerald-600 text-white border-0 py-0 h-4">
-                                                                    New Arrival
-                                                                </Badge>
-                                                            )}
-                                                            {product.is_best_sellers && (
-                                                                <Badge className="text-[9px] bg-amber-500 hover:bg-amber-500 text-amber-950 font-bold border-0 py-0 h-4">
-                                                                    Best Seller
-                                                                </Badge>
-                                                            )}
-                                                            {product.is_special_offers && (
-                                                                <Badge className="text-[9px] bg-[#4A070B] hover:bg-[#4A070B] text-white border-0 py-0 h-4">
-                                                                    Special Offer
-                                                                </Badge>
-                                                            )}
-                                                        </div>
-                                                    )}
                                                 </div>
                                             </div>
                                         </td>
@@ -445,6 +426,30 @@ export default function AdminProductsIndex({
                                                     </Badge>
                                                 )}
                                             </div>
+                                        </td>
+
+                                        <td className="p-4 align-middle whitespace-nowrap">
+                                            {(product.is_new_arrivals || product.is_best_sellers || product.is_special_offers) ? (
+                                                <div className="flex flex-wrap gap-1 max-w-[150px]">
+                                                    {product.is_new_arrivals && (
+                                                        <Badge className="text-[9px] bg-emerald-600 hover:bg-emerald-600 text-white border-0 py-0 h-4">
+                                                            New Arrival
+                                                        </Badge>
+                                                    )}
+                                                    {product.is_best_sellers && (
+                                                        <Badge className="text-[9px] bg-amber-500 hover:bg-amber-500 text-amber-950 font-bold border-0 py-0 h-4">
+                                                            Best Seller
+                                                        </Badge>
+                                                    )}
+                                                    {product.is_special_offers && (
+                                                        <Badge className="text-[9px] bg-[#4A070B] hover:bg-[#4A070B] text-white border-0 py-0 h-4">
+                                                            Special Offer
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <span className="text-muted-foreground">-</span>
+                                            )}
                                         </td>
 
                                         <td className="p-4 align-middle">
@@ -527,7 +532,7 @@ export default function AdminProductsIndex({
 
                                 {products.data.length === 0 && (
                                     <tr>
-                                        <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                                        <td colSpan={7} className="p-8 text-center text-muted-foreground">
                                             Tidak ada produk yang sesuai filter.
                                         </td>
                                     </tr>
