@@ -222,16 +222,16 @@ class ProductController extends Controller
         }
 
         // 10. Sorting (Harga Terendah, Harga Tertinggi, Nama A-Z, Nama Z-A)
-        $sortBy = (string) $request->input('sort', $request->input('sortBy', 'price-asc'));
+        $sortBy = (string) $request->input('sort', $request->input('sortBy', ''));
         match ($sortBy) {
+            'price-asc' => $query->withMin('variants', 'price')->orderBy('variants_min_price', 'asc')->orderBy('id', 'asc'),
             'price-desc' => $query->withMin('variants', 'price')->orderByDesc('variants_min_price')->orderBy('id', 'asc'),
             'name-asc' => $query->orderBy('name', 'asc')->orderBy('id', 'asc'),
             'name-desc' => $query->orderBy('name', 'desc')->orderBy('id', 'asc'),
             'popular' => $query->withCount('reviews')->orderByDesc('reviews_count')->orderBy('id', 'asc'),
             'rating' => $query->withAvg('reviews', 'rating')->withCount('reviews')->orderByRaw('COALESCE(reviews_avg_rating, 0) DESC')->orderByDesc('reviews_count')->orderBy('id', 'asc'),
             'discount' => $query->withMax('variants', 'discount_percent')->orderByRaw('COALESCE(variants_max_discount_percent, 0) DESC')->orderBy('id', 'asc'),
-            'featured' => $query->orderBy('id', 'asc'),
-            default => $query->withMin('variants', 'price')->orderBy('variants_min_price', 'asc')->orderBy('id', 'asc'),
+            default => $query->orderBy('id', 'asc'),
         };
 
         $fragrances = $query->get()->map(fn (Product $p) => CatalogService::formatProduct($p))->all();

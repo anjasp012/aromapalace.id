@@ -152,13 +152,6 @@ export default function ScentCard({ scent, colorIndex, className }: ScentCardPro
                         <div className={cn('absolute -top-6 -right-6 w-24 h-24 rounded-full bg-gradient-to-br blur-xl opacity-60 pointer-events-none', palette.glow)} />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-white/10 pointer-events-none" />
 
-                        {/* Top tag for olfactory aura */}
-                        <div className="w-full flex justify-end relative z-10">
-                            <span className="text-[8px] sm:text-[9px] uppercase tracking-widest text-white/50 font-mono font-medium">
-                                SCENT
-                            </span>
-                        </div>
-
                         {/* Center Initial Letter Avatar Capsule */}
                         <div className="flex-1 flex items-center justify-center relative z-10 my-auto">
                             <div className={cn(
