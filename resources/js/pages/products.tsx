@@ -60,16 +60,42 @@ export interface Fragrance {
     };
 }
 
+export interface CategoryItem {
+    id: number;
+    name: string;
+    name_en?: string;
+    slug: string;
+}
+
+export interface BrandItem {
+    id: number;
+    name: string;
+    slug: string;
+}
+
 interface ProductsProps {
     fragrances: Fragrance[];
     categories: string[];
     brands?: string[];
+    brandItems?: BrandItem[];
+    genders?: string[];
+    genderItems?: CategoryItem[];
+    concentrations?: string[];
+    concentrationItems?: CategoryItem[];
+    scents?: string[];
+    scentItems?: CategoryItem[];
     selectedCategory?: string;
     selectedBrand?: string;
+    selectedGender?: string;
+    selectedConcentration?: string;
+    selectedScent?: string;
     filters?: {
         searchQuery?: string;
         activeCategory?: string;
         activeBrand?: string;
+        activeGender?: string;
+        activeConcentration?: string;
+        activeScent?: string;
         priceTier?: string;
         customMin?: string;
         customMax?: string;
@@ -91,6 +117,9 @@ interface ParsedFilters {
     searchQuery: string;
     activeCategory: string;
     activeBrand: string;
+    activeGender: string;
+    activeConcentration: string;
+    activeScent: string;
     priceTier: string;
     customMin: string;
     customMax: string;
@@ -105,8 +134,14 @@ function parseFiltersFromUrl(
     searchString: string,
     categories: string[] = [],
     brands: string[] = [],
+    genders: (CategoryItem | string)[] = [],
+    concentrations: (CategoryItem | string)[] = [],
+    scents: (CategoryItem | string)[] = [],
     defaultCategory = 'All',
-    defaultBrand = 'All'
+    defaultBrand = 'All',
+    defaultGender = 'All',
+    defaultConcentration = 'All',
+    defaultScent = 'All'
 ): ParsedFilters {
     const searchParams = new URLSearchParams(
         searchString.startsWith('?') ? searchString.slice(1) : searchString
@@ -116,35 +151,61 @@ function parseFiltersFromUrl(
     const search = searchParams.get('search') || searchParams.get('q') || '';
     const searchQuery = search;
 
+    const matchOption = (val: string | null, list: (CategoryItem | string)[]): string => {
+        if (!val || val === 'All') return 'All';
+        const rawSlug = normalizeSlug(val);
+        for (const item of list) {
+            const name = typeof item === 'string' ? item : item.name;
+            const nameEn = typeof item === 'string' ? '' : (item.name_en || '');
+            const slug = typeof item === 'string' ? normalizeSlug(item) : item.slug;
+            if (
+                name.toLowerCase() === val.toLowerCase() ||
+                slug === rawSlug ||
+                (nameEn && nameEn.toLowerCase() === val.toLowerCase()) ||
+                (nameEn && normalizeSlug(nameEn) === rawSlug)
+            ) {
+                return name;
+            }
+        }
+        return val;
+    };
+
     // 2. Brand
-    let activeBrand = defaultBrand;
     const rawBrand = searchParams.get('brand');
-    const safeBrands = brands || [];
-    if (rawBrand && rawBrand !== 'All') {
-        const rawSlug = normalizeSlug(rawBrand);
-        const matched = safeBrands.find(
-            (b) => b.toLowerCase() === rawBrand.toLowerCase() ||
-                   normalizeSlug(b) === rawSlug ||
-                   b.toLowerCase().replace(/\s+/g, '-') === rawBrand.toLowerCase()
-        );
-        activeBrand = matched || rawBrand;
-    }
+    const activeBrand = rawBrand ? matchOption(rawBrand, brands) : defaultBrand;
 
-    // 3. Category
+    // 3. Gender
+    const rawGender = searchParams.get('gender');
+    let activeGender = rawGender ? matchOption(rawGender, genders) : defaultGender;
+
+    // 4. Concentration
+    const rawConc = searchParams.get('concentration');
+    let activeConcentration = rawConc ? matchOption(rawConc, concentrations) : defaultConcentration;
+
+    // 5. Scent Profile
+    const rawScent = searchParams.get('scent') || searchParams.get('scent_profile');
+    let activeScent = rawScent ? matchOption(rawScent, scents) : defaultScent;
+
+    // 6. Generic Category (backwards compatibility)
     let activeCategory = defaultCategory;
-    const rawCategory = searchParams.get('category') || searchParams.get('family') || searchParams.get('scent') || searchParams.get('collection');
-    const safeCats = categories || [];
+    const rawCategory = searchParams.get('category') || searchParams.get('family');
     if (rawCategory && rawCategory !== 'All') {
-        const rawSlug = normalizeSlug(rawCategory);
-        const matched = safeCats.find(
-            (c) => c.toLowerCase() === rawCategory.toLowerCase() ||
-                   normalizeSlug(c) === rawSlug ||
-                   c.toLowerCase().replace(/\s+/g, '-') === rawCategory.toLowerCase()
-        );
-        activeCategory = matched || rawCategory;
+        const matchedGender = matchOption(rawCategory, genders);
+        if (matchedGender !== 'All' && activeGender === 'All') {
+            activeGender = matchedGender;
+        }
+        const matchedConc = matchOption(rawCategory, concentrations);
+        if (matchedConc !== 'All' && activeConcentration === 'All') {
+            activeConcentration = matchedConc;
+        }
+        const matchedScent = matchOption(rawCategory, scents);
+        if (matchedScent !== 'All' && activeScent === 'All') {
+            activeScent = matchedScent;
+        }
+        activeCategory = matchOption(rawCategory, categories);
     }
 
-    // 4. Price Tier & Custom Min/Max
+    // 7. Price Tier & Custom Min/Max
     let priceTier = 'all';
     const rawPrice = searchParams.get('price') || searchParams.get('tier');
     if (rawPrice && ['under-1500', '1500-2500', 'above-2500', 'custom'].includes(rawPrice)) {
@@ -157,7 +218,7 @@ function parseFiltersFromUrl(
         priceTier = 'custom';
     }
 
-    // 5. Min Rating
+    // 8. Min Rating
     const rawRating = searchParams.get('rating') || searchParams.get('min_rating');
     let minRating = 0;
     if (rawRating) {
@@ -165,10 +226,10 @@ function parseFiltersFromUrl(
         if (!isNaN(parsed) && parsed > 0) minRating = parsed;
     }
 
-    // 6. Discount / Promo Filter
+    // 9. Discount / Promo Filter
     const onlyDiscount = searchParams.get('discount') === '1' || searchParams.get('discount') === 'true' || searchParams.get('promo') === '1';
 
-    // 7. Sort By
+    // 10. Sort By
     let sortBy: 'featured' | 'popular' | 'price-asc' | 'price-desc' | 'rating' | 'discount' = 'featured';
     const rawSort = searchParams.get('sort') || searchParams.get('sortBy');
     if (rawSort && ['featured', 'popular', 'price-asc', 'price-desc', 'rating', 'discount'].includes(rawSort)) {
@@ -179,6 +240,9 @@ function parseFiltersFromUrl(
         searchQuery,
         activeCategory,
         activeBrand,
+        activeGender,
+        activeConcentration,
+        activeScent,
         priceTier,
         customMin,
         customMax,

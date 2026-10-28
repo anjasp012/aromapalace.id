@@ -19,7 +19,8 @@ class ProductController extends Controller
     public function index(Request $request): Response
     {
         $filters = $request->only([
-            'search', 'q', 'category', 'brand', 'price', 'price_tier', 'min_price', 'min',
+            'search', 'q', 'category', 'brand', 'gender', 'concentration', 'scent', 'scent_profile',
+            'price', 'price_tier', 'min_price', 'min',
             'max_price', 'max', 'rating', 'min_rating', 'discount', 'promo', 'sort', 'sortBy',
         ]);
 
@@ -56,22 +57,7 @@ class ProductController extends Controller
             });
         }
 
-        // 2. Category
-        $selectedCategory = (string) $request->input('category', 'All');
-        if ($selectedCategory !== '' && $selectedCategory !== 'All') {
-            $catModel = Category::where('slug', $selectedCategory)
-                ->orWhere('name', $selectedCategory)
-                ->first();
-
-            if ($catModel) {
-                $selectedCategory = $catModel->name;
-                $query->whereHas('categories', fn ($c) => $c->where('categories.id', $catModel->id));
-            } else {
-                $query->whereHas('categories', fn ($c) => $c->where('name', $selectedCategory)->orWhere('slug', $selectedCategory));
-            }
-        }
-
-        // 3. Brand
+        // 2. Brand
         $selectedBrand = (string) $request->input('brand', 'All');
         if ($selectedBrand !== '' && $selectedBrand !== 'All') {
             $brandModel = Brand::where('slug', $selectedBrand)
@@ -86,7 +72,99 @@ class ProductController extends Controller
             }
         }
 
-        // 4. Price Tier & Custom Min/Max
+        // 3. Gender
+        $selectedGender = (string) $request->input('gender', 'All');
+        if ($selectedGender !== '' && $selectedGender !== 'All') {
+            $genderModel = Category::where('type', 'genders')
+                ->where(function ($q) use ($selectedGender) {
+                    $q->where('slug', $selectedGender)
+                        ->orWhere('name', $selectedGender)
+                        ->orWhere('name_en', $selectedGender);
+                })
+                ->first();
+
+            if ($genderModel) {
+                $selectedGender = $genderModel->name;
+                $query->whereHas('categories', fn ($c) => $c->where('categories.id', $genderModel->id));
+            } else {
+                $query->whereHas('categories', fn ($c) => $c->where('categories.type', 'genders')->where(function ($cq) use ($selectedGender) {
+                    $cq->where('categories.name', $selectedGender)
+                        ->orWhere('categories.slug', $selectedGender)
+                        ->orWhere('categories.name_en', $selectedGender);
+                }));
+            }
+        }
+
+        // 4. Concentration
+        $selectedConcentration = (string) $request->input('concentration', 'All');
+        if ($selectedConcentration !== '' && $selectedConcentration !== 'All') {
+            $concModel = Category::where('type', 'concentrates')
+                ->where(function ($q) use ($selectedConcentration) {
+                    $q->where('slug', $selectedConcentration)
+                        ->orWhere('name', $selectedConcentration)
+                        ->orWhere('name_en', $selectedConcentration);
+                })
+                ->first();
+
+            if ($concModel) {
+                $selectedConcentration = $concModel->name;
+                $query->whereHas('categories', fn ($c) => $c->where('categories.id', $concModel->id));
+            } else {
+                $query->whereHas('categories', fn ($c) => $c->where('categories.type', 'concentrates')->where(function ($cq) use ($selectedConcentration) {
+                    $cq->where('categories.name', $selectedConcentration)
+                        ->orWhere('categories.slug', $selectedConcentration)
+                        ->orWhere('categories.name_en', $selectedConcentration);
+                }));
+            }
+        }
+
+        // 5. Scent Profile
+        $selectedScent = (string) $request->input('scent', $request->input('scent_profile', 'All'));
+        if ($selectedScent !== '' && $selectedScent !== 'All') {
+            $scentModel = Category::where('type', 'scents')
+                ->where(function ($q) use ($selectedScent) {
+                    $q->where('slug', $selectedScent)
+                        ->orWhere('name', $selectedScent)
+                        ->orWhere('name_en', $selectedScent);
+                })
+                ->first();
+
+            if ($scentModel) {
+                $selectedScent = $scentModel->name;
+                $query->whereHas('categories', fn ($c) => $c->where('categories.id', $scentModel->id));
+            } else {
+                $query->whereHas('categories', fn ($c) => $c->where('categories.type', 'scents')->where(function ($cq) use ($selectedScent) {
+                    $cq->where('categories.name', $selectedScent)
+                        ->orWhere('categories.slug', $selectedScent)
+                        ->orWhere('categories.name_en', $selectedScent);
+                }));
+            }
+        }
+
+        // 6. Generic Category (for backwards-compatibility)
+        $selectedCategory = (string) $request->input('category', 'All');
+        if ($selectedCategory !== '' && $selectedCategory !== 'All') {
+            $catModel = Category::where('slug', $selectedCategory)
+                ->orWhere('name', $selectedCategory)
+                ->orWhere('name_en', $selectedCategory)
+                ->first();
+
+            if ($catModel) {
+                $selectedCategory = $catModel->name;
+                $query->whereHas('categories', fn ($c) => $c->where('categories.id', $catModel->id));
+                if ($catModel->type === 'genders' && $selectedGender === 'All') {
+                    $selectedGender = $catModel->name;
+                } elseif ($catModel->type === 'concentrates' && $selectedConcentration === 'All') {
+                    $selectedConcentration = $catModel->name;
+                } elseif ($catModel->type === 'scents' && $selectedScent === 'All') {
+                    $selectedScent = $catModel->name;
+                }
+            } else {
+                $query->whereHas('categories', fn ($c) => $c->where('name', $selectedCategory)->orWhere('slug', $selectedCategory));
+            }
+        }
+
+        // 7. Price Tier & Custom Min/Max
         $priceTier = (string) $request->input('price', $request->input('price_tier', 'all'));
         if ($priceTier === 'under-1500') {
             $query->whereHas('variants', fn ($v) => $v->where('price', '<', 1500000));
@@ -106,7 +184,7 @@ class ProductController extends Controller
             $query->whereHas('variants', fn ($v) => $v->where('price', '<=', (int) $maxPrice));
         }
 
-        // 5. Min Rating
+        // 8. Min Rating
         $rating = $request->input('rating', $request->input('min_rating'));
         if ($rating !== null && $rating !== '' && is_numeric($rating)) {
             $minRating = (float) $rating;
@@ -117,13 +195,13 @@ class ProductController extends Controller
             $minRating = 0;
         }
 
-        // 6. Promo / Discount Filter
+        // 9. Promo / Discount Filter
         $onlyDiscount = $request->boolean('discount') || $request->input('discount') === '1' || $request->input('promo') === '1';
         if ($onlyDiscount) {
             $query->whereHas('variants', fn ($v) => $v->whereNotNull('original_price')->whereColumn('original_price', '>', 'price'));
         }
 
-        // 7. Sorting
+        // 10. Sorting
         $sortBy = (string) $request->input('sort', $request->input('sortBy', 'featured'));
         match ($sortBy) {
             'popular' => $query->withCount('reviews')->orderByDesc('reviews_count')->orderBy('id', 'asc'),
@@ -136,6 +214,44 @@ class ProductController extends Controller
 
         $fragrances = $query->get()->map(fn (Product $p) => CatalogService::formatProduct($p))->all();
 
+        $genderItems = Category::where('type', 'genders')
+            ->orderBy('name')
+            ->get(['id', 'name', 'name_en', 'slug'])
+            ->map(fn ($c) => [
+                'id' => $c->id,
+                'name' => $c->name,
+                'name_en' => $c->name_en ?: $c->name,
+                'slug' => $c->slug,
+            ])->all();
+
+        $concentrationItems = Category::where('type', 'concentrates')
+            ->orderBy('name')
+            ->get(['id', 'name', 'name_en', 'slug'])
+            ->map(fn ($c) => [
+                'id' => $c->id,
+                'name' => $c->name,
+                'name_en' => $c->name_en ?: $c->name,
+                'slug' => $c->slug,
+            ])->all();
+
+        $scentItems = Category::where('type', 'scents')
+            ->orderBy('name')
+            ->get(['id', 'name', 'name_en', 'slug'])
+            ->map(fn ($c) => [
+                'id' => $c->id,
+                'name' => $c->name,
+                'name_en' => $c->name_en ?: $c->name,
+                'slug' => $c->slug,
+            ])->all();
+
+        $brandItems = Brand::orderBy('name')
+            ->get(['id', 'name', 'slug'])
+            ->map(fn ($b) => [
+                'id' => $b->id,
+                'name' => $b->name,
+                'slug' => $b->slug,
+            ])->all();
+
         $dbCategories = Category::orderBy('name')->pluck('name')->all();
         $categories = array_values(array_unique(array_merge(['All'], $dbCategories)));
 
@@ -144,16 +260,33 @@ class ProductController extends Controller
             Brand::orderBy('name')->pluck('name')->all()
         )));
 
+        $genders = array_values(array_unique(array_merge(['All'], array_column($genderItems, 'name'))));
+        $concentrations = array_values(array_unique(array_merge(['All'], array_column($concentrationItems, 'name'))));
+        $scents = array_values(array_unique(array_merge(['All'], array_column($scentItems, 'name'))));
+
         return [
             'fragrances' => $fragrances,
             'categories' => $categories,
             'brands' => $brands,
+            'brandItems' => $brandItems,
+            'genders' => $genders,
+            'genderItems' => $genderItems,
+            'concentrations' => $concentrations,
+            'concentrationItems' => $concentrationItems,
+            'scents' => $scents,
+            'scentItems' => $scentItems,
             'selectedCategory' => $selectedCategory,
             'selectedBrand' => $selectedBrand,
+            'selectedGender' => $selectedGender,
+            'selectedConcentration' => $selectedConcentration,
+            'selectedScent' => $selectedScent,
             'filters' => [
                 'searchQuery' => $search,
                 'activeCategory' => $selectedCategory,
                 'activeBrand' => $selectedBrand,
+                'activeGender' => $selectedGender,
+                'activeConcentration' => $selectedConcentration,
+                'activeScent' => $selectedScent,
                 'priceTier' => $priceTier,
                 'customMin' => (string) ($minPrice ?? ''),
                 'customMax' => (string) ($maxPrice ?? ''),
