@@ -166,7 +166,13 @@ class ProductController extends Controller
 
         // 7. Price Tier & Custom Min/Max
         $priceTier = (string) $request->input('price', $request->input('price_tier', 'all'));
-        if ($priceTier === 'under-1500') {
+        if ($priceTier === 'under-500' || $priceTier === 'under-500k') {
+            $query->whereHas('variants', fn ($v) => $v->where('price', '<', 500000));
+        } elseif ($priceTier === '500-1000' || $priceTier === '500k-1m' || $priceTier === '500-1jt') {
+            $query->whereHas('variants', fn ($v) => $v->whereBetween('price', [500000, 1000000]));
+        } elseif ($priceTier === 'above-1000' || $priceTier === 'above-1m' || $priceTier === 'above-1jt') {
+            $query->whereHas('variants', fn ($v) => $v->where('price', '>', 1000000));
+        } elseif ($priceTier === 'under-1500') {
             $query->whereHas('variants', fn ($v) => $v->where('price', '<', 1500000));
         } elseif ($priceTier === '1500-2500') {
             $query->whereHas('variants', fn ($v) => $v->whereBetween('price', [1500000, 2500000]));

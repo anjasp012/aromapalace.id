@@ -1131,18 +1131,20 @@ export const translations = {
 
 export type TranslationKey = keyof typeof translations.id;
 
+const LOCALE_CHANGED_EVENT = 'aromapalace:locale_changed';
+
 /**
  * Custom React hook for client-side and server-side synchronized translations.
  */
 export function useTranslation() {
     const { props } = usePage<{ locale?: string }>();
 
-    // Initial locale resolution: prop -> localStorage -> default 'id'
+    // Initial locale resolution: localStorage -> prop -> default 'id'
     const [locale, setLocaleState] = useState<Locale>(() => {
         if (typeof window !== 'undefined') {
             const stored = localStorage.getItem('aromapalace_locale');
             if (stored === 'id' || stored === 'en') {
-                return stored;
+                return stored as Locale;
             }
         }
         return (props?.locale === 'en' ? 'en' : 'id') as Locale;
@@ -1158,6 +1160,29 @@ export function useTranslation() {
         }
     }, [props?.locale]);
 
+    // Instantly sync across all mounted components and tabs in real-time
+    useEffect(() => {
+        const handleLocaleEvent = (e: CustomEvent<Locale>) => {
+            if (e.detail && (e.detail === 'id' || e.detail === 'en')) {
+                setLocaleState(e.detail);
+            }
+        };
+
+        const handleStorageEvent = (e: StorageEvent) => {
+            if (e.key === 'aromapalace_locale' && (e.newValue === 'id' || e.newValue === 'en')) {
+                setLocaleState(e.newValue as Locale);
+            }
+        };
+
+        window.addEventListener(LOCALE_CHANGED_EVENT as any, handleLocaleEvent);
+        window.addEventListener('storage', handleStorageEvent);
+
+        return () => {
+            window.removeEventListener(LOCALE_CHANGED_EVENT as any, handleLocaleEvent);
+            window.removeEventListener('storage', handleStorageEvent);
+        };
+    }, []);
+
     /**
      * Switch language between 'id' and 'en'
      */
@@ -1166,11 +1191,12 @@ export function useTranslation() {
         if (typeof window !== 'undefined') {
             localStorage.setItem('aromapalace_locale', newLocale);
             document.cookie = `locale=${newLocale};path=/;max-age=31536000;SameSite=Lax`;
+            window.dispatchEvent(new CustomEvent(LOCALE_CHANGED_EVENT, { detail: newLocale }));
         }
 
         router.post('/locale', { locale: newLocale }, {
             preserveScroll: true,
-            preserveState: true,
+            preserveState: false,
         });
     }, []);
 

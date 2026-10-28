@@ -66,6 +66,7 @@ import { getAdminUrl } from '@/lib/route-resolver';
 import { isRunningInNativeApp, isAdminContext } from '@/lib/app-redirect';
 import PullToRefresh from '@/components/PullToRefresh';
 import AppUpdateModal from '@/components/AppUpdateModal';
+import { FlagIndonesiaIcon, FlagEnglishIcon, FlagLocaleIcon } from '@/components/FlagIcons';
 
 import { App as CapApp } from '@capacitor/app';
 
@@ -879,10 +880,10 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
                             <DropdownMenuTrigger asChild>
                                 <button
                                     type="button"
-                                    className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-black/30 hover:bg-black/50 border border-white/20 hover:border-[#E5A844]/60 text-white text-[11px] font-medium tracking-wide transition-all cursor-pointer shadow-xs focus:outline-none focus:ring-1 focus:ring-[#E5A844]/50 select-none group"
+                                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/35 hover:bg-black/55 border border-white/20 hover:border-[#E5A844]/60 text-white text-[11px] font-medium tracking-wide transition-all cursor-pointer shadow-xs focus:outline-none focus:ring-1 focus:ring-[#E5A844]/50 select-none group"
                                     aria-label={isEn ? 'Switch Language' : 'Ganti Bahasa'}
                                 >
-                                    <Globe className="w-3 h-3 text-[#E5A844] shrink-0" />
+                                    <FlagLocaleIcon locale={locale} className="w-4 h-2.5 shrink-0 shadow-2xs" />
                                     <span className="font-semibold text-[10.5px] tracking-wider uppercase">
                                         {isEn ? 'EN' : 'ID'}
                                     </span>
@@ -892,7 +893,7 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
                             <DropdownMenuContent
                                 align="end"
                                 sideOffset={6}
-                                className="w-44 p-1.5 rounded-xl bg-[#2A0306] border border-[#E5A844]/30 shadow-2xl text-white z-[60]"
+                                className="w-52 p-1.5 rounded-xl bg-[#2A0306] border border-[#E5A844]/30 shadow-2xl text-white z-[60]"
                             >
                                 <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#E5A844] border-b border-white/10 mb-1 flex items-center justify-between">
                                     <span>{isEn ? 'Select Language' : 'Pilih Bahasa'}</span>
@@ -905,9 +906,12 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
                                         : 'text-white/90 hover:bg-white/10 hover:text-white focus:bg-white/10 focus:text-white'
                                         }`}
                                 >
-                                    <div className="flex flex-col text-left">
-                                        <span className="leading-tight font-medium">Bahasa Indonesia</span>
-                                        <span className="text-[10px] text-white/60 font-normal">Indonesia</span>
+                                    <div className="flex items-center gap-2.5 text-left">
+                                        <FlagIndonesiaIcon className="w-4.5 h-3 shrink-0 shadow-xs ring-1 ring-white/10" />
+                                        <div className="flex flex-col">
+                                            <span className="leading-tight font-medium">Bahasa Indonesia</span>
+                                            <span className="text-[10px] text-white/60 font-normal">Indonesia</span>
+                                        </div>
                                     </div>
                                     {isId && <Check className="w-4 h-4 text-[#E5A844] shrink-0 ml-2" />}
                                 </DropdownMenuItem>
@@ -918,9 +922,12 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
                                         : 'text-white/90 hover:bg-white/10 hover:text-white focus:bg-white/10 focus:text-white'
                                         }`}
                                 >
-                                    <div className="flex flex-col text-left">
-                                        <span className="leading-tight font-medium">English</span>
-                                        <span className="text-[10px] text-white/60 font-normal">International</span>
+                                    <div className="flex items-center gap-2.5 text-left">
+                                        <FlagEnglishIcon className="w-4.5 h-3 shrink-0 shadow-xs ring-1 ring-white/10" />
+                                        <div className="flex flex-col">
+                                            <span className="leading-tight font-medium">English</span>
+                                            <span className="text-[10px] text-white/60 font-normal">International</span>
+                                        </div>
                                     </div>
                                     {isEn && <Check className="w-4 h-4 text-[#E5A844] shrink-0 ml-2" />}
                                 </DropdownMenuItem>
