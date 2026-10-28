@@ -4,14 +4,16 @@ import AdminLayout from '@/layouts/AdminLayout';
 import {
     Search,
     Plus,
-    Tags,
     Boxes,
     Edit3,
     Trash2,
     RefreshCw,
     Image as ImageIcon,
+    Users,
+    FlaskConical,
+    Sparkles,
 } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -23,13 +25,6 @@ import {
     DialogDescription,
     DialogFooter,
 } from '@/components/ui/dialog';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 
 interface CategoryItem {
     id: number;
@@ -63,21 +58,61 @@ interface CategoriesIndexProps {
         type?: string;
     };
     metrics: {
-        total_categories: number;
-        categories_with_products: number;
-        total_genders?: number;
-        total_concentrates?: number;
-        total_scents?: number;
+        total_in_type?: number;
+        with_products_in_type?: number;
+        total_categories?: number;
+        categories_with_products?: number;
     };
 }
+
+const typeMeta: Record<string, {
+    title: string;
+    subtitle: string;
+    headTitle: string;
+    itemName: string;
+    metricLabel: string;
+    emptyText: string;
+    icon: React.ComponentType<{ className?: string }>;
+}> = {
+    genders: {
+        title: 'Kelola Gender',
+        subtitle: 'Manajemen klasifikasi target pengguna parfum (Pria, Wanita, Unisex), foto thumbnail, dan terjemahan.',
+        headTitle: 'Kelola Gender - Admin Panel',
+        itemName: 'Gender',
+        metricLabel: 'Total Gender',
+        emptyText: 'Tidak ada data gender parfum ditemukan.',
+        icon: Users,
+    },
+    concentrates: {
+        title: 'Kelola Konsentrasi Parfum',
+        subtitle: 'Manajemen tingkat konsentrasi kepekatan aroma parfum (Extrait, Eau de Parfum, Eau de Toilette, dll).',
+        headTitle: 'Kelola Konsentrasi - Admin Panel',
+        itemName: 'Konsentrasi',
+        metricLabel: 'Total Konsentrasi',
+        emptyText: 'Tidak ada data konsentrasi parfum ditemukan.',
+        icon: FlaskConical,
+    },
+    scents: {
+        title: 'Kelola Scent & Aroma',
+        subtitle: 'Manajemen kelompok aroma dan notes karakter parfum (Woody, Fresh, Floral, Gourmand, dll).',
+        headTitle: 'Kelola Scent & Aroma - Admin Panel',
+        itemName: 'Scent',
+        metricLabel: 'Total Scent',
+        emptyText: 'Tidak ada data scent / aroma parfum ditemukan.',
+        icon: Sparkles,
+    },
+};
 
 export default function AdminCategoriesIndex({
     categories,
     filters,
     metrics,
 }: CategoriesIndexProps) {
+    const currentType = filters.type || 'genders';
+    const meta = typeMeta[currentType] || typeMeta.genders;
+    const MetaIcon = meta.icon;
+
     const [search, setSearch] = useState(filters.search || '');
-    const [selectedType, setSelectedType] = useState(filters.type || 'all');
     const [deleteTarget, setDeleteTarget] = useState<CategoryItem | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
@@ -87,19 +122,7 @@ export default function AdminCategoriesIndex({
             '/manajemen-kategori',
             {
                 search: search || undefined,
-                type: selectedType !== 'all' ? selectedType : undefined,
-            },
-            { preserveState: true }
-        );
-    };
-
-    const handleTypeChange = (newType: string) => {
-        setSelectedType(newType);
-        router.get(
-            '/manajemen-kategori',
-            {
-                search: search || undefined,
-                type: newType !== 'all' ? newType : undefined,
+                type: currentType,
             },
             { preserveState: true }
         );
@@ -107,8 +130,7 @@ export default function AdminCategoriesIndex({
 
     const handleResetSearch = () => {
         setSearch('');
-        setSelectedType('all');
-        router.get('/manajemen-kategori');
+        router.get('/manajemen-kategori', { type: currentType });
     };
 
     const handleDeleteSubmit = () => {
@@ -124,58 +146,40 @@ export default function AdminCategoriesIndex({
 
     return (
         <AdminLayout
-            title="Kelola Kategori"
-            subtitle="Manajemen kategori kelompok aroma parfum, thumbnail foto, dan terjemahan dwibahasa."
+            title={meta.title}
+            subtitle={meta.subtitle}
         >
-            <Head title="Kelola Kategori - Admin Panel" />
+            <Head title={meta.headTitle} />
 
             <div className="space-y-6">
-                {/* Metrics Cards */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <Card className="py-3">
-                        <CardContent className="flex items-center justify-between p-0 px-4">
+                {/* Dedicated Metrics Cards for current category type */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Card className="py-4">
+                        <CardContent className="flex items-center justify-between p-0 px-6">
                             <div>
-                                <p className="text-[11px] font-medium text-muted-foreground">Total Kategori</p>
-                                <h3 className="text-xl font-bold mt-0.5 text-foreground">{metrics.total_categories}</h3>
+                                <p className="text-xs font-medium text-muted-foreground">{meta.metricLabel}</p>
+                                <h3 className="text-2xl font-bold mt-1 text-foreground">
+                                    {metrics.total_in_type ?? categories.total}
+                                </h3>
+                                <p className="text-[11px] text-muted-foreground mt-0.5">Klasifikasi {meta.itemName.toLowerCase()} terdaftar</p>
                             </div>
-                            <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                                <Tags className="size-4" />
+                            <div className="size-11 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                                <MetaIcon className="size-5" />
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="py-3">
-                        <CardContent className="flex items-center justify-between p-0 px-4">
+                    <Card className="py-4">
+                        <CardContent className="flex items-center justify-between p-0 px-6">
                             <div>
-                                <p className="text-[11px] font-medium text-muted-foreground">Gender</p>
-                                <h3 className="text-xl font-bold mt-0.5 text-sky-600 dark:text-sky-400">{metrics.total_genders ?? 0}</h3>
+                                <p className="text-xs font-medium text-muted-foreground">Digunakan Produk</p>
+                                <h3 className="text-2xl font-bold mt-1 text-foreground">
+                                    {metrics.with_products_in_type ?? 0}
+                                </h3>
+                                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-0.5">Aktif terhubung ke katalog produk</p>
                             </div>
-                            <div className="size-9 rounded-lg bg-sky-500/10 flex items-center justify-center text-sky-500">
-                                <span className="text-xs font-bold">GEN</span>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="py-3">
-                        <CardContent className="flex items-center justify-between p-0 px-4">
-                            <div>
-                                <p className="text-[11px] font-medium text-muted-foreground">Concentrate</p>
-                                <h3 className="text-xl font-bold mt-0.5 text-amber-600 dark:text-amber-400">{metrics.total_concentrates ?? 0}</h3>
-                            </div>
-                            <div className="size-9 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500">
-                                <span className="text-xs font-bold">CON</span>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="py-3">
-                        <CardContent className="flex items-center justify-between p-0 px-4">
-                            <div>
-                                <p className="text-[11px] font-medium text-muted-foreground">Scent</p>
-                                <h3 className="text-xl font-bold mt-0.5 text-emerald-600 dark:text-emerald-400">{metrics.total_scents ?? 0}</h3>
-                            </div>
-                            <div className="size-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-                                <span className="text-xs font-bold">SCE</span>
+                            <div className="size-11 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                                <Boxes className="size-5" />
                             </div>
                         </CardContent>
                     </Card>
@@ -184,45 +188,31 @@ export default function AdminCategoriesIndex({
                 {/* Filter & Action Toolbar */}
                 <Card className="p-4">
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-                        <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full sm:w-auto flex-1 max-w-xl">
-                            <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 w-full flex-1">
-                                <div className="relative w-full">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                                    <Input
-                                        type="text"
-                                        placeholder="Cari nama, slug, atau deskripsi..."
-                                        value={search}
-                                        onChange={(e) => setSearch(e.target.value)}
-                                        className="pl-9 h-9 text-xs"
-                                    />
-                                </div>
-                                <Button type="submit" size="sm" className="h-9 cursor-pointer">
-                                    Cari
-                                </Button>
-                            </form>
-
-                            <Select value={selectedType} onValueChange={handleTypeChange}>
-                                <SelectTrigger className="h-9 w-full sm:w-[170px] text-xs">
-                                    <SelectValue placeholder="Semua Tipe" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Semua Tipe</SelectItem>
-                                    <SelectItem value="genders">Gender</SelectItem>
-                                    <SelectItem value="concentrates">Concentrate</SelectItem>
-                                    <SelectItem value="scents">Scent</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
+                        <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 w-full sm:w-auto flex-1 max-w-md">
+                            <div className="relative w-full">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                                <Input
+                                    type="text"
+                                    placeholder={`Cari nama ${meta.itemName.toLowerCase()}, slug, atau deskripsi...`}
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    className="pl-9 h-9 text-xs"
+                                />
+                            </div>
+                            <Button type="submit" size="sm" className="h-9 cursor-pointer">
+                                Cari
+                            </Button>
+                        </form>
 
                         <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                            {(search !== '' || selectedType !== 'all') && (
+                            {search !== '' && (
                                 <Button
                                     type="button"
                                     variant="outline"
                                     size="sm"
                                     onClick={handleResetSearch}
                                     className="h-9 cursor-pointer"
-                                    title="Reset Pencarian & Filter"
+                                    title="Reset Pencarian"
                                 >
                                     <RefreshCw className="size-3.5 mr-1" />
                                     <span>Reset</span>
@@ -230,9 +220,9 @@ export default function AdminCategoriesIndex({
                             )}
 
                             <Button size="sm" asChild className="h-9 cursor-pointer">
-                                <Link href="/manajemen-kategori/create">
+                                <Link href={`/manajemen-kategori/create?type=${currentType}`}>
                                     <Plus className="size-4 mr-1.5" />
-                                    <span>Tambah Kategori</span>
+                                    <span>Tambah {meta.itemName}</span>
                                 </Link>
                             </Button>
                         </div>
@@ -246,7 +236,7 @@ export default function AdminCategoriesIndex({
                             <thead className="border-b bg-muted/50 text-muted-foreground">
                                 <tr className="border-b transition-colors text-xs">
                                     <th className="h-10 px-4 text-left font-medium w-16">Foto</th>
-                                    <th className="h-10 px-4 text-left font-medium">Nama Kategori</th>
+                                    <th className="h-10 px-4 text-left font-medium">Nama {meta.itemName}</th>
                                     <th className="h-10 px-4 text-left font-medium">Slug</th>
                                     <th className="h-10 px-4 text-left font-medium">Deskripsi</th>
                                     <th className="h-10 px-4 text-left font-medium">Jumlah Produk</th>
@@ -257,7 +247,7 @@ export default function AdminCategoriesIndex({
                                 {categories.data.length === 0 ? (
                                     <tr>
                                         <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                                            Tidak ada kategori parfum ditemukan.
+                                            {meta.emptyText}
                                         </td>
                                     </tr>
                                 ) : (
@@ -284,55 +274,40 @@ export default function AdminCategoriesIndex({
                                             </td>
 
                                             <td className="p-4 align-middle font-medium text-foreground">
-                                                <div className="flex items-center gap-2">
-                                                    <span>{cat.name}</span>
-                                                    <Badge variant="outline" className={`text-[10px] py-0 px-1.5 uppercase font-semibold ${
-                                                        cat.type === 'concentrates'
-                                                            ? 'bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300'
-                                                            : cat.type === 'scents'
-                                                            ? 'bg-purple-50 text-purple-700 border-purple-300 dark:bg-purple-950/40 dark:text-purple-300'
-                                                            : 'bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-950/40 dark:text-blue-300'
-                                                    }`}>
-                                                        {cat.type || 'genders'}
-                                                    </Badge>
-                                                </div>
+                                                <div className="font-semibold text-sm">{cat.name}</div>
                                                 {cat.name_en && (
                                                     <div className="text-[11px] text-muted-foreground font-normal italic mt-0.5">
                                                         EN: {cat.name_en}
                                                     </div>
                                                 )}
                                             </td>
-                                            <td className="p-4 align-middle font-mono text-muted-foreground">
-                                                /{cat.slug}
+
+                                            <td className="p-4 align-middle text-muted-foreground font-mono text-[11px]">
+                                                {cat.slug}
                                             </td>
+
                                             <td className="p-4 align-middle text-muted-foreground max-w-xs truncate">
                                                 {cat.description || '-'}
                                             </td>
+
                                             <td className="p-4 align-middle">
-                                                <Badge variant="outline" className="font-mono">
-                                                    {cat.products_count} produk
+                                                <Badge variant="secondary" className="font-mono text-xs">
+                                                    {cat.products_count} Produk
                                                 </Badge>
                                             </td>
-                                            <td className="p-4 align-middle text-right">
+
+                                            <td className="p-4 align-middle text-right whitespace-nowrap">
                                                 <div className="flex items-center justify-end gap-1.5">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        asChild
-                                                        className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
-                                                        title="Edit Kategori"
-                                                    >
+                                                    <Button variant="ghost" size="icon" asChild className="size-8 cursor-pointer">
                                                         <Link href={`/manajemen-kategori/${cat.id}/edit`}>
                                                             <Edit3 className="size-3.5" />
                                                         </Link>
                                                     </Button>
                                                     <Button
-                                                        type="button"
                                                         variant="ghost"
                                                         size="icon"
                                                         onClick={() => setDeleteTarget(cat)}
-                                                        className="size-8 text-destructive hover:bg-destructive/10 cursor-pointer"
-                                                        title="Hapus Kategori"
+                                                        className="size-8 text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer"
                                                     >
                                                         <Trash2 className="size-3.5" />
                                                     </Button>
@@ -346,73 +321,68 @@ export default function AdminCategoriesIndex({
                     </div>
 
                     {/* Pagination */}
-                    {categories.links.length > 3 && (
-                        <div className="flex items-center justify-between border-t px-4 py-3">
+                    {categories.links && categories.links.length > 3 && (
+                        <div className="flex items-center justify-between px-4 py-3 border-t">
                             <div className="text-xs text-muted-foreground">
-                                Menampilkan {categories.data.length} dari {categories.total} kategori
+                                Menampilkan halaman <span className="font-medium text-foreground">{categories.current_page}</span> dari <span className="font-medium text-foreground">{categories.last_page}</span> (Total {categories.total} {meta.itemName.toLowerCase()})
                             </div>
                             <div className="flex items-center gap-1">
-                                {categories.links.map((link, idx) => {
-                                    if (!link.url) {
-                                        return (
-                                            <span
-                                                key={idx}
-                                                className="px-2.5 py-1 text-xs text-muted-foreground"
+                                {categories.links.map((link, i) => (
+                                    link.url ? (
+                                        <Button
+                                            key={i}
+                                            variant={link.active ? 'default' : 'outline'}
+                                            size="sm"
+                                            asChild
+                                            className="h-8 min-w-8 text-xs cursor-pointer px-2.5"
+                                        >
+                                            <Link
+                                                href={link.url}
                                                 dangerouslySetInnerHTML={{ __html: link.label }}
                                             />
-                                        );
-                                    }
-                                    return (
-                                        <Link
-                                            key={idx}
-                                            href={link.url}
-                                            className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
-                                                link.active
-                                                    ? 'bg-primary text-primary-foreground font-medium'
-                                                    : 'hover:bg-muted text-muted-foreground hover:text-foreground'
-                                            }`}
+                                        </Button>
+                                    ) : (
+                                        <span
+                                            key={i}
+                                            className="px-2.5 py-1 text-xs text-muted-foreground opacity-50"
                                             dangerouslySetInnerHTML={{ __html: link.label }}
                                         />
-                                    );
-                                })}
+                                    )
+                                ))}
                             </div>
                         </div>
                     )}
                 </Card>
             </div>
 
-            {/* Delete Confirmation Dialog */}
+            {/* Modal Dialog Konfirmasi Hapus */}
             <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-                <DialogContent className="sm:max-w-sm">
+                <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Hapus Kategori?</DialogTitle>
+                        <DialogTitle>Hapus {meta.itemName}?</DialogTitle>
                         <DialogDescription>
-                            Apakah Anda yakin ingin menghapus kategori{' '}
-                            <span className="font-semibold text-foreground">"{deleteTarget?.name}"</span>?
+                            Apakah Anda yakin ingin menghapus {meta.itemName.toLowerCase()} &ldquo;{deleteTarget?.name}&rdquo;?
                             {deleteTarget && deleteTarget.products_count > 0 && (
                                 <span className="block mt-2 text-destructive font-medium">
-                                    Peringatan: Kategori ini masih memiliki {deleteTarget.products_count} produk terdaftar.
+                                    Peringatan: {meta.itemName} ini terhubung dengan {deleteTarget.products_count} produk parfum!
                                 </span>
                             )}
                         </DialogDescription>
                     </DialogHeader>
-                    <DialogFooter className="pt-2">
+                    <DialogFooter className="gap-2 sm:gap-0">
                         <Button
-                            type="button"
                             variant="outline"
-                            size="sm"
                             onClick={() => setDeleteTarget(null)}
+                            disabled={isDeleting}
                         >
                             Batal
                         </Button>
                         <Button
-                            type="button"
                             variant="destructive"
-                            size="sm"
-                            disabled={isDeleting}
                             onClick={handleDeleteSubmit}
+                            disabled={isDeleting}
                         >
-                            {isDeleting ? 'Menghapus...' : 'Ya, Hapus'}
+                            {isDeleting ? 'Menghapus...' : `Hapus ${meta.itemName}`}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

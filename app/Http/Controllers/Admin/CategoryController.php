@@ -20,11 +20,13 @@ class CategoryController extends Controller
         $search = $request->string('search')->trim()->value();
         $type = $request->string('type')->trim()->value();
 
+        if (empty($type) || ! in_array($type, ['genders', 'concentrates', 'scents'], true)) {
+            $type = 'genders';
+        }
+
         $categoriesQuery = Category::query()
+            ->where('type', $type)
             ->withCount('products')
-            ->when($type && in_array($type, ['genders', 'concentrates', 'scents'], true), function ($query) use ($type) {
-                $query->where('type', $type);
-            })
             ->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
@@ -37,26 +39,32 @@ class CategoryController extends Controller
         $categories = $categoriesQuery->paginate(15)->withQueryString();
 
         $metrics = [
+            'total_in_type' => Category::where('type', $type)->count(),
+            'with_products_in_type' => Category::where('type', $type)->has('products')->count(),
             'total_categories' => Category::count(),
             'categories_with_products' => Category::has('products')->count(),
-            'total_genders' => Category::where('type', 'genders')->count(),
-            'total_concentrates' => Category::where('type', 'concentrates')->count(),
-            'total_scents' => Category::where('type', 'scents')->count(),
         ];
 
         return Inertia::render('admin/categories/index', [
             'categories' => $categories,
             'filters' => [
                 'search' => $search,
-                'type' => $type ?: 'all',
+                'type' => $type,
             ],
             'metrics' => $metrics,
         ]);
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
-        return Inertia::render('admin/categories/create');
+        $type = $request->string('type')->trim()->value();
+        if (empty($type) || ! in_array($type, ['genders', 'concentrates', 'scents'], true)) {
+            $type = 'genders';
+        }
+
+        return Inertia::render('admin/categories/create', [
+            'type' => $type,
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -101,16 +109,24 @@ class CategoryController extends Controller
             $validated['slug'] = Str::slug($validated['slug']);
         }
 
-        Category::create($validated);
+        $category = Category::create($validated);
 
-        return redirect()->route('admin.categories.index')
-            ->with('success', 'Kategori baru berhasil ditambahkan.');
+        $typeLabels = [
+            'genders' => 'Gender',
+            'concentrates' => 'Konsentrasi',
+            'scents' => 'Scent',
+        ];
+        $label = $typeLabels[$category->type] ?? 'Kategori';
+
+        return redirect()->route('admin.categories.index', ['type' => $category->type])
+            ->with('success', "{$label} '{$category->name}' berhasil ditambahkan.");
     }
 
     public function edit(Category $category): Response
     {
         return Inertia::render('admin/categories/edit', [
             'category' => $category,
+            'type' => $category->type ?: 'genders',
         ]);
     }
 
@@ -151,21 +167,36 @@ class CategoryController extends Controller
 
         $category->update($validated);
 
-        return redirect()->route('admin.categories.index')
-            ->with('success', "Kategori '{$category->name}' berhasil diperbarui.");
+        $typeLabels = [
+            'genders' => 'Gender',
+            'concentrates' => 'Konsentrasi',
+            'scents' => 'Scent',
+        ];
+        $label = $typeLabels[$category->type] ?? 'Kategori';
+
+        return redirect()->route('admin.categories.index', ['type' => $category->type])
+            ->with('success', "{$label} '{$category->name}' berhasil diperbarui.");
     }
 
     public function destroy(Category $category): RedirectResponse
     {
+        $type = $category->type ?: 'genders';
+        $typeLabels = [
+            'genders' => 'Gender',
+            'concentrates' => 'Konsentrasi',
+            'scents' => 'Scent',
+        ];
+        $label = $typeLabels[$type] ?? 'Kategori';
+
         if ($category->products()->count() > 0) {
-            return redirect()->route('admin.categories.index')
-                ->with('error', "Kategori '{$category->name}' tidak dapat dihapus karena masih digunakan oleh produk.");
+            return redirect()->route('admin.categories.index', ['type' => $type])
+                ->with('error', "{$label} '{$category->name}' tidak dapat dihapus karena masih digunakan oleh produk.");
         }
 
         $name = $category->name;
         $category->delete();
 
-        return redirect()->route('admin.categories.index')
-            ->with('success', "Kategori '{$name}' berhasil dihapus.");
+        return redirect()->route('admin.categories.index', ['type' => $type])
+            ->with('success', "{$label} '{$name}' berhasil dihapus.");
     }
 }

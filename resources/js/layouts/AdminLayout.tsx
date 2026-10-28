@@ -15,6 +15,7 @@ import {
     ChevronDown,
     Tags,
     Sparkles,
+    FlaskConical,
     Ticket,
     FileText,
     CreditCard,
@@ -159,10 +160,9 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
     const isUsers = url.startsWith('/manajemen-pengguna');
     const isProducts = url.startsWith('/manajemen-produk');
     const isCategories = url.startsWith('/manajemen-kategori');
-    const isCategoriesGenders = url.includes('type=genders');
     const isCategoriesConcentrates = url.includes('type=concentrates');
     const isCategoriesScents = url.includes('type=scents');
-    const isCategoriesAll = isCategories && !isCategoriesGenders && !isCategoriesConcentrates && !isCategoriesScents;
+    const isCategoriesGenders = url.includes('type=genders') || (isCategories && !isCategoriesConcentrates && !isCategoriesScents);
 
     const [categoriesMenuOpen, setCategoriesMenuOpen] = useState(isCategories);
 
@@ -319,51 +319,39 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                             {categoriesMenuOpen && (
                                 <div className="ml-7 mt-1 space-y-1 border-l border-border/60 pl-2.5 text-xs">
                                     <Link
-                                        href="/manajemen-kategori"
-                                        onClick={() => setSidebarOpen(false)}
-                                        className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 transition-colors ${
-                                            isCategoriesAll
-                                                ? 'bg-primary/10 text-primary font-medium'
-                                                : 'text-muted-foreground hover:text-primary hover:bg-muted/50'
-                                        }`}
-                                    >
-                                        <span className="size-1.5 rounded-full bg-primary/40" />
-                                        <span>Semua Kategori</span>
-                                    </Link>
-                                    <Link
                                         href="/manajemen-kategori?type=genders"
                                         onClick={() => setSidebarOpen(false)}
-                                        className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 transition-colors ${
+                                        className={`flex items-center gap-2.5 rounded-md px-2.5 py-2 transition-colors ${
                                             isCategoriesGenders
-                                                ? 'bg-primary/10 text-primary font-medium'
+                                                ? 'bg-muted text-primary font-semibold'
                                                 : 'text-muted-foreground hover:text-primary hover:bg-muted/50'
                                         }`}
                                     >
-                                        <span className="size-1.5 rounded-full bg-sky-500" />
+                                        <Users className="size-3.5 shrink-0" />
                                         <span>Gender</span>
                                     </Link>
                                     <Link
                                         href="/manajemen-kategori?type=concentrates"
                                         onClick={() => setSidebarOpen(false)}
-                                        className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 transition-colors ${
+                                        className={`flex items-center gap-2.5 rounded-md px-2.5 py-2 transition-colors ${
                                             isCategoriesConcentrates
-                                                ? 'bg-primary/10 text-primary font-medium'
+                                                ? 'bg-muted text-primary font-semibold'
                                                 : 'text-muted-foreground hover:text-primary hover:bg-muted/50'
                                         }`}
                                     >
-                                        <span className="size-1.5 rounded-full bg-amber-500" />
+                                        <FlaskConical className="size-3.5 shrink-0" />
                                         <span>Concentrate</span>
                                     </Link>
                                     <Link
                                         href="/manajemen-kategori?type=scents"
                                         onClick={() => setSidebarOpen(false)}
-                                        className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 transition-colors ${
+                                        className={`flex items-center gap-2.5 rounded-md px-2.5 py-2 transition-colors ${
                                             isCategoriesScents
-                                                ? 'bg-primary/10 text-primary font-medium'
+                                                ? 'bg-muted text-primary font-semibold'
                                                 : 'text-muted-foreground hover:text-primary hover:bg-muted/50'
                                         }`}
                                     >
-                                        <span className="size-1.5 rounded-full bg-emerald-500" />
+                                        <Sparkles className="size-3.5 shrink-0" />
                                         <span>Scent</span>
                                     </Link>
                                 </div>
