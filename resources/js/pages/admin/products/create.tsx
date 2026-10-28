@@ -272,8 +272,8 @@ export default function AdminProductCreate({
                         <CardDescription>Nama, URL slug, kategori, dan deskripsi parfum.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4 text-xs">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div className="space-y-1.5 lg:col-span-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div className="space-y-1.5">
                                 <label className="font-medium text-foreground">Nama Parfum *</label>
                                 <Input
                                     type="text"
@@ -286,19 +286,7 @@ export default function AdminProductCreate({
                                 {errors.name && <p className="text-destructive text-[11px]">{errors.name}</p>}
                             </div>
 
-                            <div className="space-y-1.5 lg:col-span-2">
-                                <label className="font-medium text-foreground">URL Slug</label>
-                                <Input
-                                    type="text"
-                                    value={data.slug}
-                                    onChange={(e) => setData('slug', slugify(e.target.value))}
-                                    className="h-9 font-mono"
-                                    placeholder="oud-imperial-royale"
-                                />
-                                {errors.slug && <p className="text-destructive text-[11px]">{errors.slug}</p>}
-                            </div>
-
-                            <div className="space-y-1.5 lg:col-span-3">
+                            <div className="space-y-1.5">
                                 <label className="font-medium text-foreground">Brand</label>
                                 <Select
                                     value={data.brand_id || undefined}
@@ -318,8 +306,20 @@ export default function AdminProductCreate({
                                 {errors.brand_id && <p className="text-destructive text-[11px]">{errors.brand_id}</p>}
                             </div>
 
+                            <div className="space-y-1.5">
+                                <label className="font-medium text-foreground">URL Slug</label>
+                                <Input
+                                    type="text"
+                                    value={data.slug}
+                                    onChange={(e) => setData('slug', slugify(e.target.value))}
+                                    className="h-9 font-mono"
+                                    placeholder="oud-imperial-royale"
+                                />
+                                {errors.slug && <p className="text-destructive text-[11px]">{errors.slug}</p>}
+                            </div>
+
                             {/* Multi-category Selector (Genders, Concentrates, Scents) */}
-                            <div className="space-y-3 lg:col-span-6 pt-3 border-t border-border/70">
+                            <div className="space-y-3 col-span-full pt-3 border-t border-border/70">
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
@@ -455,7 +455,7 @@ export default function AdminProductCreate({
                             </div>
 
                             {/* Section: Tag & Highlight Produk */}
-                            <div className="space-y-3 lg:col-span-6 pt-3 border-t border-border/70">
+                            <div className="space-y-3 col-span-full pt-3 border-t border-border/70">
                                 <div>
                                     <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                                         <Sparkles className="size-3.5 text-amber-500" />
@@ -553,7 +553,7 @@ export default function AdminProductCreate({
                                 </div>
                             </div>
 
-                            <div className="lg:col-span-4 pt-2 border-t border-border">
+                            <div className="col-span-full pt-2 border-t border-border">
                                 <Tabs defaultValue="id" className="w-full">
                                     <div className="flex items-center justify-between mb-3">
                                         <label className="font-medium text-foreground">Deskripsi Parfum</label>

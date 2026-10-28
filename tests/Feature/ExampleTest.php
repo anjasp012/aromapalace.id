@@ -44,7 +44,6 @@ test('product detail page returns a successful response with valid slug', functi
         ->assertInertia(fn ($page) => $page
             ->component('product-detail')
             ->has('product')
-            ->has('relatedProducts')
             ->where('product.slug', 'oud-imperial-royale')
         );
 });

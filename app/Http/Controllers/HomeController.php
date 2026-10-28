@@ -92,19 +92,12 @@ class HomeController extends Controller
             $recommendedProducts = $popularProducts;
         }
 
-        // 4. Categories from DB (Product Categories - Limit 9)
-        $categoryImages = [
-            'parfum-pria' => 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?auto=format&fit=crop&w=400&q=80',
-            'parfum-wanita' => 'https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?auto=format&fit=crop&w=400&q=80',
-            'unisex-fragrance' => 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=400&q=80',
-            'discovery-sets-vials' => 'https://images.unsplash.com/photo-1615397349754-cfa2066a298e?auto=format&fit=crop&w=400&q=80',
-            'artisanal-attar' => 'https://images.unsplash.com/photo-1547887537-6158d64c35b3?auto=format&fit=crop&w=400&q=80',
-        ];
-
-        $categories = Category::withCount('products')
-            ->take(9)
+        // 4. Scents from DB (Product by Scents - Only Scents)
+        $scents = Category::scents()
+            ->withCount('products')
+            ->orderBy('id', 'asc')
             ->get()
-            ->map(function (Category $c) use ($categoryImages) {
+            ->map(function (Category $c) {
                 return [
                     'id' => $c->id,
                     'name' => $c->name,
@@ -113,9 +106,12 @@ class HomeController extends Controller
                     'description' => $c->description,
                     'description_en' => $c->description_en,
                     'productsCount' => (int) $c->products_count,
-                    'image' => $c->thumbnail ?: ($categoryImages[$c->slug] ?? 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=400&q=80'),
+                    'image' => $c->thumbnail ?: null,
+                    'type' => 'scents',
                 ];
-            })->values()->all();
+            })
+            ->values()
+            ->all();
 
         // 5. Brands from DB (Featured Brands - Limit 5)
         $brands = Brand::withCount('products')
@@ -211,7 +207,8 @@ class HomeController extends Controller
             'popularProducts' => $popularProducts,
             'discountedProducts' => $discountedProducts,
             'recommendedProducts' => $recommendedProducts,
-            'categories' => $categories,
+            'scents' => $scents,
+            'categories' => $scents,
             'brands' => $brands,
             'vouchers' => $vouchers,
             'articles' => $articles,

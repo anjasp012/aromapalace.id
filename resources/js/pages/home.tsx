@@ -17,6 +17,7 @@ import {
 import ProductCard, { type ProductItem } from '@/components/ProductCard';
 import ProductQuickViewModal from '@/components/ProductQuickViewModal';
 import CategoryCard, { type CategoryItem } from '@/components/CategoryCard';
+import ScentCard, { type ScentItem } from '@/components/ScentCard';
 import VoucherCard, { type VoucherItem } from '@/components/VoucherCard';
 import ArticleCard, { type ArticleItem } from '@/components/ArticleCard';
 import BrandCard, { type BrandItem } from '@/components/BrandCard';
@@ -37,6 +38,7 @@ interface HomeProps {
     popularProducts?: ProductItem[];
     discountedProducts?: ProductItem[];
     recommendedProducts?: ProductItem[];
+    scents?: ScentItem[];
     categories?: CategoryItem[];
     brands?: BrandItem[];
     vouchers?: VoucherItem[];
@@ -48,6 +50,7 @@ export default function Home({
     popularProducts: propPopularProducts = [],
     discountedProducts: propDiscountedProducts = [],
     recommendedProducts: propRecommendedProducts = [],
+    scents: propScents = [],
     categories: propCategories = [],
     brands: propBrands = [],
     vouchers: propVouchers = [],
@@ -266,6 +269,9 @@ export default function Home({
     const categoriesList: CategoryItem[] = (propCategories.length > 0
         ? propCategories
         : (cachedHome?.categories || [])).slice(0, 9);
+    const scentsList: ScentItem[] = propScents.length > 0
+        ? propScents
+        : (propCategories.length > 0 ? propCategories : (cachedHome?.scents || cachedHome?.categories || []));
     const brandList: BrandItem[] = (propBrands.length > 0
         ? propBrands
         : (cachedHome?.brands || [])).slice(0, 5);
@@ -432,27 +438,28 @@ export default function Home({
                         </Card>
                     </section>
 
-                    {/* 2. KATEGORI PRODUK */}
-                    <section id="categories">
+                    {/* 2. PRODUCT BY SCENTS */}
+                    <section id="scents">
                         <div className="flex items-center justify-between mb-4 sm:mb-6">
                             <h2 className="text-xl sm:text-2xl tracking-tight text-foreground">
-                                <span className="font-normal">{isEn ? 'Product' : 'Kategori'}</span>{' '}
-                                <span className="font-bold">{isEn ? 'Categories' : 'Produk'}</span>
+                                <span className="font-normal">{isEn ? 'Product by' : 'Pilihan'}</span>{' '}
+                                <span className="font-bold">{isEn ? 'Scents' : 'Aroma'}</span>
                             </h2>
                             <Button asChild variant="ghost" size="sm" className="text-xs">
-                                <Link href="/categories" onClick={() => setLoadingButtonId('categories_all')}>
-                                    {loadingButtonId === 'categories_all' && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                                <Link href="/products" onClick={() => setLoadingButtonId('scents_all')}>
+                                    {loadingButtonId === 'scents_all' && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
                                     <span>{t('common.see_all')} &rarr;</span>
                                 </Link>
                             </Button>
                         </div>
 
-                        <div className="-mx-4 px-4 sm:mx-0 sm:px-0 scroll-pl-4 sm:scroll-pl-0 flex sm:grid overflow-x-auto sm:overflow-visible gap-2 sm:gap-2.5 lg:gap-3 pb-2 sm:pb-0 scrollbar-none snap-x snap-mandatory sm:grid-cols-4 lg:grid-cols-9">
-                            {categoriesList.map((cat, idx) => (
-                                <CategoryCard
-                                    key={cat.slug}
-                                    category={cat}
-                                    className={`w-[calc((100%-24px)/4)] sm:w-auto shrink-0 sm:shrink snap-start ${idx >= 9 ? 'sm:hidden lg:block' : ''}`}
+                        <div className="-mx-4 px-4 sm:mx-0 sm:px-0 scroll-pl-4 sm:scroll-pl-0 flex sm:grid overflow-x-auto sm:overflow-visible gap-2.5 sm:gap-3.5 lg:gap-4 pb-2 sm:pb-0 scrollbar-none snap-x snap-mandatory sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                            {scentsList.map((scent, idx) => (
+                                <ScentCard
+                                    key={scent.slug}
+                                    scent={scent}
+                                    colorIndex={idx}
+                                    className="w-[calc((100%-24px)/3.2)] sm:w-auto shrink-0 sm:shrink snap-start"
                                 />
                             ))}
                         </div>
