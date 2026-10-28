@@ -57,6 +57,10 @@ export interface FragranceDetail {
     rating: number;
     reviews_count: number;
     in_stock: boolean;
+    is_new_arrivals?: boolean;
+    is_best_sellers?: boolean;
+    is_special_offers?: boolean;
+    isNew?: boolean;
     image: string;
     gallery?: string[];
     tag?: string;
@@ -484,6 +488,25 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
                                         />
                                     </div>
                                 ))}
+                            </div>
+
+                            {/* Product Labels: Top Left */}
+                            <div className="absolute top-3 left-3 flex flex-col gap-1 items-start pointer-events-none z-20">
+                                {(product.is_new_arrivals || product.isNew) && (
+                                    <Badge className="text-[10px] bg-emerald-600 hover:bg-emerald-600 text-white font-medium border-0 shadow-xs">
+                                        New Arrival
+                                    </Badge>
+                                )}
+                                {product.is_best_sellers && (
+                                    <Badge className="text-[10px] bg-amber-500 hover:bg-amber-500 text-amber-950 font-bold border-0 shadow-xs">
+                                        Best Seller
+                                    </Badge>
+                                )}
+                                {product.is_special_offers && (
+                                    <Badge className="text-[10px] bg-[#4A070B] hover:bg-[#4A070B] text-white font-medium border-0 shadow-xs">
+                                        Special Offer
+                                    </Badge>
+                                )}
                             </div>
 
                             {/* Floating Action Buttons: Love & Share (Matching Desktop rounded-md style) */}
