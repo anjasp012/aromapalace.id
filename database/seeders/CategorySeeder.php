@@ -126,6 +126,33 @@ class CategorySeeder extends Seeder
                 'description' => 'Kurasi sampel eksklusif produk mini untuk menjelajahi spektrum aroma atelier.',
                 'description_en' => 'Curated luxury discovery discovery vials exploring the full olfactory spectrum.',
             ],
+            [
+                'name' => 'Aquatic & Marine',
+                'name_en' => 'Aquatic & Marine',
+                'type' => 'scents',
+                'slug' => 'aquatic-marine',
+                'thumbnail' => null,
+                'description' => 'Nuansa kesegaran hembusan angin samudra dan mineral garam laut yang jernih.',
+                'description_en' => 'Crisp ocean breeze with fresh mineral sea salt and marine notes.',
+            ],
+            [
+                'name' => 'Gourmand & Vanilla',
+                'name_en' => 'Gourmand & Vanilla',
+                'type' => 'scents',
+                'slug' => 'gourmand-vanilla',
+                'thumbnail' => null,
+                'description' => 'Aroma manis vanila madagascar, kopi panggang, dan karamel mentega yang memikat.',
+                'description_en' => 'Rich madagascar vanilla, roasted coffee beans, and warm butter caramel.',
+            ],
+            [
+                'name' => 'Aromatic Fougere',
+                'name_en' => 'Aromatic Fougere',
+                'type' => 'scents',
+                'slug' => 'aromatic-fougere',
+                'thumbnail' => null,
+                'description' => 'Keharuman lavender prancis, lumut ek oakmoss, dan dedaunan herbal aromatik.',
+                'description_en' => 'French lavender, green oakmoss, and fresh aromatic botanical herbs.',
+            ],
         ];
 
         foreach ($categories as $cat) {

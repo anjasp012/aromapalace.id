@@ -453,7 +453,7 @@ export default function Home({
                             </Button>
                         </div>
 
-                        <div className="-mx-4 px-4 sm:mx-0 sm:px-0 scroll-pl-4 sm:scroll-pl-0 flex sm:grid overflow-x-auto sm:overflow-visible gap-2.5 sm:gap-3.5 lg:gap-4 pb-2 sm:pb-0 scrollbar-none snap-x snap-mandatory sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
+                        <div className="-mx-4 px-4 sm:mx-0 sm:px-0 scroll-pl-4 sm:scroll-pl-0 flex sm:grid overflow-x-auto sm:overflow-visible gap-2.5 sm:gap-3.5 lg:gap-4 pb-2 sm:pb-0 scrollbar-none snap-x snap-mandatory sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 justify-center justify-items-center">
                             {scentsList.map((scent, idx) => (
                                 <ScentCard
                                     key={scent.slug}
