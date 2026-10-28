@@ -107,10 +107,10 @@ interface ProductsProps {
 }
 
 const PRICE_TIERS = [
-    { label: 'Semua Harga', labelEn: 'All Prices', value: 'all' },
-    { label: '< Rp 1.500.000', labelEn: '< IDR 1,500,000', value: 'under-1500' },
-    { label: 'Rp 1.5jt - Rp 2.5jt', labelEn: 'IDR 1.5M - 2.5M', value: '1500-2500' },
-    { label: '> Rp 2.500.000', labelEn: '> IDR 2,500,000', value: 'above-2500' },
+    { label: '< 500rb', labelEn: '< 500k', value: 'under-500' },
+    { label: '500rb - 1jt', labelEn: '500k - 1M', value: '500-1000' },
+    { label: '> 1jt', labelEn: '> 1M', value: 'above-1000' },
+    { label: 'Custom', labelEn: 'Custom', value: 'custom' },
 ];
 
 interface ParsedFilters {
@@ -208,7 +208,7 @@ function parseFiltersFromUrl(
     // 7. Price Tier & Custom Min/Max
     let priceTier = 'all';
     const rawPrice = searchParams.get('price') || searchParams.get('tier');
-    if (rawPrice && ['under-1500', '1500-2500', 'above-2500', 'custom'].includes(rawPrice)) {
+    if (rawPrice && ['under-500', '500-1000', 'above-1000', 'under-1500', '1500-2500', 'above-2500', 'custom'].includes(rawPrice)) {
         priceTier = rawPrice;
     }
 
@@ -1007,54 +1007,65 @@ export default function Products({
                     {isEn ? 'PRICE RANGE' : 'RENTANG HARGA'}
                 </label>
                 <div className="grid grid-cols-2 gap-1.5">
-                    {PRICE_TIERS.map((tier) => (
-                        <button
-                            key={tier.value}
-                            type="button"
-                            onClick={() => {
-                                setPriceTier(tier.value);
-                                setCustomMin('');
-                                setCustomMax('');
-                            }}
-                            className={`px-2 py-1.5 rounded-md text-[10.5px] transition cursor-pointer border text-center shadow-none ${priceTier === tier.value
-                                ? 'bg-[#4A070B]/10 text-[#4A070B] border-[#4A070B] font-bold ring-1 ring-[#4A070B]/25'
-                                : 'bg-background/80 text-muted-foreground border-border/80 hover:text-foreground hover:border-[#4A070B]/30'
-                                }`}
-                        >
-                            {isEn && tier.labelEn ? tier.labelEn : tier.label}
-                        </button>
-                    ))}
+                    {PRICE_TIERS.map((tier) => {
+                        const isSelected = priceTier === tier.value;
+                        return (
+                            <button
+                                key={tier.value}
+                                type="button"
+                                onClick={() => {
+                                    if (isSelected && tier.value !== 'custom') {
+                                        setPriceTier('all');
+                                    } else {
+                                        setPriceTier(tier.value);
+                                        if (tier.value !== 'custom') {
+                                            setCustomMin('');
+                                            setCustomMax('');
+                                        }
+                                    }
+                                }}
+                                className={`px-2 py-1.5 rounded-md text-[10.5px] transition cursor-pointer border text-center shadow-none ${isSelected
+                                    ? 'bg-[#4A070B]/10 text-[#4A070B] border-[#4A070B] font-bold ring-1 ring-[#4A070B]/25'
+                                    : 'bg-background/80 text-muted-foreground border-border/80 hover:text-foreground hover:border-[#4A070B]/30'
+                                    }`}
+                            >
+                                {isEn && tier.labelEn ? tier.labelEn : tier.label}
+                            </button>
+                        );
+                    })}
                 </div>
 
                 {/* Custom Min / Max input */}
-                <div className="pt-1.5">
-                    <span className="text-[10px] text-muted-foreground uppercase font-semibold block mb-1.5">
-                        {isEn ? 'Custom Price (IDR)' : 'Kustomisasi Harga (Rp)'}
-                    </span>
-                    <div className="flex items-center gap-2">
-                        <input
-                            type="number"
-                            placeholder="Min"
-                            value={customMin}
-                            onChange={(e) => {
-                                setCustomMin(e.target.value);
-                                setPriceTier('custom');
-                            }}
-                            className="w-1/2 h-8 px-2.5 rounded-md border border-border/80 bg-background/80 text-xs text-foreground focus:outline-none focus:border-[#4A070B] shadow-none"
-                        />
-                        <span className="text-muted-foreground text-xs">-</span>
-                        <input
-                            type="number"
-                            placeholder={isEn ? 'Max' : 'Maks'}
-                            value={customMax}
-                            onChange={(e) => {
-                                setCustomMax(e.target.value);
-                                setPriceTier('custom');
-                            }}
-                            className="w-1/2 h-8 px-2.5 rounded-md border border-border/80 bg-background/80 text-xs text-foreground focus:outline-none focus:border-[#4A070B] shadow-none"
-                        />
+                {(priceTier === 'custom' || customMin || customMax) && (
+                    <div className="pt-1.5 space-y-1.5">
+                        <span className="text-[10px] text-muted-foreground uppercase font-semibold block">
+                            {isEn ? 'Custom Price (IDR)' : 'Kustomisasi Harga (Rp)'}
+                        </span>
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="number"
+                                placeholder="Min"
+                                value={customMin}
+                                onChange={(e) => {
+                                    setCustomMin(e.target.value);
+                                    setPriceTier('custom');
+                                }}
+                                className="w-1/2 h-8 px-2.5 rounded-md border border-border/80 bg-background/80 text-xs text-foreground focus:outline-none focus:border-[#4A070B] shadow-none"
+                            />
+                            <span className="text-muted-foreground text-xs">-</span>
+                            <input
+                                type="number"
+                                placeholder={isEn ? 'Max' : 'Maks'}
+                                value={customMax}
+                                onChange={(e) => {
+                                    setCustomMax(e.target.value);
+                                    setPriceTier('custom');
+                                }}
+                                className="w-1/2 h-8 px-2.5 rounded-md border border-border/80 bg-background/80 text-xs text-foreground focus:outline-none focus:border-[#4A070B] shadow-none"
+                            />
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
 
             {/* 6. CUSTOMER RATING */}
@@ -1342,10 +1353,13 @@ export default function Products({
                                         }}
                                     >
                                         <span>
-                                            {priceTier === 'under-1500' && (isEn ? '< IDR 1.5M' : '< Rp 1.5jt')}
-                                            {priceTier === '1500-2500' && (isEn ? 'IDR 1.5M - 2.5M' : 'Rp 1.5jt - 2.5jt')}
-                                            {priceTier === 'above-2500' && (isEn ? '> IDR 2.5M' : '> Rp 2.5jt')}
-                                            {priceTier === 'custom' && (isEn ? `IDR ${customMin || 0} - ${customMax || '∞'}` : `Rp ${customMin || 0} - ${customMax || '∞'}`)}
+                                            {priceTier === 'under-500' && (isEn ? '< 500k' : '< 500rb')}
+                                            {priceTier === '500-1000' && (isEn ? '500k - 1M' : '500rb - 1jt')}
+                                            {priceTier === 'above-1000' && (isEn ? '> 1M' : '> 1jt')}
+                                            {priceTier === 'under-1500' && (isEn ? '< 1.5M' : '< 1.5jt')}
+                                            {priceTier === '1500-2500' && (isEn ? '1.5M - 2.5M' : '1.5jt - 2.5jt')}
+                                            {priceTier === 'above-2500' && (isEn ? '> 2.5M' : '> 2.5jt')}
+                                            {priceTier === 'custom' && (isEn ? `Custom: IDR ${customMin || 0} - ${customMax || '∞'}` : `Kustom: Rp ${customMin || 0} - ${customMax || '∞'}`)}
                                         </span>
                                         <span className="text-xs">&times;</span>
                                     </Badge>
