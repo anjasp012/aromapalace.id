@@ -256,6 +256,9 @@ function buildQueryString(filters: {
     searchQuery: string;
     activeCategory: string;
     activeBrand: string;
+    activeGender: string;
+    activeConcentration: string;
+    activeScent: string;
     priceTier: string;
     customMin: string;
     customMax: string;
@@ -268,11 +271,20 @@ function buildQueryString(filters: {
     if (filters.searchQuery.trim()) {
         params.set('search', filters.searchQuery.trim());
     }
-    if (filters.activeCategory && filters.activeCategory !== 'All') {
-        params.set('category', filters.activeCategory);
-    }
     if (filters.activeBrand && filters.activeBrand !== 'All') {
         params.set('brand', filters.activeBrand);
+    }
+    if (filters.activeGender && filters.activeGender !== 'All') {
+        params.set('gender', filters.activeGender);
+    }
+    if (filters.activeConcentration && filters.activeConcentration !== 'All') {
+        params.set('concentration', filters.activeConcentration);
+    }
+    if (filters.activeScent && filters.activeScent !== 'All') {
+        params.set('scent', filters.activeScent);
+    }
+    if (filters.activeCategory && filters.activeCategory !== 'All' && filters.activeGender === 'All' && filters.activeConcentration === 'All' && filters.activeScent === 'All') {
+        params.set('category', filters.activeCategory);
     }
     if (filters.priceTier && filters.priceTier !== 'all' && filters.priceTier !== 'custom') {
         params.set('price', filters.priceTier);
@@ -300,8 +312,18 @@ export default function Products({
     fragrances = [],
     categories = [],
     brands: serverBrands = [],
+    brandItems: serverBrandItems = [],
+    genders: serverGenders = [],
+    genderItems: serverGenderItems = [],
+    concentrations: serverConcentrations = [],
+    concentrationItems: serverConcentrationItems = [],
+    scents: serverScents = [],
+    scentItems: serverScentItems = [],
     selectedCategory = 'All',
     selectedBrand = 'All',
+    selectedGender = 'All',
+    selectedConcentration = 'All',
+    selectedScent = 'All',
     filters: serverFilters,
     totalCount,
 }: Partial<ProductsProps>) {
@@ -317,13 +339,61 @@ export default function Products({
         return ['All', ...unique];
     }, [serverBrands, fragrances]);
 
+    const availableGenders = useMemo<CategoryItem[]>(() => {
+        if (serverGenderItems && serverGenderItems.length > 0) return serverGenderItems;
+        if (serverGenders && serverGenders.length > 0) {
+            return serverGenders.filter((g) => g !== 'All').map((g, i) => ({ id: i + 1, name: g, name_en: g, slug: normalizeSlug(g) }));
+        }
+        return [
+            { id: 1, name: 'Parfum Pria', name_en: "Men's Perfume", slug: 'parfum-pria' },
+            { id: 2, name: 'Parfum Wanita', name_en: "Women's Perfume", slug: 'parfum-wanita' },
+            { id: 3, name: 'Unisex Fragrance', name_en: 'Unisex Fragrance', slug: 'unisex-fragrance' },
+        ];
+    }, [serverGenderItems, serverGenders]);
+
+    const availableConcentrations = useMemo<CategoryItem[]>(() => {
+        if (serverConcentrationItems && serverConcentrationItems.length > 0) return serverConcentrationItems;
+        if (serverConcentrations && serverConcentrations.length > 0) {
+            return serverConcentrations.filter((c) => c !== 'All').map((c, i) => ({ id: i + 1, name: c, name_en: c, slug: normalizeSlug(c) }));
+        }
+        return [
+            { id: 1, name: 'Extrait de Parfum', name_en: 'Extrait de Parfum', slug: 'extrait-de-parfum' },
+            { id: 2, name: 'Eau de Parfum', name_en: 'Eau de Parfum', slug: 'eau-de-parfum' },
+            { id: 3, name: 'Eau de Toilette', name_en: 'Eau de Toilette', slug: 'eau-de-toilette' },
+            { id: 4, name: 'Artisanal Attar', name_en: 'Artisanal Attar', slug: 'artisanal-attar' },
+        ];
+    }, [serverConcentrationItems, serverConcentrations]);
+
+    const availableScents = useMemo<CategoryItem[]>(() => {
+        if (serverScentItems && serverScentItems.length > 0) return serverScentItems;
+        if (serverScents && serverScents.length > 0) {
+            return serverScents.filter((s) => s !== 'All').map((s, i) => ({ id: i + 1, name: s, name_en: s, slug: normalizeSlug(s) }));
+        }
+        return [
+            { id: 1, name: 'Woody & Smoky', name_en: 'Woody & Smoky', slug: 'woody-smoky' },
+            { id: 2, name: 'Floral Oriental', name_en: 'Floral Oriental', slug: 'floral-oriental' },
+            { id: 3, name: 'Fresh Citrus & Marine', name_en: 'Fresh Citrus & Marine', slug: 'fresh-citrus-marine' },
+            { id: 4, name: 'Gourmand & Vanilla', name_en: 'Gourmand & Vanilla', slug: 'gourmand-vanilla' },
+        ];
+    }, [serverScentItems, serverScents]);
+
+    const getCategoryItemLabel = (item: { name: string; name_en?: string }) => {
+        if (isEn && item.name_en && item.name_en.trim() !== '') {
+            return item.name_en;
+        }
+        return formatCategoryName(item.name, isEn);
+    };
+
     // 1. Initialize Filter States from serverFilters or URL Query
     const initialFilters = useMemo(() => {
         if (serverFilters) {
             return {
                 searchQuery: serverFilters.searchQuery || '',
-                activeCategory: serverFilters.activeCategory || selectedCategory,
-                activeBrand: serverFilters.activeBrand || selectedBrand,
+                activeCategory: serverFilters.activeCategory || selectedCategory || 'All',
+                activeBrand: serverFilters.activeBrand || selectedBrand || 'All',
+                activeGender: serverFilters.activeGender || selectedGender || 'All',
+                activeConcentration: serverFilters.activeConcentration || selectedConcentration || 'All',
+                activeScent: serverFilters.activeScent || selectedScent || 'All',
                 priceTier: serverFilters.priceTier || 'all',
                 customMin: serverFilters.customMin || '',
                 customMax: serverFilters.customMax || '',
@@ -335,12 +405,27 @@ export default function Products({
         const searchStr = typeof window !== 'undefined'
             ? window.location.search
             : (url && url.includes('?') ? url.slice(url.indexOf('?')) : '');
-        return parseFiltersFromUrl(searchStr, categories, availableBrands, selectedCategory, selectedBrand);
+        return parseFiltersFromUrl(
+            searchStr,
+            categories,
+            availableBrands,
+            availableGenders,
+            availableConcentrations,
+            availableScents,
+            selectedCategory,
+            selectedBrand,
+            selectedGender,
+            selectedConcentration,
+            selectedScent
+        );
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const [searchQuery, setSearchQuery] = useState(initialFilters.searchQuery);
     const [activeCategory, setActiveCategory] = useState(initialFilters.activeCategory);
     const [activeBrand, setActiveBrand] = useState(initialFilters.activeBrand);
+    const [activeGender, setActiveGender] = useState(initialFilters.activeGender);
+    const [activeConcentration, setActiveConcentration] = useState(initialFilters.activeConcentration);
+    const [activeScent, setActiveScent] = useState(initialFilters.activeScent);
     const [priceTier, setPriceTier] = useState(initialFilters.priceTier);
     const [customMin, setCustomMin] = useState(initialFilters.customMin);
     const [customMax, setCustomMax] = useState(initialFilters.customMax);
@@ -393,6 +478,9 @@ export default function Products({
                 searchQuery: serverFilters.searchQuery || '',
                 activeCategory: serverFilters.activeCategory || selectedCategory || 'All',
                 activeBrand: serverFilters.activeBrand || selectedBrand || 'All',
+                activeGender: serverFilters.activeGender || selectedGender || 'All',
+                activeConcentration: serverFilters.activeConcentration || selectedConcentration || 'All',
+                activeScent: serverFilters.activeScent || selectedScent || 'All',
                 priceTier: serverFilters.priceTier || 'all',
                 customMin: serverFilters.customMin || '',
                 customMax: serverFilters.customMax || '',
@@ -404,13 +492,22 @@ export default function Products({
                 typeof window !== 'undefined' ? window.location.search : (url && url.includes('?') ? url.slice(url.indexOf('?')) : ''),
                 categories,
                 availableBrands,
+                availableGenders,
+                availableConcentrations,
+                availableScents,
                 selectedCategory,
-                selectedBrand
+                selectedBrand,
+                selectedGender,
+                selectedConcentration,
+                selectedScent
             );
 
         setSearchQuery(nextFilters.searchQuery);
-        setActiveCategory(nextFilters.activeCategory);
         setActiveBrand(nextFilters.activeBrand);
+        setActiveGender(nextFilters.activeGender);
+        setActiveConcentration(nextFilters.activeConcentration);
+        setActiveScent(nextFilters.activeScent);
+        setActiveCategory(nextFilters.activeCategory);
         setPriceTier(nextFilters.priceTier);
         setCustomMin(nextFilters.customMin);
         setCustomMax(nextFilters.customMax);
@@ -420,8 +517,10 @@ export default function Products({
 
         const currentParams: Record<string, string> = {};
         if (nextFilters.searchQuery.trim()) currentParams.search = nextFilters.searchQuery.trim();
-        if (nextFilters.activeCategory && nextFilters.activeCategory !== 'All') currentParams.category = nextFilters.activeCategory;
         if (nextFilters.activeBrand && nextFilters.activeBrand !== 'All') currentParams.brand = nextFilters.activeBrand;
+        if (nextFilters.activeGender && nextFilters.activeGender !== 'All') currentParams.gender = nextFilters.activeGender;
+        if (nextFilters.activeConcentration && nextFilters.activeConcentration !== 'All') currentParams.concentration = nextFilters.activeConcentration;
+        if (nextFilters.activeScent && nextFilters.activeScent !== 'All') currentParams.scent = nextFilters.activeScent;
         if (nextFilters.priceTier && nextFilters.priceTier !== 'all' && nextFilters.priceTier !== 'custom') currentParams.price = nextFilters.priceTier;
         if (nextFilters.customMin.trim()) currentParams.min_price = nextFilters.customMin.trim();
         if (nextFilters.customMax.trim()) currentParams.max_price = nextFilters.customMax.trim();
@@ -430,14 +529,16 @@ export default function Products({
         if (nextFilters.sortBy && nextFilters.sortBy !== 'featured') currentParams.sort = nextFilters.sortBy;
 
         lastAppliedParamsRef.current = JSON.stringify(currentParams);
-    }, [serverFilters, selectedCategory, selectedBrand, url]);
+    }, [serverFilters, selectedCategory, selectedBrand, selectedGender, selectedConcentration, selectedScent, url]);
 
     // Send server-side filter request when filter/sort state changes (debounced 150ms)
     useEffect(() => {
         const params: Record<string, string> = {};
         if (searchQuery.trim()) params.search = searchQuery.trim();
-        if (activeCategory && activeCategory !== 'All') params.category = activeCategory;
         if (activeBrand && activeBrand !== 'All') params.brand = activeBrand;
+        if (activeGender && activeGender !== 'All') params.gender = activeGender;
+        if (activeConcentration && activeConcentration !== 'All') params.concentration = activeConcentration;
+        if (activeScent && activeScent !== 'All') params.scent = activeScent;
         if (priceTier && priceTier !== 'all' && priceTier !== 'custom') params.price = priceTier;
         if (customMin.trim()) params.min_price = customMin.trim();
         if (customMax.trim()) params.max_price = customMax.trim();
@@ -468,7 +569,15 @@ export default function Products({
                 preserveState: true,
                 preserveScroll: true,
                 replace: true,
-                only: ['fragrances', 'filters', 'selectedCategory', 'selectedBrand'],
+                only: [
+                    'fragrances',
+                    'filters',
+                    'selectedCategory',
+                    'selectedBrand',
+                    'selectedGender',
+                    'selectedConcentration',
+                    'selectedScent',
+                ],
                 onFinish: () => setIsServerFiltering(false),
             });
         }, 150);
@@ -480,8 +589,10 @@ export default function Products({
         };
     }, [
         searchQuery,
-        activeCategory,
         activeBrand,
+        activeGender,
+        activeConcentration,
+        activeScent,
         priceTier,
         customMin,
         customMax,
@@ -586,20 +697,24 @@ export default function Products({
         }
     };
 
-    // Count active filters (Pencarian, Kategori, Brand, Rentang Harga, Rating, Diskon)
+    // Count active filters (Pencarian, Brand, Gender, Konsentrasi, Scent Profile, Rentang Harga, Rating, Diskon)
     const activeFiltersCount = useMemo(() => {
         let count = 0;
         if (searchQuery.trim()) count++;
-        if (activeCategory !== 'All') count++;
         if (activeBrand !== 'All') count++;
+        if (activeGender !== 'All') count++;
+        if (activeConcentration !== 'All') count++;
+        if (activeScent !== 'All') count++;
         if (priceTier !== 'all' || customMin || customMax) count++;
         if (minRating > 0) count++;
         if (onlyDiscount) count++;
         return count;
     }, [
         searchQuery,
-        activeCategory,
         activeBrand,
+        activeGender,
+        activeConcentration,
+        activeScent,
         priceTier,
         customMin,
         customMax,
@@ -610,8 +725,11 @@ export default function Products({
     // Reset all filters and clear URL query string via server-side reload
     const resetAllFilters = () => {
         setSearchQuery('');
-        setActiveCategory('All');
         setActiveBrand('All');
+        setActiveGender('All');
+        setActiveConcentration('All');
+        setActiveScent('All');
+        setActiveCategory('All');
         setPriceTier('all');
         setCustomMin('');
         setCustomMax('');
@@ -624,7 +742,15 @@ export default function Products({
             preserveState: true,
             preserveScroll: true,
             replace: true,
-            only: ['fragrances', 'filters', 'selectedCategory', 'selectedBrand'],
+            only: [
+                'fragrances',
+                'filters',
+                'selectedCategory',
+                'selectedBrand',
+                'selectedGender',
+                'selectedConcentration',
+                'selectedScent',
+            ],
             onFinish: () => setIsServerFiltering(false),
         });
     };
