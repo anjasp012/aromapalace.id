@@ -104,7 +104,7 @@ interface ProductsProps {
         customMax?: string;
         minRating?: number;
         onlyDiscount?: boolean;
-        sortBy?: 'featured' | 'popular' | 'price-asc' | 'price-desc' | 'rating' | 'discount';
+        sortBy?: 'price-asc' | 'price-desc' | 'name-asc' | 'name-desc' | string;
         tag?: string;
     };
     totalCount?: number;
@@ -129,7 +129,7 @@ interface ParsedFilters {
     customMax: string;
     minRating: number;
     onlyDiscount: boolean;
-    sortBy: 'featured' | 'popular' | 'price-asc' | 'price-desc' | 'rating' | 'discount';
+    sortBy: 'price-asc' | 'price-desc' | 'name-asc' | 'name-desc' | string;
 }
 
 const normalizeSlug = (str: string) => (str || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -233,11 +233,11 @@ function parseFiltersFromUrl(
     // 9. Discount / Promo Filter
     const onlyDiscount = searchParams.get('discount') === '1' || searchParams.get('discount') === 'true' || searchParams.get('promo') === '1';
 
-    // 10. Sort By
-    let sortBy: 'featured' | 'popular' | 'price-asc' | 'price-desc' | 'rating' | 'discount' = 'featured';
+    // 10. Sort By (Harga Terendah, Harga Tertinggi, Nama A - Z, Nama Z - A)
+    let sortBy: string = 'price-asc';
     const rawSort = searchParams.get('sort') || searchParams.get('sortBy');
-    if (rawSort && ['featured', 'popular', 'price-asc', 'price-desc', 'rating', 'discount'].includes(rawSort)) {
-        sortBy = rawSort as any;
+    if (rawSort && ['price-asc', 'price-desc', 'name-asc', 'name-desc', 'featured', 'popular', 'rating', 'discount'].includes(rawSort)) {
+        sortBy = rawSort === 'featured' ? 'price-asc' : rawSort;
     }
 
     return {
@@ -403,7 +403,7 @@ export default function Products({
                 customMax: serverFilters.customMax || '',
                 minRating: serverFilters.minRating || 0,
                 onlyDiscount: serverFilters.onlyDiscount ?? false,
-                sortBy: serverFilters.sortBy || 'featured',
+                sortBy: serverFilters.sortBy && serverFilters.sortBy !== 'featured' ? serverFilters.sortBy : 'price-asc',
             };
         }
         const searchStr = typeof window !== 'undefined'
@@ -435,7 +435,7 @@ export default function Products({
     const [customMax, setCustomMax] = useState(initialFilters.customMax);
     const [minRating, setMinRating] = useState<number>(initialFilters.minRating);
     const [onlyDiscount, setOnlyDiscount] = useState<boolean>(initialFilters.onlyDiscount);
-    const [sortBy, setSortBy] = useState<'featured' | 'popular' | 'price-asc' | 'price-desc' | 'rating' | 'discount'>(initialFilters.sortBy);
+    const [sortBy, setSortBy] = useState<string>(initialFilters.sortBy || 'price-asc');
     const [isServerFiltering, setIsServerFiltering] = useState(false);
 
     // Derived Brands Partitioning (Primary Pills + Dropdown for Other Brands)
@@ -490,7 +490,7 @@ export default function Products({
                 customMax: serverFilters.customMax || '',
                 minRating: serverFilters.minRating || 0,
                 onlyDiscount: serverFilters.onlyDiscount ?? false,
-                sortBy: serverFilters.sortBy || 'featured',
+                sortBy: serverFilters.sortBy && serverFilters.sortBy !== 'featured' ? serverFilters.sortBy : 'price-asc',
             }
             : parseFiltersFromUrl(
                 typeof window !== 'undefined' ? window.location.search : (url && url.includes('?') ? url.slice(url.indexOf('?')) : ''),
@@ -530,7 +530,7 @@ export default function Products({
         if (nextFilters.customMax.trim()) currentParams.max_price = nextFilters.customMax.trim();
         if (nextFilters.minRating > 0) currentParams.rating = nextFilters.minRating.toString();
         if (nextFilters.onlyDiscount) currentParams.discount = '1';
-        if (nextFilters.sortBy && nextFilters.sortBy !== 'featured') currentParams.sort = nextFilters.sortBy;
+        if (nextFilters.sortBy) currentParams.sort = nextFilters.sortBy;
 
         lastAppliedParamsRef.current = JSON.stringify(currentParams);
     }, [serverFilters, selectedCategory, selectedBrand, selectedGender, selectedConcentration, selectedScent, url]);
@@ -548,7 +548,7 @@ export default function Products({
         if (customMax.trim()) params.max_price = customMax.trim();
         if (minRating > 0) params.rating = minRating.toString();
         if (onlyDiscount) params.discount = '1';
-        if (sortBy && sortBy !== 'featured') params.sort = sortBy;
+        if (sortBy) params.sort = sortBy;
 
         const paramsStr = JSON.stringify(params);
 
@@ -739,7 +739,7 @@ export default function Products({
         setCustomMax('');
         setMinRating(0);
         setOnlyDiscount(false);
-        setSortBy('featured');
+        setSortBy('price-asc');
 
         setIsServerFiltering(true);
         router.get('/products', {}, {
