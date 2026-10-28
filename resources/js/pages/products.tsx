@@ -767,16 +767,25 @@ export default function Products({
                     <svg className="w-4 h-4 text-[#4A070B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                     </svg>
-                    <span>{t('catalog.filter')}</span>
+                    <span>{isEn ? 'FILTERS' : 'FILTER'}</span>
                 </div>
                 {activeFiltersCount > 0 && (
-                    <span className="w-5 h-5 rounded-full bg-[#4A070B]/10 text-[#4A070B] border border-[#4A070B]/30 text-[10px] font-bold flex items-center justify-center">
-                        {activeFiltersCount}
-                    </span>
+                    <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={resetAllFilters}
+                            className="text-[11px] text-[#4A070B] dark:text-[#E8D0BA] hover:underline font-medium cursor-pointer"
+                        >
+                            {isEn ? 'Reset' : 'Reset'}
+                        </button>
+                        <span className="w-5 h-5 rounded-full bg-[#4A070B]/10 text-[#4A070B] border border-[#4A070B]/30 text-[10px] font-bold flex items-center justify-center">
+                            {activeFiltersCount}
+                        </span>
+                    </div>
                 )}
             </div>
 
-            {/* 1. Quick Search */}
+            {/* Quick Search */}
             <div className="space-y-2">
                 <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground block">
                     {isEn ? 'Quick Search' : 'Pencarian Cepat'}
@@ -805,38 +814,13 @@ export default function Products({
                 </div>
             </div>
 
-            {/* 2. Kategori */}
+            {/* 1. BRANDS */}
             <div className="space-y-2 pt-1 border-t border-border/60">
                 <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground block pt-2">
-                    {t('catalog.categories')}
+                    {isEn ? 'BRANDS' : 'BRAND'}
                 </label>
                 <div className="flex flex-wrap gap-1.5">
-                    {categories.map((cat) => {
-                        const isSelected = activeCategory === cat || (cat !== 'All' && normalizeSlug(activeCategory) === normalizeSlug(cat));
-                        return (
-                            <button
-                                key={cat}
-                                type="button"
-                                onClick={() => setActiveCategory(cat)}
-                                className={`px-2.5 py-1.5 rounded-md text-[11px] transition cursor-pointer border text-center shadow-none ${isSelected
-                                    ? 'bg-[#4A070B]/10 text-[#4A070B] border-[#4A070B] font-bold ring-1 ring-[#4A070B]/25'
-                                    : 'bg-background/80 text-muted-foreground border-border/80 hover:text-foreground hover:border-[#4A070B]/30'
-                                    }`}
-                            >
-                                {cat === 'All' ? t('catalog.allCategories') : formatCategoryName(cat, isEn)}
-                            </button>
-                        );
-                    })}
-                </div>
-            </div>
-
-            {/* 3. Brand */}
-            <div className="space-y-2 pt-1 border-t border-border/60">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground block pt-2">
-                    {t('catalog.brands')}
-                </label>
-                <div className="flex flex-wrap gap-1.5">
-                    {/* Semua Brand */}
+                    {/* All Brands */}
                     <button
                         type="button"
                         onClick={() => setActiveBrand('All')}
@@ -845,7 +829,7 @@ export default function Products({
                             : 'bg-background/80 text-muted-foreground border-border/80 hover:text-foreground hover:border-[#4A070B]/30'
                             }`}
                     >
-                        {t('catalog.allBrands')}
+                        {isEn ? 'All Brands' : 'Semua Brand'}
                     </button>
 
                     {/* Primary Brands */}
@@ -866,7 +850,7 @@ export default function Products({
                         );
                     })}
 
-                    {/* Brand Lainnya Dropdown */}
+                    {/* Other Brands Dropdown */}
                     {otherBrands.length > 0 && (
                         <DropdownMenu>
                             <DropdownMenuTrigger
@@ -887,7 +871,7 @@ export default function Products({
                                         onClick={() => setActiveBrand('All')}
                                         className="flex items-center justify-between px-2.5 py-1.5 cursor-pointer rounded-md text-[11px] text-muted-foreground hover:bg-muted/80 border-b border-border/50 mb-1"
                                     >
-                                        <span>{t('catalog.allBrands')}</span>
+                                        <span>{isEn ? 'All Brands' : 'Semua Brand'}</span>
                                     </DropdownMenuItem>
                                 )}
                                 {otherBrands.map((b) => {
@@ -912,10 +896,115 @@ export default function Products({
                 </div>
             </div>
 
-            {/* 4. Rentang Harga */}
+            {/* 2. GENDER */}
+            <div className="space-y-2 pt-1 border-t border-border/60">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground block pt-2">
+                    {isEn ? 'GENDER' : 'GENDER'}
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                    <button
+                        type="button"
+                        onClick={() => setActiveGender('All')}
+                        className={`px-2.5 py-1.5 rounded-md text-[11px] transition cursor-pointer border text-center shadow-none ${activeGender === 'All'
+                            ? 'bg-[#4A070B]/10 text-[#4A070B] border-[#4A070B] font-bold ring-1 ring-[#4A070B]/25'
+                            : 'bg-background/80 text-muted-foreground border-border/80 hover:text-foreground hover:border-[#4A070B]/30'
+                            }`}
+                    >
+                        {isEn ? 'All Genders' : 'Semua Gender'}
+                    </button>
+                    {availableGenders.map((g) => {
+                        const isSelected = activeGender === g.slug || activeGender === g.name || normalizeSlug(activeGender) === normalizeSlug(g.slug);
+                        return (
+                            <button
+                                key={g.slug || g.name}
+                                type="button"
+                                onClick={() => setActiveGender(isSelected ? 'All' : g.slug)}
+                                className={`px-2.5 py-1.5 rounded-md text-[11px] transition cursor-pointer border text-center shadow-none ${isSelected
+                                    ? 'bg-[#4A070B]/10 text-[#4A070B] border-[#4A070B] font-bold ring-1 ring-[#4A070B]/25'
+                                    : 'bg-background/80 text-muted-foreground border-border/80 hover:text-foreground hover:border-[#4A070B]/30'
+                                    }`}
+                            >
+                                {getCategoryItemLabel(g)}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* 3. CONCENTRATION */}
+            <div className="space-y-2 pt-1 border-t border-border/60">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground block pt-2">
+                    {isEn ? 'CONCENTRATION' : 'KONSENTRASI'}
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                    <button
+                        type="button"
+                        onClick={() => setActiveConcentration('All')}
+                        className={`px-2.5 py-1.5 rounded-md text-[11px] transition cursor-pointer border text-center shadow-none ${activeConcentration === 'All'
+                            ? 'bg-[#4A070B]/10 text-[#4A070B] border-[#4A070B] font-bold ring-1 ring-[#4A070B]/25'
+                            : 'bg-background/80 text-muted-foreground border-border/80 hover:text-foreground hover:border-[#4A070B]/30'
+                            }`}
+                    >
+                        {isEn ? 'All Concentrations' : 'Semua Konsentrasi'}
+                    </button>
+                    {availableConcentrations.map((c) => {
+                        const isSelected = activeConcentration === c.slug || activeConcentration === c.name || normalizeSlug(activeConcentration) === normalizeSlug(c.slug);
+                        return (
+                            <button
+                                key={c.slug || c.name}
+                                type="button"
+                                onClick={() => setActiveConcentration(isSelected ? 'All' : c.slug)}
+                                className={`px-2.5 py-1.5 rounded-md text-[11px] transition cursor-pointer border text-center shadow-none ${isSelected
+                                    ? 'bg-[#4A070B]/10 text-[#4A070B] border-[#4A070B] font-bold ring-1 ring-[#4A070B]/25'
+                                    : 'bg-background/80 text-muted-foreground border-border/80 hover:text-foreground hover:border-[#4A070B]/30'
+                                    }`}
+                            >
+                                {getCategoryItemLabel(c)}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* 4. SCENT PROFILE */}
+            <div className="space-y-2 pt-1 border-t border-border/60">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground block pt-2">
+                    {isEn ? 'SCENT PROFILE' : 'PROFIL AROMA'}
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                    <button
+                        type="button"
+                        onClick={() => setActiveScent('All')}
+                        className={`px-2.5 py-1.5 rounded-md text-[11px] transition cursor-pointer border text-center shadow-none ${activeScent === 'All'
+                            ? 'bg-[#4A070B]/10 text-[#4A070B] border-[#4A070B] font-bold ring-1 ring-[#4A070B]/25'
+                            : 'bg-background/80 text-muted-foreground border-border/80 hover:text-foreground hover:border-[#4A070B]/30'
+                            }`}
+                    >
+                        {isEn ? 'All Scents' : 'Semua Profil'}
+                    </button>
+                    {availableScents.map((s) => {
+                        const isSelected = activeScent === s.slug || activeScent === s.name || normalizeSlug(activeScent) === normalizeSlug(s.slug);
+                        return (
+                            <button
+                                key={s.slug || s.name}
+                                type="button"
+                                onClick={() => setActiveScent(isSelected ? 'All' : s.slug)}
+                                className={`px-2.5 py-1.5 rounded-md text-[11px] transition cursor-pointer border text-center shadow-none ${isSelected
+                                    ? 'bg-[#4A070B]/10 text-[#4A070B] border-[#4A070B] font-bold ring-1 ring-[#4A070B]/25'
+                                    : 'bg-background/80 text-muted-foreground border-border/80 hover:text-foreground hover:border-[#4A070B]/30'
+                                    }`}
+                            >
+                                {getCategoryItemLabel(s)}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* 5. PRICE RANGE */}
             <div className="space-y-2.5 pt-1 border-t border-border/60">
                 <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground block pt-2">
-                    {t('catalog.priceRange')}
+                    {isEn ? 'PRICE RANGE' : 'RENTANG HARGA'}
                 </label>
                 <div className="grid grid-cols-2 gap-1.5">
                     {PRICE_TIERS.map((tier) => (
@@ -968,10 +1057,10 @@ export default function Products({
                 </div>
             </div>
 
-            {/* 4. Rating */}
+            {/* 6. CUSTOMER RATING */}
             <div className="space-y-2 pt-1 border-t border-border/60">
                 <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground block pt-2">
-                    {isEn ? 'Customer Rating' : 'Rating Pelanggan'}
+                    {isEn ? 'CUSTOMER RATING' : 'RATING PELANGGAN'}
                 </label>
                 <div className="flex gap-1.5">
                     <button
@@ -982,7 +1071,7 @@ export default function Products({
                             : 'bg-background/80 text-muted-foreground border-border/80 hover:text-foreground hover:border-[#4A070B]/30'
                             }`}
                     >
-                        {t('common.all')}
+                        {isEn ? 'All' : 'Semua'}
                     </button>
                     <button
                         type="button"
@@ -1007,10 +1096,10 @@ export default function Products({
                 </div>
             </div>
 
-            {/* 5. Penawaran & Promo */}
+            {/* 7. PROMOS/DISCOUNT */}
             <div className="space-y-2 pt-1 border-t border-border/60">
                 <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground block pt-2">
-                    {isEn ? 'Deals & Discounts' : 'Penawaran & Diskon'}
+                    {isEn ? 'PROMOS / DISCOUNT' : 'PROMO & DISKON'}
                 </label>
                 <div className="grid grid-cols-2 gap-1.5">
                     <button
@@ -1161,13 +1250,13 @@ export default function Products({
                                     {isEn ? 'Active filters:' : 'Filter aktif:'}
                                 </span>
 
-                                {activeCategory !== 'All' && (
+                                {searchQuery && (
                                     <Badge
                                         variant="secondary"
                                         className="gap-1 text-[11px] rounded-md px-2 py-0.5 border border-border cursor-pointer hover:bg-destructive/10"
-                                        onClick={() => setActiveCategory('All')}
+                                        onClick={() => setSearchQuery('')}
                                     >
-                                        <span>{formatCategoryName(categories.find((c) => c === activeCategory || (c !== 'All' && normalizeSlug(c) === normalizeSlug(activeCategory))) || activeCategory, isEn)}</span>
+                                        <span>&ldquo;{searchQuery}&rdquo;</span>
                                         <span className="text-xs">&times;</span>
                                     </Badge>
                                 )}
@@ -1183,7 +1272,66 @@ export default function Products({
                                     </Badge>
                                 )}
 
-                                {priceTier !== 'all' && (
+                                {activeGender !== 'All' && (
+                                    <Badge
+                                        variant="secondary"
+                                        className="gap-1 text-[11px] rounded-md px-2 py-0.5 border border-border cursor-pointer hover:bg-destructive/10"
+                                        onClick={() => setActiveGender('All')}
+                                    >
+                                        <span>
+                                            {isEn ? 'Gender' : 'Gender'}: {(() => {
+                                                const match = availableGenders.find((g) => g.slug === activeGender || g.name === activeGender || normalizeSlug(g.slug) === normalizeSlug(activeGender));
+                                                return match ? getCategoryItemLabel(match) : activeGender;
+                                            })()}
+                                        </span>
+                                        <span className="text-xs">&times;</span>
+                                    </Badge>
+                                )}
+
+                                {activeConcentration !== 'All' && (
+                                    <Badge
+                                        variant="secondary"
+                                        className="gap-1 text-[11px] rounded-md px-2 py-0.5 border border-border cursor-pointer hover:bg-destructive/10"
+                                        onClick={() => setActiveConcentration('All')}
+                                    >
+                                        <span>
+                                            {isEn ? 'Concentration' : 'Konsentrasi'}: {(() => {
+                                                const match = availableConcentrations.find((c) => c.slug === activeConcentration || c.name === activeConcentration || normalizeSlug(c.slug) === normalizeSlug(activeConcentration));
+                                                return match ? getCategoryItemLabel(match) : activeConcentration;
+                                            })()}
+                                        </span>
+                                        <span className="text-xs">&times;</span>
+                                    </Badge>
+                                )}
+
+                                {activeScent !== 'All' && (
+                                    <Badge
+                                        variant="secondary"
+                                        className="gap-1 text-[11px] rounded-md px-2 py-0.5 border border-border cursor-pointer hover:bg-destructive/10"
+                                        onClick={() => setActiveScent('All')}
+                                    >
+                                        <span>
+                                            {isEn ? 'Scent' : 'Aroma'}: {(() => {
+                                                const match = availableScents.find((s) => s.slug === activeScent || s.name === activeScent || normalizeSlug(s.slug) === normalizeSlug(activeScent));
+                                                return match ? getCategoryItemLabel(match) : activeScent;
+                                            })()}
+                                        </span>
+                                        <span className="text-xs">&times;</span>
+                                    </Badge>
+                                )}
+
+                                {activeCategory !== 'All' && (
+                                    <Badge
+                                        variant="secondary"
+                                        className="gap-1 text-[11px] rounded-md px-2 py-0.5 border border-border cursor-pointer hover:bg-destructive/10"
+                                        onClick={() => setActiveCategory('All')}
+                                    >
+                                        <span>{formatCategoryName(categories.find((c) => c === activeCategory || (c !== 'All' && normalizeSlug(c) === normalizeSlug(activeCategory))) || activeCategory, isEn)}</span>
+                                        <span className="text-xs">&times;</span>
+                                    </Badge>
+                                )}
+
+                                {(priceTier !== 'all' || customMin || customMax) && (
                                     <Badge
                                         variant="secondary"
                                         className="gap-1 text-[11px] rounded-md px-2 py-0.5 border border-border cursor-pointer hover:bg-destructive/10"
@@ -1210,17 +1358,6 @@ export default function Products({
                                         onClick={() => setMinRating(0)}
                                     >
                                         <span>★ {minRating}+</span>
-                                        <span className="text-xs">&times;</span>
-                                    </Badge>
-                                )}
-
-                                {searchQuery && (
-                                    <Badge
-                                        variant="secondary"
-                                        className="gap-1 text-[11px] rounded-md px-2 py-0.5 border border-border cursor-pointer hover:bg-destructive/10"
-                                        onClick={() => setSearchQuery('')}
-                                    >
-                                        <span>&ldquo;{searchQuery}&rdquo;</span>
                                         <span className="text-xs">&times;</span>
                                     </Badge>
                                 )}
