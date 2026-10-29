@@ -491,15 +491,16 @@ export default function Products({
         if (activeTag === 'new-arrivals' || activeTag === 'new_arrivals') {
             return {
                 headTitle: isEn ? 'New Arrivals' : 'Koleksi Terbaru',
+                titleClassName: 'font-bold sm:font-extrabold text-3xl sm:text-4xl lg:text-5xl tracking-[0.08em]',
                 title: isEn ? (
                     <span>
-                        <span className="text-4xl sm:text-5xl md:text-6xl font-normal">N</span>EW{' '}
-                        <span className="text-4xl sm:text-5xl md:text-6xl font-normal">A</span>RRIVALS
+                        <span className="text-4xl sm:text-5xl md:text-6xl font-bold sm:font-extrabold">N</span>EW{' '}
+                        <span className="text-4xl sm:text-5xl md:text-6xl font-bold sm:font-extrabold">A</span>RRIVALS
                     </span>
                 ) : (
                     <span>
-                        <span className="text-4xl sm:text-5xl md:text-6xl font-normal">K</span>OLEKSI{' '}
-                        <span className="text-4xl sm:text-5xl md:text-6xl font-normal">T</span>ERBARU
+                        <span className="text-4xl sm:text-5xl md:text-6xl font-bold sm:font-extrabold">K</span>OLEKSI{' '}
+                        <span className="text-4xl sm:text-5xl md:text-6xl font-bold sm:font-extrabold">T</span>ERBARU
                     </span>
                 ),
                 subtitle1: isEn ? 'DISCOVER OUR LATEST ARRIVALS' : 'JELAJAHI KOLEKSI TERBARU KAMI',
@@ -520,15 +521,16 @@ export default function Products({
         if (activeTag === 'best-sellers' || activeTag === 'best_sellers') {
             return {
                 headTitle: isEn ? 'Best Sellers' : 'Produk Terlaris',
+                titleClassName: 'font-bold sm:font-extrabold text-3xl sm:text-4xl lg:text-5xl tracking-[0.08em]',
                 title: isEn ? (
                     <span>
-                        <span className="text-4xl sm:text-5xl md:text-6xl font-normal">B</span>EST{' '}
-                        <span className="text-4xl sm:text-5xl md:text-6xl font-normal">S</span>ELLERS
+                        <span className="text-4xl sm:text-5xl md:text-6xl font-bold sm:font-extrabold">B</span>EST{' '}
+                        <span className="text-4xl sm:text-5xl md:text-6xl font-bold sm:font-extrabold">S</span>ELLERS
                     </span>
                 ) : (
                     <span>
-                        <span className="text-4xl sm:text-5xl md:text-6xl font-normal">P</span>RODUK{' '}
-                        <span className="text-4xl sm:text-5xl md:text-6xl font-normal">T</span>ERLARIS
+                        <span className="text-4xl sm:text-5xl md:text-6xl font-bold sm:font-extrabold">P</span>RODUK{' '}
+                        <span className="text-4xl sm:text-5xl md:text-6xl font-bold sm:font-extrabold">T</span>ERLARIS
                     </span>
                 ),
                 subtitle1: isEn ? 'DISCOVER OUR MOST LOVED FRAGRANCES' : 'TEMUKAN WEWANGIAN PALING DICINTAI',
@@ -549,22 +551,22 @@ export default function Products({
         if (activeTag === 'special-offers' || activeTag === 'special_offers' || onlyDiscount) {
             return {
                 headTitle: isEn ? 'Special Offers' : 'Penawaran Spesial',
-                titleClassName: 'font-bold sm:font-extrabold text-4xl sm:text-5xl lg:text-6xl tracking-[0.06em]',
+                titleClassName: 'font-bold sm:font-extrabold text-3xl sm:text-4xl lg:text-5xl tracking-[0.06em]',
                 title: isEn ? (
-                    <div className="flex flex-col items-center justify-center leading-[0.9] sm:leading-[0.88]">
+                    <div className="flex flex-col sm:flex-row items-center justify-center sm:gap-3 leading-[0.9] sm:leading-normal">
                         <span className="block">
                             <span className="text-[1.24em]">S</span>PECIAL
                         </span>
-                        <span className="block -mt-1 sm:-mt-2">
+                        <span className="block -mt-1 sm:mt-0">
                             <span className="text-[1.24em]">O</span>FFERS
                         </span>
                     </div>
                 ) : (
-                    <div className="flex flex-col items-center justify-center leading-[0.9] sm:leading-[0.88]">
+                    <div className="flex flex-col sm:flex-row items-center justify-center sm:gap-3 leading-[0.9] sm:leading-normal">
                         <span className="block">
                             <span className="text-[1.24em]">P</span>ENAWARAN
                         </span>
-                        <span className="block -mt-1 sm:-mt-2">
+                        <span className="block -mt-1 sm:mt-0">
                             <span className="text-[1.24em]">S</span>PESIAL
                         </span>
                     </div>
