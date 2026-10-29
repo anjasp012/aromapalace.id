@@ -561,7 +561,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                             <Menu className="size-4" />
                         </Button>
 
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
                             <span>Admin</span>
                             <ChevronRight className="size-3.5" />
                             <span className="font-medium text-foreground">{title}</span>
@@ -662,21 +662,32 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                             </DropdownMenuContent>
                         </DropdownMenu>
 
-                        <Button variant="outline" size="sm" asChild>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            asChild
+                            className="size-8 p-0 sm:size-auto sm:h-8 sm:px-3 cursor-pointer"
+                            title="Lihat Toko"
+                        >
                             <a
                                 href={getStorefrontUrl('/', (props as any)?.storefront_url)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                             >
-                                <Store className="size-3.5 mr-1.5" />
+                                <Store className="size-4 sm:size-3.5 sm:mr-1.5" />
                                 <span className="hidden sm:inline">Lihat Toko</span>
                             </a>
                         </Button>
 
-                        <Button size="sm" asChild>
+                        <Button
+                            size="sm"
+                            asChild
+                            className="size-8 p-0 sm:size-auto sm:h-8 sm:px-3 cursor-pointer"
+                            title="Kelola Pesanan"
+                        >
                             <Link href="/manajemen-pesanan">
-                                <ShoppingBag className="size-3.5 mr-1.5" />
-                                <span>Kelola Pesanan</span>
+                                <ShoppingBag className="size-4 sm:size-3.5 sm:mr-1.5" />
+                                <span className="hidden sm:inline">Kelola Pesanan</span>
                             </Link>
                         </Button>
                     </div>
