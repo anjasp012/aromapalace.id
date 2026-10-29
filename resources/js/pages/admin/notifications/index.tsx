@@ -20,6 +20,7 @@ import {
     UserCheck,
     Award,
     Coins,
+    FileCheck,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -160,6 +161,12 @@ export default function AdminNotificationsIndex({
                         <CreditCard className="size-5" />
                     </div>
                 );
+            case 'admin_manual_payment_proof':
+                return (
+                    <div className="size-10 rounded-md bg-orange-500/10 text-orange-600 dark:text-orange-400 flex items-center justify-center shrink-0 border border-orange-500/20 shadow-xs">
+                        <FileCheck className="size-5" />
+                    </div>
+                );
             case 'order_shipped':
             case 'admin_order_shipped':
                 return (
@@ -239,6 +246,8 @@ export default function AdminNotificationsIndex({
             case 'payment_success':
             case 'admin_payment_received':
                 return <Badge variant="secondary" className="text-[10px] bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20">Pembayaran</Badge>;
+            case 'admin_manual_payment_proof':
+                return <Badge variant="secondary" className="text-[10px] bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20">Bukti Transfer</Badge>;
             case 'order_shipped':
             case 'admin_order_shipped':
                 return <Badge variant="secondary" className="text-[10px] bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20">Pengiriman</Badge>;
@@ -406,6 +415,7 @@ export default function AdminNotificationsIndex({
                             { key: 'all', label: 'Semua Kategori' },
                             { key: 'orders', label: 'Pesanan Baru' },
                             { key: 'payments', label: 'Pembayaran' },
+                            { key: 'manual_proof', label: 'Bukti Transfer' },
                             { key: 'shipping', label: 'Pengiriman' },
                             { key: 'delivered', label: 'Pesanan Sampai' },
                             { key: 'completed', label: 'Pesanan Selesai' },
@@ -481,6 +491,14 @@ export default function AdminNotificationsIndex({
                                             <td className="p-4 align-middle space-y-1">
                                                 <div className="flex items-center gap-2 flex-wrap">
                                                     {getTypeBadge(notif.type)}
+                                                    {(notif.type === 'admin_payment_received' || notif.type === 'payment_success') && (
+                                                        (notif.data as Record<string, string> | null)?.payment_method === 'manual'
+                                                            ? <Badge variant="secondary" className="text-[10px] bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20">Manual</Badge>
+                                                            : <Badge variant="secondary" className="text-[10px] bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-500/20">Otomatis</Badge>
+                                                    )}
+                                                    {notif.type === 'admin_manual_payment_proof' && (
+                                                        <Badge variant="secondary" className="text-[10px] bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20">Manual</Badge>
+                                                    )}
                                                     <span className={`text-sm ${!notif.is_read ? 'font-bold text-foreground' : 'font-semibold text-foreground/85'}`}>
                                                         {notif.title}
                                                     </span>

@@ -202,6 +202,7 @@ class OrderController extends Controller
             $newStatus = 'dikirim';
         }
 
+        $previousStatus = $orderModel->status;
         $orderModel->status = $newStatus;
 
         if (in_array($newStatus, ['diproses', 'dikirim', 'selesai'])) {
@@ -285,6 +286,8 @@ class OrderController extends Controller
         $orderModel->save();
 
         // Trigger push notifications
+        $isManualPaymentTransition = $previousStatus === 'menunggu_konfirmasi';
+
         if ($newStatus === 'dikirim') {
             if ($orderModel->delivery_type === 'pickup') {
                 app(FirebaseNotificationService::class)->notifyStorePickupReady($orderModel);
@@ -292,14 +295,22 @@ class OrderController extends Controller
                 app(FirebaseNotificationService::class)->notifyOrderShipped($orderModel);
             }
         } elseif ($newStatus === 'diproses') {
-            app(FirebaseNotificationService::class)->notifyPaymentSuccess($orderModel);
+            if ($isManualPaymentTransition) {
+                app(FirebaseNotificationService::class)->notifyManualPaymentApproved($orderModel);
+            } else {
+                app(FirebaseNotificationService::class)->notifyPaymentSuccess($orderModel);
+            }
         } elseif ($newStatus === 'sampai') {
             app(FirebaseNotificationService::class)->notifyOrderDelivered($orderModel);
         } elseif ($newStatus === 'selesai') {
             app(FirebaseNotificationService::class)->notifyOrderCompleted($orderModel);
             app(MembershipService::class)->awardOrderPoints($orderModel);
         } elseif ($newStatus === 'dibatalkan') {
-            app(FirebaseNotificationService::class)->notifyOrderCanceled($orderModel, 'Dibatalkan oleh Administrator.');
+            if ($isManualPaymentTransition) {
+                app(FirebaseNotificationService::class)->notifyManualPaymentRejected($orderModel);
+            } else {
+                app(FirebaseNotificationService::class)->notifyOrderCanceled($orderModel, 'Dibatalkan oleh Administrator.');
+            }
         }
 
         // Broadcast real-time update via WebSockets

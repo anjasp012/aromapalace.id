@@ -234,6 +234,13 @@ class PaymentController extends Controller
 
         Log::info("Manual payment proof uploaded for order #{$orderModel->order_number} by user #{$user->id}");
 
+        // Notify admins that a manual payment proof has been uploaded
+        try {
+            app(FirebaseNotificationService::class)->notifyManualPaymentProofUploaded($orderModel);
+        } catch (\Throwable $e) {
+            Log::warning("Failed to send manual payment proof notification for order #{$orderModel->order_number}: ".$e->getMessage());
+        }
+
         return redirect()->route('payment.show', ['order' => $orderModel->order_number])
             ->with('success', 'Bukti transfer berhasil diunggah! Tim Aroma Palace akan memverifikasi pesanan Anda segera.');
     }

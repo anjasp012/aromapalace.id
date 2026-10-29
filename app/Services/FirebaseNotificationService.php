@@ -941,4 +941,33 @@ class FirebaseNotificationService
 
         return $sentCount;
     }
+
+    /**
+     * 13. Notifikasi Bukti Transfer Manual Diunggah:
+     * - Ke Admin: "Bukti Transfer Diunggah – Konfirmasi Diperlukan"
+     */
+    public function notifyManualPaymentProofUploaded(Order $order): void
+    {
+        $cacheKey = "fcm_manual_proof_uploaded_{$order->id}_".now()->format('YmdH');
+        if (Cache::has($cacheKey)) {
+            Log::info("Suppressing duplicate notifyManualPaymentProofUploaded for order #{$order->order_number}");
+
+            return;
+        }
+        Cache::put($cacheKey, true, now()->addHours(1));
+
+        $formattedTotal = 'Rp '.number_format($order->total_amount, 0, ',', '.');
+
+        $this->sendToAdmins(
+            title: '🧾 Bukti Transfer Diunggah #'.$order->order_number,
+            body: "{$order->recipient_name} telah mengunggah bukti transfer {$formattedTotal}. Silakan verifikasi segera.",
+            url: '/manajemen-pesanan/'.$order->id,
+            data: [
+                'order_id' => (string) $order->id,
+                'order_number' => (string) $order->order_number,
+                'type' => 'admin_manual_payment_proof',
+                'payment_method' => 'manual',
+            ]
+        );
+    }
 }
