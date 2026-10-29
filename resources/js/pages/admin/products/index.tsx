@@ -455,10 +455,10 @@ export default function AdminProductsIndex({
                                     <th className="h-10 px-4 text-left font-medium">Parfum &amp; Foto</th>
                                     <th className="h-10 px-4 text-left font-medium">Brand</th>
                                     <th className="h-10 px-4 text-left font-medium">Kategori</th>
-                                    <th className="h-10 px-4 text-center font-medium">Draft</th>
                                     <th className="h-10 px-4 text-left font-medium">Label Produk</th>
                                     <th className="h-10 px-4 text-left font-medium">Varian &amp; Harga</th>
                                     <th className="h-10 px-4 text-center font-medium">Total Stok</th>
+                                    <th className="h-10 px-4 text-center font-medium">Draft</th>
                                     <th className="h-10 px-4 text-right font-medium">Aksi</th>
                                 </tr>
                             </thead>
@@ -541,10 +541,6 @@ export default function AdminProductsIndex({
                                             </div>
                                         </td>
 
-                                        <td className="p-4 align-middle whitespace-nowrap text-center text-xs font-semibold">
-                                            {product.is_draft ? 'YA' : 'TIDAK'}
-                                        </td>
-
                                         <td className="p-4 align-middle whitespace-nowrap">
                                             {(product.is_new_arrivals || product.is_best_sellers || product.is_special_offers) ? (
                                                 <div className="flex flex-wrap gap-1 max-w-[150px]">
@@ -623,6 +619,10 @@ export default function AdminProductsIndex({
                                             >
                                                 {product.total_stock <= 0 ? 'Habis' : `${product.total_stock} unit`}
                                             </Badge>
+                                        </td>
+
+                                        <td className="p-4 align-middle whitespace-nowrap text-center text-xs font-semibold">
+                                            {product.is_draft ? 'YA' : 'TIDAK'}
                                         </td>
 
                                         <td className="p-4 whitespace-nowrap align-middle text-right">

@@ -456,8 +456,9 @@ export default function Products({
         activeBrand !== 'All' && otherBrands.some((b) => b === activeBrand || normalizeSlug(b) === normalizeSlug(activeBrand))
     );
 
-    // 2. Mobile Drawer State
+    // 2. Mobile Drawer & Desktop Filter Sidebar Visibility State
     const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+    const [showDesktopFilter, setShowDesktopFilter] = useState(true);
 
     // 3. Modals, Wishlist & Copy State
     const [selectedBottle, setSelectedBottle] = useState<Fragrance | null>(null);
@@ -1169,11 +1170,13 @@ export default function Products({
                     {/* ======================================================== */}
                     {/* LEFT SIDEBAR: DESKTOP STICKY FILTER PANEL */}
                     {/* ======================================================== */}
-                    <aside className="hidden lg:block w-72 shrink-0 sticky top-28">
-                        <div className="rounded-lg border border-border/80 bg-card/60 backdrop-blur-xs p-5 shadow-none">
-                            {renderFilterContent()}
-                        </div>
-                    </aside>
+                    {showDesktopFilter && (
+                        <aside className="hidden lg:block w-72 shrink-0 sticky top-28 transition-all duration-300">
+                            <div className="rounded-lg border border-border/80 bg-card/60 backdrop-blur-xs p-5 shadow-none">
+                                {renderFilterContent()}
+                            </div>
+                        </aside>
+                    )}
 
                     {/* ======================================================== */}
                     {/* RIGHT AREA: CATALOG TOOLBAR & PRODUCT GRID */}
@@ -1199,8 +1202,37 @@ export default function Products({
                                 )}
                             </div>
 
-                            {/* Right: Filter Icon Button & Sort Dropdown side by side */}
+                            {/* Right: Filter Buttons (Desktop & Mobile) & Sort Dropdown side by side */}
                             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                                {/* Desktop Filter Toggle Button */}
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setShowDesktopFilter((prev) => !prev)}
+                                    aria-label={showDesktopFilter ? (isEn ? 'Hide Filters' : 'Sembunyikan Filter') : (isEn ? 'Show Filters' : 'Tampilkan Filter')}
+                                    className={`hidden lg:inline-flex items-center gap-1.5 h-8 sm:h-8.5 px-3 text-xs border rounded-md shadow-none cursor-pointer shrink-0 transition-colors ${
+                                        showDesktopFilter
+                                            ? 'border-[#4A070B]/30 text-[#4A070B] bg-[#4A070B]/5 hover:bg-[#4A070B]/10 dark:text-[#E8D0BA]'
+                                            : 'border-border/80 text-foreground hover:border-[#4A070B]/40 hover:text-[#4A070B]'
+                                    }`}
+                                    title={showDesktopFilter ? (isEn ? 'Hide filter sidebar' : 'Sembunyikan filter') : (isEn ? 'Show filter sidebar' : 'Tampilkan filter')}
+                                >
+                                    <svg className="w-4 h-4 text-[#4A070B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                                    </svg>
+                                    <span>
+                                        {showDesktopFilter
+                                            ? (isEn ? 'Hide Filter' : 'Sembunyikan Filter')
+                                            : (isEn ? 'Filter' : 'Filter')}
+                                    </span>
+                                    {activeFiltersCount > 0 && (
+                                        <span className="w-4 h-4 rounded-full bg-[#4A070B] text-white text-[9px] font-bold flex items-center justify-center">
+                                            {activeFiltersCount}
+                                        </span>
+                                    )}
+                                </Button>
+
                                 {/* Mobile Filter Button Trigger: JUST ICON */}
                                 <Sheet open={mobileFilterOpen} onOpenChange={setMobileFilterOpen}>
                                     <SheetTrigger asChild>
@@ -1426,7 +1458,7 @@ export default function Products({
                         {/* PRODUCT GRID OR SKELETON OR EMPTY STATE */}
                         {/* ======================================================== */}
                         {(!fragrances || (fragrances.length === 0 && totalCount === undefined)) ? (
-                            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6">
+                            <div className={`grid ${showDesktopFilter ? 'grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4' : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5'} gap-4 sm:gap-6`}>
                                 {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
                                     <ProductCardSkeleton key={n} />
                                 ))}
@@ -1458,7 +1490,7 @@ export default function Products({
                                 </div>
                             </div>
                         ) : (
-                            <div className={`grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6 transition-opacity duration-200 ${isServerFiltering ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+                            <div className={`grid ${showDesktopFilter ? 'grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4' : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5'} gap-4 sm:gap-6 transition-opacity duration-200 ${isServerFiltering ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
                                 {filteredFragrances.map((perfume) => (
                                     <ProductCard
                                         key={perfume.id}

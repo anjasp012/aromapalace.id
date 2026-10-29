@@ -264,11 +264,11 @@ export default function AdminArticlesIndex({
                             <thead className="border-b bg-muted/50 text-muted-foreground">
                                 <tr className="border-b transition-colors text-xs">
                                     <th className="h-10 px-4 text-left font-medium">Artikel &amp; Thumbnail</th>
-                                    <th className="h-10 px-4 text-left font-medium">Status</th>
                                     <th className="h-10 px-4 text-left font-medium">Slug</th>
                                     <th className="h-10 px-4 text-left font-medium">Waktu Baca</th>
                                     <th className="h-10 px-4 text-left font-medium">Cuplikan</th>
                                     <th className="h-10 px-4 text-left font-medium">Tanggal</th>
+                                    <th className="h-10 px-4 text-center font-medium">Draft</th>
                                     <th className="h-10 px-4 text-right font-medium">Aksi</th>
                                 </tr>
                             </thead>
@@ -312,19 +312,6 @@ export default function AdminArticlesIndex({
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="p-4 align-middle whitespace-nowrap">
-                                                {art.is_draft ? (
-                                                    <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-700 border-amber-300 dark:text-amber-400 dark:border-amber-800 font-semibold gap-1">
-                                                        <span className="size-1.5 rounded-full bg-amber-500 animate-pulse" />
-                                                        Draft
-                                                    </Badge>
-                                                ) : (
-                                                    <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-700 border-emerald-300 dark:text-emerald-400 dark:border-emerald-800 font-semibold gap-1">
-                                                        <span className="size-1.5 rounded-full bg-emerald-500" />
-                                                        Publik
-                                                    </Badge>
-                                                )}
-                                            </td>
                                             <td className="p-4 align-middle font-mono text-muted-foreground">
                                                 /{art.slug}
                                             </td>
@@ -343,6 +330,9 @@ export default function AdminArticlesIndex({
                                                     month: 'short',
                                                     year: 'numeric',
                                                 }) : '-'}
+                                            </td>
+                                            <td className="p-4 align-middle whitespace-nowrap text-center text-xs font-semibold">
+                                                {art.is_draft ? 'YA' : 'TIDAK'}
                                             </td>
                                             <td className="p-4 align-middle text-right">
                                                 <div className="flex items-center justify-end gap-1.5">
