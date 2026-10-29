@@ -15,7 +15,6 @@ import {
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 
 interface PaymentMethodData {
@@ -26,7 +25,6 @@ interface PaymentMethodData {
     type?: 'automatic' | 'manual';
     account_number?: string | null;
     account_name?: string | null;
-    instructions?: string | null;
     is_active?: boolean;
 }
 
@@ -45,7 +43,6 @@ export default function AdminPaymentMethodEdit({ paymentMethod }: AdminPaymentMe
         type: 'automatic' | 'manual';
         account_number: string;
         account_name: string;
-        instructions: string;
         icon: File | null;
         remove_icon: boolean;
         is_active: boolean;
@@ -55,7 +52,6 @@ export default function AdminPaymentMethodEdit({ paymentMethod }: AdminPaymentMe
         type: paymentMethod.type ?? 'automatic',
         account_number: paymentMethod.account_number || '',
         account_name: paymentMethod.account_name || '',
-        instructions: paymentMethod.instructions || '',
         icon: null,
         remove_icon: false,
         is_active: paymentMethod.is_active ?? true,
@@ -432,23 +428,6 @@ export default function AdminPaymentMethodEdit({ paymentMethod }: AdminPaymentMe
                                     {errors.account_name && (
                                         <p className="text-xs text-destructive font-medium">{errors.account_name}</p>
                                     )}
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-xs font-medium text-foreground">
-                                    Instruksi / Catatan Pembayaran untuk Pelanggan (Opsional)
-                                </label>
-                                <Textarea
-                                    rows={3}
-                                    placeholder="cth. Transfer tepat sesuai nominal hingga 3 digit terakhir. Unggah foto bukti transfer dalam 24 jam agar pesanan tidak dibatalkan otomatis."
-                                    value={data.instructions}
-                                    onChange={(e) => setData('instructions', e.target.value)}
-                                    className="text-xs"
-                                />
-                                {errors.instructions && (
-                                    <p className="text-xs text-destructive font-medium">{errors.instructions}</p>
-                                )}
                             </div>
                         </CardContent>
                     </Card>

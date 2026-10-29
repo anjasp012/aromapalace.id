@@ -226,7 +226,7 @@ test('admin cannot delete a payment method that is in use by orders', function (
     ]);
 });
 
-test('admin can store a manual payment method with account details and instructions', function () {
+test('admin can store a manual payment method with account details', function () {
     $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
     $admin = User::factory()->admin()->create();
 
@@ -237,7 +237,6 @@ test('admin can store a manual payment method with account details and instructi
             'type' => 'manual',
             'account_number' => '123-456-7890',
             'account_name' => 'PT Aroma Palace Official',
-            'instructions' => 'Kirim bukti transfer via halaman konfirmasi.',
             'is_active' => true,
         ]);
 
@@ -248,12 +247,11 @@ test('admin can store a manual payment method with account details and instructi
         'type' => 'manual',
         'account_number' => '123-456-7890',
         'account_name' => 'PT Aroma Palace Official',
-        'instructions' => 'Kirim bukti transfer via halaman konfirmasi.',
         'is_active' => true,
     ]);
 });
 
-test('admin can update a payment method with type, account details and instructions', function () {
+test('admin can update a payment method with type and account details', function () {
     $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
     $admin = User::factory()->admin()->create();
 
@@ -273,7 +271,6 @@ test('admin can update a payment method with type, account details and instructi
             'type' => 'manual',
             'account_number' => '081288887777',
             'account_name' => 'Aroma Palace Store',
-            'instructions' => 'Scan QRIS GoPay atau transfer ke nomor tersebut.',
             'is_active' => true,
         ]);
 
@@ -285,7 +282,6 @@ test('admin can update a payment method with type, account details and instructi
         'type' => 'manual',
         'account_number' => '081288887777',
         'account_name' => 'Aroma Palace Store',
-        'instructions' => 'Scan QRIS GoPay atau transfer ke nomor tersebut.',
     ]);
 });
 

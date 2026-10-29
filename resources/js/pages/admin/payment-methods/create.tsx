@@ -15,7 +15,6 @@ import {
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 
 export default function AdminPaymentMethodCreate() {
@@ -29,7 +28,6 @@ export default function AdminPaymentMethodCreate() {
         type: 'automatic' | 'manual';
         account_number: string;
         account_name: string;
-        instructions: string;
         icon: File | null;
         is_active: boolean;
     }>({
@@ -38,7 +36,6 @@ export default function AdminPaymentMethodCreate() {
         type: 'automatic',
         account_number: '',
         account_name: '',
-        instructions: '',
         icon: null,
         is_active: true,
     });
@@ -412,22 +409,6 @@ export default function AdminPaymentMethodCreate() {
                                         <p className="text-xs text-destructive font-medium">{errors.account_name}</p>
                                     )}
                                 </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-xs font-medium text-foreground">
-                                    Instruksi / Catatan Pembayaran untuk Pelanggan (Opsional)
-                                </label>
-                                <Textarea
-                                    rows={3}
-                                    placeholder="cth. Transfer tepat sesuai nominal hingga 3 digit terakhir. Unggah foto bukti transfer dalam 24 jam agar pesanan tidak dibatalkan otomatis."
-                                    value={data.instructions}
-                                    onChange={(e) => setData('instructions', e.target.value)}
-                                    className="text-xs"
-                                />
-                                {errors.instructions && (
-                                    <p className="text-xs text-destructive font-medium">{errors.instructions}</p>
-                                )}
                             </div>
                         </CardContent>
                     </Card>

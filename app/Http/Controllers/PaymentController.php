@@ -54,13 +54,15 @@ class PaymentController extends Controller
             $orderModel->refresh();
         }
 
-        $isManual = $orderModel->is_manual;
         $pm = PaymentMethod::where('code', $orderModel->payment_method)->first();
+        if (! $pm && $orderModel->payment_channel) {
+            $pm = PaymentMethod::where('name', $orderModel->payment_channel)->first();
+        }
+        $isManual = $orderModel->is_manual || ($pm && $pm->is_manual);
 
         $bankName = $pm?->name ?: ($orderModel->payment_channel ?: 'Transfer Bank Manual');
         $accountNumber = $pm?->account_number ?: $orderModel->payment_code;
         $accountName = $pm?->account_name ?: 'PT Aroma Palace Indonesia';
-        $instructions = $pm?->instructions ?: 'Silakan transfer tepat sesuai jumlah nominal pembayaran, lalu unggah foto atau tangkapan layar bukti transfer Anda.';
 
         return Inertia::render('payment', [
             'order' => [
@@ -83,7 +85,6 @@ class PaymentController extends Controller
                     'bank_name' => $bankName,
                     'account_number' => $accountNumber,
                     'account_name' => $accountName,
-                    'instructions' => $instructions,
                 ] : null,
                 'total_amount' => $orderModel->total_amount,
                 'total_amount_formatted' => 'Rp '.number_format($orderModel->total_amount, 0, ',', '.'),
@@ -201,7 +202,7 @@ class PaymentController extends Controller
         $orderModel = $user->orders()->where('order_number', $order)->firstOrFail();
 
         $validated = $request->validate([
-            'payment_proof' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
+            'payment_proof' => [$orderModel->payment_proof ? 'nullable' : 'required', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
             'payment_sender_name' => ['required', 'string', 'max:255'],
             'payment_notes' => ['nullable', 'string', 'max:500'],
         ], [
@@ -211,6 +212,12 @@ class PaymentController extends Controller
             'payment_sender_name.required' => 'Nama pemilik rekening pengirim wajib diisi.',
         ]);
 
+        $updateData = [
+            'payment_sender_name' => $validated['payment_sender_name'],
+            'payment_notes' => $validated['payment_notes'] ?? null,
+            'status' => 'menunggu_konfirmasi',
+        ];
+
         if ($request->hasFile('payment_proof')) {
             // Delete old proof file if exists
             if ($orderModel->payment_proof && Storage::disk('public')->exists($orderModel->payment_proof)) {
@@ -219,22 +226,15 @@ class PaymentController extends Controller
 
             $file = $request->file('payment_proof');
             $path = $file->store('payment-proofs', 'public');
-
-            $orderModel->update([
-                'payment_proof' => $path,
-                'payment_proof_uploaded_at' => now(),
-                'payment_sender_name' => $validated['payment_sender_name'],
-                'payment_notes' => $validated['payment_notes'] ?? null,
-                'status' => 'menunggu_konfirmasi',
-            ]);
-
-            Log::info("Manual payment proof uploaded for order #{$orderModel->order_number} by user #{$user->id}");
-
-            return redirect()->route('payment.show', ['order' => $orderModel->order_number])
-                ->with('success', 'Bukti transfer berhasil diunggah! Tim Aroma Palace akan memverifikasi pesanan Anda segera.');
+            $updateData['payment_proof'] = $path;
+            $updateData['payment_proof_uploaded_at'] = now();
         }
 
+        $orderModel->update($updateData);
+
+        Log::info("Manual payment proof uploaded for order #{$orderModel->order_number} by user #{$user->id}");
+
         return redirect()->route('payment.show', ['order' => $orderModel->order_number])
-            ->with('error', 'Gagal mengunggah berkas bukti transfer.');
+            ->with('success', 'Bukti transfer berhasil diunggah! Tim Aroma Palace akan memverifikasi pesanan Anda segera.');
     }
 }

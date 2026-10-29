@@ -131,9 +131,21 @@ class Order extends Model
      */
     public function getIsManualAttribute(): bool
     {
-        return str_starts_with($this->payment_method ?? '', 'manual_')
+        if (str_starts_with($this->payment_method ?? '', 'manual_')
             || str_contains(strtolower($this->payment_channel ?? ''), 'manual')
-            || str_contains(strtolower($this->payment_method ?? ''), 'manual');
+            || str_contains(strtolower($this->payment_method ?? ''), 'manual')
+        ) {
+            return true;
+        }
+
+        if (! empty($this->payment_method)) {
+            $pm = PaymentMethod::where('code', $this->payment_method)->first();
+            if ($pm && $pm->is_manual) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
