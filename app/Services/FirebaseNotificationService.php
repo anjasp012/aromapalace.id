@@ -584,9 +584,9 @@ class FirebaseNotificationService
             $formattedTotal = 'Rp '.number_format($order->total_amount, 0, ',', '.');
             $paymentUrl = url('/payment/'.$order->order_number);
 
-            $titleId = '⏰ Segera Bayar! Pesanan #'.$order->order_number.' Akan Dibatalkan';
+            $titleId = 'Segera Bayar! Pesanan #'.$order->order_number.' Akan Dibatalkan';
             $bodyId = "Pembayaran {$formattedTotal} harus diselesaikan dalam 1 jam. Pesanan Anda akan otomatis dibatalkan jika melewati batas waktu.";
-            $titleEn = '⏰ Pay Now! Order #'.$order->order_number.' Expiring Soon';
+            $titleEn = 'Pay Now! Order #'.$order->order_number.' Expiring Soon';
             $bodyEn = "Payment of {$formattedTotal} must be completed within 1 hour or your order will be automatically canceled.";
 
             $this->sendToUser(
@@ -775,9 +775,9 @@ class FirebaseNotificationService
         Cache::put($cacheKey, true, now()->addHours(1));
 
         $isEn = app()->getLocale() === 'en';
-        $titleId = 'Selamat Datang di Aroma Palace! ✨';
+        $titleId = 'Selamat Datang di Aroma Palace!';
         $bodyId = "Halo {$user->name}, terima kasih telah bergabung di butik wewangian mewah kami. Nikmati koleksi aroma eksklusif dan penawaran istimewa.";
-        $titleEn = 'Welcome to Aroma Palace! ✨';
+        $titleEn = 'Welcome to Aroma Palace!';
         $bodyEn = "Hello {$user->name}, thank you for joining our luxury fragrance boutique. Explore exclusive scents and special privileges.";
 
         $this->sendToUser(
@@ -821,9 +821,9 @@ class FirebaseNotificationService
         Cache::put($cacheKey, true, now()->addMinutes(30));
 
         $isEn = app()->getLocale() === 'en';
-        $titleId = "Poin Loyalitas Diperoleh! (+{$points} Poin) 🎉";
+        $titleId = "Poin Loyalitas Diperoleh! (+{$points} Poin)";
         $bodyId = "Selamat! Anda memperoleh +{$points} loyalty points dari pesanan #{$order->order_number}. Total saldo poin Anda saat ini: {$newBalance} poin.";
-        $titleEn = "Loyalty Points Earned! (+{$points} Points) 🎉";
+        $titleEn = "Loyalty Points Earned! (+{$points} Points)";
         $bodyEn = "Congratulations! You earned +{$points} loyalty points from order #{$order->order_number}. Your current points balance: {$newBalance} points.";
 
         $this->sendToUser(
@@ -854,9 +854,9 @@ class FirebaseNotificationService
     public function notifyPointsRedeemed(User $user, int $points, string $voucherCode, string $rewardName): void
     {
         $isEn = app()->getLocale() === 'en';
-        $titleId = 'Penukaran Poin Berhasil 🎁';
+        $titleId = 'Penukaran Poin Berhasil';
         $bodyId = "Anda telah menukarkan {$points} poin dengan voucher {$rewardName} (Kode: {$voucherCode}). Gunakan saat checkout belanja!";
-        $titleEn = 'Points Redeemed Successfully 🎁';
+        $titleEn = 'Points Redeemed Successfully';
         $bodyEn = "You have redeemed {$points} points for {$rewardName} voucher (Code: {$voucherCode}). Apply it on your next checkout!";
 
         $this->sendToUser(
@@ -925,7 +925,7 @@ class FirebaseNotificationService
             $formattedTotal = 'Rp '.number_format($order->total_amount, 0, ',', '.');
 
             $this->sendToAdmins(
-                title: '⚠️ Pesanan Belum Diproses #'.$order->order_number,
+                title: 'Pesanan Belum Diproses #'.$order->order_number,
                 body: "Pesanan {$formattedTotal} dari {$order->recipient_name} sudah dibayar {$hoursStuck} jam lalu dan belum dikirim.",
                 url: '/manajemen-pesanan/'.$order->id,
                 data: [
@@ -959,7 +959,7 @@ class FirebaseNotificationService
         $formattedTotal = 'Rp '.number_format($order->total_amount, 0, ',', '.');
 
         $this->sendToAdmins(
-            title: '🧾 Bukti Transfer Diunggah #'.$order->order_number,
+            title: 'Bukti Transfer Diunggah #'.$order->order_number,
             body: "{$order->recipient_name} telah mengunggah bukti transfer {$formattedTotal}. Silakan verifikasi segera.",
             url: '/manajemen-pesanan/'.$order->id,
             data: [
@@ -988,9 +988,9 @@ class FirebaseNotificationService
         $formattedTotal = 'Rp '.number_format($order->total_amount, 0, ',', '.');
 
         if ($order->user_id) {
-            $titleId = '✅ Pembayaran Dikonfirmasi! #'.$order->order_number;
+            $titleId = 'Pembayaran Dikonfirmasi! #'.$order->order_number;
             $bodyId = "Bukti transfer {$formattedTotal} Anda telah diverifikasi. Pesanan wewangian Anda sedang kami siapkan.";
-            $titleEn = '✅ Payment Confirmed! #'.$order->order_number;
+            $titleEn = 'Payment Confirmed! #'.$order->order_number;
             $bodyEn = "Your transfer proof of {$formattedTotal} has been verified. Your luxury fragrance order is being prepared.";
 
             $this->sendToUser(
@@ -1042,9 +1042,9 @@ class FirebaseNotificationService
         $formattedTotal = 'Rp '.number_format($order->total_amount, 0, ',', '.');
 
         if ($order->user_id) {
-            $titleId = '❌ Bukti Transfer Ditolak #'.$order->order_number;
+            $titleId = 'Bukti Transfer Ditolak #'.$order->order_number;
             $bodyId = "Bukti transfer {$formattedTotal} tidak dapat diverifikasi oleh admin. Pesanan dibatalkan. Hubungi CS Aroma Palace untuk bantuan.";
-            $titleEn = '❌ Transfer Proof Rejected #'.$order->order_number;
+            $titleEn = 'Transfer Proof Rejected #'.$order->order_number;
             $bodyEn = "Your transfer proof of {$formattedTotal} could not be verified. Order has been canceled. Please contact Aroma Palace customer support.";
 
             $this->sendToUser(

@@ -335,6 +335,70 @@ class OrderController extends Controller
     }
 
     /**
+     * Approve a manual bank-transfer payment: set status to diproses and payment_status to paid.
+     */
+    public function approveManualPayment(string $order): RedirectResponse
+    {
+        $orderModel = Order::where(function ($q) use ($order) {
+            $q->where('order_number', $order)->orWhere('id', $order);
+        })->firstOrFail();
+
+        if ($orderModel->order_status !== 'menunggu_konfirmasi' && $orderModel->status !== 'menunggu_konfirmasi') {
+            return back()->with('error', 'Pesanan ini tidak dalam status menunggu konfirmasi.');
+        }
+
+        $orderModel->update([
+            'status' => 'diproses',
+            'payment_status' => 'paid',
+        ]);
+
+        try {
+            app(FirebaseNotificationService::class)->notifyManualPaymentApproved($orderModel->fresh());
+        } catch (\Throwable $e) {
+            Log::warning('Failed to send manual payment approved notification: '.$e->getMessage());
+        }
+
+        return back()->with('success', "Bukti transfer pesanan #{$orderModel->order_number} telah disetujui. Status diperbarui ke Diproses.");
+    }
+
+    /**
+     * Reject a manual bank-transfer payment: reset status to menunggu_pembayaran and clear the proof
+     * so the customer can re-upload a correct transfer receipt.
+     */
+    public function rejectManualPayment(string $order): RedirectResponse
+    {
+        $orderModel = Order::where(function ($q) use ($order) {
+            $q->where('order_number', $order)->orWhere('id', $order);
+        })->firstOrFail();
+
+        if ($orderModel->order_status !== 'menunggu_konfirmasi' && $orderModel->status !== 'menunggu_konfirmasi') {
+            return back()->with('error', 'Pesanan ini tidak dalam status menunggu konfirmasi.');
+        }
+
+        // Delete the uploaded proof file from storage
+        if ($orderModel->payment_proof && \Illuminate\Support\Facades\Storage::disk('public')->exists($orderModel->payment_proof)) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($orderModel->payment_proof);
+        }
+
+        $orderModel->update([
+            'status' => 'menunggu_pembayaran',
+            'payment_status' => 'pending',
+            'payment_proof' => null,
+            'payment_proof_uploaded_at' => null,
+            'payment_sender_name' => null,
+            'payment_notes' => null,
+        ]);
+
+        try {
+            app(FirebaseNotificationService::class)->notifyManualPaymentRejected($orderModel->fresh());
+        } catch (\Throwable $e) {
+            Log::warning('Failed to send manual payment rejected notification: '.$e->getMessage());
+        }
+
+        return back()->with('success', "Bukti transfer pesanan #{$orderModel->order_number} ditolak. Pelanggan akan diminta untuk mengunggah ulang.");
+    }
+
+    /**
      * Delete/archive a cancelled order.
      */
     public function destroy(string $order): RedirectResponse

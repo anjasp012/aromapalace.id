@@ -27,6 +27,10 @@ import {
     Edit2,
     RefreshCw,
     Printer,
+    FileCheck2,
+    Eye,
+    ThumbsUp,
+    ThumbsDown,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -124,6 +128,11 @@ interface OrderDetail {
     payment_method: string;
     payment_channel: string;
     payment_code: string;
+    is_manual?: boolean;
+    payment_proof?: string | null;
+    payment_proof_uploaded_at?: string | null;
+    payment_sender_name?: string | null;
+    payment_notes?: string | null;
     notes?: string | null;
     items_count: number;
     items: OrderItemDetail[];
@@ -146,9 +155,13 @@ interface OrderShowProps {
 
 export default function AdminOrderShow({ order, pickupSchedules }: OrderShowProps) {
     const isPickup = order.delivery_type === 'pickup';
+    const isManualAwaitingConfirmation = order.is_manual && order.order_status === 'menunggu_konfirmasi';
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+    const [isProofDialogOpen, setIsProofDialogOpen] = useState(false);
     const [isManualModalOpen, setIsManualModalOpen] = useState(false);
     const [isAutomaticModalOpen, setIsAutomaticModalOpen] = useState(false);
+    const [isApprovingProof, setIsApprovingProof] = useState(false);
+    const [isRejectingProof, setIsRejectingProof] = useState(false);
 
     const isSchedulesLoaded = pickupSchedules !== undefined;
     const validSchedules = React.useMemo(() => {
@@ -854,7 +867,105 @@ export default function AdminOrderShow({ order, pickupSchedules }: OrderShowProp
                             </CardContent>
                         </Card>
 
-                        {/* Manual Status Override */}
+                        {/* Manual Payment Proof Card */}
+                        {order.is_manual && order.payment_proof && (
+                            <Card className="border-orange-200 dark:border-orange-900/50">
+                                <CardHeader className="pb-3">
+                                    <div className="flex items-center gap-2">
+                                        <FileCheck2 className="size-4 text-orange-500" />
+                                        <CardTitle className="text-sm font-semibold">Bukti Transfer Manual</CardTitle>
+                                    </div>
+                                    {order.payment_proof_uploaded_at && (
+                                        <p className="text-[11px] text-muted-foreground">Diunggah: {order.payment_proof_uploaded_at}</p>
+                                    )}
+                                </CardHeader>
+                                <CardContent className="space-y-3 text-xs">
+                                    {order.payment_sender_name && (
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">Nama Pengirim</span>
+                                            <span className="font-medium">{order.payment_sender_name}</span>
+                                        </div>
+                                    )}
+                                    {order.payment_notes && (
+                                        <div className="flex justify-between gap-2">
+                                            <span className="text-muted-foreground shrink-0">Catatan</span>
+                                            <span className="text-right">{order.payment_notes}</span>
+                                        </div>
+                                    )}
+
+                                    {/* Proof Preview */}
+                                    <div className="pt-1">
+                                        {order.payment_proof.toLowerCase().endsWith('.pdf') ? (
+                                            <a
+                                                href={order.payment_proof}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-1.5 text-primary hover:underline"
+                                            >
+                                                <FileText className="size-3.5" />
+                                                Lihat Bukti Transfer (PDF)
+                                            </a>
+                                        ) : (
+                                            <>
+                                                <img
+                                                    src={order.payment_proof}
+                                                    alt="Bukti Transfer"
+                                                    className="w-full max-h-48 object-contain rounded-md border cursor-pointer hover:opacity-90 transition-opacity"
+                                                    onClick={() => setIsProofDialogOpen(true)}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setIsProofDialogOpen(true)}
+                                                    className="mt-1.5 flex items-center gap-1 text-[11px] text-primary hover:underline cursor-pointer"
+                                                >
+                                                    <Eye className="size-3" /> Lihat ukuran penuh
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
+
+                                    {/* Approve / Reject buttons — only when awaiting confirmation */}
+                                    {isManualAwaitingConfirmation && (
+                                        <div className="flex gap-2 pt-2 border-t">
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                className="flex-1 h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+                                                disabled={isApprovingProof || isRejectingProof}
+                                                onClick={() => {
+                                                    setIsApprovingProof(true);
+                                                    router.post(`/manajemen-pesanan/${order.order_number}/acc-bukti`, {}, {
+                                                        preserveScroll: true,
+                                                        onFinish: () => setIsApprovingProof(false),
+                                                    });
+                                                }}
+                                            >
+                                                <ThumbsUp className="size-3 mr-1.5" />
+                                                {isApprovingProof ? 'Memproses...' : 'Acc Bukti'}
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                className="flex-1 h-8 text-xs border-rose-300 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 cursor-pointer"
+                                                disabled={isApprovingProof || isRejectingProof}
+                                                onClick={() => {
+                                                    setIsRejectingProof(true);
+                                                    router.post(`/manajemen-pesanan/${order.order_number}/tolak-bukti`, {}, {
+                                                        preserveScroll: true,
+                                                        onFinish: () => setIsRejectingProof(false),
+                                                    });
+                                                }}
+                                            >
+                                                <ThumbsDown className="size-3 mr-1.5" />
+                                                {isRejectingProof ? 'Memproses...' : 'Tolak Bukti'}
+                                            </Button>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        )}
+
                         <Card>
                             <CardHeader className="pb-3">
                                 <CardTitle className="text-sm font-medium">Ubah Status Manual</CardTitle>

@@ -50,6 +50,8 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::delete('/manajemen-pesanan/{order}/hapus-permanen', [OrderController::class, 'forceDelete'])->name('orders.force-delete');
     Route::delete('/manajemen-pesanan/{order}', [OrderController::class, 'destroy'])->name('orders.destroy');
     Route::post('/manajemen-pesanan/{order}/sync-resi', [OrderController::class, 'syncResi'])->name('orders.sync-resi');
+    Route::post('/manajemen-pesanan/{order}/acc-bukti', [OrderController::class, 'approveManualPayment'])->name('orders.approve-manual-payment');
+    Route::post('/manajemen-pesanan/{order}/tolak-bukti', [OrderController::class, 'rejectManualPayment'])->name('orders.reject-manual-payment');
     Route::get('/api/shipping/track/{awb}', [ShippingController::class, 'track'])->name('admin.shipping.track');
     Route::get('/api/coverage/provinces', [CoverageAreaController::class, 'provinces'])->name('coverage.provinces');
     Route::get('/api/coverage/cities', [CoverageAreaController::class, 'cities'])->name('coverage.cities');
