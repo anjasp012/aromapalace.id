@@ -31,6 +31,10 @@ interface PaymentMethodItem {
     code: string;
     name: string;
     icon?: string | null;
+    type?: 'automatic' | 'manual';
+    account_number?: string | null;
+    account_name?: string | null;
+    instructions?: string | null;
     is_active: boolean;
     created_at?: string;
 }
@@ -52,11 +56,14 @@ interface PaymentMethodsIndexProps {
     filters: {
         search: string;
         status?: string;
+        type?: string;
     };
     metrics?: {
         total_methods: number;
         active_methods: number;
         inactive_methods: number;
+        automatic_methods?: number;
+        manual_methods?: number;
     };
 }
 
@@ -67,6 +74,7 @@ export default function AdminPaymentMethodsIndex({
 }: PaymentMethodsIndexProps) {
     const [search, setSearch] = useState(filters.search || '');
     const [statusFilter, setStatusFilter] = useState(filters.status || '');
+    const [typeFilter, setTypeFilter] = useState(filters.type || '');
     const [deleteTarget, setDeleteTarget] = useState<PaymentMethodItem | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [togglingId, setTogglingId] = useState<number | null>(null);
@@ -76,6 +84,7 @@ export default function AdminPaymentMethodsIndex({
         router.get('/manajemen-pembayaran', {
             search: search || undefined,
             status: statusFilter || undefined,
+            type: typeFilter || undefined,
         }, { preserveState: true });
     };
 
@@ -84,12 +93,23 @@ export default function AdminPaymentMethodsIndex({
         router.get('/manajemen-pembayaran', {
             search: search || undefined,
             status: status || undefined,
+            type: typeFilter || undefined,
+        }, { preserveState: true });
+    };
+
+    const handleTypeFilterChange = (type: string) => {
+        setTypeFilter(type);
+        router.get('/manajemen-pembayaran', {
+            search: search || undefined,
+            status: statusFilter || undefined,
+            type: type || undefined,
         }, { preserveState: true });
     };
 
     const handleResetSearch = () => {
         setSearch('');
         setStatusFilter('');
+        setTypeFilter('');
         router.get('/manajemen-pembayaran');
     };
 
@@ -153,7 +173,7 @@ export default function AdminPaymentMethodsIndex({
             <div className="space-y-6">
                 {/* Metric Summary Cards */}
                 {metrics && (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         <Card className="py-4">
                             <CardContent className="p-0 px-6">
                                 <div className="flex items-center justify-between">
@@ -177,46 +197,80 @@ export default function AdminPaymentMethodsIndex({
                         <Card className="py-4">
                             <CardContent className="p-0 px-6">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-xs font-medium text-muted-foreground">Metode Nonaktif</span>
-                                    <XCircle className="size-4 text-muted-foreground" />
+                                    <span className="text-xs font-medium text-muted-foreground">Gateway Otomatis</span>
+                                    <CreditCard className="size-4 text-sky-500" />
                                 </div>
-                                <div className="text-2xl font-bold mt-2 text-muted-foreground">{metrics.inactive_methods}</div>
-                                <p className="text-xs text-muted-foreground mt-1">Disembunyikan dari pelanggan</p>
+                                <div className="text-2xl font-bold mt-2 text-sky-600 dark:text-sky-400">{metrics.automatic_methods ?? 0}</div>
+                                <p className="text-xs text-muted-foreground mt-1">Verifikasi via Pakasir</p>
+                            </CardContent>
+                        </Card>
+                        <Card className="py-4">
+                            <CardContent className="p-0 px-6">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-medium text-muted-foreground">Transfer Manual</span>
+                                    <CheckCircle2 className="size-4 text-amber-500" />
+                                </div>
+                                <div className="text-2xl font-bold mt-2 text-amber-600 dark:text-amber-400">{metrics.manual_methods ?? 0}</div>
+                                <p className="text-xs text-muted-foreground mt-1">Verifikasi bukti transfer admin</p>
                             </CardContent>
                         </Card>
                     </div>
                 )}
 
-                {/* Status Tabs Navigation */}
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                    {[
-                        { key: '', label: 'Semua Metode', count: metrics?.total_methods ?? 0 },
-                        { key: 'active', label: 'Metode Aktif', count: metrics?.active_methods ?? 0 },
-                        { key: 'inactive', label: 'Nonaktif', count: metrics?.inactive_methods ?? 0 },
-                    ].map((tab) => {
-                        const isActive = statusFilter === tab.key;
-                        return (
-                            <Button
-                                key={tab.key}
-                                type="button"
-                                variant={isActive ? 'default' : 'outline'}
-                                size="sm"
-                                onClick={() => handleStatusFilterChange(tab.key)}
-                                className="h-8 gap-2 whitespace-nowrap text-xs cursor-pointer"
-                            >
-                                <span>{tab.label}</span>
-                                <span
-                                    className={`px-1.5 py-0.2 rounded-full text-[10px] font-semibold ${
-                                        isActive
-                                            ? 'bg-primary-foreground text-primary'
-                                            : 'bg-muted text-muted-foreground'
-                                    }`}
+                {/* Status & Type Filter Navigation */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                        {[
+                            { key: '', label: 'Semua Status', count: metrics?.total_methods ?? 0 },
+                            { key: 'active', label: 'Metode Aktif', count: metrics?.active_methods ?? 0 },
+                            { key: 'inactive', label: 'Nonaktif', count: metrics?.inactive_methods ?? 0 },
+                        ].map((tab) => {
+                            const isActive = statusFilter === tab.key;
+                            return (
+                                <Button
+                                    key={tab.key}
+                                    type="button"
+                                    variant={isActive ? 'default' : 'outline'}
+                                    size="sm"
+                                    onClick={() => handleStatusFilterChange(tab.key)}
+                                    className="h-8 gap-2 whitespace-nowrap text-xs cursor-pointer"
                                 >
-                                    {tab.count}
-                                </span>
-                            </Button>
-                        );
-                    })}
+                                    <span>{tab.label}</span>
+                                    <span
+                                        className={`px-1.5 py-0.2 rounded-full text-[10px] font-semibold ${
+                                            isActive
+                                                ? 'bg-primary-foreground text-primary'
+                                                : 'bg-muted text-muted-foreground'
+                                        }`}
+                                    >
+                                        {tab.count}
+                                    </span>
+                                </Button>
+                            );
+                        })}
+                    </div>
+
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                        {[
+                            { key: '', label: 'Semua Tipe' },
+                            { key: 'automatic', label: 'Otomatis' },
+                            { key: 'manual', label: 'Transfer Manual' },
+                        ].map((typeTab) => {
+                            const isTypeActive = typeFilter === typeTab.key;
+                            return (
+                                <Button
+                                    key={typeTab.key}
+                                    type="button"
+                                    variant={isTypeActive ? 'secondary' : 'ghost'}
+                                    size="sm"
+                                    onClick={() => handleTypeFilterChange(typeTab.key)}
+                                    className={`h-8 text-xs cursor-pointer ${isTypeActive ? 'font-semibold border shadow-xs' : 'text-muted-foreground'}`}
+                                >
+                                    {typeTab.label}
+                                </Button>
+                            );
+                        })}
+                    </div>
                 </div>
 
                 {/* Filter and Actions Toolbar */}
@@ -227,7 +281,7 @@ export default function AdminPaymentMethodsIndex({
                                 <Search className="size-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                                 <Input
                                     type="text"
-                                    placeholder="Cari nama atau kode teknis metode..."
+                                    placeholder="Cari nama, kode teknis, atau no. rekening..."
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                     className="pl-9 h-9 text-xs"
@@ -239,7 +293,7 @@ export default function AdminPaymentMethodsIndex({
                         </form>
 
                         <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                            {(search !== '' || statusFilter !== '') && (
+                            {(search !== '' || statusFilter !== '' || typeFilter !== '') && (
                                 <Button
                                     type="button"
                                     variant="outline"
@@ -273,6 +327,7 @@ export default function AdminPaymentMethodsIndex({
                                     <th className="h-10 px-4 text-left font-medium">Logo / Icon</th>
                                     <th className="h-10 px-4 text-left font-medium">Nama Metode</th>
                                     <th className="h-10 px-4 text-left font-medium">Kode Teknis</th>
+                                    <th className="h-10 px-4 text-left font-medium">Tipe Kanal</th>
                                     <th className="h-10 px-4 text-left font-medium">Status &amp; Visibilitas</th>
                                     <th className="h-10 px-4 text-right font-medium">Aksi</th>
                                 </tr>
@@ -280,7 +335,7 @@ export default function AdminPaymentMethodsIndex({
                             <tbody className="divide-y text-xs">
                                 {paymentMethods.data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                                        <td colSpan={7} className="p-8 text-center text-muted-foreground">
                                             <div className="flex flex-col items-center justify-center gap-2">
                                                 <CreditCard className="size-8 text-muted-foreground/40" />
                                                 <p className="text-sm font-medium text-foreground">Tidak ada metode pembayaran ditemukan</p>
@@ -300,9 +355,21 @@ export default function AdminPaymentMethodsIndex({
                                                 {renderIconBadge(pm.icon, pm.name)}
                                             </td>
 
-                                            {/* Name */}
+                                            {/* Name & Account Info */}
                                             <td className="p-4 align-middle font-medium text-foreground">
                                                 <div className="font-semibold text-sm">{pm.name}</div>
+                                                {pm.type === 'manual' && (pm.account_number || pm.account_name) && (
+                                                    <div className="text-[11px] text-muted-foreground mt-0.5 flex flex-wrap items-center gap-1.5">
+                                                        {pm.account_number && (
+                                                            <span className="font-mono text-foreground font-medium bg-muted/60 px-1 py-0.2 rounded border">
+                                                                Rek: {pm.account_number}
+                                                            </span>
+                                                        )}
+                                                        {pm.account_name && (
+                                                            <span>a.n {pm.account_name}</span>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </td>
 
                                             {/* Code */}
@@ -310,6 +377,19 @@ export default function AdminPaymentMethodsIndex({
                                                 <Badge variant="outline" className="font-mono text-[11px] px-2 py-0.5">
                                                     {pm.code}
                                                 </Badge>
+                                            </td>
+
+                                            {/* Type */}
+                                            <td className="p-4 align-middle">
+                                                {pm.type === 'manual' ? (
+                                                    <Badge variant="outline" className="text-[11px] bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800 font-medium">
+                                                        Transfer Manual
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge variant="outline" className="text-[11px] bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800 font-medium">
+                                                        Otomatis (Gateway)
+                                                    </Badge>
+                                                )}
                                             </td>
 
                                             {/* Status & Visibilitas Switch */}

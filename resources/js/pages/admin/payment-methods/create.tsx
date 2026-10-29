@@ -8,10 +8,14 @@ import {
     Upload,
     Trash2,
     Image as ImageIcon,
+    CheckCircle2,
+    Landmark,
+    Zap,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 
 export default function AdminPaymentMethodCreate() {
@@ -22,11 +26,19 @@ export default function AdminPaymentMethodCreate() {
     const { data, setData, post, processing, errors } = useForm<{
         name: string;
         code: string;
+        type: 'automatic' | 'manual';
+        account_number: string;
+        account_name: string;
+        instructions: string;
         icon: File | null;
         is_active: boolean;
     }>({
         name: '',
         code: '',
+        type: 'automatic',
+        account_number: '',
+        account_name: '',
+        instructions: '',
         icon: null,
         is_active: true,
     });
@@ -228,7 +240,77 @@ export default function AdminPaymentMethodCreate() {
                     </CardContent>
                 </Card>
 
-                {/* 2. Detail Metode Pembayaran */}
+                {/* 2. Tipe Pembayaran (Otomatis vs Manual) */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-base flex items-center gap-2">
+                            <Zap className="size-4 text-primary" />
+                            <span>Tipe Pemrosesan Pembayaran</span>
+                        </CardTitle>
+                        <CardDescription>
+                            Pilih bagaimana pembayaran untuk kanal ini diverifikasi dan diselesaikan.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div
+                                onClick={() => setData('type', 'automatic')}
+                                className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                                    data.type === 'automatic'
+                                        ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                                        : 'border-border/70 hover:border-border hover:bg-muted/40'
+                                }`}
+                            >
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="p-2 rounded-lg bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300">
+                                            <Zap className="size-4" />
+                                        </div>
+                                        <span className="font-semibold text-sm text-foreground">Gateway Otomatis (Pakasir)</span>
+                                    </div>
+                                    {data.type === 'automatic' && (
+                                        <CheckCircle2 className="size-4 text-primary" />
+                                    )}
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                                    Pembayaran diverifikasi secara otomatis oleh gateway (QRIS dinamis, Virtual Account otomatis). Status pesanan langsung update tanpa konfirmasi admin manual.
+                                </p>
+                            </div>
+
+                            <div
+                                onClick={() => {
+                                    setData((prev) => ({
+                                        ...prev,
+                                        type: 'manual',
+                                        code: prev.code && !prev.code.startsWith('manual_') ? `manual_${prev.code}` : prev.code,
+                                    }));
+                                }}
+                                className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                                    data.type === 'manual'
+                                        ? 'border-amber-500 bg-amber-500/5 ring-2 ring-amber-500/20'
+                                        : 'border-border/70 hover:border-border hover:bg-muted/40'
+                                }`}
+                            >
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="p-2 rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
+                                            <Landmark className="size-4" />
+                                        </div>
+                                        <span className="font-semibold text-sm text-foreground">Transfer Manual (Verifikasi Admin)</span>
+                                    </div>
+                                    {data.type === 'manual' && (
+                                        <CheckCircle2 className="size-4 text-amber-500" />
+                                    )}
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                                    Pelanggan mentransfer ke rekening bank / e-wallet toko Anda dan mengunggah bukti transfer. Admin memeriksa mutasi dan mengonfirmasi pembayaran di CMS.
+                                </p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* 3. Detail Metode Pembayaran */}
                 <Card>
                     <CardHeader>
                         <CardTitle className="text-base flex items-center gap-2">
@@ -247,7 +329,7 @@ export default function AdminPaymentMethodCreate() {
                             </label>
                             <Input
                                 type="text"
-                                placeholder="cth. BCA Virtual Account, QRIS, Bank Mandiri"
+                                placeholder={data.type === 'manual' ? 'cth. BCA (Transfer Manual)' : 'cth. BCA Virtual Account, QRIS'}
                                 value={data.name}
                                 onChange={(e) => handleNameChange(e.target.value)}
                                 className="text-xs font-semibold"
@@ -268,7 +350,7 @@ export default function AdminPaymentMethodCreate() {
                             </div>
                             <Input
                                 type="text"
-                                placeholder="bca_va, qris, mandiri"
+                                placeholder={data.type === 'manual' ? 'manual_bca, manual_mandiri' : 'bca_va, qris, mandiri'}
                                 value={data.code}
                                 onChange={(e) => setData('code', slugifyCode(e.target.value))}
                                 className="text-xs font-mono"
@@ -280,6 +362,76 @@ export default function AdminPaymentMethodCreate() {
                         </div>
                     </CardContent>
                 </Card>
+
+                {/* 4. Informasi Rekening & Petunjuk (Khusus Transfer Manual) */}
+                {data.type === 'manual' && (
+                    <Card className="border-amber-300/60 dark:border-amber-800/60 bg-amber-50/20 dark:bg-amber-950/10">
+                        <CardHeader>
+                            <CardTitle className="text-base flex items-center gap-2 text-foreground">
+                                <Landmark className="size-4 text-amber-600 dark:text-amber-400" />
+                                <span>Informasi Rekening &amp; Petunjuk Transfer</span>
+                            </CardTitle>
+                            <CardDescription>
+                                Masukkan nomor rekening atau ID e-wallet yang akan ditampilkan ke pelanggan pada saat checkout dan halaman instruksi pembayaran.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-medium text-foreground flex items-center gap-1">
+                                        <span>Nomor Rekening / E-Wallet</span>
+                                        <span className="text-destructive">*</span>
+                                    </label>
+                                    <Input
+                                        type="text"
+                                        placeholder="cth. 8720-1234-5678 atau 081234567890"
+                                        value={data.account_number}
+                                        onChange={(e) => setData('account_number', e.target.value)}
+                                        className="text-xs font-mono font-semibold"
+                                        required={data.type === 'manual'}
+                                    />
+                                    {errors.account_number && (
+                                        <p className="text-xs text-destructive font-medium">{errors.account_number}</p>
+                                    )}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-xs font-medium text-foreground flex items-center gap-1">
+                                        <span>Atas Nama (Pemilik Rekening)</span>
+                                        <span className="text-destructive">*</span>
+                                    </label>
+                                    <Input
+                                        type="text"
+                                        placeholder="cth. PT Aroma Palace Indonesia"
+                                        value={data.account_name}
+                                        onChange={(e) => setData('account_name', e.target.value)}
+                                        className="text-xs font-semibold"
+                                        required={data.type === 'manual'}
+                                    />
+                                    {errors.account_name && (
+                                        <p className="text-xs text-destructive font-medium">{errors.account_name}</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-xs font-medium text-foreground">
+                                    Instruksi / Catatan Pembayaran untuk Pelanggan (Opsional)
+                                </label>
+                                <Textarea
+                                    rows={3}
+                                    placeholder="cth. Transfer tepat sesuai nominal hingga 3 digit terakhir. Unggah foto bukti transfer dalam 24 jam agar pesanan tidak dibatalkan otomatis."
+                                    value={data.instructions}
+                                    onChange={(e) => setData('instructions', e.target.value)}
+                                    className="text-xs"
+                                />
+                                {errors.instructions && (
+                                    <p className="text-xs text-destructive font-medium">{errors.instructions}</p>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
 
                 {/* 3. Status Visibilitas */}
                 <Card>

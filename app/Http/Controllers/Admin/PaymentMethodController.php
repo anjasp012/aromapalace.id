@@ -20,16 +20,21 @@ class PaymentMethodController extends Controller
     {
         $search = $request->string('search')->trim()->value();
         $status = $request->string('status')->trim()->value();
+        $type = $request->string('type')->trim()->value();
 
         $methodsQuery = PaymentMethod::query()
             ->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('code', 'like', "%{$search}%");
+                        ->orWhere('code', 'like', "%{$search}%")
+                        ->orWhere('account_number', 'like', "%{$search}%")
+                        ->orWhere('account_name', 'like', "%{$search}%");
                 });
             })
             ->when($status === 'active', fn ($query) => $query->where('is_active', true))
             ->when($status === 'inactive', fn ($query) => $query->where('is_active', false))
+            ->when($type === 'automatic', fn ($query) => $query->where('type', 'automatic'))
+            ->when($type === 'manual', fn ($query) => $query->where('type', 'manual'))
             ->latest('id');
 
         $paymentMethods = $methodsQuery->paginate(15)->withQueryString();
@@ -38,6 +43,8 @@ class PaymentMethodController extends Controller
             'total_methods' => PaymentMethod::count(),
             'active_methods' => PaymentMethod::where('is_active', true)->count(),
             'inactive_methods' => PaymentMethod::where('is_active', false)->count(),
+            'automatic_methods' => PaymentMethod::where('type', 'automatic')->count(),
+            'manual_methods' => PaymentMethod::where('type', 'manual')->count(),
         ];
 
         return Inertia::render('admin/payment-methods/index', [
@@ -45,6 +52,7 @@ class PaymentMethodController extends Controller
             'filters' => [
                 'search' => $search,
                 'status' => $status,
+                'type' => $type,
             ],
             'metrics' => $metrics,
         ]);
@@ -60,6 +68,10 @@ class PaymentMethodController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'code' => ['required', 'string', 'max:255', 'unique:payment_methods,code'],
+            'type' => ['nullable', 'string', 'in:automatic,manual'],
+            'account_number' => ['nullable', 'string', 'max:100'],
+            'account_name' => ['nullable', 'string', 'max:255'],
+            'instructions' => ['nullable', 'string'],
             'icon' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp,svg', 'max:2048'],
             'is_active' => ['nullable', 'boolean'],
         ]);
@@ -79,6 +91,10 @@ class PaymentMethodController extends Controller
             'name' => $validated['name'],
             'code' => $code,
             'icon' => $icon,
+            'type' => $validated['type'] ?? 'automatic',
+            'account_number' => $validated['account_number'] ?? null,
+            'account_name' => $validated['account_name'] ?? null,
+            'instructions' => $validated['instructions'] ?? null,
             'is_active' => $request->has('is_active') ? $request->boolean('is_active') : true,
         ]);
 
@@ -98,6 +114,10 @@ class PaymentMethodController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'code' => ['required', 'string', 'max:255', Rule::unique('payment_methods', 'code')->ignore($paymentMethod->id)],
+            'type' => ['nullable', 'string', 'in:automatic,manual'],
+            'account_number' => ['nullable', 'string', 'max:100'],
+            'account_name' => ['nullable', 'string', 'max:255'],
+            'instructions' => ['nullable', 'string'],
             'icon' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp,svg', 'max:2048'],
             'remove_icon' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
@@ -120,6 +140,10 @@ class PaymentMethodController extends Controller
             'name' => $validated['name'],
             'code' => $code,
             'icon' => $icon,
+            'type' => $validated['type'] ?? ($paymentMethod->type ?? 'automatic'),
+            'account_number' => $validated['account_number'] ?? null,
+            'account_name' => $validated['account_name'] ?? null,
+            'instructions' => $validated['instructions'] ?? null,
             'is_active' => $request->has('is_active') ? $request->boolean('is_active') : $paymentMethod->is_active,
         ]);
 

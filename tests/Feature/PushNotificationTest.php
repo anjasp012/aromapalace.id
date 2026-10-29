@@ -170,3 +170,82 @@ test('user can log in and register multiple mobile devices simultaneously withou
     expect($tokens)->toContain('fcm_iphone_phone_token_222');
     expect($tokens)->toContain('fcm_android_tablet_token_333');
 });
+
+test('remind expiring payments command sends reminder to orders created 23 hours ago but not awaiting confirmation', function () {
+    $customer = User::factory()->create(['role' => 'customer']);
+
+    // 1. Order in 23-24 hour window, pending payment -> SHOULD get reminded
+    $expiringOrder = Order::create([
+        'order_number' => 'ARPL-EXP-REMIND-1',
+        'user_id' => $customer->id,
+        'recipient_name' => 'Budi',
+        'recipient_phone' => '0812345678',
+        'address' => 'Jakarta',
+        'city' => 'Jakarta',
+        'courier' => 'JNE',
+        'shipping_cost' => 0,
+        'payment_method' => 'manual_bca',
+        'payment_status' => 'pending',
+        'status' => 'pending',
+        'subtotal' => 150000,
+        'discount_amount' => 0,
+        'total_amount' => 150000,
+    ]);
+    $expiringOrder->timestamps = false;
+    $expiringOrder->created_at = now()->subHours(23)->subMinutes(30);
+    $expiringOrder->save();
+
+    // 2. Order created 23 hours ago but status is menunggu_konfirmasi -> SHOULD NOT get reminded
+    $confirmingOrder = Order::create([
+        'order_number' => 'ARPL-CONFIRMING-1',
+        'user_id' => $customer->id,
+        'recipient_name' => 'Budi',
+        'recipient_phone' => '0812345678',
+        'address' => 'Jakarta',
+        'city' => 'Jakarta',
+        'courier' => 'JNE',
+        'shipping_cost' => 0,
+        'payment_method' => 'manual_bca',
+        'payment_status' => 'pending',
+        'status' => 'menunggu_konfirmasi',
+        'subtotal' => 150000,
+        'discount_amount' => 0,
+        'total_amount' => 150000,
+    ]);
+    $confirmingOrder->timestamps = false;
+    $confirmingOrder->created_at = now()->subHours(23)->subMinutes(30);
+    $confirmingOrder->save();
+
+    // 3. Order created only 5 hours ago -> SHOULD NOT get reminded
+    $recentOrder = Order::create([
+        'order_number' => 'ARPL-RECENT-1',
+        'user_id' => $customer->id,
+        'recipient_name' => 'Budi',
+        'recipient_phone' => '0812345678',
+        'address' => 'Jakarta',
+        'city' => 'Jakarta',
+        'courier' => 'JNE',
+        'shipping_cost' => 0,
+        'payment_method' => 'manual_bca',
+        'payment_status' => 'pending',
+        'status' => 'pending',
+        'subtotal' => 150000,
+        'discount_amount' => 0,
+        'total_amount' => 150000,
+    ]);
+    $recentOrder->timestamps = false;
+    $recentOrder->created_at = now()->subHours(5);
+    $recentOrder->save();
+
+    // Run Artisan command
+    $this->artisan('orders:remind-expiring-payments')
+        ->expectsOutput('Checking for orders expiring in the next hour...')
+        ->expectsOutput('Sent 1 payment expiry reminder(s) to customers.')
+        ->assertSuccessful();
+
+    // Re-running immediately should be blocked by cache (TTL 2 hours)
+    $this->artisan('orders:remind-expiring-payments')
+        ->expectsOutput('Checking for orders expiring in the next hour...')
+        ->expectsOutput('No orders entering the 1-hour expiry window at this time.')
+        ->assertSuccessful();
+});

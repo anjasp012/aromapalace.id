@@ -225,3 +225,82 @@ test('admin cannot delete a payment method that is in use by orders', function (
         'id' => $pm->id,
     ]);
 });
+
+test('admin can store a manual payment method with account details and instructions', function () {
+    $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
+    $admin = User::factory()->admin()->create();
+
+    $response = $this->actingAs($admin)
+        ->post("http://{$adminDomain}/manajemen-pembayaran", [
+            'name' => 'BCA Transfer Manual Kantor',
+            'code' => 'manual_bca_kantor',
+            'type' => 'manual',
+            'account_number' => '123-456-7890',
+            'account_name' => 'PT Aroma Palace Official',
+            'instructions' => 'Kirim bukti transfer via halaman konfirmasi.',
+            'is_active' => true,
+        ]);
+
+    $response->assertRedirect(route('admin.payment-methods.index'));
+    $this->assertDatabaseHas('payment_methods', [
+        'name' => 'BCA Transfer Manual Kantor',
+        'code' => 'manual_bca_kantor',
+        'type' => 'manual',
+        'account_number' => '123-456-7890',
+        'account_name' => 'PT Aroma Palace Official',
+        'instructions' => 'Kirim bukti transfer via halaman konfirmasi.',
+        'is_active' => true,
+    ]);
+});
+
+test('admin can update a payment method with type, account details and instructions', function () {
+    $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
+    $admin = User::factory()->admin()->create();
+
+    $pm = PaymentMethod::create([
+        'name' => 'GoPay Manual',
+        'code' => 'manual_gopay',
+        'type' => 'manual',
+        'account_number' => '081299990000',
+        'account_name' => 'Aroma Admin',
+        'is_active' => true,
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->put("http://{$adminDomain}/manajemen-pembayaran/{$pm->id}", [
+            'name' => 'GoPay QRIS Manual Toko',
+            'code' => 'manual_gopay_toko',
+            'type' => 'manual',
+            'account_number' => '081288887777',
+            'account_name' => 'Aroma Palace Store',
+            'instructions' => 'Scan QRIS GoPay atau transfer ke nomor tersebut.',
+            'is_active' => true,
+        ]);
+
+    $response->assertRedirect(route('admin.payment-methods.index'));
+    $this->assertDatabaseHas('payment_methods', [
+        'id' => $pm->id,
+        'name' => 'GoPay QRIS Manual Toko',
+        'code' => 'manual_gopay_toko',
+        'type' => 'manual',
+        'account_number' => '081288887777',
+        'account_name' => 'Aroma Palace Store',
+        'instructions' => 'Scan QRIS GoPay atau transfer ke nomor tersebut.',
+    ]);
+});
+
+test('admin can filter payment methods by type in index', function () {
+    $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
+    $admin = User::factory()->admin()->create();
+
+    $response = $this->actingAs($admin)
+        ->get("http://{$adminDomain}/manajemen-pembayaran?type=manual");
+
+    $response->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('admin/payment-methods/index')
+            ->where('filters.type', 'manual')
+            ->has('metrics.automatic_methods')
+            ->has('metrics.manual_methods')
+        );
+});
