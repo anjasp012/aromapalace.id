@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Events\OrderPaid;
 use App\Models\Order;
 use App\Services\FirebaseNotificationService;
-use App\Services\MembershipService;
 use App\Services\OrderService;
 use App\Services\PakasirService;
 use Illuminate\Http\JsonResponse;
@@ -109,7 +108,6 @@ class PaymentController extends Controller
                                         Log::warning('Broadcast OrderPaid failed: '.$e->getMessage());
                                     }
                                     app(FirebaseNotificationService::class)->notifyPaymentSuccess($locked);
-                                    app(MembershipService::class)->awardOrderPoints($locked);
                                 }
                             });
                             $orderModel->refresh();

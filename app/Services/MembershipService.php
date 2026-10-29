@@ -129,6 +129,11 @@ class MembershipService
             return null;
         }
 
+        // Poin belanja hanya diberikan ketika pesanan sudah selesai
+        if ($order->status !== 'selesai') {
+            return null;
+        }
+
         $membership = $user->membership ?? $this->join($user);
 
         // Check if points already awarded for this order

@@ -15,7 +15,6 @@ use App\Models\Voucher;
 use App\Services\CatalogService;
 use App\Services\FirebaseNotificationService;
 use App\Services\KiriminAjaService;
-use App\Services\MembershipService;
 use App\Services\PakasirService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -800,9 +799,7 @@ class CheckoutController extends Controller
                 }
             });
 
-            if ($order->payment_status === 'paid') {
-                app(MembershipService::class)->awardOrderPoints($order);
-            } else {
+            if ($order->payment_status !== 'paid') {
                 // Delayed Job: Auto cancel after 24 hours if still unpaid, restore stock, and send FCM notification
                 CancelExpiredOrderJob::dispatch($order->id)->delay(now()->addHours(24));
             }

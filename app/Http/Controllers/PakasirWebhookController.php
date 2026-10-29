@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Events\OrderPaid;
 use App\Models\Order;
 use App\Services\FirebaseNotificationService;
-use App\Services\MembershipService;
 use App\Services\PakasirService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -93,7 +92,6 @@ class PakasirWebhookController extends Controller
                     Log::warning('Broadcast OrderPaid failed: '.$e->getMessage());
                 }
                 app(FirebaseNotificationService::class)->notifyPaymentSuccess($order);
-                app(MembershipService::class)->awardOrderPoints($order);
             } elseif ($status === 'canceled') {
                 if ($order->payment_status !== 'canceled') {
                     app(OrderService::class)->cancelOrder($order, 'Dibatalkan oleh gateway Pakasir.');

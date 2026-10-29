@@ -63,7 +63,7 @@ test('authenticated member can view their membership status, points, and history
         );
 });
 
-test('paying an order awards loyalty points (1 point per Rp 10.000 spent)', function () {
+test('completing an order awards loyalty points only when status is selesai (1 point per Rp 10.000 spent)', function () {
     $user = User::factory()->create();
     $service = app(MembershipService::class);
     $membership = $service->join($user);
@@ -71,7 +71,7 @@ test('paying an order awards loyalty points (1 point per Rp 10.000 spent)', func
     // Initial points: 100
     expect($membership->points)->toBe(100);
 
-    // Create an order of Rp 500.000 (at 1 pt / 10k = 50 pts)
+    // Create an order of Rp 500.000 with status diproses
     $order = Order::create([
         'order_number' => 'ARPL-ORDER-TEST-PTS',
         'user_id' => $user->id,
@@ -87,6 +87,17 @@ test('paying an order awards loyalty points (1 point per Rp 10.000 spent)', func
         'total_amount' => 500000,
     ]);
 
+    // Should NOT award points while status is diproses
+    $result = $service->awardOrderPoints($order);
+    expect($result)->toBeNull();
+
+    $membership->refresh();
+    expect($membership->points)->toBe(100);
+
+    // Now update status to selesai
+    $order->update(['status' => 'selesai']);
+
+    // Should award points when status is selesai
     $service->awardOrderPoints($order);
 
     $membership->refresh();
