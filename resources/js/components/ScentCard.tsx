@@ -76,7 +76,7 @@ export default function ScentCard({
                 className
             )}
         >
-            <div className="relative w-full aspect-square flex items-center justify-center p-3 sm:p-4 bg-muted/20 hover:bg-muted/30 transition-colors rounded-none overflow-visible">
+            <div className="relative w-full aspect-square flex items-center justify-center p-2 sm:p-3 bg-transparent rounded-none overflow-visible">
                 {scent.image ? (
                     <img
                         src={scent.image}

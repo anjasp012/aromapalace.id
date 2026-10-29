@@ -80,12 +80,15 @@ export default function CategoriesPage({
                     </div>
                 ) : (
                     <>
-                        {/* 1. GENDER SECTION - 8 per row on lg, justify-center */}
+                        {/* 1. GENDER SECTION */}
                         {gendersList.length > 0 && (
                             <section id="genders">
-                                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mb-6 text-center">
-                                    {isEn ? 'Gender' : 'Gender'}
-                                </h2>
+                                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                                    <h2 className="text-xl sm:text-2xl tracking-tight text-foreground">
+                                        <span className="font-normal">{isEn ? 'Category' : 'Kategori'}</span>{' '}
+                                        <span className="font-bold">{isEn ? 'Gender' : 'Gender'}</span>
+                                    </h2>
+                                </div>
 
                                 <div className="flex flex-wrap justify-center gap-3 sm:gap-4 lg:gap-5">
                                     {gendersList.map((category, idx) => (
@@ -100,12 +103,15 @@ export default function CategoriesPage({
                             </section>
                         )}
 
-                        {/* 2. CONCENTRATE SECTION - 8 per row on lg, justify-center */}
+                        {/* 2. CONCENTRATE SECTION */}
                         {concentratesList.length > 0 && (
                             <section id="concentrates">
-                                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mb-6 text-center">
-                                    {isEn ? 'Concentration' : 'Konsentrasi'}
-                                </h2>
+                                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                                    <h2 className="text-xl sm:text-2xl tracking-tight text-foreground">
+                                        <span className="font-normal">{isEn ? 'Category' : 'Kategori'}</span>{' '}
+                                        <span className="font-bold">{isEn ? 'Concentration' : 'Konsentrasi'}</span>
+                                    </h2>
+                                </div>
 
                                 <div className="flex flex-wrap justify-center gap-3 sm:gap-4 lg:gap-5">
                                     {concentratesList.map((category, idx) => (
@@ -120,12 +126,15 @@ export default function CategoriesPage({
                             </section>
                         )}
 
-                        {/* 3. SCENT SECTION - 8 per row on lg, justify-center */}
+                        {/* 3. SCENT SECTION */}
                         {scentsList.length > 0 && (
                             <section id="scents">
-                                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mb-6 text-center">
-                                    {isEn ? 'Scents' : 'Aroma'}
-                                </h2>
+                                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                                    <h2 className="text-xl sm:text-2xl tracking-tight text-foreground">
+                                        <span className="font-normal">{isEn ? 'Category' : 'Kategori'}</span>{' '}
+                                        <span className="font-bold">{isEn ? 'Scents' : 'Aroma'}</span>
+                                    </h2>
+                                </div>
 
                                 <div className="flex flex-wrap justify-center gap-3 sm:gap-4 lg:gap-5">
                                     {scentsList.map((scent, idx) => (

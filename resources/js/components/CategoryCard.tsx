@@ -40,8 +40,8 @@ export default function CategoryCard({ category, className }: CategoryCardProps)
                 className
             )}
         >
-            {/* Pure Image Container - Unrounded, Borderless, Never Clipped */}
-            <div className="relative w-full aspect-square flex items-center justify-center p-3 sm:p-4 bg-muted/20 hover:bg-muted/30 transition-colors rounded-none overflow-visible">
+            {/* Pure Image Container - Unrounded, Borderless, Transparent Background */}
+            <div className="relative w-full aspect-square flex items-center justify-center p-2 sm:p-3 bg-transparent rounded-none overflow-visible">
                 {category.image ? (
                     <img
                         src={category.image}
