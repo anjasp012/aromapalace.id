@@ -428,6 +428,7 @@ export default function AdminPaymentMethodEdit({ paymentMethod }: AdminPaymentMe
                                     {errors.account_name && (
                                         <p className="text-xs text-destructive font-medium">{errors.account_name}</p>
                                     )}
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
