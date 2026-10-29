@@ -28,6 +28,8 @@ export default function CategoriesPage({
 
     const totalCount = gendersList.length + concentratesList.length + scentsList.length;
 
+    const itemWidthClass = 'w-[calc(50%-0.5rem)] sm:w-[calc(25%-0.75rem)] md:w-[calc(16.666%-0.85rem)] lg:w-[calc(12.5%-1.1rem)] max-w-[150px] shrink-0';
+
     return (
         <Layout>
             <Head>
@@ -78,58 +80,61 @@ export default function CategoriesPage({
                     </div>
                 ) : (
                     <>
-                        {/* 1. GENDER SECTION */}
+                        {/* 1. GENDER SECTION - 8 per row on lg, justify-center */}
                         {gendersList.length > 0 && (
                             <section id="genders">
-                                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mb-6">
+                                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mb-6 text-center">
                                     {isEn ? 'Gender' : 'Gender'}
                                 </h2>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
+                                <div className="flex flex-wrap justify-center gap-3 sm:gap-4 lg:gap-5">
                                     {gendersList.map((category, idx) => (
-                                        <CategoryCard
-                                            key={category.slug}
-                                            category={category}
-                                            colorIndex={idx}
-                                        />
+                                        <div key={category.slug} className={itemWidthClass}>
+                                            <CategoryCard
+                                                category={category}
+                                                colorIndex={idx}
+                                            />
+                                        </div>
                                     ))}
                                 </div>
                             </section>
                         )}
 
-                        {/* 2. CONCENTRATE SECTION */}
+                        {/* 2. CONCENTRATE SECTION - 8 per row on lg, justify-center */}
                         {concentratesList.length > 0 && (
                             <section id="concentrates">
-                                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mb-6">
+                                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mb-6 text-center">
                                     {isEn ? 'Concentration' : 'Konsentrasi'}
                                 </h2>
 
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8">
+                                <div className="flex flex-wrap justify-center gap-3 sm:gap-4 lg:gap-5">
                                     {concentratesList.map((category, idx) => (
-                                        <CategoryCard
-                                            key={category.slug}
-                                            category={category}
-                                            colorIndex={idx + 3}
-                                        />
+                                        <div key={category.slug} className={itemWidthClass}>
+                                            <CategoryCard
+                                                category={category}
+                                                colorIndex={idx + 3}
+                                            />
+                                        </div>
                                     ))}
                                 </div>
                             </section>
                         )}
 
-                        {/* 3. SCENT SECTION */}
+                        {/* 3. SCENT SECTION - 8 per row on lg, justify-center */}
                         {scentsList.length > 0 && (
                             <section id="scents">
-                                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mb-6">
+                                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mb-6 text-center">
                                     {isEn ? 'Scents' : 'Aroma'}
                                 </h2>
 
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-6 sm:gap-8">
+                                <div className="flex flex-wrap justify-center gap-3 sm:gap-4 lg:gap-5">
                                     {scentsList.map((scent, idx) => (
-                                        <ScentCard
-                                            key={scent.slug}
-                                            scent={scent}
-                                            colorIndex={idx + 7}
-                                        />
+                                        <div key={scent.slug} className={itemWidthClass}>
+                                            <ScentCard
+                                                scent={scent}
+                                                colorIndex={idx + 7}
+                                            />
+                                        </div>
                                     ))}
                                 </div>
                             </section>
