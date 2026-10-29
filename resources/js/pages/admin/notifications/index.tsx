@@ -317,6 +317,39 @@ export default function AdminNotificationsIndex({
                 )}
 
                 {/* Filter and Actions Toolbar */}
+                {/* Status Tabs Navigation */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                    {[
+                        { key: 'all', label: 'Semua Notifikasi', count: metrics?.total ?? 0 },
+                        { key: 'unread', label: 'Belum Dibaca', count: metrics?.unread ?? 0 },
+                        { key: 'read', label: 'Sudah Dibaca', count: metrics?.read ?? 0 },
+                    ].map((tab) => {
+                        const isActive = status === tab.key;
+                        return (
+                            <Button
+                                key={tab.key}
+                                type="button"
+                                variant={isActive ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => handleStatusChange(tab.key)}
+                                className="h-8 gap-2 whitespace-nowrap text-xs cursor-pointer"
+                            >
+                                <span>{tab.label}</span>
+                                <span
+                                    className={`px-1.5 py-0.2 rounded-full text-[10px] font-semibold ${
+                                        isActive
+                                            ? 'bg-primary-foreground text-primary'
+                                            : 'bg-muted text-muted-foreground'
+                                    }`}
+                                >
+                                    {tab.count}
+                                </span>
+                            </Button>
+                        );
+                    })}
+                </div>
+
+                {/* Filter and Actions Toolbar */}
                 <Card className="p-4">
                     <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
                         {/* Search Input */}
@@ -336,51 +369,14 @@ export default function AdminNotificationsIndex({
                             </Button>
                         </form>
 
-                        {/* Filter Status Buttons & Actions */}
-                        <div className="flex items-center gap-2 flex-wrap justify-between lg:justify-end">
-                            <div className="inline-flex rounded-lg border bg-muted/40 p-0.5 text-xs">
-                                <button
-                                    type="button"
-                                    onClick={() => handleStatusChange('all')}
-                                    className={`px-3 py-1 rounded-md font-medium transition-all cursor-pointer ${
-                                        status === 'all'
-                                            ? 'bg-background text-foreground shadow-xs'
-                                            : 'text-muted-foreground hover:text-foreground'
-                                    }`}
-                                >
-                                    Semua {metrics?.total !== undefined && `(${metrics.total})`}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleStatusChange('unread')}
-                                    className={`px-3 py-1 rounded-md font-medium transition-all cursor-pointer ${
-                                        status === 'unread'
-                                            ? 'bg-background text-foreground shadow-xs'
-                                            : 'text-muted-foreground hover:text-foreground'
-                                    }`}
-                                >
-                                    Belum Dibaca {metrics?.unread !== undefined && `(${metrics.unread})`}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleStatusChange('read')}
-                                    className={`px-3 py-1 rounded-md font-medium transition-all cursor-pointer ${
-                                        status === 'read'
-                                            ? 'bg-background text-foreground shadow-xs'
-                                            : 'text-muted-foreground hover:text-foreground'
-                                    }`}
-                                >
-                                    Sudah Dibaca {metrics?.read !== undefined && `(${metrics.read})`}
-                                </button>
-                            </div>
-
+                        <div className="flex items-center gap-2 flex-wrap justify-end">
                             {unreadCount > 0 && (
                                 <Button
                                     type="button"
                                     variant="outline"
                                     size="sm"
                                     onClick={handleMarkAllAsRead}
-                                    className="h-9 cursor-pointer text-xs"
+                                    className="h-9 cursor-pointer"
                                 >
                                     <CheckCheck className="size-3.5 mr-1.5 text-primary" />
                                     <span>Tandai Semua Dibaca</span>
@@ -393,7 +389,7 @@ export default function AdminNotificationsIndex({
                                     variant="outline"
                                     size="sm"
                                     onClick={handleReset}
-                                    className="h-9 cursor-pointer text-xs"
+                                    className="h-9 cursor-pointer"
                                     title="Reset Filter"
                                 >
                                     <RefreshCw className="size-3.5 mr-1" />

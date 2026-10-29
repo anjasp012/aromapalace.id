@@ -109,14 +109,27 @@ export default function AdminUsersIndex({
         applyFilter({ search });
     };
 
-    const handleRoleFilterChange = (role: string) => {
-        setRoleFilter(role);
-        applyFilter({ role });
-    };
+    const activeTab = statusFilter === 'trashed' ? 'trashed' : (roleFilter !== 'all' ? roleFilter : 'all');
 
-    const handleStatusFilterChange = (status: string) => {
-        setStatusFilter(status);
-        applyFilter({ status });
+    const USER_TABS = [
+        { key: 'all', label: 'Semua Pengguna', count: metrics.total_users },
+        { key: 'customer', label: 'Pelanggan', count: metrics.total_customers },
+        { key: 'admin', label: 'Admin', count: metrics.total_admins },
+        ...((metrics.total_trashed && metrics.total_trashed > 0) || statusFilter === 'trashed'
+            ? [{ key: 'trashed', label: 'Sampah', count: metrics.total_trashed ?? 0, isTrashed: true }]
+            : []),
+    ];
+
+    const handleTabChange = (tabKey: string) => {
+        if (tabKey === 'trashed') {
+            setStatusFilter('trashed');
+            setRoleFilter('all');
+            applyFilter({ status: 'trashed', role: 'all' });
+        } else {
+            setStatusFilter('all');
+            setRoleFilter(tabKey);
+            applyFilter({ status: 'all', role: tabKey });
+        }
     };
 
     const handleResetFilter = () => {
@@ -210,6 +223,37 @@ export default function AdminUsersIndex({
                     </Card>
                 </div>
 
+                {/* Status Tabs Navigation */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                    {USER_TABS.map((tab) => {
+                        const isActive = activeTab === tab.key;
+                        return (
+                            <Button
+                                key={tab.key}
+                                type="button"
+                                variant={isActive ? (tab.isTrashed ? 'destructive' : 'default') : 'outline'}
+                                size="sm"
+                                onClick={() => handleTabChange(tab.key)}
+                                className={`h-8 gap-2 whitespace-nowrap text-xs cursor-pointer ${
+                                    !isActive && tab.isTrashed ? 'text-destructive hover:text-destructive hover:bg-destructive/10' : ''
+                                }`}
+                            >
+                                {tab.isTrashed && <Trash2 className="size-3" />}
+                                <span>{tab.label}</span>
+                                <span
+                                    className={`px-1.5 py-0.2 rounded-full text-[10px] font-semibold ${
+                                        isActive
+                                            ? 'bg-primary-foreground text-primary'
+                                            : 'bg-muted text-muted-foreground'
+                                    }`}
+                                >
+                                    {tab.count}
+                                </span>
+                            </Button>
+                        );
+                    })}
+                </div>
+
                 {/* Filter and Action Bar */}
                 <Card className="p-4">
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
@@ -230,63 +274,6 @@ export default function AdminUsersIndex({
                         </form>
 
                         <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                            <div className="flex rounded-md border p-0.5 bg-muted/40">
-                                <Button
-                                    type="button"
-                                    variant={statusFilter !== 'trashed' && roleFilter === 'all' ? 'default' : 'ghost'}
-                                    size="sm"
-                                    onClick={() => {
-                                        setStatusFilter('all');
-                                        handleRoleFilterChange('all');
-                                    }}
-                                    className="h-7 text-xs px-2.5 cursor-pointer"
-                                >
-                                    Semua
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant={statusFilter !== 'trashed' && roleFilter === 'customer' ? 'default' : 'ghost'}
-                                    size="sm"
-                                    onClick={() => {
-                                        setStatusFilter('all');
-                                        handleRoleFilterChange('customer');
-                                    }}
-                                    className="h-7 text-xs px-2.5 cursor-pointer"
-                                >
-                                    Pelanggan
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant={statusFilter !== 'trashed' && roleFilter === 'admin' ? 'default' : 'ghost'}
-                                    size="sm"
-                                    onClick={() => {
-                                        setStatusFilter('all');
-                                        handleRoleFilterChange('admin');
-                                    }}
-                                    className="h-7 text-xs px-2.5 cursor-pointer"
-                                >
-                                    Admin
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant={statusFilter === 'trashed' ? 'destructive' : 'ghost'}
-                                    size="sm"
-                                    onClick={() => handleStatusFilterChange(statusFilter === 'trashed' ? 'all' : 'trashed')}
-                                    className="h-7 text-xs px-2.5 cursor-pointer gap-1"
-                                >
-                                    <Trash2 className="size-3" />
-                                    <span>Sampah</span>
-                                    {metrics.total_trashed ? (
-                                        <Badge
-                                            variant={statusFilter === 'trashed' ? 'secondary' : 'destructive'}
-                                            className="text-[9px] px-1 py-0 h-4 font-bold"
-                                        >
-                                            {metrics.total_trashed}
-                                        </Badge>
-                                    ) : null}
-                                </Button>
-                            </div>
-
                             {(search !== '' || roleFilter !== 'all' || statusFilter !== 'all') && (
                                 <Button
                                     type="button"

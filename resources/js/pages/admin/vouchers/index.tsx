@@ -234,8 +234,40 @@ export default function AdminVouchersIndex({
                     </Card>
                 </div>
 
+                {/* Status Tabs Navigation */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                    {[
+                        { key: 'all', label: 'Semua Voucher', count: metrics.total_vouchers },
+                        { key: 'active', label: 'Voucher Aktif', count: metrics.active_vouchers },
+                        { key: 'expired', label: 'Kadaluarsa', count: metrics.expired_vouchers },
+                    ].map((tab) => {
+                        const isActive = statusFilter === tab.key;
+                        return (
+                            <Button
+                                key={tab.key}
+                                type="button"
+                                variant={isActive ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => handleStatusFilterChange(tab.key)}
+                                className="h-8 gap-2 whitespace-nowrap text-xs cursor-pointer"
+                            >
+                                <span>{tab.label}</span>
+                                <span
+                                    className={`px-1.5 py-0.2 rounded-full text-[10px] font-semibold ${
+                                        isActive
+                                            ? 'bg-primary-foreground text-primary'
+                                            : 'bg-muted text-muted-foreground'
+                                    }`}
+                                >
+                                    {tab.count}
+                                </span>
+                            </Button>
+                        );
+                    })}
+                </div>
+
                 {/* Filter and Actions */}
-                <Card className="p-4 space-y-3">
+                <Card className="p-4">
                     <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
                         <form onSubmit={handleSearchSubmit} className="flex-1 w-full lg:max-w-md flex items-center gap-2">
                             <div className="relative flex-1">
@@ -253,50 +285,19 @@ export default function AdminVouchersIndex({
                             </Button>
                         </form>
 
-                        <div className="flex flex-wrap items-center gap-2">
-                            {/* Filter Status */}
-                            <div className="flex rounded-md border p-0.5 bg-muted/40">
-                                <Button
-                                    type="button"
-                                    variant={statusFilter === 'all' ? 'default' : 'ghost'}
-                                    size="sm"
-                                    onClick={() => handleStatusFilterChange('all')}
-                                    className="h-7 text-xs px-2.5 cursor-pointer"
-                                >
-                                    Semua
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant={statusFilter === 'active' ? 'default' : 'ghost'}
-                                    size="sm"
-                                    onClick={() => handleStatusFilterChange('active')}
-                                    className="h-7 text-xs px-2.5 cursor-pointer"
-                                >
-                                    Aktif
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant={statusFilter === 'expired' ? 'default' : 'ghost'}
-                                    size="sm"
-                                    onClick={() => handleStatusFilterChange('expired')}
-                                    className="h-7 text-xs px-2.5 cursor-pointer"
-                                >
-                                    Kadaluarsa
-                                </Button>
-                            </div>
-
+                        <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-end">
                             {/* Filter Tipe */}
                             <Select
                                 value={typeFilter}
                                 onValueChange={(val) => handleTypeFilterChange(val)}
                             >
-                                <SelectTrigger className="h-8 text-xs w-[130px]">
+                                <SelectTrigger className="h-9 text-xs w-[140px]">
                                     <SelectValue placeholder="Semua Tipe" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">Semua Tipe</SelectItem>
-                                    <SelectItem value="biasa">Voucher Biasa</SelectItem>
-                                    <SelectItem value="reward">Voucher Reward</SelectItem>
+                                    <SelectItem value="biasa">Voucher Biasa ({metrics.total_biasa ?? 0})</SelectItem>
+                                    <SelectItem value="reward">Voucher Reward ({metrics.total_reward ?? 0})</SelectItem>
                                 </SelectContent>
                             </Select>
 
@@ -305,12 +306,12 @@ export default function AdminVouchersIndex({
                                 value={scopeFilter}
                                 onValueChange={(val) => handleScopeFilterChange(val)}
                             >
-                                <SelectTrigger className="h-8 text-xs w-[150px]">
+                                <SelectTrigger className="h-9 text-xs w-[160px]">
                                     <SelectValue placeholder="Semua Cakupan" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">Semua Cakupan</SelectItem>
-                                    <SelectItem value="specific">Khusus Produk</SelectItem>
+                                    <SelectItem value="specific">Khusus Produk ({metrics.total_specific ?? 0})</SelectItem>
                                 </SelectContent>
                             </Select>
 
@@ -320,7 +321,7 @@ export default function AdminVouchersIndex({
                                     variant="outline"
                                     size="sm"
                                     onClick={handleResetFilter}
-                                    className="h-8 cursor-pointer text-xs"
+                                    className="h-9 cursor-pointer"
                                     title="Reset Pencarian"
                                 >
                                     <RefreshCw className="size-3.5 mr-1" />
@@ -328,7 +329,7 @@ export default function AdminVouchersIndex({
                                 </Button>
                             )}
 
-                            <Button size="sm" asChild className="h-8 cursor-pointer">
+                            <Button size="sm" asChild className="h-9 cursor-pointer">
                                 <Link href="/manajemen-voucher/create">
                                     <Plus className="size-4 mr-1.5" />
                                     <span>Tambah Voucher</span>

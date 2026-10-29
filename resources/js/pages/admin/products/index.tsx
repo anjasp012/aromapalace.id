@@ -294,6 +294,50 @@ export default function AdminProductsIndex({
                     </Card>
                 </div>
 
+                {/* Status Tabs Navigation */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                    {[
+                        { key: 'all', label: 'Semua Produk', count: metrics.total_products },
+                        { key: 'published', label: 'Publikasi', count: metrics.published_count ?? 0 },
+                        { key: 'draft', label: 'Draft', count: metrics.draft_count ?? 0 },
+                        ...((metrics.trashed_count && metrics.trashed_count > 0) || selectedStatus === 'trashed' ? [{
+                            key: 'trashed',
+                            label: 'Sampah',
+                            count: metrics.trashed_count ?? 0,
+                            isTrashed: true,
+                        }] : []),
+                    ].map((tab) => {
+                        const isActive = selectedStatus === tab.key;
+                        return (
+                            <Button
+                                key={tab.key}
+                                type="button"
+                                variant={isActive ? (tab.isTrashed ? 'destructive' : 'default') : 'outline'}
+                                size="sm"
+                                onClick={() => {
+                                    setSelectedStatus(tab.key);
+                                    applyFilters({ status: tab.key });
+                                }}
+                                className={`h-8 gap-2 whitespace-nowrap text-xs cursor-pointer ${
+                                    !isActive && tab.isTrashed ? 'text-destructive hover:text-destructive hover:bg-destructive/10' : ''
+                                }`}
+                            >
+                                {tab.isTrashed && <Trash2 className="size-3" />}
+                                <span>{tab.label}</span>
+                                <span
+                                    className={`px-1.5 py-0.2 rounded-full text-[10px] font-semibold ${
+                                        isActive
+                                            ? 'bg-primary-foreground text-primary'
+                                            : 'bg-muted text-muted-foreground'
+                                    }`}
+                                >
+                                    {tab.count}
+                                </span>
+                            </Button>
+                        );
+                    })}
+                </div>
+
                 {/* Filter & Action Card */}
                 <Card className="p-4">
                     <div className="flex flex-col lg:flex-row items-center justify-between gap-3">
@@ -308,7 +352,7 @@ export default function AdminProductsIndex({
                                     className="pl-9 h-9 text-xs"
                                 />
                             </div>
-                            <Button type="submit" size="sm" className="h-9">
+                            <Button type="submit" size="sm" className="h-9 cursor-pointer">
                                 Cari
                             </Button>
                         </form>
@@ -362,22 +406,19 @@ export default function AdminProductsIndex({
                             </Select>
 
                             <Select
-                                value={selectedStatus}
+                                value={selectedStockFilter}
                                 onValueChange={(val) => {
-                                    setSelectedStatus(val);
-                                    applyFilters({ status: val });
+                                    setSelectedStockFilter(val);
+                                    applyFilters({ stock_filter: val });
                                 }}
                             >
-                                <SelectTrigger className="h-9 w-[150px] text-xs">
-                                    <SelectValue placeholder="Semua Status" />
+                                <SelectTrigger className="h-9 w-[160px] text-xs">
+                                    <SelectValue placeholder="Semua Stok" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">Semua Status</SelectItem>
-                                    <SelectItem value="published">Publikasi ({metrics.published_count ?? 0})</SelectItem>
-                                    <SelectItem value="draft">Draft ({metrics.draft_count ?? 0})</SelectItem>
-                                    <SelectItem value="trashed" className="text-destructive font-medium">
-                                        Sampah ({metrics.trashed_count ?? 0})
-                                    </SelectItem>
+                                    <SelectItem value="all">Semua Stok</SelectItem>
+                                    <SelectItem value="out_of_stock">Stok Habis ({metrics.out_of_stock_count ?? 0})</SelectItem>
+                                    <SelectItem value="low_stock">Stok Menipis ({metrics.low_stock_count ?? 0})</SelectItem>
                                 </SelectContent>
                             </Select>
 
@@ -387,7 +428,7 @@ export default function AdminProductsIndex({
                                     variant="outline"
                                     size="sm"
                                     onClick={handleResetFilters}
-                                    className="h-9"
+                                    className="h-9 cursor-pointer"
                                     title="Reset Filter"
                                 >
                                     <RefreshCw className="size-3.5 mr-1" />
@@ -395,7 +436,7 @@ export default function AdminProductsIndex({
                                 </Button>
                             )}
 
-                            <Button size="sm" asChild className="h-9">
+                            <Button size="sm" asChild className="h-9 cursor-pointer">
                                 <Link href="/manajemen-produk/create">
                                     <Plus className="size-4 mr-1.5" />
                                     <span>Tambah Produk</span>

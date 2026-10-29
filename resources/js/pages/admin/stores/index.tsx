@@ -167,10 +167,10 @@ export default function AdminStoresIndex({
 
                 {/* Search & Filter Toolbar */}
                 <Card className="p-4">
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                        <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 flex-1 max-w-md">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <form onSubmit={handleSearchSubmit} className="flex-1 w-full sm:max-w-md flex items-center gap-2">
                             <div className="relative flex-1">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                                <Search className="size-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                                 <Input
                                     type="text"
                                     placeholder="Cari nama butik, mall, atau alamat kota..."
@@ -182,27 +182,30 @@ export default function AdminStoresIndex({
                             <Button type="submit" size="sm" className="h-9 cursor-pointer">
                                 Cari
                             </Button>
-                            {search && (
+                        </form>
+
+                        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                            {search !== '' && (
                                 <Button
                                     type="button"
                                     size="sm"
                                     variant="outline"
                                     onClick={handleResetSearch}
-                                    className="h-9 cursor-pointer text-xs"
+                                    className="h-9 cursor-pointer"
                                     title="Reset Pencarian"
                                 >
                                     <RefreshCw className="size-3.5 mr-1" />
                                     <span>Reset</span>
                                 </Button>
                             )}
-                        </form>
 
-                        <Button size="sm" asChild className="h-9 cursor-pointer">
-                            <Link href="/manajemen-butik/create">
-                                <Plus className="size-4 mr-1.5" />
-                                <span>Tambah Butik</span>
-                            </Link>
-                        </Button>
+                            <Button size="sm" asChild className="h-9 cursor-pointer">
+                                <Link href="/manajemen-butik/create">
+                                    <Plus className="size-4 mr-1.5" />
+                                    <span>Tambah Butik</span>
+                                </Link>
+                            </Button>
+                        </div>
                     </div>
                 </Card>
 

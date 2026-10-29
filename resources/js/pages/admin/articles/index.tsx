@@ -178,6 +178,41 @@ export default function AdminArticlesIndex({
                     </Card>
                 </div>
 
+                {/* Status Tabs Navigation */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                    {[
+                        { key: 'all', label: 'Semua Artikel', count: metrics.total_articles },
+                        { key: 'published', label: 'Publikasi', count: metrics.published_count ?? 0 },
+                        { key: 'draft', label: 'Draft', count: metrics.draft_count ?? 0 },
+                    ].map((tab) => {
+                        const isActive = selectedStatus === tab.key;
+                        return (
+                            <Button
+                                key={tab.key}
+                                type="button"
+                                variant={isActive ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => {
+                                    setSelectedStatus(tab.key);
+                                    applyFilters({ status: tab.key });
+                                }}
+                                className="h-8 gap-2 whitespace-nowrap text-xs cursor-pointer"
+                            >
+                                <span>{tab.label}</span>
+                                <span
+                                    className={`px-1.5 py-0.2 rounded-full text-[10px] font-semibold ${
+                                        isActive
+                                            ? 'bg-primary-foreground text-primary'
+                                            : 'bg-muted text-muted-foreground'
+                                    }`}
+                                >
+                                    {tab.count}
+                                </span>
+                            </Button>
+                        );
+                    })}
+                </div>
+
                 {/* Filter and Actions */}
                 <Card className="p-4">
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
@@ -192,36 +227,19 @@ export default function AdminArticlesIndex({
                                     className="pl-9 h-9 text-xs"
                                 />
                             </div>
-                            <Button type="submit" size="sm" className="h-9">
+                            <Button type="submit" size="sm" className="h-9 cursor-pointer">
                                 Cari
                             </Button>
                         </form>
 
                         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
-                            <Select
-                                value={selectedStatus}
-                                onValueChange={(val) => {
-                                    setSelectedStatus(val);
-                                    applyFilters({ status: val });
-                                }}
-                            >
-                                <SelectTrigger className="h-9 w-[150px] text-xs">
-                                    <SelectValue placeholder="Semua Status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Semua Status</SelectItem>
-                                    <SelectItem value="published">Publikasi ({metrics.published_count ?? 0})</SelectItem>
-                                    <SelectItem value="draft">Draft ({metrics.draft_count ?? 0})</SelectItem>
-                                </SelectContent>
-                            </Select>
-
                             {(search !== '' || selectedStatus !== 'all') && (
                                 <Button
                                     type="button"
                                     variant="outline"
                                     size="sm"
                                     onClick={handleResetSearch}
-                                    className="h-9"
+                                    className="h-9 cursor-pointer"
                                     title="Reset Pencarian"
                                 >
                                     <RefreshCw className="size-3.5 mr-1" />
@@ -229,7 +247,7 @@ export default function AdminArticlesIndex({
                                 </Button>
                             )}
 
-                            <Button size="sm" asChild className="h-9">
+                            <Button size="sm" asChild className="h-9 cursor-pointer">
                                 <Link href="/manajemen-artikel/create">
                                     <Plus className="size-4 mr-1.5" />
                                     <span>Tulis Artikel Baru</span>

@@ -184,9 +184,9 @@ export default function AdminCategoriesIndex({
                 {/* Filter & Action Toolbar */}
                 <Card className="p-4">
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-                        <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 w-full sm:w-auto flex-1 max-w-md">
-                            <div className="relative w-full">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                        <form onSubmit={handleSearchSubmit} className="flex-1 w-full sm:max-w-md flex items-center gap-2">
+                            <div className="relative flex-1">
+                                <Search className="size-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                                 <Input
                                     type="text"
                                     placeholder={`Cari nama ${meta.itemName.toLowerCase()}, slug, atau deskripsi...`}

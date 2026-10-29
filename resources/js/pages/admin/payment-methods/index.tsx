@@ -187,6 +187,38 @@ export default function AdminPaymentMethodsIndex({
                     </div>
                 )}
 
+                {/* Status Tabs Navigation */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                    {[
+                        { key: '', label: 'Semua Metode', count: metrics?.total_methods ?? 0 },
+                        { key: 'active', label: 'Metode Aktif', count: metrics?.active_methods ?? 0 },
+                        { key: 'inactive', label: 'Nonaktif', count: metrics?.inactive_methods ?? 0 },
+                    ].map((tab) => {
+                        const isActive = statusFilter === tab.key;
+                        return (
+                            <Button
+                                key={tab.key}
+                                type="button"
+                                variant={isActive ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => handleStatusFilterChange(tab.key)}
+                                className="h-8 gap-2 whitespace-nowrap text-xs cursor-pointer"
+                            >
+                                <span>{tab.label}</span>
+                                <span
+                                    className={`px-1.5 py-0.2 rounded-full text-[10px] font-semibold ${
+                                        isActive
+                                            ? 'bg-primary-foreground text-primary'
+                                            : 'bg-muted text-muted-foreground'
+                                    }`}
+                                >
+                                    {tab.count}
+                                </span>
+                            </Button>
+                        );
+                    })}
+                </div>
+
                 {/* Filter and Actions Toolbar */}
                 <Card className="p-4">
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
@@ -205,37 +237,6 @@ export default function AdminPaymentMethodsIndex({
                                 Cari
                             </Button>
                         </form>
-
-                        {/* Status Filter Badges */}
-                        <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
-                            <Button
-                                type="button"
-                                variant={statusFilter === '' ? 'secondary' : 'ghost'}
-                                size="sm"
-                                onClick={() => handleStatusFilterChange('')}
-                                className="h-8 text-xs cursor-pointer"
-                            >
-                                Semua
-                            </Button>
-                            <Button
-                                type="button"
-                                variant={statusFilter === 'active' ? 'secondary' : 'ghost'}
-                                size="sm"
-                                onClick={() => handleStatusFilterChange('active')}
-                                className="h-8 text-xs cursor-pointer"
-                            >
-                                Aktif ({metrics?.active_methods ?? 0})
-                            </Button>
-                            <Button
-                                type="button"
-                                variant={statusFilter === 'inactive' ? 'secondary' : 'ghost'}
-                                size="sm"
-                                onClick={() => handleStatusFilterChange('inactive')}
-                                className="h-8 text-xs cursor-pointer"
-                            >
-                                Nonaktif ({metrics?.inactive_methods ?? 0})
-                            </Button>
-                        </div>
 
                         <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                             {(search !== '' || statusFilter !== '') && (

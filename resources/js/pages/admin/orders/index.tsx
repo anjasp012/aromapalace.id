@@ -357,7 +357,7 @@ export default function AdminOrdersIndex({
                                 variant={isActive ? 'default' : 'outline'}
                                 size="sm"
                                 onClick={() => handleTabChange(tab.key)}
-                                className="h-8 gap-2 whitespace-nowrap text-xs"
+                                className="h-8 gap-2 whitespace-nowrap text-xs cursor-pointer"
                             >
                                 <span>{tab.label}</span>
                                 <span
@@ -387,7 +387,7 @@ export default function AdminOrdersIndex({
                                     className="pl-9 h-9 text-xs"
                                 />
                             </div>
-                            <Button type="submit" size="sm" className="h-9">
+                            <Button type="submit" size="sm" className="h-9 cursor-pointer">
                                 Cari
                             </Button>
                         </form>
@@ -413,7 +413,7 @@ export default function AdminOrdersIndex({
                                     variant="outline"
                                     size="sm"
                                     onClick={handleResetFilter}
-                                    className="h-9"
+                                    className="h-9 cursor-pointer"
                                     title="Reset Filter"
                                 >
                                     <RefreshCw className="size-3.5 mr-1" />
