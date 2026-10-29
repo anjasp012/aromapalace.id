@@ -156,8 +156,10 @@ class VoucherController extends Controller
 
         $voucher = Voucher::create($validated);
 
-        // Broadcast notification to all customers for new voucher
-        app(FirebaseNotificationService::class)->notifyNewVoucher($voucher);
+        // Broadcast notification to all customers for new voucher (hanya untuk voucher promo biasa, bukan voucher reward)
+        if ($voucher->voucher_type !== 'reward') {
+            app(FirebaseNotificationService::class)->notifyNewVoucher($voucher);
+        }
 
         return redirect()->route('admin.vouchers.index')
             ->with('success', "Voucher '{$validated['code']}' berhasil ditambahkan.");

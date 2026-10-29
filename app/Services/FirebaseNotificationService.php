@@ -523,6 +523,11 @@ class FirebaseNotificationService
      */
     public function notifyNewVoucher(Voucher $voucher): int
     {
+        // Jangan kirim notifikasi jika voucher ini bertipe reward atau khusus untuk user tertentu
+        if ($voucher->voucher_type === 'reward' || ! empty($voucher->user_id)) {
+            return 0;
+        }
+
         $isEn = app()->getLocale() === 'en';
         $discountInfoId = $voucher->type === 'percentage' ? "Diskon {$voucher->value}%" : 'Potongan Rp '.number_format($voucher->value, 0, ',', '.');
         $discountInfoEn = $voucher->type === 'percentage' ? "{$voucher->value}% Discount" : 'Rp '.number_format($voucher->value, 0, ',', '.').' Off';

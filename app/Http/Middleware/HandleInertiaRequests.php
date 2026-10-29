@@ -107,6 +107,8 @@ class HandleInertiaRequests extends Middleware
             'header_vouchers' => fn () => Cache::remember('active_header_vouchers', 600, function () {
                 return Voucher::query()
                     ->where('is_active', true)
+                    ->where('voucher_type', '!=', 'reward')
+                    ->whereNull('user_id')
                     ->where(function ($q) {
                         $q->whereNull('starts_at')->orWhere('starts_at', '<=', now());
                     })

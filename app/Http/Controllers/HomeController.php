@@ -132,8 +132,10 @@ class HomeController extends Controller
                 ];
             })->values()->all();
 
-        // 6. Vouchers from DB
+        // 6. Vouchers from DB (Hanya voucher promo umum, jangan tampilkan voucher reward atau voucher khusus user)
         $vouchers = Voucher::where('is_active', true)
+            ->where('voucher_type', '!=', 'reward')
+            ->whereNull('user_id')
             ->where(function ($q) {
                 $q->whereNull('expires_at')->orWhere('expires_at', '>=', now());
             })
