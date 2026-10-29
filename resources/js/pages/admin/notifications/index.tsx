@@ -14,6 +14,12 @@ import {
     Ticket,
     RefreshCw,
     Check,
+    PackageCheck,
+    CheckCircle2,
+    XCircle,
+    UserCheck,
+    Award,
+    Coins,
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -73,6 +79,7 @@ export default function AdminNotificationsIndex({
 }: NotificationsIndexProps) {
     const [search, setSearch] = useState(filters.search || '');
     const [status, setStatus] = useState(filters.status || 'all');
+    const [typeFilter, setTypeFilter] = useState(filters.type || 'all');
     const [deleteTarget, setDeleteTarget] = useState<NotificationItem | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
@@ -81,6 +88,7 @@ export default function AdminNotificationsIndex({
         router.get('/manajemen-notifikasi', {
             search: search || undefined,
             status: status !== 'all' ? status : undefined,
+            type: typeFilter !== 'all' ? typeFilter : undefined,
         }, { preserveState: true });
     };
 
@@ -89,12 +97,23 @@ export default function AdminNotificationsIndex({
         router.get('/manajemen-notifikasi', {
             search: search || undefined,
             status: newStatus !== 'all' ? newStatus : undefined,
+            type: typeFilter !== 'all' ? typeFilter : undefined,
+        }, { preserveState: true });
+    };
+
+    const handleTypeChange = (newType: string) => {
+        setTypeFilter(newType);
+        router.get('/manajemen-notifikasi', {
+            search: search || undefined,
+            status: status !== 'all' ? status : undefined,
+            type: newType !== 'all' ? newType : undefined,
         }, { preserveState: true });
     };
 
     const handleReset = () => {
         setSearch('');
         setStatus('all');
+        setTypeFilter('all');
         router.get('/manajemen-notifikasi');
     };
 
@@ -128,6 +147,7 @@ export default function AdminNotificationsIndex({
     const renderTypeIcon = (notifType: string) => {
         switch (notifType) {
             case 'new_order':
+            case 'admin_new_order':
                 return (
                     <div className="size-10 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20 shadow-xs">
                         <ShoppingBag className="size-5" />
@@ -141,15 +161,58 @@ export default function AdminNotificationsIndex({
                     </div>
                 );
             case 'order_shipped':
+            case 'admin_order_shipped':
                 return (
                     <div className="size-10 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-500/20 shadow-xs">
                         <Truck className="size-5" />
                     </div>
                 );
             case 'store_pickup_ready':
+            case 'admin_store_pickup_ready':
                 return (
                     <div className="size-10 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 border border-purple-500/20 shadow-xs">
                         <Store className="size-5" />
+                    </div>
+                );
+            case 'order_delivered':
+            case 'admin_order_delivered':
+                return (
+                    <div className="size-10 rounded-md bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0 border border-teal-500/20 shadow-xs">
+                        <PackageCheck className="size-5" />
+                    </div>
+                );
+            case 'order_completed':
+            case 'admin_order_completed':
+                return (
+                    <div className="size-10 rounded-md bg-green-500/10 text-green-600 dark:text-green-400 flex items-center justify-center shrink-0 border border-green-500/20 shadow-xs">
+                        <CheckCircle2 className="size-5" />
+                    </div>
+                );
+            case 'order_canceled':
+            case 'admin_order_canceled':
+                return (
+                    <div className="size-10 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-500/20 shadow-xs">
+                        <XCircle className="size-5" />
+                    </div>
+                );
+            case 'new_user_welcome':
+            case 'admin_new_user':
+                return (
+                    <div className="size-10 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-500/20 shadow-xs">
+                        <UserCheck className="size-5" />
+                    </div>
+                );
+            case 'loyalty_points_earned':
+                return (
+                    <div className="size-10 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20 shadow-xs">
+                        <Award className="size-5" />
+                    </div>
+                );
+            case 'loyalty_points_redeemed':
+            case 'admin_points_redeemed':
+                return (
+                    <div className="size-10 rounded-md bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0 border border-violet-500/20 shadow-xs">
+                        <Coins className="size-5" />
                     </div>
                 );
             case 'voucher_reward':
@@ -171,19 +234,39 @@ export default function AdminNotificationsIndex({
     const getTypeBadge = (notifType: string) => {
         switch (notifType) {
             case 'new_order':
+            case 'admin_new_order':
                 return <Badge variant="secondary" className="text-[10px] bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20">Pesanan Baru</Badge>;
             case 'payment_success':
             case 'admin_payment_received':
                 return <Badge variant="secondary" className="text-[10px] bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20">Pembayaran</Badge>;
             case 'order_shipped':
+            case 'admin_order_shipped':
                 return <Badge variant="secondary" className="text-[10px] bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20">Pengiriman</Badge>;
             case 'store_pickup_ready':
+            case 'admin_store_pickup_ready':
                 return <Badge variant="secondary" className="text-[10px] bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20">Ambil di Butik</Badge>;
+            case 'order_delivered':
+            case 'admin_order_delivered':
+                return <Badge variant="secondary" className="text-[10px] bg-teal-500/10 text-teal-700 dark:text-teal-400 border-teal-500/20">Pesanan Sampai</Badge>;
+            case 'order_completed':
+            case 'admin_order_completed':
+                return <Badge variant="secondary" className="text-[10px] bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">Pesanan Selesai</Badge>;
+            case 'order_canceled':
+            case 'admin_order_canceled':
+                return <Badge variant="secondary" className="text-[10px] bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/20">Pesanan Batal</Badge>;
+            case 'new_user_welcome':
+            case 'admin_new_user':
+                return <Badge variant="secondary" className="text-[10px] bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/20">Pelanggan Baru</Badge>;
+            case 'loyalty_points_earned':
+                return <Badge variant="secondary" className="text-[10px] bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20">Poin Belanja</Badge>;
+            case 'loyalty_points_redeemed':
+            case 'admin_points_redeemed':
+                return <Badge variant="secondary" className="text-[10px] bg-violet-500/10 text-violet-700 dark:text-violet-400 border-violet-500/20">Tukar Poin</Badge>;
             case 'voucher_reward':
             case 'promo':
                 return <Badge variant="secondary" className="text-[10px] bg-pink-500/10 text-pink-700 dark:text-pink-400 border-pink-500/20">Promo & Voucher</Badge>;
             default:
-                return <Badge variant="outline" className="text-[10px]">Sistem</Badge>;
+                return <Badge variant="outline" className="text-[10px] text-muted-foreground">Sistem</Badge>;
         }
     };
 
@@ -268,7 +351,7 @@ export default function AdminNotificationsIndex({
                                 </Button>
                             )}
 
-                            {(search !== '' || status !== 'all') && (
+                            {(search !== '' || status !== 'all' || typeFilter !== 'all') && (
                                 <Button
                                     type="button"
                                     variant="outline"
@@ -282,6 +365,36 @@ export default function AdminNotificationsIndex({
                                 </Button>
                             )}
                         </div>
+                    </div>
+
+                    {/* Category Filter Pills */}
+                    <div className="pt-3 mt-3 border-t border-border/60 flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+                        <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mr-1 shrink-0">Kategori:</span>
+                        {[
+                            { key: 'all', label: 'Semua Kategori' },
+                            { key: 'orders', label: 'Pesanan Baru' },
+                            { key: 'payments', label: 'Pembayaran' },
+                            { key: 'shipping', label: 'Pengiriman' },
+                            { key: 'delivered', label: 'Pesanan Sampai' },
+                            { key: 'completed', label: 'Pesanan Selesai' },
+                            { key: 'canceled', label: 'Pesanan Batal' },
+                            { key: 'users', label: 'Pelanggan Baru' },
+                            { key: 'loyalty', label: 'Poin & Voucher' },
+                            { key: 'system', label: 'Sistem' },
+                        ].map((cat) => (
+                            <button
+                                key={cat.key}
+                                type="button"
+                                onClick={() => handleTypeChange(cat.key)}
+                                className={`px-2.5 py-1 rounded-md text-xs font-medium shrink-0 transition-colors cursor-pointer ${
+                                    typeFilter === cat.key
+                                        ? 'bg-[#4A070B] text-white shadow-xs'
+                                        : 'bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground'
+                                }`}
+                            >
+                                {cat.label}
+                            </button>
+                        ))}
                     </div>
                 </Card>
 

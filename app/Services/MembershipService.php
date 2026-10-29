@@ -9,6 +9,7 @@ use App\Models\Order;
 use App\Models\User;
 use App\Models\Voucher;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class MembershipService
@@ -153,7 +154,7 @@ class MembershipService
             $membership->lifetime_points += $earnedPoints;
             $membership->save();
 
-            return LoyaltyPointHistory::create([
+            $history = LoyaltyPointHistory::create([
                 'user_id' => $user->id,
                 'membership_id' => $membership->id,
                 'type' => 'earned',
@@ -163,6 +164,14 @@ class MembershipService
                 'reference_id' => $order->order_number,
                 'created_at' => now(),
             ]);
+
+            try {
+                app(FirebaseNotificationService::class)->notifyPointsEarned($user, $earnedPoints, $order, $membership->points);
+            } catch (\Throwable $e) {
+                Log::warning('Failed to dispatch points earned notification: '.$e->getMessage());
+            }
+
+            return $history;
         });
     }
 
@@ -233,6 +242,12 @@ class MembershipService
                 'reference_id' => $voucherCode,
                 'created_at' => now(),
             ]);
+
+            try {
+                app(FirebaseNotificationService::class)->notifyPointsRedeemed($user, $reward->points_required, $voucherCode, $reward->name);
+            } catch (\Throwable $e) {
+                Log::warning('Failed to dispatch points redeemed notification: '.$e->getMessage());
+            }
 
             return [
                 'success' => true,

@@ -284,9 +284,15 @@ class OrderController extends Controller
             } else {
                 app(FirebaseNotificationService::class)->notifyOrderShipped($orderModel);
             }
-        } elseif ($newStatus === 'diproses' || $newStatus === 'selesai') {
+        } elseif ($newStatus === 'diproses') {
             app(FirebaseNotificationService::class)->notifyPaymentSuccess($orderModel);
+        } elseif ($newStatus === 'sampai') {
+            app(FirebaseNotificationService::class)->notifyOrderDelivered($orderModel);
+        } elseif ($newStatus === 'selesai') {
+            app(FirebaseNotificationService::class)->notifyOrderCompleted($orderModel);
             app(MembershipService::class)->awardOrderPoints($orderModel);
+        } elseif ($newStatus === 'dibatalkan') {
+            app(FirebaseNotificationService::class)->notifyOrderCanceled($orderModel, 'Dibatalkan oleh Administrator.');
         }
 
         // Broadcast real-time update via WebSockets

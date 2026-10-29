@@ -601,13 +601,10 @@ class FirebaseNotificationService
     /**
      * 8. Notifikasi Paket Sampai di Tujuan (Jeda 3 hari sebelum selesai otomatis):
      * - Ke Customer: "Pesanan Telah Sampai!"
+     * - Ke Admin: "Pesanan Sampai Tujuan"
      */
     public function notifyOrderDelivered(Order $order, ?Shipping $shipping = null): void
     {
-        if (! $order->user_id) {
-            return;
-        }
-
         $cacheKey = "fcm_order_delivered_sent_{$order->id}";
         if (Cache::has($cacheKey)) {
             return;
@@ -619,22 +616,169 @@ class FirebaseNotificationService
             ? $shippingModel->auto_completes_at->format('d/m/Y')
             : now()->addDays(3)->format('d/m/Y');
 
-        $isEn = app()->getLocale() === 'en';
-        $titleId = 'Pesanan Telah Sampai! #'.$order->order_number;
-        $bodyId = "Paket pesanan #{$order->order_number} telah sampai di tujuan. Pesanan otomatis selesai pada {$autoCompleteDate}. Silakan periksa produk Anda.";
-        $titleEn = 'Your Order Has Arrived! #'.$order->order_number;
-        $bodyEn = "Package for order #{$order->order_number} has arrived at destination. It will automatically complete on {$autoCompleteDate}. Please check your products.";
+        if ($order->user_id) {
+            $isEn = app()->getLocale() === 'en';
+            $titleId = 'Pesanan Telah Sampai! #'.$order->order_number;
+            $bodyId = "Paket pesanan #{$order->order_number} telah sampai di tujuan. Pesanan otomatis selesai pada {$autoCompleteDate}. Silakan periksa produk Anda.";
+            $titleEn = 'Your Order Has Arrived! #'.$order->order_number;
+            $bodyEn = "Package for order #{$order->order_number} has arrived at destination. It will automatically complete on {$autoCompleteDate}. Please check your products.";
 
-        $this->sendToUser(
-            user: $order->user_id,
-            title: $isEn ? $titleEn : $titleId,
-            body: $isEn ? $bodyEn : $bodyId,
-            url: url('/account/orders'),
+            $this->sendToUser(
+                user: $order->user_id,
+                title: $isEn ? $titleEn : $titleId,
+                body: $isEn ? $bodyEn : $bodyId,
+                url: url('/account/orders'),
+                data: [
+                    'order_id' => (string) $order->id,
+                    'order_number' => (string) $order->order_number,
+                    'auto_completes_at' => (string) ($shippingModel?->auto_completes_at?->toIso8601String() ?? now()->addDays(3)->toIso8601String()),
+                    'type' => 'order_delivered',
+                    'title_en' => $titleEn,
+                    'body_en' => $bodyEn,
+                    'title_id' => $titleId,
+                    'body_id' => $bodyId,
+                ]
+            );
+        }
+
+        $this->sendToAdmins(
+            title: 'Pesanan Sampai Tujuan #'.$order->order_number,
+            body: "Paket pesanan #{$order->order_number} untuk {$order->recipient_name} telah sampai di alamat tujuan.",
+            url: '/manajemen-pesanan/'.$order->id,
             data: [
                 'order_id' => (string) $order->id,
                 'order_number' => (string) $order->order_number,
-                'auto_completes_at' => (string) ($shippingModel?->auto_completes_at?->toIso8601String() ?? now()->addDays(3)->toIso8601String()),
-                'type' => 'order_delivered',
+                'type' => 'admin_order_delivered',
+            ]
+        );
+    }
+
+    /**
+     * 9. Notifikasi Pesanan Selesai:
+     * - Ke Customer: "Pesanan Selesai!"
+     * - Ke Admin: "Pesanan Selesai"
+     */
+    public function notifyOrderCompleted(Order $order): void
+    {
+        $cacheKey = "fcm_order_completed_sent_{$order->id}";
+        if (Cache::has($cacheKey)) {
+            return;
+        }
+        Cache::put($cacheKey, true, now()->addMinutes(30));
+
+        if ($order->user_id) {
+            $isEn = app()->getLocale() === 'en';
+            $titleId = 'Pesanan Selesai! #'.$order->order_number;
+            $bodyId = "Pesanan wewangian mewah #{$order->order_number} telah selesai. Terima kasih telah berbelanja di Aroma Palace!";
+            $titleEn = 'Order Completed! #'.$order->order_number;
+            $bodyEn = "Your luxury fragrance order #{$order->order_number} is completed. Thank you for shopping with Aroma Palace!";
+
+            $this->sendToUser(
+                user: $order->user_id,
+                title: $isEn ? $titleEn : $titleId,
+                body: $isEn ? $bodyEn : $bodyId,
+                url: url('/account/orders'),
+                data: [
+                    'order_id' => (string) $order->id,
+                    'order_number' => (string) $order->order_number,
+                    'type' => 'order_completed',
+                    'title_en' => $titleEn,
+                    'body_en' => $bodyEn,
+                    'title_id' => $titleId,
+                    'body_id' => $bodyId,
+                ]
+            );
+        }
+
+        $this->sendToAdmins(
+            title: 'Pesanan Selesai #'.$order->order_number,
+            body: "Pesanan #{$order->order_number} dari {$order->recipient_name} telah selesai diterima.",
+            url: '/manajemen-pesanan/'.$order->id,
+            data: [
+                'order_id' => (string) $order->id,
+                'order_number' => (string) $order->order_number,
+                'type' => 'admin_order_completed',
+            ]
+        );
+    }
+
+    /**
+     * 10. Notifikasi Registrasi User Baru:
+     * - Ke Customer: Selamat datang
+     * - Ke Admin: Pelanggan baru mendaftar
+     */
+    public function notifyNewUserRegistered(User $user): void
+    {
+        $cacheKey = "notif_new_user_{$user->id}";
+        if (Cache::has($cacheKey)) {
+            return;
+        }
+        Cache::put($cacheKey, true, now()->addHours(1));
+
+        $isEn = app()->getLocale() === 'en';
+        $titleId = 'Selamat Datang di Aroma Palace! ✨';
+        $bodyId = "Halo {$user->name}, terima kasih telah bergabung di butik wewangian mewah kami. Nikmati koleksi aroma eksklusif dan penawaran istimewa.";
+        $titleEn = 'Welcome to Aroma Palace! ✨';
+        $bodyEn = "Hello {$user->name}, thank you for joining our luxury fragrance boutique. Explore exclusive scents and special privileges.";
+
+        $this->sendToUser(
+            user: $user->id,
+            title: $isEn ? $titleEn : $titleId,
+            body: $isEn ? $bodyEn : $bodyId,
+            url: url('/products'),
+            data: [
+                'user_id' => (string) $user->id,
+                'type' => 'new_user_welcome',
+                'title_en' => $titleEn,
+                'body_en' => $bodyEn,
+                'title_id' => $titleId,
+                'body_id' => $bodyId,
+            ]
+        );
+
+        $this->sendToAdmins(
+            title: 'Pelanggan Baru Mendaftar',
+            body: "Pelanggan baru {$user->name} ({$user->email}) telah mendaftar akun di Aroma Palace.",
+            url: '/manajemen-pelanggan',
+            data: [
+                'user_id' => (string) $user->id,
+                'user_name' => (string) $user->name,
+                'user_email' => (string) $user->email,
+                'type' => 'admin_new_user',
+            ]
+        );
+    }
+
+    /**
+     * 11. Notifikasi Perolehan Poin Loyalitas (Belanja):
+     * - Ke Customer: Poin diperoleh
+     */
+    public function notifyPointsEarned(User $user, int $points, Order $order, int $newBalance): void
+    {
+        $cacheKey = "notif_points_earned_{$order->id}_{$user->id}";
+        if (Cache::has($cacheKey)) {
+            return;
+        }
+        Cache::put($cacheKey, true, now()->addMinutes(30));
+
+        $isEn = app()->getLocale() === 'en';
+        $titleId = "Poin Loyalitas Diperoleh! (+{$points} Poin) 🎉";
+        $bodyId = "Selamat! Anda memperoleh +{$points} loyalty points dari pesanan #{$order->order_number}. Total saldo poin Anda saat ini: {$newBalance} poin.";
+        $titleEn = "Loyalty Points Earned! (+{$points} Points) 🎉";
+        $bodyEn = "Congratulations! You earned +{$points} loyalty points from order #{$order->order_number}. Your current points balance: {$newBalance} points.";
+
+        $this->sendToUser(
+            user: $user->id,
+            title: $isEn ? $titleEn : $titleId,
+            body: $isEn ? $bodyEn : $bodyId,
+            url: url('/account'),
+            data: [
+                'user_id' => (string) $user->id,
+                'order_id' => (string) $order->id,
+                'order_number' => (string) $order->order_number,
+                'points_earned' => (string) $points,
+                'new_balance' => (string) $newBalance,
+                'type' => 'loyalty_points_earned',
                 'title_en' => $titleEn,
                 'body_en' => $bodyEn,
                 'title_id' => $titleId,
@@ -644,40 +788,47 @@ class FirebaseNotificationService
     }
 
     /**
-     * 9. Notifikasi Pesanan Selesai:
-     * - Ke Customer: "Pesanan Selesai!"
+     * 12. Notifikasi Penukaran Poin Loyalitas (Tukar Reward):
+     * - Ke Customer: Voucher didapat
+     * - Ke Admin: Pelanggan menukarkan poin
      */
-    public function notifyOrderCompleted(Order $order): void
+    public function notifyPointsRedeemed(User $user, int $points, string $voucherCode, string $rewardName): void
     {
-        if (! $order->user_id) {
-            return;
-        }
-
-        $cacheKey = "fcm_order_completed_sent_{$order->id}";
-        if (Cache::has($cacheKey)) {
-            return;
-        }
-        Cache::put($cacheKey, true, now()->addMinutes(30));
-
         $isEn = app()->getLocale() === 'en';
-        $titleId = 'Pesanan Selesai! #'.$order->order_number;
-        $bodyId = "Pesanan wewangian mewah #{$order->order_number} telah selesai. Terima kasih telah berbelanja di Aroma Palace!";
-        $titleEn = 'Order Completed! #'.$order->order_number;
-        $bodyEn = "Your luxury fragrance order #{$order->order_number} is completed. Thank you for shopping with Aroma Palace!";
+        $titleId = 'Penukaran Poin Berhasil 🎁';
+        $bodyId = "Anda telah menukarkan {$points} poin dengan voucher {$rewardName} (Kode: {$voucherCode}). Gunakan saat checkout belanja!";
+        $titleEn = 'Points Redeemed Successfully 🎁';
+        $bodyEn = "You have redeemed {$points} points for {$rewardName} voucher (Code: {$voucherCode}). Apply it on your next checkout!";
 
         $this->sendToUser(
-            user: $order->user_id,
+            user: $user->id,
             title: $isEn ? $titleEn : $titleId,
             body: $isEn ? $bodyEn : $bodyId,
-            url: url('/account/orders'),
+            url: url('/account'),
             data: [
-                'order_id' => (string) $order->id,
-                'order_number' => (string) $order->order_number,
-                'type' => 'order_completed',
+                'user_id' => (string) $user->id,
+                'voucher_code' => $voucherCode,
+                'points_spent' => (string) $points,
+                'reward_name' => $rewardName,
+                'type' => 'loyalty_points_redeemed',
                 'title_en' => $titleEn,
                 'body_en' => $bodyEn,
                 'title_id' => $titleId,
                 'body_id' => $bodyId,
+            ]
+        );
+
+        $this->sendToAdmins(
+            title: 'Pelanggan Menukarkan Poin',
+            body: "{$user->name} telah menukarkan {$points} poin untuk voucher {$rewardName} ({$voucherCode}).",
+            url: '/manajemen-membership',
+            data: [
+                'user_id' => (string) $user->id,
+                'user_name' => (string) $user->name,
+                'voucher_code' => $voucherCode,
+                'points_spent' => (string) $points,
+                'reward_name' => $rewardName,
+                'type' => 'admin_points_redeemed',
             ]
         );
     }

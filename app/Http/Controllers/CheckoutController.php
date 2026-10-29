@@ -44,7 +44,10 @@ class CheckoutController extends Controller
         $user = $request->user();
 
         $cartRecords = $user->cartItems()
-            ->with(['variant'])
+            ->with([
+                'variant',
+                'product' => fn ($q) => $q->with(CatalogService::$eagerRelations),
+            ])
             ->latest()
             ->get();
 
@@ -52,15 +55,41 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index')->with('error', 'Keranjang belanja Anda masih kosong. Silakan pilih wewangian terlebih dahulu.');
         }
 
+        // Strict validation: if any item is deleted, draft, or out of stock, redirect to cart with clear message
+        foreach ($cartRecords as $record) {
+            if (! $record->product) {
+                $record->delete();
+
+                return redirect()->route('cart.index')
+                    ->with('error', 'Sebagian wewangian di keranjang belanja Anda telah dihapus atau tidak tersedia lagi. Keranjang Anda telah diperbarui.');
+            }
+
+            if ($record->product->is_draft) {
+                return redirect()->route('cart.index')
+                    ->with('error', "Produk wewangian '{$record->product->name}' sedang berstatus draft (belum dipublikasikan) dan tidak dapat dibeli. Silakan hapus atau ganti produk tersebut dari keranjang.");
+            }
+
+            if (! $record->variant) {
+                return redirect()->route('cart.index')
+                    ->with('error', "Varian wewangian untuk '{$record->product->name}' tidak ditemukan. Silakan periksa kembali keranjang belanja Anda.");
+            }
+
+            if ($record->variant->stock <= 0) {
+                return redirect()->route('cart.index')
+                    ->with('error', "Mohon maaf, stok untuk '{$record->product->name} ({$record->variant->name})' telah habis. Silakan periksa kembali keranjang belanja Anda.");
+            }
+
+            if ($record->quantity > $record->variant->stock) {
+                return redirect()->route('cart.index')
+                    ->with('error', "Jumlah pesanan wewangian '{$record->product->name} ({$record->variant->name})' melebihi stok yang tersedia (tersisa {$record->variant->stock} unit). Silakan sesuaikan jumlah pesanan.");
+            }
+        }
+
         $items = [];
         $subtotal = 0;
 
         foreach ($cartRecords as $record) {
-            $product = CatalogService::find($record->product_id);
-            if (! $product) {
-                continue;
-            }
-
+            $product = CatalogService::formatProduct($record->product);
             $variant = $record->variant;
             $unitPrice = $variant ? (int) $variant->price : (int) ($product['raw_price'] ?? 0);
             $volume = $variant ? (int) $variant->volume : (int) filter_var($product['volume'] ?? 50, FILTER_SANITIZE_NUMBER_INT);
@@ -404,22 +433,51 @@ class CheckoutController extends Controller
 
         try {
             $cartRecords = $user->cartItems()
-                ->with(['variant'])
+                ->with([
+                    'variant',
+                    'product' => fn ($q) => $q->with(CatalogService::$eagerRelations),
+                ])
                 ->get();
 
             if ($cartRecords->isEmpty()) {
                 return redirect()->route('cart.index')->with('error', 'Keranjang belanja Anda kosong.');
             }
 
+            // Pre-validation: verify all cart items before calling payment gateway or creating order
+            foreach ($cartRecords as $record) {
+                if (! $record->product) {
+                    $record->delete();
+
+                    return redirect()->route('cart.index')
+                        ->with('error', 'Salah satu produk di keranjang Anda telah dihapus atau tidak tersedia lagi. Keranjang Anda telah diperbarui.');
+                }
+
+                if ($record->product->is_draft) {
+                    return redirect()->route('cart.index')
+                        ->with('error', "Mohon maaf, wewangian '{$record->product->name}' sedang berstatus draft (belum dipublikasikan) dan tidak dapat dibeli.");
+                }
+
+                if (! $record->variant) {
+                    return redirect()->route('cart.index')
+                        ->with('error', "Varian wewangian untuk '{$record->product->name}' tidak ditemukan atau telah dihapus.");
+                }
+
+                if ($record->variant->stock <= 0) {
+                    return redirect()->route('cart.index')
+                        ->with('error', "Mohon maaf, stok untuk '{$record->product->name} ({$record->variant->name})' telah habis.");
+                }
+
+                if ($record->quantity > $record->variant->stock) {
+                    return redirect()->route('cart.index')
+                        ->with('error', "Jumlah pesanan untuk '{$record->product->name} ({$record->variant->name})' melebihi stok yang tersedia (tersisa {$record->variant->stock} unit).");
+                }
+            }
+
             $orderItemsData = [];
             $subtotal = 0;
 
             foreach ($cartRecords as $record) {
-                $product = CatalogService::find($record->product_id);
-                if (! $product) {
-                    continue;
-                }
-
+                $product = CatalogService::formatProduct($record->product);
                 $variant = $record->variant;
                 $unitPrice = $variant ? (int) $variant->price : (int) ($product['raw_price'] ?? 0);
                 $volume = $variant ? (int) $variant->volume : (int) filter_var($product['volume'] ?? 50, FILTER_SANITIZE_NUMBER_INT);
@@ -621,15 +679,26 @@ class CheckoutController extends Controller
                     throw new \Exception('Keranjang belanja Anda kosong atau telah diproses di jendela lain.');
                 }
 
-                // 3. Race condition guard: Lock Product Variants & verify/deduct stock atomically
+                // 3. Race condition guard: Lock Parent Product & Product Variants & verify/deduct stock atomically
                 foreach ($orderItemsData as $itemData) {
+                    $product = Product::where('id', $itemData['product_id'])->lockForUpdate()->first();
+                    if (! $product) {
+                        throw new \Exception("Produk wewangian '{$itemData['product_name']}' sudah tidak tersedia atau telah dihapus.");
+                    }
+                    if ($product->is_draft) {
+                        throw new \Exception("Mohon maaf, produk wewangian '{$product->name}' sedang berstatus draft (belum dipublikasikan) dan tidak dapat dibeli.");
+                    }
+
                     if (! empty($itemData['variant_id'])) {
                         $variant = ProductVariant::where('id', $itemData['variant_id'])->lockForUpdate()->first();
                         if (! $variant) {
-                            throw new \Exception("Varian wewangian '{$itemData['product_name']}' tidak ditemukan.");
+                            throw new \Exception("Varian wewangian '{$itemData['product_name']}' tidak ditemukan atau telah dihapus.");
+                        }
+                        if ($variant->stock <= 0) {
+                            throw new \Exception("Mohon maaf, stok untuk '{$itemData['product_name']} ({$itemData['variant_name']})' telah habis.");
                         }
                         if ($variant->stock < $itemData['quantity']) {
-                            throw new \Exception("Mohon maaf, stok untuk '{$itemData['product_name']} ({$itemData['variant_name']})' tersisa {$variant->stock} unit.");
+                            throw new \Exception("Mohon maaf, stok untuk '{$itemData['product_name']} ({$itemData['variant_name']})' tersisa {$variant->stock} unit. Jumlah pesanan Anda melebihi stok yang tersedia.");
                         }
                         $variant->decrement('stock', $itemData['quantity']);
                     }
@@ -750,8 +819,7 @@ class CheckoutController extends Controller
 
             $isEn = app()->getLocale() === 'en';
 
-            return redirect()->route('checkout.index')
-                ->withInput()
+            return redirect()->route('cart.index')
                 ->with('error', $e->getMessage() ?: ($isEn ? 'An error occurred while processing your order. Please check your cart.' : 'Terjadi kesalahan saat memproses pesanan. Silakan periksa kembali keranjang Anda.'));
         } finally {
             $lock->release();

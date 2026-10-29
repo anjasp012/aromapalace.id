@@ -36,7 +36,28 @@ class NotificationController extends Controller
         }
 
         if ($request->filled('type') && $request->type !== 'all') {
-            $query->where('type', $request->type);
+            $type = $request->type;
+            if ($type === 'orders') {
+                $query->whereIn('type', ['new_order', 'admin_new_order']);
+            } elseif ($type === 'payments') {
+                $query->whereIn('type', ['payment_success', 'admin_payment_received']);
+            } elseif ($type === 'shipping') {
+                $query->whereIn('type', ['order_shipped', 'admin_order_shipped', 'store_pickup_ready', 'admin_store_pickup_ready']);
+            } elseif ($type === 'delivered') {
+                $query->whereIn('type', ['order_delivered', 'admin_order_delivered']);
+            } elseif ($type === 'completed') {
+                $query->whereIn('type', ['order_completed', 'admin_order_completed']);
+            } elseif ($type === 'canceled') {
+                $query->whereIn('type', ['order_canceled', 'admin_order_canceled']);
+            } elseif ($type === 'users') {
+                $query->whereIn('type', ['new_user_welcome', 'admin_new_user']);
+            } elseif ($type === 'loyalty') {
+                $query->whereIn('type', ['loyalty_points_earned', 'loyalty_points_redeemed', 'admin_points_redeemed', 'voucher_reward', 'promo']);
+            } elseif ($type === 'system') {
+                $query->whereIn('type', ['system', 'general', 'admin']);
+            } else {
+                $query->where('type', $type);
+            }
         }
 
         $notifications = $query->latest('id')

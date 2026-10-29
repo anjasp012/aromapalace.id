@@ -24,26 +24,62 @@ class CartController extends Controller
         $user = $request->user();
 
         $cartRecords = $user->cartItems()
-            ->with(['variant'])
+            ->with([
+                'variant',
+                'product' => fn ($q) => $q->with(CatalogService::$eagerRelations),
+            ])
             ->latest()
             ->get();
 
         $items = [];
         $subtotal = 0;
+        $hasUnavailableItems = false;
+        $removedCount = 0;
 
         foreach ($cartRecords as $record) {
-            $product = CatalogService::find($record->product_id);
-            if (! $product) {
+            $productModel = $record->product;
+            if (! $productModel) {
+                $record->delete();
+                $removedCount++;
+                $hasUnavailableItems = true;
+
                 continue;
             }
 
+            $product = CatalogService::formatProduct($productModel);
             $variant = $record->variant;
             $unitPrice = $variant ? (int) $variant->price : (int) ($product['raw_price'] ?? 0);
             $volume = $variant?->volume ?? ($product['volume'] ?? 50);
             $volumeLabel = $variant ? "{$variant->volume}ml ({$variant->name})" : "{$volume}ml";
 
+            $isDraft = (bool) $productModel->is_draft;
+            $isOutOfStock = false;
+            $stockExceeded = false;
+            $availableStock = $variant ? (int) $variant->stock : 0;
+            $unavailableReason = null;
+
+            if ($isDraft) {
+                $hasUnavailableItems = true;
+                $unavailableReason = 'Produk wewangian ini sedang berstatus draft (belum dipublikasikan).';
+            } elseif (! $variant) {
+                $hasUnavailableItems = true;
+                $unavailableReason = 'Varian wewangian tidak ditemukan atau telah dihapus.';
+            } elseif ($availableStock <= 0) {
+                $isOutOfStock = true;
+                $hasUnavailableItems = true;
+                $unavailableReason = 'Stok untuk varian wewangian ini telah habis.';
+            } elseif ($record->quantity > $availableStock) {
+                $stockExceeded = true;
+                $hasUnavailableItems = true;
+                $unavailableReason = "Stok tersisa {$availableStock} unit. Silakan kurangi jumlah pesanan.";
+            }
+
+            $isValidForCheckout = ! $isDraft && ! $isOutOfStock && ! $stockExceeded && $variant !== null;
+
             $itemTotal = $unitPrice * $record->quantity;
-            $subtotal += $itemTotal;
+            if ($isValidForCheckout) {
+                $subtotal += $itemTotal;
+            }
 
             $items[] = [
                 'id' => $record->id,
@@ -59,7 +95,17 @@ class CartController extends Controller
                 'total_price_formatted' => 'Rp '.number_format($itemTotal, 0, ',', '.'),
                 'created_at' => $record->created_at?->toISOString(),
                 'product' => $product,
+                'is_draft' => $isDraft,
+                'is_out_of_stock' => $isOutOfStock,
+                'stock_exceeded' => $stockExceeded,
+                'available_stock' => $availableStock,
+                'is_valid_for_checkout' => $isValidForCheckout,
+                'unavailable_reason' => $unavailableReason,
             ];
+        }
+
+        if ($removedCount > 0) {
+            session()->flash('error', "Sebanyak {$removedCount} produk di keranjang belanja Anda telah dihapus atau sudah tidak tersedia lagi.");
         }
 
         $formattedSubtotal = 'Rp '.number_format($subtotal, 0, ',', '.');
@@ -204,6 +250,7 @@ class CartController extends Controller
             'total_formatted' => $formattedSubtotal,
             'initial_voucher' => $appliedVoucher,
             'available_vouchers' => $availableVouchers,
+            'has_unavailable_items' => $hasUnavailableItems,
         ]);
     }
 
@@ -220,12 +267,16 @@ class CartController extends Controller
         ]);
 
         $productId = (int) $validated['product_id'];
-        $product = CatalogService::find($productId);
+        $product = Product::find($productId);
 
         $isEn = app()->getLocale() === 'en';
 
         if (! $product) {
-            return back()->with('error', $isEn ? 'Fragrance product not found.' : 'Produk wewangian tidak ditemukan.');
+            return back()->with('error', $isEn ? 'Fragrance product not found or has been removed.' : 'Produk wewangian tidak ditemukan atau telah dihapus.');
+        }
+
+        if ($product->is_draft) {
+            return back()->with('error', $isEn ? 'This fragrance product is currently in draft and not available for purchase.' : 'Produk wewangian ini sedang dalam status draft dan belum tersedia untuk dibeli.');
         }
 
         $quantity = isset($validated['quantity']) ? (int) $validated['quantity'] : 1;
@@ -243,14 +294,31 @@ class CartController extends Controller
             }
         }
 
+        if (! $variant) {
+            $variant = ProductVariant::where('product_id', $productId)->first();
+        }
+
+        if ($variant && $variant->stock <= 0) {
+            return back()->with('error', $isEn ? 'Sorry, this fragrance variant is out of stock.' : 'Mohon maaf, stok untuk varian wewangian ini sedang habis.');
+        }
+
         $variantId = $variant?->id;
-        $volume = $variant ? $variant->volume : ($product['volume'] ?? 50);
         $userId = $request->user()->id;
 
         $existing = CartItem::where('user_id', $userId)
             ->where('product_id', $productId)
             ->where('variant_id', $variantId)
             ->first();
+
+        $currentCartQty = $existing ? $existing->quantity : 0;
+        if ($variant && ($currentCartQty + $quantity > $variant->stock)) {
+            $remainingCanAdd = max(0, $variant->stock - $currentCartQty);
+            if ($remainingCanAdd === 0) {
+                return back()->with('error', $isEn ? "You already have {$currentCartQty} items in your cart (maximum available stock: {$variant->stock})." : "Anda sudah memiliki {$currentCartQty} unit di keranjang (seluruh stok yang tersedia: {$variant->stock}).");
+            }
+
+            return back()->with('error', $isEn ? "Only {$remainingCanAdd} more units can be added to your cart. Total stock remaining is {$variant->stock}." : "Hanya dapat menambahkan {$remainingCanAdd} unit lagi ke keranjang. Total stok tersisa {$variant->stock} unit.");
+        }
 
         if ($existing) {
             $newQuantity = min(20, $existing->quantity + $quantity);
@@ -278,9 +346,31 @@ class CartController extends Controller
             'quantity' => ['required', 'integer', 'min:1', 'max:20'],
         ]);
 
-        $item = $request->user()->cartItems()->findOrFail($id);
+        $item = $request->user()->cartItems()->with(['product', 'variant'])->findOrFail($id);
+        $isEn = app()->getLocale() === 'en';
+
+        if (! $item->product) {
+            $item->delete();
+
+            return back()->with('error', $isEn ? 'This fragrance product is no longer available and has been removed from your cart.' : 'Produk wewangian ini sudah dihapus atau tidak tersedia lagi, dan telah disingkirkan dari keranjang.');
+        }
+
+        if ($item->product->is_draft) {
+            return back()->with('error', $isEn ? 'This fragrance product is currently in draft and cannot be ordered.' : 'Produk wewangian ini sedang dalam status draft dan tidak dapat dipesan.');
+        }
+
+        $newQuantity = (int) $validated['quantity'];
+        if ($item->variant) {
+            if ($item->variant->stock <= 0) {
+                return back()->with('error', $isEn ? 'Stock for this fragrance variant is out of stock.' : 'Stok untuk varian wewangian ini telah habis.');
+            }
+            if ($newQuantity > $item->variant->stock) {
+                return back()->with('error', $isEn ? "Stock is insufficient. Only {$item->variant->stock} units available." : "Stok tidak mencukupi. Hanya tersedia {$item->variant->stock} unit.");
+            }
+        }
+
         $item->update([
-            'quantity' => (int) $validated['quantity'],
+            'quantity' => $newQuantity,
         ]);
 
         $isEn = app()->getLocale() === 'en';

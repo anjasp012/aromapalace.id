@@ -36,6 +36,12 @@ interface CartItemData {
     total_price: number;
     total_price_formatted: string;
     product: FragranceProduct;
+    is_draft?: boolean;
+    is_out_of_stock?: boolean;
+    stock_exceeded?: boolean;
+    available_stock?: number;
+    is_valid_for_checkout?: boolean;
+    unavailable_reason?: string | null;
 }
 
 interface CartPageProps {
@@ -48,16 +54,18 @@ interface CartPageProps {
     total_formatted: string;
     initial_voucher?: string;
     available_vouchers?: AvailableVoucher[];
+    has_unavailable_items?: boolean;
 }
 
 export default function CartPage({
-    items,
+    items = [],
     subtotal = 0,
     subtotal_formatted = 'Rp 0',
     total = 0,
     total_formatted = 'Rp 0',
     initial_voucher = '',
     available_vouchers = [],
+    has_unavailable_items = false,
 }: Partial<CartPageProps>) {
     const { t, isEn } = useTranslation();
     const [isMounted, setIsMounted] = useState(false);
@@ -256,7 +264,12 @@ export default function CartPage({
         });
     };
 
+    const hasUnavailableItems = has_unavailable_items || (items || []).some((it) => it.is_valid_for_checkout === false);
+
     const handleProceedToCheckout = () => {
+        if (hasUnavailableItems) {
+            return;
+        }
         setIsNavigatingCheckout(true);
         const code = (
             (voucherApplied && voucherCode ? voucherCode : '') ||
@@ -361,38 +374,86 @@ export default function CartPage({
                                 </Button>
                             </div>
 
+                            {/* Unavailable Items Warning Banner */}
+                            {hasUnavailableItems && (
+                                <div className="p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-lg text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2.5">
+                                    <span className="text-sm shrink-0 mt-0.5">⚠</span>
+                                    <div className="space-y-0.5">
+                                        <p className="font-bold">
+                                            {isEn ? 'Action required in your cart' : 'Perlu perhatian pada keranjang belanja Anda'}
+                                        </p>
+                                        <p className="text-[11px] opacity-90 leading-relaxed">
+                                            {isEn
+                                                ? 'Some items are in draft, out of stock, or exceed available stock. Please adjust quantity or remove them to proceed to checkout.'
+                                                : 'Sebagian produk sedang dalam status draft, stok habis, atau melebihi kuota stok tersedia. Harap sesuaikan jumlah atau hapus produk tersebut untuk melanjutkan ke pembayaran.'}
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Item Cards */}
                             <div className="space-y-3">
                                 {items.map((item) => {
                                     const { product } = item;
                                     const isItemUpdating = updatingId === item.id;
                                     const isItemRemoving = removingId === item.id;
+                                    const isInvalid = item.is_valid_for_checkout === false;
+                                    const maxAllowedQty = item.available_stock && item.available_stock > 0 ? Math.min(20, item.available_stock) : 20;
 
                                     return (
                                         <div
                                             key={item.id}
-                                            className="rounded-lg border border-border/80 bg-card/60 backdrop-blur-xs p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-none hover:border-border transition-colors"
+                                            className={cn(
+                                                "rounded-lg border bg-card/60 backdrop-blur-xs p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-none transition-colors",
+                                                isInvalid ? "border-amber-500/50 bg-amber-500/[0.03]" : "border-border/80 hover:border-border"
+                                            )}
                                         >
                                             {/* Thumbnail & Product Info */}
                                             <div className="flex items-center gap-4">
                                                 <Link
                                                     href={`/products/${product.slug}`}
-                                                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-md border border-border/80 bg-muted/30 overflow-hidden shrink-0 group block"
+                                                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-md border border-border/80 bg-muted/30 overflow-hidden shrink-0 group block relative"
                                                 >
                                                     <img
                                                         src={product.image}
                                                         alt={product.name}
-                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                        className={cn(
+                                                            "w-full h-full object-cover group-hover:scale-105 transition-transform duration-500",
+                                                            isInvalid && "opacity-75 grayscale-[30%]"
+                                                        )}
                                                     />
                                                 </Link>
 
                                                 <div className="space-y-1.5">
-                                                    <Link
-                                                        href={`/products/${product.slug}`}
-                                                        className="block font-semibold text-xs sm:text-sm text-foreground hover:text-[#4A070B] transition-colors line-clamp-1"
-                                                    >
-                                                        {product.name}
-                                                    </Link>
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <Link
+                                                            href={`/products/${product.slug}`}
+                                                            className="block font-semibold text-xs sm:text-sm text-foreground hover:text-[#4A070B] transition-colors line-clamp-1"
+                                                        >
+                                                            {product.name}
+                                                        </Link>
+                                                        {item.is_draft && (
+                                                            <Badge variant="destructive" className="text-[10px] bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30 font-medium">
+                                                                Draft
+                                                            </Badge>
+                                                        )}
+                                                        {item.is_out_of_stock && (
+                                                            <Badge variant="destructive" className="text-[10px] bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30 font-medium">
+                                                                {isEn ? 'Out of Stock' : 'Stok Habis'}
+                                                            </Badge>
+                                                        )}
+                                                        {item.stock_exceeded && (
+                                                            <Badge variant="destructive" className="text-[10px] bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30 font-medium">
+                                                                {isEn ? `Max ${item.available_stock}` : `Sisa ${item.available_stock} Unit`}
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+
+                                                    {item.unavailable_reason && (
+                                                        <p className="text-[11px] font-medium text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                                                            <span>⚠</span> {item.unavailable_reason}
+                                                        </p>
+                                                    )}
 
                                                     <div className="flex flex-col flex-wrap gap-2 text-xs text-muted-foreground pt-0.5">
                                                         <span className="inline-flex items-center gap-1 text-[11px] bg-muted/40 border border-border/70 px-2 py-0.5 rounded-md">
@@ -413,7 +474,7 @@ export default function CartPage({
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
-                                                        disabled={item.quantity <= 1 || isItemUpdating}
+                                                        disabled={item.quantity <= 1 || isItemUpdating || item.is_out_of_stock || item.is_draft}
                                                         onClick={() => handleUpdateQuantity(item, item.quantity - 1)}
                                                         className="h-7 w-7 p-0 cursor-pointer text-muted-foreground hover:text-foreground text-xs"
                                                         aria-label={isEn ? 'Decrease quantity' : 'Kurangi jumlah'}
@@ -426,7 +487,7 @@ export default function CartPage({
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
-                                                        disabled={item.quantity >= 20 || isItemUpdating}
+                                                        disabled={item.quantity >= maxAllowedQty || isItemUpdating || item.is_out_of_stock || item.is_draft}
                                                         onClick={() => handleUpdateQuantity(item, item.quantity + 1)}
                                                         className="h-7 w-7 p-0 cursor-pointer text-muted-foreground hover:text-foreground text-xs"
                                                         aria-label={isEn ? 'Increase quantity' : 'Tambah jumlah'}
@@ -577,12 +638,25 @@ export default function CartPage({
                                     </div>
                                 </div>
 
+                                {hasUnavailableItems && (
+                                    <div className="p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-md text-[11px] text-amber-800 dark:text-amber-300">
+                                        <p className="font-semibold flex items-center gap-1">
+                                            <span>⚠</span> {isEn ? 'Action Required' : 'Perlu Tindakan'}
+                                        </p>
+                                        <p className="mt-0.5 opacity-90 leading-normal">
+                                            {isEn
+                                                ? 'Please resolve draft or out of stock items in your cart to proceed.'
+                                                : 'Harap sesuaikan atau hapus produk draft / stok habis untuk melanjutkan.'}
+                                        </p>
+                                    </div>
+                                )}
+
                                 {/* Checkout Primary Button with Loading State */}
                                 <Button
                                     size="lg"
-                                    disabled={isNavigatingCheckout}
+                                    disabled={isNavigatingCheckout || hasUnavailableItems}
                                     onClick={handleProceedToCheckout}
-                                    className="w-full bg-[#4A070B] hover:bg-[#360407] text-white font-semibold rounded-md h-11 text-xs sm:text-sm shadow-none transition active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 disabled:opacity-85"
+                                    className="w-full bg-[#4A070B] hover:bg-[#360407] text-white font-semibold rounded-md h-11 text-xs sm:text-sm shadow-none transition active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {isNavigatingCheckout ? (
                                         <Loader2 className="w-4 h-4 animate-spin text-[#E5A844]" />
@@ -693,9 +767,9 @@ export default function CartPage({
                                 {/* Checkout Action Button */}
                                 <Button
                                     size="default"
-                                    disabled={isNavigatingCheckout}
+                                    disabled={isNavigatingCheckout || hasUnavailableItems}
                                     onClick={handleProceedToCheckout}
-                                    className="h-10.5 px-5 sm:px-6 bg-[#4A070B] hover:bg-[#360407] text-white font-semibold rounded-md text-xs sm:text-sm shadow-none transition active:scale-[0.98] cursor-pointer flex items-center gap-2 shrink-0 disabled:opacity-80"
+                                    className="h-10.5 px-5 sm:px-6 bg-[#4A070B] hover:bg-[#360407] text-white font-semibold rounded-md text-xs sm:text-sm shadow-none transition active:scale-[0.98] cursor-pointer flex items-center gap-2 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {isNavigatingCheckout ? (
                                         <Loader2 className="w-3.5 h-3.5 animate-spin text-[#E5A844]" />

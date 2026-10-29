@@ -26,6 +26,11 @@ import {
     CheckCheck,
     Truck,
     Settings,
+    PackageCheck,
+    XCircle,
+    UserCheck,
+    Award,
+    Coins,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -99,6 +104,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
     const getNotificationIcon = (type: string) => {
         switch (type) {
             case 'new_order':
+            case 'admin_new_order':
                 return (
                     <div className="size-8 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
                         <ShoppingBag className="size-4" />
@@ -112,18 +118,62 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                     </div>
                 );
             case 'order_shipped':
+            case 'admin_order_shipped':
                 return (
                     <div className="size-8 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
                         <Truck className="size-4" />
                     </div>
                 );
             case 'store_pickup_ready':
+            case 'admin_store_pickup_ready':
                 return (
                     <div className="size-8 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
                         <Store className="size-4" />
                     </div>
                 );
+            case 'order_delivered':
+            case 'admin_order_delivered':
+                return (
+                    <div className="size-8 rounded-full bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0">
+                        <PackageCheck className="size-4" />
+                    </div>
+                );
+            case 'order_completed':
+            case 'admin_order_completed':
+                return (
+                    <div className="size-8 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 flex items-center justify-center shrink-0">
+                        <CheckCircle2 className="size-4" />
+                    </div>
+                );
+            case 'order_canceled':
+            case 'admin_order_canceled':
+                return (
+                    <div className="size-8 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+                        <XCircle className="size-4" />
+                    </div>
+                );
+            case 'new_user_welcome':
+            case 'admin_new_user':
+                return (
+                    <div className="size-8 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                        <UserCheck className="size-4" />
+                    </div>
+                );
+            case 'loyalty_points_earned':
+                return (
+                    <div className="size-8 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                        <Award className="size-4" />
+                    </div>
+                );
+            case 'loyalty_points_redeemed':
+            case 'admin_points_redeemed':
+                return (
+                    <div className="size-8 rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
+                        <Coins className="size-4" />
+                    </div>
+                );
             case 'voucher_reward':
+            case 'promo':
                 return (
                     <div className="size-8 rounded-full bg-pink-500/10 text-pink-600 dark:text-pink-400 flex items-center justify-center shrink-0">
                         <Ticket className="size-4" />

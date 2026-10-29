@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\DeviceToken;
 use App\Models\User;
+use App\Services\FirebaseNotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
@@ -130,6 +132,12 @@ class AuthController extends Controller
             'password' => Hash::make($validated['password']),
             'role' => 'customer',
         ]);
+
+        try {
+            app(FirebaseNotificationService::class)->notifyNewUserRegistered($user);
+        } catch (\Throwable $e) {
+            Log::warning('Failed to dispatch new user notification: '.$e->getMessage());
+        }
 
         Auth::login($user, true);
         $request->session()->regenerate();
