@@ -155,32 +155,28 @@ export default function AdminCategoriesIndex({
                 {/* Dedicated Metrics Cards for current category type */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Card className="py-4">
-                        <CardContent className="flex items-center justify-between p-0 px-6">
-                            <div>
-                                <p className="text-xs font-medium text-muted-foreground">{meta.metricLabel}</p>
-                                <h3 className="text-2xl font-bold mt-1 text-foreground">
-                                    {metrics.total_in_type ?? categories.total}
-                                </h3>
-                                <p className="text-[11px] text-muted-foreground mt-0.5">Klasifikasi {meta.itemName.toLowerCase()} terdaftar</p>
+                        <CardContent className="p-0 px-6">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-muted-foreground">{meta.metricLabel}</span>
+                                <MetaIcon className="size-4 text-primary" />
                             </div>
-                            <div className="size-11 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                                <MetaIcon className="size-5" />
+                            <div className="text-2xl font-bold mt-2 text-foreground">
+                                {metrics.total_in_type ?? categories.total}
                             </div>
+                            <p className="text-xs text-muted-foreground mt-1">Klasifikasi {meta.itemName.toLowerCase()} terdaftar</p>
                         </CardContent>
                     </Card>
 
                     <Card className="py-4">
-                        <CardContent className="flex items-center justify-between p-0 px-6">
-                            <div>
-                                <p className="text-xs font-medium text-muted-foreground">Digunakan Produk</p>
-                                <h3 className="text-2xl font-bold mt-1 text-foreground">
-                                    {metrics.with_products_in_type ?? 0}
-                                </h3>
-                                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-0.5">Aktif terhubung ke katalog produk</p>
+                        <CardContent className="p-0 px-6">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-muted-foreground">Digunakan Produk</span>
+                                <Boxes className="size-4 text-emerald-500" />
                             </div>
-                            <div className="size-11 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-                                <Boxes className="size-5" />
+                            <div className="text-2xl font-bold mt-2 text-foreground">
+                                {metrics.with_products_in_type ?? 0}
                             </div>
+                            <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">Aktif terhubung ke katalog produk</p>
                         </CardContent>
                     </Card>
                 </div>
@@ -230,7 +226,7 @@ export default function AdminCategoriesIndex({
                 </Card>
 
                 {/* Categories Table Card */}
-                <Card className="py-0">
+                <Card className="py-0 overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full caption-bottom text-sm">
                             <thead className="border-b bg-muted/50 text-muted-foreground">
@@ -247,7 +243,11 @@ export default function AdminCategoriesIndex({
                                 {categories.data.length === 0 ? (
                                     <tr>
                                         <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                                            {meta.emptyText}
+                                            <div className="flex flex-col items-center justify-center gap-2">
+                                                <MetaIcon className="size-8 text-muted-foreground/40" />
+                                                <p className="text-sm font-medium text-foreground">{meta.emptyText}</p>
+                                                <p className="text-xs text-muted-foreground">Belum ada data atau kata kunci pencarian tidak ditemukan.</p>
+                                            </div>
                                         </td>
                                     </tr>
                                 ) : (
@@ -298,16 +298,18 @@ export default function AdminCategoriesIndex({
 
                                             <td className="p-4 align-middle text-right whitespace-nowrap">
                                                 <div className="flex items-center justify-end gap-1.5">
-                                                    <Button variant="ghost" size="icon" asChild className="size-8 cursor-pointer">
+                                                    <Button variant="ghost" size="icon" asChild className="size-8 text-muted-foreground hover:text-foreground cursor-pointer" title={`Edit ${meta.itemName}`}>
                                                         <Link href={`/manajemen-kategori/${cat.id}/edit`}>
                                                             <Edit3 className="size-3.5" />
                                                         </Link>
                                                     </Button>
                                                     <Button
+                                                        type="button"
                                                         variant="ghost"
                                                         size="icon"
                                                         onClick={() => setDeleteTarget(cat)}
-                                                        className="size-8 text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer"
+                                                        className="size-8 text-destructive hover:bg-destructive/10 cursor-pointer"
+                                                        title={`Hapus ${meta.itemName}`}
                                                     >
                                                         <Trash2 className="size-3.5" />
                                                     </Button>
@@ -322,19 +324,21 @@ export default function AdminCategoriesIndex({
 
                     {/* Pagination */}
                     {categories.links && categories.links.length > 3 && (
-                        <div className="flex items-center justify-between px-4 py-3 border-t">
+                        <div className="flex flex-col sm:flex-row items-center justify-between border-t px-4 py-3 gap-3">
                             <div className="text-xs text-muted-foreground">
-                                Menampilkan halaman <span className="font-medium text-foreground">{categories.current_page}</span> dari <span className="font-medium text-foreground">{categories.last_page}</span> (Total {categories.total} {meta.itemName.toLowerCase()})
+                                Menampilkan halaman <span className="font-medium text-foreground">{categories.current_page}</span> dari{' '}
+                                <span className="font-medium text-foreground">{categories.last_page}</span> (Total{' '}
+                                <span className="font-medium text-foreground">{categories.total}</span> {meta.itemName.toLowerCase()})
                             </div>
                             <div className="flex items-center gap-1">
-                                {categories.links.map((link, i) => (
+                                {categories.links.map((link, i) =>
                                     link.url ? (
                                         <Button
                                             key={i}
                                             variant={link.active ? 'default' : 'outline'}
                                             size="sm"
                                             asChild
-                                            className="h-8 min-w-8 text-xs cursor-pointer px-2.5"
+                                            className="h-8 min-w-8 px-2.5 text-xs cursor-pointer"
                                         >
                                             <Link
                                                 href={link.url}
@@ -344,11 +348,11 @@ export default function AdminCategoriesIndex({
                                     ) : (
                                         <span
                                             key={i}
-                                            className="px-2.5 py-1 text-xs text-muted-foreground opacity-50"
+                                            className="px-2.5 py-1 text-xs text-muted-foreground/40 rounded border border-transparent"
                                             dangerouslySetInnerHTML={{ __html: link.label }}
                                         />
                                     )
-                                ))}
+                                )}
                             </div>
                         </div>
                     )}

@@ -34,6 +34,14 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+} from '@/components/ui/dialog';
 import { formatVolume } from '@/lib/utils';
 
 interface ProductVariantItem {
@@ -217,16 +225,18 @@ export default function AdminProductsIndex({
             title="Katalog Produk"
             subtitle="Kelola koleksi parfum, harga varian, dan inventaris stok."
         >
+            <Head title="Katalog Produk - Admin Panel" />
+
             <div className="space-y-6">
                 {/* Metric Summary Cards */}
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Total Produk</CardTitle>
-                            <Package className="size-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{metrics.total_products}</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <Card className="py-4">
+                        <CardContent className="p-0 px-6">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-muted-foreground">Total Produk</span>
+                                <Package className="size-4 text-primary" />
+                            </div>
+                            <div className="text-2xl font-bold mt-2 text-foreground">{metrics.total_products}</div>
                             <p className="text-xs text-muted-foreground mt-1">
                                 {metrics.published_count ?? metrics.total_products} Terbit &bull; {metrics.draft_count ?? 0} Draft
                                 {(metrics.trashed_count ?? 0) > 0 && (
@@ -236,49 +246,49 @@ export default function AdminProductsIndex({
                         </CardContent>
                     </Card>
 
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Total Varian</CardTitle>
-                            <Boxes className="size-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{metrics.total_variants}</div>
+                    <Card className="py-4">
+                        <CardContent className="p-0 px-6">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-muted-foreground">Total Varian</span>
+                                <Boxes className="size-4 text-primary" />
+                            </div>
+                            <div className="text-2xl font-bold mt-2 text-foreground">{metrics.total_variants}</div>
                             <p className="text-xs text-muted-foreground mt-1">Volume 50ml, 100ml, dll</p>
                         </CardContent>
                     </Card>
 
                     <Card
-                        className={`cursor-pointer transition-colors ${selectedStockFilter === 'low_stock' ? 'border-primary ring-1 ring-primary' : ''}`}
+                        className={`py-4 cursor-pointer transition-all hover:border-amber-500/50 ${selectedStockFilter === 'low_stock' ? 'border-amber-500 ring-1 ring-amber-500' : ''}`}
                         onClick={() => {
                             const val = selectedStockFilter === 'low_stock' ? 'all' : 'low_stock';
                             setSelectedStockFilter(val);
                             applyFilters({ stock_filter: val });
                         }}
                     >
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium text-amber-600 dark:text-amber-400">Stok Menipis (&le; 10)</CardTitle>
-                            <AlertTriangle className="size-4 text-amber-500" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{metrics.low_stock_count}</div>
+                        <CardContent className="p-0 px-6">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-amber-600 dark:text-amber-400">Stok Menipis (&le; 10)</span>
+                                <AlertTriangle className="size-4 text-amber-500" />
+                            </div>
+                            <div className="text-2xl font-bold mt-2 text-amber-600 dark:text-amber-400">{metrics.low_stock_count}</div>
                             <p className="text-xs text-muted-foreground mt-1">Perlu ditambah</p>
                         </CardContent>
                     </Card>
 
                     <Card
-                        className={`cursor-pointer transition-colors ${selectedStockFilter === 'out_of_stock' ? 'border-destructive ring-1 ring-destructive' : ''}`}
+                        className={`py-4 cursor-pointer transition-all hover:border-destructive/50 ${selectedStockFilter === 'out_of_stock' ? 'border-destructive ring-1 ring-destructive' : ''}`}
                         onClick={() => {
                             const val = selectedStockFilter === 'out_of_stock' ? 'all' : 'out_of_stock';
                             setSelectedStockFilter(val);
                             applyFilters({ stock_filter: val });
                         }}
                     >
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium text-destructive">Stok Habis (0)</CardTitle>
-                            <XCircle className="size-4 text-destructive" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-destructive">{metrics.out_of_stock_count}</div>
+                        <CardContent className="p-0 px-6">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-destructive">Stok Habis (0)</span>
+                                <XCircle className="size-4 text-destructive" />
+                            </div>
+                            <div className="text-2xl font-bold mt-2 text-destructive">{metrics.out_of_stock_count}</div>
                             <p className="text-xs text-muted-foreground mt-1">Tidak dapat dibeli</p>
                         </CardContent>
                     </Card>
@@ -396,7 +406,7 @@ export default function AdminProductsIndex({
                 </Card>
 
                 {/* Table Card */}
-                <Card className='py-0'>
+                <Card className="py-0 overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full caption-bottom text-sm">
                             <thead className="border-b bg-muted/50 text-muted-foreground">
@@ -641,7 +651,11 @@ export default function AdminProductsIndex({
                                 {products.data.length === 0 && (
                                     <tr>
                                         <td colSpan={7} className="p-8 text-center text-muted-foreground">
-                                            Tidak ada produk yang sesuai filter.
+                                            <div className="flex flex-col items-center justify-center gap-2">
+                                                <Package className="size-8 text-muted-foreground/40" />
+                                                <p className="text-sm font-medium text-foreground">Tidak ada produk ditemukan</p>
+                                                <p className="text-xs text-muted-foreground">Coba ubah kata kunci pencarian atau filter yang dipilih.</p>
+                                            </div>
                                         </td>
                                     </tr>
                                 )}
@@ -650,9 +664,9 @@ export default function AdminProductsIndex({
                     </div>
 
                     {/* Pagination */}
-                    {products.links.length > 3 && (
-                        <div className="p-4 border-t flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
-                            <div>
+                    {products.links && products.links.length > 3 && (
+                        <div className="flex flex-col sm:flex-row items-center justify-between border-t px-4 py-3 gap-3">
+                            <div className="text-xs text-muted-foreground">
                                 Menampilkan <span className="font-medium text-foreground">{products.from || 0}</span> sampai{' '}
                                 <span className="font-medium text-foreground">{products.to || 0}</span> dari{' '}
                                 <span className="font-medium text-foreground">{products.total}</span> produk
@@ -665,7 +679,7 @@ export default function AdminProductsIndex({
                                             <span
                                                 key={idx}
                                                 dangerouslySetInnerHTML={{ __html: link.label }}
-                                                className="px-2.5 py-1 rounded border text-muted-foreground/40 text-xs"
+                                                className="px-2.5 py-1 text-xs text-muted-foreground/40 rounded border border-transparent"
                                             />
                                         );
                                     }
@@ -675,7 +689,7 @@ export default function AdminProductsIndex({
                                             variant={link.active ? 'default' : 'outline'}
                                             size="sm"
                                             asChild
-                                            className="h-8 px-2.5 text-xs"
+                                            className="h-8 min-w-8 px-2.5 text-xs cursor-pointer"
                                         >
                                             <Link
                                                 href={link.url}
@@ -691,112 +705,99 @@ export default function AdminProductsIndex({
             </div>
 
             {/* Quick Stock Modal */}
-            {quickStockTarget && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in"
-                    onClick={() => setQuickStockTarget(null)}
-                >
-                    <Card className="max-w-xs w-full shadow-lg" onClick={(e) => e.stopPropagation()}>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <div>
-                                <CardTitle className="text-sm font-semibold">Ubah Stok Varian</CardTitle>
-                                <CardDescription className="text-xs">{quickStockTarget.variant.name} ({formatVolume(quickStockTarget.variant.volume)})</CardDescription>
+            <Dialog open={Boolean(quickStockTarget)} onOpenChange={(open) => !open && setQuickStockTarget(null)}>
+                <DialogContent className="sm:max-w-xs">
+                    <DialogHeader>
+                        <DialogTitle className="text-sm font-semibold">Ubah Stok Varian</DialogTitle>
+                        {quickStockTarget && (
+                            <DialogDescription className="text-xs">
+                                {quickStockTarget.variant.name} ({formatVolume(quickStockTarget.variant.volume)})
+                            </DialogDescription>
+                        )}
+                    </DialogHeader>
+                    {quickStockTarget && (
+                        <form onSubmit={handleQuickStockSave} className="space-y-4">
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-medium">Stok Unit:</label>
+                                <Input
+                                    type="number"
+                                    min={0}
+                                    value={newStockValue}
+                                    onChange={(e) => setNewStockValue(Math.max(0, parseInt(e.target.value) || 0))}
+                                    className="h-9 text-xs"
+                                    autoFocus
+                                />
                             </div>
-                            <Button variant="ghost" size="icon" onClick={() => setQuickStockTarget(null)} className="size-7">
-                                <X className="size-4" />
-                            </Button>
-                        </CardHeader>
-                        <CardContent>
-                            <form onSubmit={handleQuickStockSave} className="space-y-3 text-xs">
-                                <div className="space-y-1">
-                                    <label className="font-medium">Stok Unit:</label>
-                                    <Input
-                                        type="number"
-                                        min={0}
-                                        value={newStockValue}
-                                        onChange={(e) => setNewStockValue(Math.max(0, parseInt(e.target.value) || 0))}
-                                        className="h-9"
-                                    />
-                                </div>
-                                <div className="flex justify-end gap-2 pt-1">
-                                    <Button type="button" variant="outline" size="sm" onClick={() => setQuickStockTarget(null)}>
-                                        Batal
-                                    </Button>
-                                    <Button type="submit" size="sm" disabled={isSavingStock}>
-                                        {isSavingStock ? 'Menyimpan...' : 'Simpan'}
-                                    </Button>
-                                </div>
-                            </form>
-                        </CardContent>
-                    </Card>
-                </div>
-            )}
+                            <DialogFooter className="gap-2 sm:gap-0">
+                                <Button type="button" variant="outline" size="sm" onClick={() => setQuickStockTarget(null)} className="h-8 text-xs cursor-pointer">
+                                    Batal
+                                </Button>
+                                <Button type="submit" size="sm" disabled={isSavingStock} className="h-8 text-xs cursor-pointer">
+                                    {isSavingStock ? 'Menyimpan...' : 'Simpan'}
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    )}
+                </DialogContent>
+            </Dialog>
 
-            {/* Delete Modal (Soft Delete) */}
-            {deleteTarget && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in"
-                    onClick={() => setDeleteTarget(null)}
-                >
-                    <Card className="max-w-sm w-full shadow-lg" onClick={(e) => e.stopPropagation()}>
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-base font-semibold">Pindahkan ke Sampah?</CardTitle>
-                            <CardDescription>
-                                Apakah Anda yakin ingin menghapus parfum "{deleteTarget.name}"? Produk akan dipindahkan ke folder Sampah dan dapat dipulihkan kapan saja.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex justify-end gap-2 pt-2">
-                            <Button variant="outline" size="sm" onClick={() => setDeleteTarget(null)}>
-                                Batal
-                            </Button>
-                            <Button
-                                variant="destructive"
-                                size="sm"
-                                disabled={isDeleting}
-                                onClick={handleDeleteProduct}
-                            >
-                                {isDeleting ? 'Memindahkan...' : 'Ya, Hapus'}
-                            </Button>
-                        </CardContent>
-                    </Card>
-                </div>
-            )}
+            {/* Soft Delete Modal */}
+            <Dialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Pindahkan ke Sampah?</DialogTitle>
+                        <DialogDescription>
+                            Apakah Anda yakin ingin menghapus parfum "{deleteTarget?.name}"? Produk akan dipindahkan ke folder Sampah dan dapat dipulihkan kapan saja.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button variant="outline" size="sm" onClick={() => setDeleteTarget(null)} className="h-8 text-xs cursor-pointer">
+                            Batal
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            size="sm"
+                            disabled={isDeleting}
+                            onClick={handleDeleteProduct}
+                            className="h-8 text-xs cursor-pointer"
+                        >
+                            {isDeleting ? 'Memindahkan...' : 'Ya, Hapus'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             {/* Force Delete Modal */}
-            {forceDeleteTarget && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in"
-                    onClick={() => setForceDeleteTarget(null)}
-                >
-                    <Card className="max-w-md w-full shadow-lg border-destructive/50" onClick={(e) => e.stopPropagation()}>
-                        <CardHeader className="pb-2">
-                            <div className="flex items-center gap-2 text-destructive mb-1">
-                                <AlertTriangle className="size-5" />
-                                <CardTitle className="text-base font-semibold text-destructive">Hapus Permanen Produk?</CardTitle>
-                            </div>
-                            <CardDescription>
-                                Apakah Anda yakin ingin menghapus parfum "<strong>{forceDeleteTarget.name}</strong>" secara <strong>PERMANEN</strong> dari database?
-                                <span className="block mt-2 text-rose-600 font-medium">
-                                    PERINGATAN: Seluruh varian dan file foto produk akan dihapus selamanya dan TIDAK DAPAT dipulihkan kembali!
-                                </span>
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex justify-end gap-2 pt-2">
-                            <Button variant="outline" size="sm" onClick={() => setForceDeleteTarget(null)}>
-                                Batal
-                            </Button>
-                            <Button
-                                variant="destructive"
-                                size="sm"
-                                disabled={isForceDeleting}
-                                onClick={handleForceDeleteProduct}
-                            >
-                                {isForceDeleting ? 'Menghapus Total...' : 'Ya, Hapus Permanen'}
-                            </Button>
-                        </CardContent>
-                    </Card>
-                </div>
-            )}
+            <Dialog open={Boolean(forceDeleteTarget)} onOpenChange={(open) => !open && setForceDeleteTarget(null)}>
+                <DialogContent className="sm:max-w-md border-destructive/50">
+                    <DialogHeader>
+                        <div className="flex items-center gap-2 text-destructive mb-1">
+                            <AlertTriangle className="size-5" />
+                            <DialogTitle className="text-destructive">Hapus Permanen Produk?</DialogTitle>
+                        </div>
+                        <DialogDescription>
+                            Apakah Anda yakin ingin menghapus parfum "<strong>{forceDeleteTarget?.name}</strong>" secara <strong>PERMANEN</strong> dari database?
+                            <span className="block mt-2 text-rose-600 font-medium">
+                                PERINGATAN: Seluruh varian dan file foto produk akan dihapus selamanya dan TIDAK DAPAT dipulihkan kembali!
+                            </span>
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button variant="outline" size="sm" onClick={() => setForceDeleteTarget(null)} className="h-8 text-xs cursor-pointer">
+                            Batal
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            size="sm"
+                            disabled={isForceDeleting}
+                            onClick={handleForceDeleteProduct}
+                            className="h-8 text-xs cursor-pointer"
+                        >
+                            {isForceDeleting ? 'Menghapus Total...' : 'Ya, Hapus Permanen'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </AdminLayout>
     );
 }

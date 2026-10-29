@@ -12,6 +12,7 @@ import {
     RefreshCw,
     Clock,
     Image,
+    CheckCircle2,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -117,38 +118,62 @@ export default function AdminArticlesIndex({
             title="Artikel &amp; Jurnal"
             subtitle="Kelola konten edukasi wewangian, panduan aroma, dan tips perawatan parfum."
         >
+            <Head title="Artikel &amp; Jurnal - Admin Panel" />
+
             <div className="space-y-6">
                 {/* Metric Summary Card */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Total Artikel</CardTitle>
-                            <FileText className="size-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{metrics.total_articles}</div>
-                            <p className="text-xs text-muted-foreground mt-1">
-                                {metrics.published_count ?? metrics.total_articles} Terbit &bull; {metrics.draft_count ?? 0} Draft
-                            </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <Card className="py-4">
+                        <CardContent className="p-0 px-6">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-muted-foreground">Total Artikel</span>
+                                <FileText className="size-4 text-primary" />
+                            </div>
+                            <div className="text-2xl font-bold mt-2 text-foreground">{metrics.total_articles}</div>
+                            <p className="text-xs text-muted-foreground mt-1">Seluruh tulisan jurnal</p>
                         </CardContent>
                     </Card>
 
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Halaman Publik</CardTitle>
-                            <ExternalLink className="size-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <a
-                                href={getStorefrontUrl('/articles')}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 text-xs text-primary font-semibold hover:underline"
-                            >
-                                <span>Kunjungi Jurnal Aroma Palace</span>
-                                <ExternalLink className="size-3.5" />
-                            </a>
-                            <p className="text-xs text-muted-foreground mt-1">Dapat dibaca oleh semua pengunjung</p>
+                    <Card className="py-4">
+                        <CardContent className="p-0 px-6">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-muted-foreground">Artikel Terbit</span>
+                                <CheckCircle2 className="size-4 text-emerald-500" />
+                            </div>
+                            <div className="text-2xl font-bold mt-2 text-foreground">{metrics.published_count ?? metrics.total_articles}</div>
+                            <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">Dapat dibaca publik</p>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="py-4">
+                        <CardContent className="p-0 px-6">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-muted-foreground">Draft Penulisan</span>
+                                <Clock className="size-4 text-amber-500" />
+                            </div>
+                            <div className="text-2xl font-bold mt-2 text-foreground">{metrics.draft_count ?? 0}</div>
+                            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">Belum dipublikasikan</p>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="py-4">
+                        <CardContent className="p-0 px-6">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-muted-foreground">Halaman Publik</span>
+                                <ExternalLink className="size-4 text-blue-500" />
+                            </div>
+                            <div className="mt-2">
+                                <a
+                                    href={getStorefrontUrl('/articles')}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+                                >
+                                    <span>Kunjungi Jurnal</span>
+                                    <ExternalLink className="size-3.5" />
+                                </a>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">Lihat etalase edukasi</p>
                         </CardContent>
                     </Card>
                 </div>
@@ -215,7 +240,7 @@ export default function AdminArticlesIndex({
                 </Card>
 
                 {/* Articles Table Card */}
-                <Card className="py-0">
+                <Card className="py-0 overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full caption-bottom text-sm">
                             <thead className="border-b bg-muted/50 text-muted-foreground">
@@ -232,8 +257,12 @@ export default function AdminArticlesIndex({
                             <tbody className="divide-y text-xs">
                                 {articles.data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                                            Tidak ada artikel jurnal ditemukan.
+                                        <td colSpan={7} className="p-8 text-center text-muted-foreground">
+                                            <div className="flex flex-col items-center justify-center gap-2">
+                                                <FileText className="size-8 text-muted-foreground/40" />
+                                                <p className="text-sm font-medium text-foreground">Tidak ada artikel jurnal ditemukan</p>
+                                                <p className="text-xs text-muted-foreground">Coba ubah kata kunci pencarian atau filter yang dipilih.</p>
+                                            </div>
                                         </td>
                                     </tr>
                                 ) : (
@@ -353,10 +382,11 @@ export default function AdminArticlesIndex({
                     </div>
 
                     {/* Pagination */}
-                    {articles.links.length > 3 && (
-                        <div className="flex items-center justify-between border-t px-4 py-3">
+                    {articles.links && articles.links.length > 3 && (
+                        <div className="flex flex-col sm:flex-row items-center justify-between border-t px-4 py-3 gap-3">
                             <div className="text-xs text-muted-foreground">
-                                Menampilkan {articles.data.length} dari {articles.total} artikel
+                                Menampilkan <span className="font-medium text-foreground">{articles.data.length}</span> dari{' '}
+                                <span className="font-medium text-foreground">{articles.total}</span> artikel
                             </div>
                             <div className="flex items-center gap-1">
                                 {articles.links.map((link, idx) => {
@@ -364,22 +394,24 @@ export default function AdminArticlesIndex({
                                         return (
                                             <span
                                                 key={idx}
-                                                className="px-2.5 py-1 text-xs text-muted-foreground"
+                                                className="px-2.5 py-1 text-xs text-muted-foreground/40 rounded border border-transparent"
                                                 dangerouslySetInnerHTML={{ __html: link.label }}
                                             />
                                         );
                                     }
                                     return (
-                                        <Link
+                                        <Button
                                             key={idx}
-                                            href={link.url}
-                                            className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
-                                                link.active
-                                                    ? 'bg-primary text-primary-foreground font-medium'
-                                                    : 'hover:bg-muted text-muted-foreground hover:text-foreground'
-                                            }`}
-                                            dangerouslySetInnerHTML={{ __html: link.label }}
-                                        />
+                                            variant={link.active ? 'default' : 'outline'}
+                                            size="sm"
+                                            asChild
+                                            className="h-8 min-w-8 px-2.5 text-xs cursor-pointer"
+                                        >
+                                            <Link
+                                                href={link.url}
+                                                dangerouslySetInnerHTML={{ __html: link.label }}
+                                            />
+                                        </Button>
                                     );
                                 })}
                             </div>

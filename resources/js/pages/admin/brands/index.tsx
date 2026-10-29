@@ -99,28 +99,24 @@ export default function AdminBrandsIndex({
                 {/* Metrics Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Card className="py-4">
-                        <CardContent className="flex items-center justify-between p-0 px-6">
-                            <div>
-                                <p className="text-xs font-medium text-muted-foreground">Total Brand / Maison</p>
-                                <h3 className="text-2xl font-bold mt-1 text-foreground">{metrics.total_brands}</h3>
-                                <p className="text-[11px] text-muted-foreground mt-0.5">Rumah parfum resmi terdaftar</p>
+                        <CardContent className="p-0 px-6">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-muted-foreground">Total Brand / Maison</span>
+                                <Sparkles className="size-4 text-amber-500" />
                             </div>
-                            <div className="size-11 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500">
-                                <Sparkles className="size-5" />
-                            </div>
+                            <div className="text-2xl font-bold mt-2 text-foreground">{metrics.total_brands}</div>
+                            <p className="text-xs text-muted-foreground mt-1">Rumah parfum resmi terdaftar</p>
                         </CardContent>
                     </Card>
 
                     <Card className="py-4">
-                        <CardContent className="flex items-center justify-between p-0 px-6">
-                            <div>
-                                <p className="text-xs font-medium text-muted-foreground">Brand Aktif Berproduk</p>
-                                <h3 className="text-2xl font-bold mt-1 text-foreground">{metrics.brands_with_products}</h3>
-                                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-0.5">Koleksi aktif di etalase</p>
+                        <CardContent className="p-0 px-6">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-muted-foreground">Brand Aktif Berproduk</span>
+                                <Boxes className="size-4 text-emerald-500" />
                             </div>
-                            <div className="size-11 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-                                <Boxes className="size-5" />
-                            </div>
+                            <div className="text-2xl font-bold mt-2 text-foreground">{metrics.brands_with_products}</div>
+                            <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">Koleksi aktif di etalase</p>
                         </CardContent>
                     </Card>
                 </div>
@@ -170,7 +166,7 @@ export default function AdminBrandsIndex({
                 </Card>
 
                 {/* Brands Table Card */}
-                <Card className="py-0">
+                <Card className="py-0 overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full caption-bottom text-sm">
                             <thead className="border-b bg-muted/50 text-muted-foreground">
@@ -186,7 +182,11 @@ export default function AdminBrandsIndex({
                                 {brands.data.length === 0 ? (
                                     <tr>
                                         <td colSpan={5} className="p-8 text-center text-muted-foreground">
-                                            Tidak ada brand parfum ditemukan.
+                                            <div className="flex flex-col items-center justify-center gap-2">
+                                                <Sparkles className="size-8 text-muted-foreground/40" />
+                                                <p className="text-sm font-medium text-foreground">Tidak ada brand parfum ditemukan</p>
+                                                <p className="text-xs text-muted-foreground">Coba ubah kata kunci pencarian atau filter yang dipilih.</p>
+                                            </div>
                                         </td>
                                     </tr>
                                 ) : (
@@ -257,10 +257,11 @@ export default function AdminBrandsIndex({
                     </div>
 
                     {/* Pagination */}
-                    {brands.links.length > 3 && (
-                        <div className="flex items-center justify-between border-t px-4 py-3">
+                    {brands.links && brands.links.length > 3 && (
+                        <div className="flex flex-col sm:flex-row items-center justify-between border-t px-4 py-3 gap-3">
                             <div className="text-xs text-muted-foreground">
-                                Menampilkan {brands.data.length} dari {brands.total} brand
+                                Menampilkan <span className="font-medium text-foreground">{brands.data.length}</span> dari{' '}
+                                <span className="font-medium text-foreground">{brands.total}</span> brand
                             </div>
                             <div className="flex items-center gap-1">
                                 {brands.links.map((link, idx) => {
@@ -268,22 +269,24 @@ export default function AdminBrandsIndex({
                                         return (
                                             <span
                                                 key={idx}
-                                                className="px-2.5 py-1 text-xs text-muted-foreground"
+                                                className="px-2.5 py-1 text-xs text-muted-foreground/40 rounded border border-transparent"
                                                 dangerouslySetInnerHTML={{ __html: link.label }}
                                             />
                                         );
                                     }
                                     return (
-                                        <Link
+                                        <Button
                                             key={idx}
-                                            href={link.url}
-                                            className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
-                                                link.active
-                                                    ? 'bg-primary text-primary-foreground font-medium'
-                                                    : 'hover:bg-muted text-muted-foreground hover:text-foreground'
-                                            }`}
-                                            dangerouslySetInnerHTML={{ __html: link.label }}
-                                        />
+                                            variant={link.active ? 'default' : 'outline'}
+                                            size="sm"
+                                            asChild
+                                            className="h-8 min-w-8 px-2.5 text-xs cursor-pointer"
+                                        >
+                                            <Link
+                                                href={link.url}
+                                                dangerouslySetInnerHTML={{ __html: link.label }}
+                                            />
+                                        </Button>
                                     );
                                 })}
                             </div>
