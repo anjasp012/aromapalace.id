@@ -249,42 +249,6 @@ export default function AdminCategoriesIndex({
             <Head title={meta.headTitle} />
 
             <div className="space-y-6">
-                {/* Navigation Tabs */}
-                <div className="flex border-b border-border/80 gap-6 overflow-x-auto scrollbar-none">
-                    <Link
-                        href="/manajemen-kategori?type=genders"
-                        className={`pb-3 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex items-center gap-2 ${
-                            currentType === 'genders'
-                                ? 'border-primary text-primary font-semibold'
-                                : 'border-transparent text-muted-foreground hover:text-foreground'
-                        }`}
-                    >
-                        <Users className="size-4" />
-                        <span>Target Gender</span>
-                    </Link>
-                    <Link
-                        href="/manajemen-kategori?type=concentrates"
-                        className={`pb-3 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex items-center gap-2 ${
-                            currentType === 'concentrates'
-                                ? 'border-primary text-primary font-semibold'
-                                : 'border-transparent text-muted-foreground hover:text-foreground'
-                        }`}
-                    >
-                        <FlaskConical className="size-4" />
-                        <span>Konsentrasi</span>
-                    </Link>
-                    <Link
-                        href="/manajemen-kategori?type=scents"
-                        className={`pb-3 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex items-center gap-2 ${
-                            currentType === 'scents'
-                                ? 'border-primary text-primary font-semibold'
-                                : 'border-transparent text-muted-foreground hover:text-foreground'
-                        }`}
-                    >
-                        <Sparkles className="size-4" />
-                        <span>Scent & Notes</span>
-                    </Link>
-                </div>
 
                 {/* Metrics Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
