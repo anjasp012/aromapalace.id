@@ -119,6 +119,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/payment/{order}', [PaymentController::class, 'show'])->name('payment.show');
     Route::post('/payment/{order}/check', [PaymentController::class, 'checkStatus'])->name('payment.check');
+    Route::post('/payment/{order}/confirm-manual', [PaymentController::class, 'confirmManual'])->name('payment.confirm_manual');
     Route::get('/payment', fn () => redirect()->route('checkout.index'));
     Route::get('/orders/{order}/invoice', [OrderController::class, 'invoice'])->name('orders.invoice');
     Route::get('/orders/{order}/invoice/download', [OrderController::class, 'downloadInvoice'])->name('orders.invoice.download');

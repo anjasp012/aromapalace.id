@@ -552,6 +552,65 @@ class FirebaseNotificationService
      * - Ke Customer: "Pesanan Dibatalkan"
      * - Ke Admin: "Pesanan Dibatalkan Otomatis"
      */
+    /**
+     * Remind users about pending orders that will expire in ~1 hour (23–24h window).
+     * Runs every 10 minutes via scheduler; sends only once per order (cached).
+     *
+     * @return int Number of reminders sent
+     */
+    public function notifyPaymentExpiringSoon(): int
+    {
+        // Orders created between 23h and 24h ago that are still unpaid and not awaiting confirmation
+        $expiringSoon = Order::where('payment_status', 'pending')
+            ->whereNotIn('status', ['menunggu_konfirmasi', 'diproses', 'dikirim', 'selesai', 'dibatalkan'])
+            ->whereBetween('created_at', [now()->subHours(24), now()->subHours(23)])
+            ->whereNotNull('user_id')
+            ->get();
+
+        if ($expiringSoon->isEmpty()) {
+            return 0;
+        }
+
+        $sentCount = 0;
+
+        foreach ($expiringSoon as $order) {
+            // Send only once per order (TTL 2h so it doesn't re-fire in the next 10-min run)
+            $cacheKey = "fcm_payment_expiring_soon_{$order->id}";
+            if (Cache::has($cacheKey)) {
+                continue;
+            }
+            Cache::put($cacheKey, true, now()->addHours(2));
+
+            $formattedTotal = 'Rp '.number_format($order->total_amount, 0, ',', '.');
+            $paymentUrl = url('/payment/'.$order->order_number);
+
+            $titleId = '⏰ Segera Bayar! Pesanan #'.$order->order_number.' Akan Dibatalkan';
+            $bodyId = "Pembayaran {$formattedTotal} harus diselesaikan dalam 1 jam. Pesanan Anda akan otomatis dibatalkan jika melewati batas waktu.";
+            $titleEn = '⏰ Pay Now! Order #'.$order->order_number.' Expiring Soon';
+            $bodyEn = "Payment of {$formattedTotal} must be completed within 1 hour or your order will be automatically canceled.";
+
+            $this->sendToUser(
+                user: $order->user_id,
+                title: $titleId,
+                body: $bodyId,
+                url: $paymentUrl,
+                data: [
+                    'order_id' => (string) $order->id,
+                    'order_number' => (string) $order->order_number,
+                    'type' => 'payment_expiring_soon',
+                    'title_en' => $titleEn,
+                    'body_en' => $bodyEn,
+                    'title_id' => $titleId,
+                    'body_id' => $bodyId,
+                ]
+            );
+
+            $sentCount++;
+        }
+
+        return $sentCount;
+    }
+
     public function notifyOrderCanceled(Order $order, string $reason = 'Batas waktu pembayaran 24 jam telah berakhir.'): void
     {
         $cacheKey = "fcm_order_canceled_sent_{$order->id}";
@@ -831,5 +890,55 @@ class FirebaseNotificationService
                 'type' => 'admin_points_redeemed',
             ]
         );
+    }
+
+    /**
+     * Remind admins about paid orders that have not been processed to shipping
+     * after 24 hours. Sends one notification per order per hour (cached).
+     *
+     * @return int Number of reminder notifications sent
+     */
+    public function notifyUnprocessedPaidOrders(): int
+    {
+        // Orders that are paid (payment_status=paid) but haven't reached 'dikirim'/'selesai'/'dibatalkan'
+        // and were last updated (paid) more than 24 hours ago.
+        $stuck = Order::where('payment_status', 'paid')
+            ->whereNotIn('status', ['dikirim', 'selesai', 'dibatalkan'])
+            ->where('updated_at', '<=', now()->subHours(24))
+            ->get();
+
+        if ($stuck->isEmpty()) {
+            return 0;
+        }
+
+        $sentCount = 0;
+
+        foreach ($stuck as $order) {
+            // Throttle: send at most once per hour per order
+            $cacheKey = "admin_unprocessed_reminder_{$order->id}_".now()->format('YmdH');
+            if (Cache::has($cacheKey)) {
+                continue;
+            }
+            Cache::put($cacheKey, true, now()->addHours(2));
+
+            $hoursStuck = (int) now()->diffInHours($order->updated_at);
+            $formattedTotal = 'Rp '.number_format($order->total_amount, 0, ',', '.');
+
+            $this->sendToAdmins(
+                title: '⚠️ Pesanan Belum Diproses #'.$order->order_number,
+                body: "Pesanan {$formattedTotal} dari {$order->recipient_name} sudah dibayar {$hoursStuck} jam lalu dan belum dikirim.",
+                url: '/manajemen-pesanan/'.$order->id,
+                data: [
+                    'order_id' => (string) $order->id,
+                    'order_number' => (string) $order->order_number,
+                    'hours_stuck' => (string) $hoursStuck,
+                    'type' => 'admin_order_unprocessed',
+                ]
+            );
+
+            $sentCount++;
+        }
+
+        return $sentCount;
     }
 }

@@ -82,6 +82,10 @@ use Illuminate\Support\Carbon;
     'payment_channel',
     'payment_code',
     'payment_status',
+    'payment_proof',
+    'payment_proof_uploaded_at',
+    'payment_sender_name',
+    'payment_notes',
     'status',
     'subtotal',
     'discount_amount',
@@ -118,7 +122,18 @@ class Order extends Model
             'total_amount' => 'integer',
             'latitude' => 'float',
             'longitude' => 'float',
+            'payment_proof_uploaded_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Determine if order payment is manual confirmation.
+     */
+    public function getIsManualAttribute(): bool
+    {
+        return str_starts_with($this->payment_method ?? '', 'manual_')
+            || str_contains(strtolower($this->payment_channel ?? ''), 'manual')
+            || str_contains(strtolower($this->payment_method ?? ''), 'manual');
     }
 
     /**

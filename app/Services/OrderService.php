@@ -25,8 +25,8 @@ class OrderService
             // Lock order record from database to prevent concurrent webhook/cancellation races
             $lockedOrder = Order::where('id', $order->id)->lockForUpdate()->first();
 
-            if (! $lockedOrder || $lockedOrder->payment_status !== 'pending') {
-                // Already paid or canceled by a concurrent process
+            if (! $lockedOrder || $lockedOrder->payment_status !== 'pending' || $lockedOrder->status === 'menunggu_konfirmasi') {
+                // Already paid, already canceled, or proof uploaded awaiting admin review — do not cancel
                 return false;
             }
 
@@ -77,7 +77,7 @@ class OrderService
             $q->where('payment_status', 'pending')
                 ->orWhere('status', 'menunggu_pembayaran');
         })
-            ->whereNotIn('status', ['diproses', 'dikirim', 'selesai', 'dibatalkan'])
+            ->whereNotIn('status', ['menunggu_konfirmasi', 'diproses', 'dikirim', 'selesai', 'dibatalkan'])
             ->where('created_at', '<=', $cutoff)
             ->get();
 

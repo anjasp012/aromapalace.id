@@ -49,11 +49,15 @@ export interface PaymentMethodItem {
     id: string;
     code: string;
     name: string;
-    type: string;
-    min_amount: number;
-    min_amount_formatted: string;
-    max_amount: number;
-    max_amount_formatted: string;
+    type?: string;
+    is_manual?: boolean;
+    account_number?: string | null;
+    account_name?: string | null;
+    instructions?: string | null;
+    min_amount?: number;
+    min_amount_formatted?: string;
+    max_amount?: number;
+    max_amount_formatted?: string;
     icon?: string;
     description?: string;
 }
@@ -278,6 +282,16 @@ const getPaymentMeta = (code: string, icon?: string) => {
             return {
                 logo: 'PORTAL',
                 logoStyle: 'text-[#4A070B] bg-[#4A070B]/10 dark:text-[#E8D0BA] dark:bg-[#E8D0BA]/10 border border-[#4A070B]/20 dark:border-[#E8D0BA]/20',
+            };
+        case 'manual_bca':
+            return {
+                logo: 'BCA',
+                logoStyle: 'text-[#005BAB] bg-blue-50 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200 dark:border-blue-900',
+            };
+        case 'manual_mandiri':
+            return {
+                logo: 'MANDIRI',
+                logoStyle: 'text-[#002B66] bg-amber-50 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200 dark:border-amber-900',
             };
         default:
             return {
@@ -838,17 +852,22 @@ export default function CheckoutPage({
         if (Array.isArray(payment_methods) && payment_methods.length > 0) {
             return payment_methods.map((pm) => {
                 const meta = getPaymentMeta(pm.code, pm.icon || undefined);
+                const isManual = Boolean(pm.is_manual ?? (pm.type === 'manual' || pm.code.startsWith('manual_')));
                 return {
                     id: pm.code,
                     code: pm.code,
                     name: pm.name,
                     icon: pm.icon || null,
-                    type: pm.type === 'qris' ? 'QRIS Instant' : pm.type === 'payment_link' ? 'Multi-Payment Portal' : (pm.type || 'Virtual Account'),
+                    type: isManual ? (isEn ? 'Manual Bank Transfer' : 'Transfer Bank Manual') : (pm.type === 'qris' ? 'QRIS Instant' : pm.type === 'payment_link' ? 'Multi-Payment Portal' : (pm.type || 'Virtual Account')),
+                    is_manual: isManual,
+                    account_number: pm.account_number,
+                    account_name: pm.account_name,
+                    instructions: pm.instructions,
                     min_amount: pm.min_amount,
                     max_amount: pm.max_amount,
                     min_amount_formatted: pm.min_amount_formatted,
                     max_amount_formatted: pm.max_amount_formatted,
-                    description: pm.description,
+                    description: pm.description || (isManual && pm.account_number ? `Rek: ${pm.account_number} • a/n ${pm.account_name || 'Aroma Palace'}` : undefined),
                     freeFee: true,
                     logo: meta.logo,
                     logoStyle: meta.logoStyle,
@@ -856,7 +875,7 @@ export default function CheckoutPage({
             });
         }
         return [];
-    }, [payment_methods]);
+    }, [payment_methods, isEn]);
 
     // Ensure selected payment method is valid among active payment methods
     useEffect(() => {
@@ -1450,9 +1469,20 @@ export default function CheckoutPage({
                                                             {pm.logo}
                                                         </span>
                                                         <div className="min-w-0">
-                                                            <span className="text-xs font-bold text-foreground block truncate">
-                                                                {pm.name}
-                                                            </span>
+                                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                                <span className="text-xs font-bold text-foreground block truncate">
+                                                                    {pm.name}
+                                                                </span>
+                                                                {pm.is_manual ? (
+                                                                    <span className="text-[9.5px] font-bold px-1.5 py-0.2 rounded-sm bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30 shrink-0">
+                                                                        {isEn ? 'Manual' : 'Konfirmasi Manual'}
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="text-[9.5px] font-bold px-1.5 py-0.2 rounded-sm bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 shrink-0">
+                                                                        {isEn ? 'Automatic' : 'Otomatis'}
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                             {pm.description && (
                                                                 <span className="text-[10.5px] text-muted-foreground block truncate">
                                                                     {pm.description}
@@ -1481,6 +1511,24 @@ export default function CheckoutPage({
                                             {errors.payment_method}
                                         </p>
                                     )}
+
+                                    {(() => {
+                                        const selectedPM = activePaymentMethods.find((p) => p.id === data.payment_method);
+                                        if (!selectedPM?.is_manual) return null;
+                                        return (
+                                            <div className="p-3 rounded-md border border-amber-500/30 bg-amber-500/5 text-xs space-y-1.5">
+                                                <div className="flex items-center gap-1.5 font-bold text-amber-800 dark:text-amber-300">
+                                                    <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                                                    <span>{isEn ? 'Manual Transfer Confirmation' : 'Metode Transfer Konfirmasi Manual'}</span>
+                                                </div>
+                                                <p className="text-muted-foreground text-[11px] leading-relaxed">
+                                                    {isEn
+                                                        ? 'Official bank account details and instructions will appear on the next page. Simply make the transfer and upload your receipt.'
+                                                        : 'Nomor rekening butik resmi Aroma Palace dan panduan transfer akan ditampilkan di halaman berikutnya. Anda cukup melakukan transfer dan mengunggah bukti transfer untuk verifikasi.'}
+                                                </p>
+                                            </div>
+                                        );
+                                    })()}
                                 </div>
                             </div>
 

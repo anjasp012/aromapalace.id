@@ -1,10 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Head, Link, router } from '@inertiajs/react';
+import React, { useRef, useState, useEffect } from 'react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
-import { Loader2, AlertCircle, Clock, CheckCircle2, Copy, Check, ArrowRight } from 'lucide-react';
+import { Loader2, AlertCircle, Clock, CheckCircle2, Copy, Check, ArrowRight, Upload, HourglassIcon, Building2 } from 'lucide-react';
 import { useEcho } from '@laravel/echo-react';
 import { useTranslation } from '@/lib/i18n';
+
+interface BankDetails {
+    bank_name: string;
+    account_number: string;
+    account_name: string;
+    instructions: string;
+}
 
 interface PaymentProps {
     order: {
@@ -17,6 +24,13 @@ interface PaymentProps {
         payment_code: string;
         payment_status: string;
         status?: string;
+        is_manual?: boolean;
+        bank_details?: BankDetails | null;
+        payment_proof?: string | null;
+        payment_proof_uploaded_at?: string | null;
+        payment_proof_uploaded_at_formatted?: string | null;
+        payment_sender_name?: string | null;
+        payment_notes?: string | null;
         total_amount: number;
         total_amount_formatted: string;
     };
@@ -25,10 +39,13 @@ interface PaymentProps {
 function PaymentContent({ order }: PaymentProps) {
     const { isEn } = useTranslation();
 
-    const isPaid = order.payment_status === 'paid' || order.status === 'menunggu_konfirmasi' || order.status === 'diproses' || order.status === 'dikirim' || order.status === 'selesai';
+    const isManual = !!order.is_manual;
+    const isWaitingConfirmation = order.status === 'menunggu_konfirmasi';
+    const isPaid = order.payment_status === 'paid' || order.status === 'diproses' || order.status === 'dikirim' || order.status === 'selesai';
     const isCanceled = order.payment_status === 'canceled' || order.payment_status === 'cancelled' || order.status === 'dibatalkan';
     const isQris = order.payment_method === 'qris';
     const isPaymentLink = order.payment_method === 'payment_link' || order.payment_code?.startsWith('http');
+    const hasUploadedProof = !!order.payment_proof;
 
     // 24 hour countdown timer calculated from order creation time
     const [timeLeft, setTimeLeft] = useState<number>(() => {
@@ -42,9 +59,19 @@ function PaymentContent({ order }: PaymentProps) {
 
     const [copiedCode, setCopiedCode] = useState(false);
     const [copiedAmount, setCopiedAmount] = useState(false);
+    const [copiedAccount, setCopiedAccount] = useState(false);
     const [openAccordion, setOpenAccordion] = useState<string | null>(isQris ? 'qris_app' : 'atm');
     const [isChecking, setIsChecking] = useState(false);
     const [checkMessage, setCheckMessage] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [filePreview, setFilePreview] = useState<string | null>(null);
+
+    const manualForm = useForm({
+        payment_proof: null as File | null,
+        payment_sender_name: '',
+        payment_notes: '',
+    });
 
     // Real-time WebSocket: listen for OrderPaid event via Laravel Reverb
     useEcho(
@@ -59,8 +86,9 @@ function PaymentContent({ order }: PaymentProps) {
     );
 
     // Smart Fallback: background poll every 5s while waiting for payment
+    // (Stop polling for menunggu_konfirmasi — user has uploaded proof, admin must confirm)
     useEffect(() => {
-        if (isPaid || isCanceled || typeof window === 'undefined') return;
+        if (isPaid || isCanceled || isWaitingConfirmation || typeof window === 'undefined') return;
 
         const interval = setInterval(() => {
             if (document.visibilityState === 'visible') {
@@ -69,38 +97,41 @@ function PaymentContent({ order }: PaymentProps) {
         }, 5000);
 
         return () => clearInterval(interval);
-    }, [isPaid, isCanceled]);
+    }, [isPaid, isCanceled, isWaitingConfirmation]);
 
-    // Countdown tick
+    // Countdown tick — paused once proof is uploaded (menunggu_konfirmasi)
     useEffect(() => {
-        if (isPaid || isCanceled) return;
+        if (isPaid || isCanceled || isWaitingConfirmation) return;
         const timer = setInterval(() => {
             setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
         }, 1000);
         return () => clearInterval(timer);
-    }, [isPaid, isCanceled]);
+    }, [isPaid, isCanceled, isWaitingConfirmation]);
 
-    // Auto-trigger check / cancel when timer hits 0
+    // Auto-trigger check / cancel when timer hits 0 (only for non-confirmed orders)
     useEffect(() => {
-        if (timeLeft === 0 && !isPaid && !isCanceled) {
+        if (timeLeft === 0 && !isPaid && !isCanceled && !isWaitingConfirmation) {
             router.post(`/payment/${order.order_number}/check`, {}, { preserveScroll: true });
         }
-    }, [timeLeft, isPaid, isCanceled, order.order_number]);
+    }, [timeLeft, isPaid, isCanceled, isWaitingConfirmation, order.order_number]);
 
     const hours = String(Math.floor(timeLeft / 3600)).padStart(2, '0');
     const minutes = String(Math.floor((timeLeft % 3600) / 60)).padStart(2, '0');
     const seconds = String(timeLeft % 60).padStart(2, '0');
 
-    const handleCopy = (text: string, type: 'code' | 'amount') => {
+    const handleCopy = (text: string, type: 'code' | 'amount' | 'account') => {
         if (navigator?.clipboard) {
             navigator.clipboard.writeText(text);
         }
         if (type === 'code') {
             setCopiedCode(true);
             setTimeout(() => setCopiedCode(false), 2000);
-        } else {
+        } else if (type === 'amount') {
             setCopiedAmount(true);
             setTimeout(() => setCopiedAmount(false), 2000);
+        } else {
+            setCopiedAccount(true);
+            setTimeout(() => setCopiedAccount(false), 2000);
         }
     };
 
@@ -128,6 +159,27 @@ function PaymentContent({ order }: PaymentProps) {
                 },
             }
         );
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0] ?? null;
+        setSelectedFile(file);
+        manualForm.setData('payment_proof', file);
+        if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (ev) => setFilePreview(ev.target?.result as string);
+            reader.readAsDataURL(file);
+        } else {
+            setFilePreview(null);
+        }
+    };
+
+    const handleManualSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        manualForm.post(`/payment/${order.order_number}/confirm-manual`, {
+            forceFormData: true,
+            preserveScroll: true,
+        });
     };
 
     // Render Bank / Payment Logo
@@ -433,9 +485,254 @@ function PaymentContent({ order }: PaymentProps) {
                             </Link>
                         </div>
                     </div>
+                ) : isManual ? (
+                    /* ======================================================== */
+                    /* MANUAL PAYMENT STATE: TRANSFER BANK MANUAL */
+                    /* ======================================================== */
+                    <div className="w-full max-w-[520px] mx-auto space-y-4">
+
+                        {/* 24-Hour Countdown Timer — hidden once proof is uploaded */}
+                        {!isWaitingConfirmation && (
+                            <div className="bg-card/60 backdrop-blur-xs border border-border/80 rounded-2xl p-4 sm:p-5 text-center space-y-1">
+                                <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground font-normal">
+                                    <Clock className="w-3.5 h-3.5 text-amber-500" />
+                                    <span>{isEn ? 'Payment deadline (24 hours from order)' : 'Batas waktu bayar (24 jam sejak pesan)'}</span>
+                                </div>
+                                <div className={`text-xl sm:text-2xl font-black tracking-tight font-mono ${timeLeft < 3600 ? 'text-rose-600 dark:text-rose-400' : 'text-foreground'}`}>
+                                    {hours} {isEn ? 'hrs' : 'jam'} : {minutes} {isEn ? 'min' : 'menit'} : {seconds} {isEn ? 'sec' : 'detik'}
+                                </div>
+                                {timeLeft < 3600 && (
+                                    <p className="text-[11px] text-rose-500 font-medium">
+                                        {isEn ? 'Less than 1 hour remaining! Upload your proof now.' : 'Kurang dari 1 jam lagi! Segera unggah bukti transfer Anda.'}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Waiting Confirmation Banner */}
+                        {isWaitingConfirmation && (
+                            <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800">
+                                <HourglassIcon className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                                <div>
+                                    <p className="text-sm font-bold text-amber-900 dark:text-amber-200">
+                                        {isEn ? 'Awaiting Admin Verification' : 'Menunggu Verifikasi Admin'}
+                                    </p>
+                                    <p className="text-xs text-amber-800 dark:text-amber-300 mt-0.5">
+                                        {isEn
+                                            ? 'Your transfer proof has been received. Our team will verify it within 1×24 hours on business days.'
+                                            : 'Bukti transfer Anda telah kami terima. Tim kami akan memverifikasi dalam 1×24 jam kerja.'}
+                                    </p>
+                                    {order.payment_proof_uploaded_at_formatted && (
+                                        <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-1 font-mono">
+                                            {isEn ? 'Uploaded:' : 'Diunggah:'} {order.payment_proof_uploaded_at_formatted}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Bank Details Card */}
+                        {order.bank_details && (
+                            <div className="bg-card/70 backdrop-blur-xs border border-border/80 rounded-2xl p-6 sm:p-7 shadow-none space-y-4">
+                                <div className="flex items-center gap-2">
+                                    <Building2 className="w-4 h-4 text-muted-foreground" />
+                                    <h2 className="text-sm font-bold text-foreground">
+                                        {isEn ? 'Transfer to this account' : 'Transfer ke rekening berikut'}
+                                    </h2>
+                                </div>
+
+                                {/* Bank Name */}
+                                <div className="bg-muted/40 rounded-xl p-4 border border-border/60 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs text-muted-foreground">{isEn ? 'Bank' : 'Bank'}</span>
+                                        <span className="font-extrabold text-sm text-foreground">{order.bank_details.bank_name}</span>
+                                    </div>
+                                    <div className="border-t border-border/60" />
+                                    {/* Account Number */}
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <span className="text-xs text-muted-foreground block">{isEn ? 'Account Number' : 'Nomor Rekening'}</span>
+                                            <span className="font-black text-base text-foreground font-mono tracking-wider mt-0.5 block">
+                                                {order.bank_details.account_number}
+                                            </span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleCopy(order.bank_details!.account_number, 'account')}
+                                            className="rounded-md border border-border/80 hover:bg-muted/60 px-3 py-1.5 text-xs font-semibold text-foreground flex items-center gap-1.5 transition cursor-pointer select-none"
+                                        >
+                                            {copiedAccount ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5 text-muted-foreground" />}
+                                            <span>{copiedAccount ? (isEn ? 'Copied' : 'Tersalin') : (isEn ? 'Copy' : 'Salin')}</span>
+                                        </button>
+                                    </div>
+                                    <div className="border-t border-border/60" />
+                                    {/* Account Name */}
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs text-muted-foreground">{isEn ? 'Account Holder' : 'Atas Nama'}</span>
+                                        <span className="font-bold text-sm text-foreground">{order.bank_details.account_name}</span>
+                                    </div>
+                                    <div className="border-t border-border/60" />
+                                    {/* Total Amount */}
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs text-muted-foreground">{isEn ? 'Transfer Amount' : 'Jumlah Transfer'}</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-extrabold text-base text-[#4A070B] dark:text-[#E8D0BA]">{order.total_amount_formatted}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleCopy(String(order.total_amount), 'amount')}
+                                                className="rounded-md border border-border/80 hover:bg-muted/60 px-2 py-1 text-xs font-semibold text-foreground flex items-center gap-1 transition cursor-pointer select-none"
+                                            >
+                                                {copiedAmount ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3 text-muted-foreground" />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Instructions */}
+                                {order.bank_details.instructions && (
+                                    <div className="text-xs text-muted-foreground leading-relaxed bg-muted/30 rounded-lg p-3 border border-border/50">
+                                        <p className="font-semibold text-foreground mb-1">{isEn ? 'Transfer Instructions' : 'Petunjuk Transfer'}</p>
+                                        <p>{order.bank_details.instructions}</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Upload Proof of Transfer */}
+                        {!isPaid && (
+                            <div className="bg-card/70 backdrop-blur-xs border border-border/80 rounded-2xl p-6 sm:p-7 shadow-none space-y-4">
+                                <div className="flex items-center gap-2">
+                                    <Upload className="w-4 h-4 text-muted-foreground" />
+                                    <h2 className="text-sm font-bold text-foreground">
+                                        {isWaitingConfirmation
+                                            ? (isEn ? 'Update Transfer Proof' : 'Perbarui Bukti Transfer')
+                                            : (isEn ? 'Upload Transfer Proof' : 'Unggah Bukti Transfer')}
+                                    </h2>
+                                </div>
+
+                                {/* Already uploaded proof preview */}
+                                {hasUploadedProof && order.payment_proof && (
+                                    <div className="space-y-2">
+                                        <p className="text-xs text-muted-foreground font-medium">{isEn ? 'Current proof:' : 'Bukti saat ini:'}</p>
+                                        <a href={order.payment_proof} target="_blank" rel="noopener noreferrer"
+                                            className="block rounded-lg border border-border/60 overflow-hidden hover:opacity-90 transition"
+                                        >
+                                            <img src={order.payment_proof} alt="Payment proof" className="w-full max-h-40 object-cover" />
+                                        </a>
+                                        {order.payment_sender_name && (
+                                            <p className="text-[11px] text-muted-foreground">
+                                                {isEn ? 'Sender:' : 'Pengirim:'} <strong className="text-foreground">{order.payment_sender_name}</strong>
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+
+                                <form onSubmit={handleManualSubmit} className="space-y-3">
+                                    {/* Sender Name */}
+                                    <div>
+                                        <label className="block text-xs font-semibold text-foreground mb-1">
+                                            {isEn ? 'Sender Account Name' : 'Nama Pemilik Rekening Pengirim'}
+                                            <span className="text-rose-500 ml-0.5">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={manualForm.data.payment_sender_name}
+                                            onChange={(e) => manualForm.setData('payment_sender_name', e.target.value)}
+                                            placeholder={isEn ? 'e.g. John Doe' : 'mis. Budi Santoso'}
+                                            className="w-full h-10 rounded-lg border border-border/80 bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#4A070B]/30 dark:focus:ring-[#E8D0BA]/30"
+                                        />
+                                        {manualForm.errors.payment_sender_name && (
+                                            <p className="text-xs text-rose-500 mt-1">{manualForm.errors.payment_sender_name}</p>
+                                        )}
+                                    </div>
+
+                                    {/* File Upload */}
+                                    <div>
+                                        <label className="block text-xs font-semibold text-foreground mb-1">
+                                            {isEn ? 'Transfer Receipt (Photo/Screenshot)' : 'Foto/Screenshot Bukti Transfer'}
+                                            <span className="text-rose-500 ml-0.5">*</span>
+                                        </label>
+                                        <div
+                                            onClick={() => fileInputRef.current?.click()}
+                                            className="relative flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border/70 hover:border-[#4A070B]/40 dark:hover:border-[#E8D0BA]/30 rounded-xl p-5 cursor-pointer transition group"
+                                        >
+                                            {filePreview ? (
+                                                <img src={filePreview} alt="Preview" className="max-h-36 rounded-lg object-contain" />
+                                            ) : (
+                                                <>
+                                                    <Upload className="w-7 h-7 text-muted-foreground group-hover:text-foreground transition" />
+                                                    <p className="text-xs text-muted-foreground group-hover:text-foreground transition text-center">
+                                                        {selectedFile
+                                                            ? selectedFile.name
+                                                            : (isEn ? 'Click to select image or PDF (max 5MB)' : 'Klik untuk pilih gambar atau PDF (maks 5MB)')}
+                                                    </p>
+                                                </>
+                                            )}
+                                            <input
+                                                ref={fileInputRef}
+                                                type="file"
+                                                accept="image/*,.pdf"
+                                                className="hidden"
+                                                onChange={handleFileChange}
+                                            />
+                                        </div>
+                                        {manualForm.errors.payment_proof && (
+                                            <p className="text-xs text-rose-500 mt-1">{manualForm.errors.payment_proof}</p>
+                                        )}
+                                    </div>
+
+                                    {/* Notes (Optional) */}
+                                    <div>
+                                        <label className="block text-xs font-semibold text-foreground mb-1">
+                                            {isEn ? 'Notes (optional)' : 'Catatan (opsional)'}
+                                        </label>
+                                        <textarea
+                                            value={manualForm.data.payment_notes}
+                                            onChange={(e) => manualForm.setData('payment_notes', e.target.value)}
+                                            placeholder={isEn ? 'e.g. Transferred from BCA Mobile at 10:30' : 'mis. Transfer dari BCA Mobile pukul 10.30'}
+                                            rows={2}
+                                            className="w-full rounded-lg border border-border/80 bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#4A070B]/30 dark:focus:ring-[#E8D0BA]/30 resize-none"
+                                        />
+                                    </div>
+
+                                    <Button
+                                        type="submit"
+                                        disabled={manualForm.processing || !manualForm.data.payment_sender_name || !manualForm.data.payment_proof}
+                                        className="w-full h-11 rounded-lg font-bold text-sm bg-[#4A070B] hover:bg-[#3a050a] text-white shadow-none cursor-pointer transition active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    >
+                                        {manualForm.processing && <Loader2 className="w-4 h-4 animate-spin" />}
+                                        {isWaitingConfirmation
+                                            ? (isEn ? 'Update Transfer Proof' : 'Perbarui Bukti Transfer')
+                                            : (isEn ? 'Submit Transfer Proof' : 'Kirim Bukti Transfer')}
+                                    </Button>
+                                </form>
+                            </div>
+                        )}
+
+                        {/* Bottom navigation */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <Link href="/account/orders" className="block w-full">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="w-full h-11 rounded-md font-bold text-xs sm:text-sm text-foreground border-border/80 hover:bg-muted/50 cursor-pointer shadow-none"
+                                >
+                                    {isEn ? 'Order History' : 'Riwayat Pesanan'}
+                                </Button>
+                            </Link>
+                            <Link href="/products" className="block w-full">
+                                <Button
+                                    type="button"
+                                    className="w-full h-11 rounded-md font-bold text-xs sm:text-sm bg-[#FFC400] hover:bg-[#E5B000] text-black shadow-none cursor-pointer transition active:scale-[0.98]"
+                                >
+                                    {isEn ? 'Shop Again' : 'Belanja Lagi'}
+                                </Button>
+                            </Link>
+                        </div>
+                    </div>
                 ) : (
                     /* ======================================================== */
-                    /* PENDING STATE: INSTRUKSI PEMBAYARAN */
+                    /* PENDING STATE: INSTRUKSI PEMBAYARAN (GATEWAY) */
                     /* ======================================================== */
                     <div className="w-full max-w-[480px] mx-auto bg-card/60 backdrop-blur-xs border border-border/80 rounded-2xl p-6 sm:p-8 shadow-none space-y-5">
                         

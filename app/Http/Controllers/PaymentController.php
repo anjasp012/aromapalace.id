@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Events\OrderPaid;
 use App\Models\Order;
+use App\Models\PaymentMethod;
 use App\Services\FirebaseNotificationService;
 use App\Services\OrderService;
 use App\Services\PakasirService;
@@ -12,6 +13,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -41,11 +43,24 @@ class PaymentController extends Controller
             return redirect()->route('home')->with('error', 'Pesanan tidak ditemukan.');
         }
 
-        // Auto-cancel if pending and older than 24 hours
-        if ($orderModel->payment_status === 'pending' && $orderModel->created_at && $orderModel->created_at->copy()->addHours(24)->isPast()) {
+        // Auto-cancel if unpaid (and NOT awaiting admin confirmation) after 24 hours
+        if (
+            $orderModel->payment_status !== 'paid'
+            && $orderModel->status !== 'menunggu_konfirmasi'
+            && $orderModel->created_at
+            && $orderModel->created_at->copy()->addHours(24)->isPast()
+        ) {
             app(OrderService::class)->cancelOrder($orderModel, 'Batas waktu pembayaran 24 jam telah berakhir.');
             $orderModel->refresh();
         }
+
+        $isManual = $orderModel->is_manual;
+        $pm = PaymentMethod::where('code', $orderModel->payment_method)->first();
+
+        $bankName = $pm?->name ?: ($orderModel->payment_channel ?: 'Transfer Bank Manual');
+        $accountNumber = $pm?->account_number ?: $orderModel->payment_code;
+        $accountName = $pm?->account_name ?: 'PT Aroma Palace Indonesia';
+        $instructions = $pm?->instructions ?: 'Silakan transfer tepat sesuai jumlah nominal pembayaran, lalu unggah foto atau tangkapan layar bukti transfer Anda.';
 
         return Inertia::render('payment', [
             'order' => [
@@ -58,6 +73,18 @@ class PaymentController extends Controller
                 'payment_code' => $orderModel->payment_code,
                 'payment_status' => $orderModel->payment_status,
                 'status' => $orderModel->status,
+                'is_manual' => $isManual,
+                'payment_proof' => $orderModel->payment_proof ? asset('storage/'.$orderModel->payment_proof) : null,
+                'payment_proof_uploaded_at' => $orderModel->payment_proof_uploaded_at?->toIso8601String(),
+                'payment_proof_uploaded_at_formatted' => $orderModel->payment_proof_uploaded_at?->format('d M Y, H:i').' WIB',
+                'payment_sender_name' => $orderModel->payment_sender_name,
+                'payment_notes' => $orderModel->payment_notes,
+                'bank_details' => $isManual ? [
+                    'bank_name' => $bankName,
+                    'account_number' => $accountNumber,
+                    'account_name' => $accountName,
+                    'instructions' => $instructions,
+                ] : null,
                 'total_amount' => $orderModel->total_amount,
                 'total_amount_formatted' => 'Rp '.number_format($orderModel->total_amount, 0, ',', '.'),
             ],
@@ -65,7 +92,7 @@ class PaymentController extends Controller
     }
 
     /**
-     * Check transaction status with Pakasir on demand.
+     * Check transaction status on demand.
      */
     public function checkStatus(Request $request, string $order): JsonResponse|RedirectResponse
     {
@@ -81,6 +108,39 @@ class PaymentController extends Controller
             }
 
             return redirect()->route('home')->with('error', 'Pesanan tidak ditemukan.');
+        }
+
+        // For manual confirmation orders, auto-cancel if 24h passed and proof NOT yet uploaded
+        if ($orderModel->is_manual) {
+            if (
+                $orderModel->payment_status !== 'paid'
+                && $orderModel->status !== 'menunggu_konfirmasi'
+                && $orderModel->created_at
+                && $orderModel->created_at->copy()->addHours(24)->isPast()
+            ) {
+                app(OrderService::class)->cancelOrder($orderModel, 'Batas waktu pembayaran 24 jam telah berakhir.');
+                $orderModel->refresh();
+            }
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'payment_status' => $orderModel->payment_status,
+                    'status' => $orderModel->status,
+                    'message' => $orderModel->payment_status === 'paid'
+                        ? 'Pembayaran telah diverifikasi lunas.'
+                        : ($orderModel->status === 'dibatalkan'
+                            ? 'Pesanan dibatalkan karena melewati batas waktu 24 jam.'
+                            : ($orderModel->payment_proof ? 'Bukti transfer sedang diverifikasi oleh admin.' : 'Silakan unggah bukti transfer pembayaran.')),
+                ]);
+            }
+
+            return redirect()->route('payment.show', ['order' => $orderModel->order_number])
+                ->with('info', $orderModel->payment_status === 'paid'
+                    ? 'Pembayaran berhasil dikonfirmasi lunas!'
+                    : ($orderModel->status === 'dibatalkan'
+                        ? 'Pesanan dibatalkan karena melewati batas waktu 24 jam.'
+                        : ($orderModel->payment_proof ? 'Bukti transfer sedang diverifikasi oleh admin.' : 'Silakan unggah bukti transfer pembayaran.')));
         }
 
         if ($orderModel->payment_status === 'pending') {
@@ -130,5 +190,51 @@ class PaymentController extends Controller
 
         return redirect()->route('payment.show', ['order' => $orderModel->order_number])
             ->with('info', $orderModel->payment_status === 'paid' ? 'Pembayaran berhasil dikonfirmasi!' : 'Status pembayaran: '.ucfirst($orderModel->payment_status));
+    }
+
+    /**
+     * Upload proof of transfer for manual confirmation payment.
+     */
+    public function confirmManual(Request $request, string $order): RedirectResponse
+    {
+        $user = $request->user();
+        $orderModel = $user->orders()->where('order_number', $order)->firstOrFail();
+
+        $validated = $request->validate([
+            'payment_proof' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
+            'payment_sender_name' => ['required', 'string', 'max:255'],
+            'payment_notes' => ['nullable', 'string', 'max:500'],
+        ], [
+            'payment_proof.required' => 'Foto atau berkas bukti transfer wajib diunggah.',
+            'payment_proof.mimes' => 'Bukti transfer harus berformat JPG, JPEG, PNG, WEBP, atau PDF.',
+            'payment_proof.max' => 'Ukuran file bukti transfer maksimal 5MB.',
+            'payment_sender_name.required' => 'Nama pemilik rekening pengirim wajib diisi.',
+        ]);
+
+        if ($request->hasFile('payment_proof')) {
+            // Delete old proof file if exists
+            if ($orderModel->payment_proof && Storage::disk('public')->exists($orderModel->payment_proof)) {
+                Storage::disk('public')->delete($orderModel->payment_proof);
+            }
+
+            $file = $request->file('payment_proof');
+            $path = $file->store('payment-proofs', 'public');
+
+            $orderModel->update([
+                'payment_proof' => $path,
+                'payment_proof_uploaded_at' => now(),
+                'payment_sender_name' => $validated['payment_sender_name'],
+                'payment_notes' => $validated['payment_notes'] ?? null,
+                'status' => 'menunggu_konfirmasi',
+            ]);
+
+            Log::info("Manual payment proof uploaded for order #{$orderModel->order_number} by user #{$user->id}");
+
+            return redirect()->route('payment.show', ['order' => $orderModel->order_number])
+                ->with('success', 'Bukti transfer berhasil diunggah! Tim Aroma Palace akan memverifikasi pesanan Anda segera.');
+        }
+
+        return redirect()->route('payment.show', ['order' => $orderModel->order_number])
+            ->with('error', 'Gagal mengunggah berkas bukti transfer.');
     }
 }

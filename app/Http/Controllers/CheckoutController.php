@@ -266,6 +266,11 @@ class CheckoutController extends Controller
                 'code' => $pm->code,
                 'name' => $pm->name,
                 'icon' => $pm->icon,
+                'type' => $pm->type ?? 'automatic',
+                'is_manual' => $pm->is_manual,
+                'account_number' => $pm->account_number,
+                'account_name' => $pm->account_name,
+                'instructions' => $pm->instructions,
             ])
             ->values()
             ->all();
@@ -542,18 +547,26 @@ class CheckoutController extends Controller
             $paymentMethod = $validated['payment_method'];
             $pm = PaymentMethod::where('code', $paymentMethod)->where('is_active', true)->first();
 
+            $isManualPayment = $pm ? $pm->is_manual : str_starts_with($paymentMethod, 'manual_');
             $channelName = $pm ? $pm->name : 'Virtual Account';
-            $paymentChannel = match ($paymentMethod) {
-                'qris' => 'QRIS Instant (Pakasir)',
-                'payment_link' => 'Payment Link (Pakasir)',
-                default => "{$channelName} Virtual Account (Pakasir)",
-            };
-
-            $paymentStatus = 'pending';
             $orderNumber = 'ARPL-'.date('Ymd').'-'.strtoupper(Str::random(5));
+            $paymentStatus = 'pending';
 
-            // Call Pakasir API to create real payment transaction
-            if ($totalAmount > 0) {
+            if ($totalAmount === 0) {
+                $paymentCode = 'FREE-VOUCHER';
+                $paymentStatus = 'paid';
+                $paymentChannel = 'Free Voucher';
+            } elseif ($isManualPayment) {
+                $paymentChannel = $pm ? $pm->name : 'Transfer Manual';
+                $paymentCode = ($pm && $pm->account_number) ? $pm->account_number : 'MANUAL-'.strtoupper(Str::random(6));
+            } else {
+                $paymentChannel = match ($paymentMethod) {
+                    'qris' => 'QRIS Instant (Pakasir)',
+                    'payment_link' => 'Payment Link (Pakasir)',
+                    default => "{$channelName} Virtual Account (Pakasir)",
+                };
+
+                // Call Pakasir API to create real payment transaction
                 $pakasirRes = $this->pakasirService->createTransaction($orderNumber, $totalAmount, $paymentMethod);
 
                 if (! $pakasirRes['success'] || empty($pakasirRes['data'])) {
@@ -580,9 +593,6 @@ class CheckoutController extends Controller
                         ->withInput()
                         ->with('error', 'Gerbang pembayaran Pakasir tidak mengembalikan kode pembayaran yang valid. Silakan coba kembali.');
                 }
-            } else {
-                $paymentCode = 'FREE-VOUCHER';
-                $paymentStatus = 'paid';
             }
 
             $deliveryType = $validated['delivery_type'] ?? 'delivery';

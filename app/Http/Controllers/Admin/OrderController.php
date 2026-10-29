@@ -36,9 +36,11 @@ class OrderController extends Controller
 
             if ($status === 'menunggu_pembayaran') {
                 $query->where(function ($q) {
-                    $q->where('status', 'menunggu_pembayaran')
+                    $q->whereIn('status', ['menunggu_pembayaran', 'menunggu_konfirmasi'])
                         ->orWhere(fn ($sub) => $sub->whereNull('status')->where('payment_status', 'pending'));
                 });
+            } elseif ($status === 'menunggu_konfirmasi') {
+                $query->where('status', 'menunggu_konfirmasi');
             } elseif ($status === 'diproses') {
                 $query->where('status', 'diproses');
             } elseif ($status === 'dikirim') {
@@ -81,7 +83,7 @@ class OrderController extends Controller
 
         $tabCounts = [
             'all' => Order::count(),
-            'menunggu_pembayaran' => Order::where('status', 'menunggu_pembayaran')
+            'menunggu_pembayaran' => Order::whereIn('status', ['menunggu_pembayaran', 'menunggu_konfirmasi'])
                 ->orWhere(fn ($q) => $q->whereNull('status')->where('payment_status', 'pending'))
                 ->count(),
             'diproses' => Order::where('status', 'diproses')->count(),
@@ -182,7 +184,7 @@ class OrderController extends Controller
             'status' => [
                 'required',
                 'string',
-                'in:menunggu_pembayaran,diproses,dikirim,pengambilan,selesai,dibatalkan',
+                'in:menunggu_pembayaran,menunggu_konfirmasi,diproses,dikirim,pengambilan,selesai,dibatalkan',
             ],
             'shipping_mode' => ['nullable', 'string', 'in:kiriminaja,manual'],
             'tracking_number' => ['nullable', 'string', 'max:100'],
@@ -211,7 +213,7 @@ class OrderController extends Controller
                     ->where('used_count', '>', 0)
                     ->decrement('used_count');
             }
-        } elseif ($newStatus === 'menunggu_pembayaran') {
+        } elseif (in_array($newStatus, ['menunggu_pembayaran', 'menunggu_konfirmasi'])) {
             $orderModel->payment_status = 'pending';
         }
 
@@ -394,6 +396,7 @@ class OrderController extends Controller
             'selesai' => 'Selesai',
             'dikirim' => $isPickup ? 'Pengambilan' : 'Dikirim',
             'diproses' => 'Diproses',
+            'menunggu_konfirmasi' => 'Menunggu Konfirmasi',
             'menunggu_pembayaran' => 'Menunggu Pembayaran',
             'dibatalkan' => 'Dibatalkan',
             default => ucfirst(str_replace('_', ' ', $orderStatus)),
@@ -422,6 +425,9 @@ class OrderController extends Controller
             'payment_status' => $order->payment_status,
             'order_status' => $orderStatus,
             'status_label' => $statusLabel,
+            'is_manual' => $order->is_manual,
+            'payment_proof' => $order->payment_proof ? asset('storage/'.$order->payment_proof) : null,
+            'payment_proof_uploaded_at' => $order->payment_proof_uploaded_at?->format('d M Y, H:i').' WIB',
             'items_count' => $order->items->sum('quantity'),
             'items_preview' => $order->items->take(2)->map(fn (OrderItem $item) => [
                 'name' => $item->product_name,
@@ -473,6 +479,7 @@ class OrderController extends Controller
             'selesai' => 'Selesai',
             'dikirim' => $isPickup ? 'Pengambilan' : 'Dikirim',
             'diproses' => 'Diproses',
+            'menunggu_konfirmasi' => 'Menunggu Konfirmasi',
             'menunggu_pembayaran' => 'Menunggu Pembayaran',
             'dibatalkan' => 'Dibatalkan',
             default => ucfirst(str_replace('_', ' ', $orderStatus)),
@@ -537,10 +544,10 @@ class OrderController extends Controller
                 'origin' => $order->shipping->origin,
                 'destination' => $order->shipping->destination,
                 'histories' => $order->shipping->histories,
-                'delivered_at' => $order->shipping->delivered_at?->format('d/m/Y, H:i').' WIB',
-                'auto_completes_at' => $order->shipping->auto_completes_at?->toIso8601String(),
-                'auto_completes_at_formatted' => $order->shipping->auto_completes_at?->format('d/m/Y'),
-                'auto_completes_at_time' => $order->shipping->auto_completes_at?->format('d/m/Y, H:i').' WIB',
+                'delivered_at' => $order->shipping?->delivered_at?->format('d/m/Y, H:i').' WIB',
+                'auto_completes_at' => $order->shipping?->auto_completes_at?->toIso8601String(),
+                'auto_completes_at_formatted' => $order->shipping?->auto_completes_at?->format('d/m/Y'),
+                'auto_completes_at_time' => $order->shipping?->auto_completes_at?->format('d/m/Y, H:i').' WIB',
             ] : null,
             'shipping_cost' => (int) $order->shipping_cost,
             'shipping_cost_formatted' => $order->shipping_cost > 0 ? 'Rp '.number_format($order->shipping_cost, 0, ',', '.') : 'Gratis',
@@ -558,7 +565,13 @@ class OrderController extends Controller
             'total_amount' => (int) $order->total_amount,
             'total_amount_formatted' => 'Rp '.number_format($order->total_amount, 0, ',', '.'),
             'payment_method' => $order->payment_method,
+            'payment_channel' => $order->payment_channel,
             'payment_code' => $order->payment_code,
+            'is_manual' => $order->is_manual,
+            'payment_proof' => $order->payment_proof ? asset('storage/'.$order->payment_proof) : null,
+            'payment_proof_uploaded_at' => $order->payment_proof_uploaded_at?->format('d M Y, H:i').' WIB',
+            'payment_sender_name' => $order->payment_sender_name,
+            'payment_notes' => $order->payment_notes,
             'notes' => $order->notes,
             'items_count' => $items->sum('quantity'),
             'total_qty' => $items->sum('quantity'),
