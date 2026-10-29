@@ -150,6 +150,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
     // Convenient Aliases
     Route::get('/admin', fn () => redirect()->route('admin.dashboard'));
     Route::get('/admin/dashboard', fn () => redirect()->route('admin.dashboard'));
+    Route::get('/manajemen-pelanggan', fn () => redirect()->route('admin.users.index'));
+    Route::get('/manajemen-pelanggan/{user}', fn ($user) => redirect()->route('admin.users.show', $user));
+    Route::get('/manajemen-membership', fn () => redirect()->route('admin.users.index'));
     Route::get('/products/{product}/edit', fn ($product) => redirect()->route('admin.products.edit', $product));
     Route::get('/categories/{category}/edit', fn ($category) => redirect()->route('admin.categories.edit', $category));
     Route::get('/brands/{brand}/edit', fn ($brand) => redirect()->route('admin.brands.edit', $brand));

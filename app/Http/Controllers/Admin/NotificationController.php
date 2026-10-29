@@ -68,7 +68,7 @@ class NotificationController extends Controller
                 'type' => $n->type,
                 'title' => $n->title,
                 'body' => $n->body,
-                'url' => $n->admin_url ?: $n->url,
+                'url' => $this->resolveAdminTargetUrl($n->admin_url ?: $n->url),
                 'data' => $n->data,
                 'is_read' => $n->is_read,
                 'created_at' => $n->created_at ? $n->created_at->format('d M Y H:i') : null,
@@ -107,7 +107,7 @@ class NotificationController extends Controller
                 'type' => $n->type,
                 'title' => $n->title,
                 'body' => $n->body,
-                'url' => $n->admin_url ?: $n->url,
+                'url' => $this->resolveAdminTargetUrl($n->admin_url ?: $n->url),
                 'is_read' => $n->is_read,
                 'created_at' => $n->created_at ? $n->created_at->diffForHumans() : null,
             ]);
@@ -172,13 +172,33 @@ class NotificationController extends Controller
             ]);
         }
 
-        $targetUrl = $notification->admin_url ?: $notification->url;
+        $targetUrl = $this->resolveAdminTargetUrl($notification->admin_url ?: $notification->url);
 
         if (! empty($targetUrl)) {
             return redirect($targetUrl);
         }
 
         return redirect()->route('admin.notifications.page');
+    }
+
+    /**
+     * Normalize notification URLs to current admin routes.
+     */
+    protected function resolveAdminTargetUrl(?string $url): string
+    {
+        if (empty($url)) {
+            return route('admin.notifications.page');
+        }
+
+        if ($url === '/manajemen-pelanggan' || $url === '/manajemen-membership') {
+            return route('admin.users.index');
+        }
+
+        if (str_starts_with($url, '/manajemen-pelanggan/')) {
+            return str_replace('/manajemen-pelanggan/', '/manajemen-pengguna/', $url);
+        }
+
+        return $url;
     }
 
     /**

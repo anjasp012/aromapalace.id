@@ -21,7 +21,7 @@ import {
     Award,
     Coins,
 } from 'lucide-react';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -280,6 +280,42 @@ export default function AdminNotificationsIndex({
             <Head title="Kelola Notifikasi - Admin Panel" />
 
             <div className="space-y-6">
+                {/* Metric Summary Cards */}
+                {metrics && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <Card className="py-4">
+                            <CardContent className="p-0 px-6">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-medium text-muted-foreground">Total Notifikasi</span>
+                                    <Bell className="size-4 text-primary" />
+                                </div>
+                                <div className="text-2xl font-bold mt-2">{metrics.total}</div>
+                                <p className="text-xs text-muted-foreground mt-1">Riwayat aktivitas &amp; transaksi</p>
+                            </CardContent>
+                        </Card>
+                        <Card className="py-4">
+                            <CardContent className="p-0 px-6">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-medium text-muted-foreground">Belum Dibaca</span>
+                                    <Bell className="size-4 text-amber-500" />
+                                </div>
+                                <div className="text-2xl font-bold mt-2 text-amber-600 dark:text-amber-400">{metrics.unread}</div>
+                                <p className="text-xs text-muted-foreground mt-1">Perlu perhatian atau tindakan</p>
+                            </CardContent>
+                        </Card>
+                        <Card className="py-4">
+                            <CardContent className="p-0 px-6">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-medium text-muted-foreground">Sudah Dibaca</span>
+                                    <CheckCircle2 className="size-4 text-emerald-500" />
+                                </div>
+                                <div className="text-2xl font-bold mt-2 text-emerald-600 dark:text-emerald-400">{metrics.read}</div>
+                                <p className="text-xs text-muted-foreground mt-1">Riwayat notifikasi yang telah dibaca</p>
+                            </CardContent>
+                        </Card>
+                    </div>
+                )}
+
                 {/* Filter and Actions Toolbar */}
                 <Card className="p-4">
                     <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
@@ -415,14 +451,16 @@ export default function AdminNotificationsIndex({
                             <tbody className="divide-y text-xs">
                                 {notifications.data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={6} className="p-12 text-center text-muted-foreground">
-                                            <Bell className="size-9 mx-auto mb-2 opacity-30" />
-                                            <p className="font-semibold text-foreground text-sm">Tidak ada notifikasi ditemukan.</p>
-                                            <p className="text-xs mt-1">
-                                                {search || status !== 'all'
-                                                    ? 'Coba sesuaikan kata kunci pencarian atau tab filter status.'
-                                                    : 'Belum ada riwayat pemberitahuan sistem.'}
-                                            </p>
+                                        <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                                            <div className="flex flex-col items-center justify-center gap-2">
+                                                <Bell className="size-8 text-muted-foreground/40" />
+                                                <p className="text-sm font-medium text-foreground">Tidak ada notifikasi ditemukan</p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {search || status !== 'all' || typeFilter !== 'all'
+                                                        ? 'Coba sesuaikan kata kunci pencarian atau filter yang dipilih.'
+                                                        : 'Belum ada riwayat pemberitahuan sistem.'}
+                                                </p>
+                                            </div>
                                         </td>
                                     </tr>
                                 ) : (
@@ -519,7 +557,7 @@ export default function AdminNotificationsIndex({
                                                         className="size-8 text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer"
                                                         title="Hapus Notifikasi"
                                                     >
-                                                        <Trash2 className="size-4" />
+                                                        <Trash2 className="size-3.5" />
                                                     </Button>
                                                 </div>
                                             </td>
@@ -531,34 +569,43 @@ export default function AdminNotificationsIndex({
                     </div>
 
                     {/* Pagination */}
-                    {notifications.total > 0 && notifications.links && notifications.links.length > 3 && (
-                        <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t bg-muted/20 text-xs text-muted-foreground gap-3">
-                            <div>
-                                Menampilkan <span className="font-semibold text-foreground">{notifications.data.length}</span> dari{' '}
-                                <span className="font-semibold text-foreground">{notifications.total}</span> notifikasi
+                    {notifications.links && notifications.links.length > 3 && (
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t px-6 py-4">
+                            <div className="text-xs text-muted-foreground">
+                                Menampilkan {notifications.data.length > 0 ? (notifications.current_page - 1) * 15 + 1 : 0} sampai{' '}
+                                {Math.min(notifications.current_page * 15, notifications.total)} dari {notifications.total} notifikasi
                             </div>
                             <div className="flex items-center gap-1">
-                                {notifications.links.map((link, idx) => (
-                                    <Button
-                                        key={idx}
-                                        asChild={Boolean(link.url)}
-                                        disabled={!link.url}
-                                        variant={link.active ? 'default' : 'outline'}
-                                        size="sm"
-                                        className="h-7 min-w-7 px-2 text-xs"
-                                    >
-                                        {link.url ? (
+                                {notifications.links.map((link, idx) => {
+                                    if (!link.url) {
+                                        return (
+                                            <Button
+                                                key={idx}
+                                                variant="outline"
+                                                size="sm"
+                                                disabled
+                                                className="h-8 min-w-8 px-2.5 text-xs opacity-50"
+                                                dangerouslySetInnerHTML={{ __html: link.label }}
+                                            />
+                                        );
+                                    }
+                                    return (
+                                        <Button
+                                            key={idx}
+                                            variant={link.active ? 'default' : 'outline'}
+                                            size="sm"
+                                            asChild
+                                            className="h-8 min-w-8 px-2.5 text-xs cursor-pointer"
+                                        >
                                             <Link
                                                 href={link.url}
-                                                dangerouslySetInnerHTML={{ __html: link.label }}
                                                 preserveState
                                                 preserveScroll
+                                                dangerouslySetInnerHTML={{ __html: link.label }}
                                             />
-                                        ) : (
-                                            <span dangerouslySetInnerHTML={{ __html: link.label }} />
-                                        )}
-                                    </Button>
-                                ))}
+                                        </Button>
+                                    );
+                                })}
                             </div>
                         </div>
                     )}

@@ -99,34 +99,36 @@ export default function AdminSliderPromosIndex({
             <div className="space-y-6">
                 {/* Metric Summary Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Total Slider Promo</CardTitle>
-                            <SlidersHorizontal className="size-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{metrics.total_sliders}</div>
+                    <Card className="py-4">
+                        <CardContent className="p-0 px-6">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-muted-foreground">Total Slider Promo</span>
+                                <SlidersHorizontal className="size-4 text-primary" />
+                            </div>
+                            <div className="text-2xl font-bold mt-2">{metrics.total_sliders}</div>
                             <p className="text-xs text-muted-foreground mt-1">
                                 Banner promosi yang ditampilkan di rotasi hero beranda
                             </p>
                         </CardContent>
                     </Card>
 
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Pratinjau Beranda</CardTitle>
-                            <Globe className="size-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <a
-                                href="/"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
-                            >
-                                <span>Lihat Beranda Aroma Palace</span>
-                                <ExternalLink className="size-3.5" />
-                            </a>
+                    <Card className="py-4">
+                        <CardContent className="p-0 px-6">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-muted-foreground">Pratinjau Beranda</span>
+                                <Globe className="size-4 text-primary" />
+                            </div>
+                            <div className="mt-2">
+                                <a
+                                    href="/"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1.5 text-base font-bold text-primary hover:underline"
+                                >
+                                    <span>Lihat Beranda Aroma Palace</span>
+                                    <ExternalLink className="size-3.5" />
+                                </a>
+                            </div>
                             <p className="text-xs text-muted-foreground mt-1">
                                 Buka beranda di tab baru untuk melihat rotasi banner terkini
                             </p>
@@ -179,7 +181,7 @@ export default function AdminSliderPromosIndex({
                 </Card>
 
                 {/* Slider Promos Table Card */}
-                <Card className="py-0">
+                <Card className="py-0 overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full caption-bottom text-sm">
                             <thead className="border-b bg-muted/50 text-muted-foreground">
@@ -195,7 +197,11 @@ export default function AdminSliderPromosIndex({
                                 {sliderPromos.data.length === 0 ? (
                                     <tr>
                                         <td colSpan={5} className="p-8 text-center text-muted-foreground">
-                                            Tidak ada data slider promo ditemukan.
+                                            <div className="flex flex-col items-center justify-center gap-2">
+                                                <SlidersHorizontal className="size-8 text-muted-foreground/40" />
+                                                <p className="text-sm font-medium text-foreground">Tidak ada data slider promo ditemukan</p>
+                                                <p className="text-xs text-muted-foreground">Coba ubah kata kunci pencarian Anda.</p>
+                                            </div>
                                         </td>
                                     </tr>
                                 ) : (
@@ -284,7 +290,7 @@ export default function AdminSliderPromosIndex({
                                                             href={`/manajemen-slider-promo/${slider.id}/edit`}
                                                             title="Edit Slider Promo"
                                                         >
-                                                            <Edit3 className="size-4 text-foreground/80 hover:text-foreground" />
+                                                            <Edit3 className="size-3.5 text-foreground/80 hover:text-foreground" />
                                                         </Link>
                                                     </Button>
 
@@ -295,7 +301,7 @@ export default function AdminSliderPromosIndex({
                                                         className="size-8 text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer"
                                                         title="Hapus Slider Promo"
                                                     >
-                                                        <Trash2 className="size-4" />
+                                                        <Trash2 className="size-3.5" />
                                                     </Button>
                                                 </div>
                                             </td>
@@ -306,36 +312,40 @@ export default function AdminSliderPromosIndex({
                         </table>
                     </div>
 
-                    {/* Pagination Links */}
+                    {/* Pagination */}
                     {sliderPromos.links && sliderPromos.links.length > 3 && (
-                        <div className="flex items-center justify-between border-t px-4 py-3 text-xs text-muted-foreground">
-                            <div>
-                                Menampilkan halaman <span className="font-semibold text-foreground">{sliderPromos.current_page}</span> dari{' '}
-                                <span className="font-semibold text-foreground">{sliderPromos.last_page}</span> (Total{' '}
-                                <span className="font-semibold text-foreground">{sliderPromos.total}</span> slider)
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t px-6 py-4">
+                            <div className="text-xs text-muted-foreground">
+                                Menampilkan {sliderPromos.data.length > 0 ? (sliderPromos.current_page - 1) * 15 + 1 : 0} sampai{' '}
+                                {Math.min(sliderPromos.current_page * 15, sliderPromos.total)} dari {sliderPromos.total} slider promo
                             </div>
                             <div className="flex items-center gap-1">
                                 {sliderPromos.links.map((link, idx) => {
                                     if (!link.url) {
                                         return (
-                                            <span
+                                            <Button
                                                 key={idx}
+                                                variant="outline"
+                                                size="sm"
+                                                disabled
+                                                className="h-8 min-w-8 px-2.5 text-xs opacity-50"
                                                 dangerouslySetInnerHTML={{ __html: link.label }}
-                                                className="px-2.5 py-1 text-muted-foreground/40 rounded border border-transparent"
                                             />
                                         );
                                     }
                                     return (
-                                        <Link
+                                        <Button
                                             key={idx}
-                                            href={link.url}
-                                            dangerouslySetInnerHTML={{ __html: link.label }}
-                                            className={`px-2.5 py-1 rounded border transition-colors ${
-                                                link.active
-                                                    ? 'bg-primary text-primary-foreground border-primary font-semibold'
-                                                    : 'hover:bg-muted text-foreground border-border'
-                                            }`}
-                                        />
+                                            variant={link.active ? 'default' : 'outline'}
+                                            size="sm"
+                                            asChild
+                                            className="h-8 min-w-8 px-2.5 text-xs cursor-pointer"
+                                        >
+                                            <Link
+                                                href={link.url}
+                                                dangerouslySetInnerHTML={{ __html: link.label }}
+                                            />
+                                        </Button>
                                     );
                                 })}
                             </div>

@@ -739,7 +739,7 @@ class FirebaseNotificationService
         $this->sendToAdmins(
             title: 'Pelanggan Baru Mendaftar',
             body: "Pelanggan baru {$user->name} ({$user->email}) telah mendaftar akun di Aroma Palace.",
-            url: '/manajemen-pelanggan',
+            url: '/manajemen-pengguna',
             data: [
                 'user_id' => (string) $user->id,
                 'user_name' => (string) $user->name,
@@ -821,7 +821,7 @@ class FirebaseNotificationService
         $this->sendToAdmins(
             title: 'Pelanggan Menukarkan Poin',
             body: "{$user->name} telah menukarkan {$points} poin untuk voucher {$rewardName} ({$voucherCode}).",
-            url: '/manajemen-membership',
+            url: '/manajemen-pengguna',
             data: [
                 'user_id' => (string) $user->id,
                 'user_name' => (string) $user->name,

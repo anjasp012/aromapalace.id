@@ -14,6 +14,7 @@ import {
     Table as TableIcon,
     Map as MapIcon,
     Eye,
+    ShoppingBag,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -115,24 +116,31 @@ export default function AdminStoresIndex({
             <Head title="Lokasi Butik - Admin Panel" />
 
             <div className="w-full space-y-6">
-                {/* Header Action Bar */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                        <h2 className="text-xl font-bold tracking-tight text-foreground">Lokasi Butik &amp; Outlet</h2>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                            Sebaran seluruh titik gerai fisik resmi Aroma Palace di Indonesia.
-                        </p>
-                    </div>
-
-                    <Button asChild size="sm" className="h-9 cursor-pointer">
-                        <Link href="/manajemen-butik/create">
-                            <Plus className="size-4 mr-1.5" />
-                            <span>Tambah Butik</span>
-                        </Link>
-                    </Button>
+                {/* Summary Metrics Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Card className="py-4">
+                        <CardContent className="p-0 px-6">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-muted-foreground">Total Butik Resmi</span>
+                                <Store className="size-4 text-primary" />
+                            </div>
+                            <div className="text-2xl font-bold mt-2">{metrics.total_stores}</div>
+                            <p className="text-xs text-muted-foreground mt-1">Titik gerai fisik terdaftar</p>
+                        </CardContent>
+                    </Card>
+                    <Card className="py-4">
+                        <CardContent className="p-0 px-6">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-muted-foreground">Pesanan Ambil di Butik</span>
+                                <ShoppingBag className="size-4 text-emerald-500" />
+                            </div>
+                            <div className="text-2xl font-bold mt-2">{metrics.total_pickup_orders}</div>
+                            <p className="text-xs text-muted-foreground mt-1">Total transaksi pickup gerai</p>
+                        </CardContent>
+                    </Card>
                 </div>
 
-                {/* Leaflet Multi-Pin Map directly at the Top - Full Panoramic */}
+                {/* Leaflet Multi-Pin Map - Full Panoramic */}
                 <div className="space-y-2">
                     <div className="flex items-center justify-between px-1">
                         <div className="flex items-center gap-2">
@@ -158,80 +166,72 @@ export default function AdminStoresIndex({
                 </div>
 
                 {/* Search & Filter Toolbar */}
-                <Card>
-                    <CardContent className="p-3">
-                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                            <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 flex-1">
-                                <div className="relative flex-1">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                                    <Input
-                                        type="text"
-                                        placeholder="Cari nama butik, mall, atau alamat kota..."
-                                        value={search}
-                                        onChange={(e) => setSearch(e.target.value)}
-                                        className="pl-9 h-9 text-xs"
-                                    />
-                                </div>
-                                <Button type="submit" size="sm" variant="secondary" className="h-9 cursor-pointer">
-                                    Cari
-                                </Button>
-                                {search && (
-                                    <Button
-                                        type="button"
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={handleResetSearch}
-                                        className="h-9 px-2 text-xs cursor-pointer"
-                                    >
-                                        <RefreshCw className="size-3.5 mr-1" />
-                                        <span>Reset</span>
-                                    </Button>
-                                )}
-                            </form>
-
-                            <div className="flex items-center gap-4 text-xs text-muted-foreground self-end sm:self-center">
-                                <div>Total Butik: <span className="font-semibold text-foreground">{metrics.total_stores}</span></div>
-                                <div className="h-3 w-px bg-border" />
-                                <div>Pesanan Pickup: <span className="font-semibold text-foreground">{metrics.total_pickup_orders}</span></div>
+                <Card className="p-4">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                        <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 flex-1 max-w-md">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                                <Input
+                                    type="text"
+                                    placeholder="Cari nama butik, mall, atau alamat kota..."
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    className="pl-9 h-9 text-xs"
+                                />
                             </div>
-                        </div>
-                    </CardContent>
+                            <Button type="submit" size="sm" className="h-9 cursor-pointer">
+                                Cari
+                            </Button>
+                            {search && (
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={handleResetSearch}
+                                    className="h-9 cursor-pointer text-xs"
+                                    title="Reset Pencarian"
+                                >
+                                    <RefreshCw className="size-3.5 mr-1" />
+                                    <span>Reset</span>
+                                </Button>
+                            )}
+                        </form>
+
+                        <Button size="sm" asChild className="h-9 cursor-pointer">
+                            <Link href="/manajemen-butik/create">
+                                <Plus className="size-4 mr-1.5" />
+                                <span>Tambah Butik</span>
+                            </Link>
+                        </Button>
+                    </div>
                 </Card>
 
-                {/* Stores Data Table */}
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-semibold flex items-center justify-between">
-                            <span className="flex items-center gap-2">
-                                <TableIcon className="size-4 text-muted-foreground" />
-                                <span>Daftar Butik &amp; Koordinat ({stores.total})</span>
-                            </span>
-                        </CardTitle>
-                        <CardDescription className="text-xs">
-                            Klik nama alamat atau link Google Maps untuk membuka navigasi rute.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-xs">
-                                <thead>
-                                    <tr className="border-b bg-muted/40 text-muted-foreground">
-                                        <th className="p-4 text-left font-semibold">Butik</th>
-                                        <th className="p-4 text-left font-semibold">Alamat &amp; Deskripsi</th>
-                                        <th className="p-4 text-left font-semibold">Titik Koordinat</th>
-                                        <th className="p-4 text-center font-semibold">Total Order</th>
-                                        <th className="p-4 text-center font-semibold">Status</th>
-                                        <th className="p-4 text-right font-semibold">Aksi</th>
+                {/* Stores Data Table Card */}
+                <Card className="py-0 overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full caption-bottom text-sm">
+                            <thead className="border-b bg-muted/50 text-muted-foreground">
+                                <tr className="border-b transition-colors text-xs">
+                                    <th className="h-10 px-4 text-left font-medium">Butik</th>
+                                    <th className="h-10 px-4 text-left font-medium">Alamat &amp; Deskripsi</th>
+                                    <th className="h-10 px-4 text-left font-medium">Titik Koordinat</th>
+                                    <th className="h-10 px-4 text-center font-medium">Total Order</th>
+                                    <th className="h-10 px-4 text-center font-medium">Status</th>
+                                    <th className="h-10 px-4 text-right font-medium">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y text-xs">
+                                {stores.data.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                                            <div className="flex flex-col items-center justify-center gap-2">
+                                                <Store className="size-8 text-muted-foreground/40" />
+                                                <p className="text-sm font-medium text-foreground">Tidak ada butik ditemukan</p>
+                                                <p className="text-xs text-muted-foreground">Coba ubah kata kunci pencarian Anda.</p>
+                                            </div>
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody className="divide-y">
-                                    {stores.data.length === 0 ? (
-                                        <tr>
-                                            <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                                                Tidak ada butik yang sesuai dengan pencarian.
-                                            </td>
-                                        </tr>
-                                    ) : (
+                                ) : (
                                         stores.data.map((st) => {
                                             return (
                                                 <tr
@@ -314,7 +314,7 @@ export default function AdminStoresIndex({
                                                         </span>
                                                     </td>
                                                     <td className="p-4 align-middle text-right">
-                                                        <div className="flex items-center justify-end gap-1">
+                                                        <div className="flex items-center justify-end gap-1.5">
                                                             <Button
                                                                 variant="ghost"
                                                                 size="icon"
@@ -322,7 +322,7 @@ export default function AdminStoresIndex({
                                                                 className="size-8 text-muted-foreground hover:text-primary hover:bg-primary/10 cursor-pointer"
                                                                 title="Lihat Titik di Peta"
                                                             >
-                                                                <Eye className="size-4" />
+                                                                <Eye className="size-3.5" />
                                                             </Button>
                                                             <Button
                                                                 variant="ghost"
@@ -332,7 +332,7 @@ export default function AdminStoresIndex({
                                                                 title="Edit Butik"
                                                             >
                                                                 <Link href={`/manajemen-butik/${st.id}/edit`}>
-                                                                    <Edit3 className="size-4" />
+                                                                    <Edit3 className="size-3.5" />
                                                                 </Link>
                                                             </Button>
                                                             <Button
@@ -340,10 +340,10 @@ export default function AdminStoresIndex({
                                                                 variant="ghost"
                                                                 size="icon"
                                                                 onClick={() => setDeleteTarget(st)}
-                                                                className="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer"
+                                                                className="size-8 text-destructive hover:bg-destructive/10 cursor-pointer"
                                                                 title="Hapus Butik"
                                                             >
-                                                                <Trash2 className="size-4" />
+                                                                <Trash2 className="size-3.5" />
                                                             </Button>
                                                         </div>
                                                     </td>
@@ -355,38 +355,47 @@ export default function AdminStoresIndex({
                             </table>
                         </div>
 
-                        {/* Pagination Links */}
+                        {/* Pagination */}
                         {stores.links && stores.links.length > 3 && (
-                            <div className="flex items-center justify-between border-t p-4">
-                                <span className="text-xs text-muted-foreground">
-                                    Halaman {stores.current_page} dari {stores.last_page} (Total {stores.total})
-                                </span>
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t px-6 py-4">
+                                <div className="text-xs text-muted-foreground">
+                                    Menampilkan {stores.data.length > 0 ? (stores.current_page - 1) * 15 + 1 : 0} sampai{' '}
+                                    {Math.min(stores.current_page * 15, stores.total)} dari {stores.total} butik
+                                </div>
                                 <div className="flex items-center gap-1">
-                                    {stores.links.map((link, idx) => (
-                                        <Button
-                                            key={idx}
-                                            variant={link.active ? 'default' : 'outline'}
-                                            size="sm"
-                                            disabled={!link.url}
-                                            asChild={!!link.url}
-                                            className="h-8 px-3 text-xs"
-                                        >
-                                            {link.url ? (
+                                    {stores.links.map((link, idx) => {
+                                        if (!link.url) {
+                                            return (
+                                                <Button
+                                                    key={idx}
+                                                    variant="outline"
+                                                    size="sm"
+                                                    disabled
+                                                    className="h-8 min-w-8 px-2.5 text-xs opacity-50"
+                                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                                />
+                                            );
+                                        }
+                                        return (
+                                            <Button
+                                                key={idx}
+                                                variant={link.active ? 'default' : 'outline'}
+                                                size="sm"
+                                                asChild
+                                                className="h-8 min-w-8 px-2.5 text-xs cursor-pointer"
+                                            >
                                                 <Link
                                                     href={link.url}
                                                     preserveState
                                                     dangerouslySetInnerHTML={{ __html: link.label }}
                                                 />
-                                            ) : (
-                                                <span dangerouslySetInnerHTML={{ __html: link.label }} />
-                                            )}
-                                        </Button>
-                                    ))}
+                                            </Button>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
-                    </CardContent>
-                </Card>
+                    </Card>
 
                 {/* Dialog Delete Confirmation */}
                 <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>

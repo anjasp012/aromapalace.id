@@ -12,7 +12,7 @@ import {
     XCircle,
     Loader2,
 } from 'lucide-react';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -154,27 +154,35 @@ export default function AdminPaymentMethodsIndex({
                 {/* Metric Summary Cards */}
                 {metrics && (
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <Card className="p-4">
-                            <div className="text-xs text-muted-foreground font-medium">Total Metode</div>
-                            <div className="text-2xl font-bold text-foreground mt-1">{metrics.total_methods}</div>
+                        <Card className="py-4">
+                            <CardContent className="p-0 px-6">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-medium text-muted-foreground">Total Metode</span>
+                                    <CreditCard className="size-4 text-primary" />
+                                </div>
+                                <div className="text-2xl font-bold mt-2">{metrics.total_methods}</div>
+                                <p className="text-xs text-muted-foreground mt-1">Kanal pembayaran terdaftar</p>
+                            </CardContent>
                         </Card>
-                        <Card className="p-4 border-emerald-500/20 bg-emerald-50/20 dark:bg-emerald-950/10">
-                            <div className="flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-400 font-medium">
-                                <span>Metode Aktif</span>
-                                <Badge variant="outline" className="border-emerald-500/30 text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 text-[10px]">
-                                    Tampil di Checkout
-                                </Badge>
-                            </div>
-                            <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-400 mt-1">{metrics.active_methods}</div>
+                        <Card className="py-4">
+                            <CardContent className="p-0 px-6">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-medium text-muted-foreground">Metode Aktif</span>
+                                    <CheckCircle2 className="size-4 text-emerald-500" />
+                                </div>
+                                <div className="text-2xl font-bold mt-2 text-emerald-600 dark:text-emerald-400">{metrics.active_methods}</div>
+                                <p className="text-xs text-muted-foreground mt-1">Tampil di pilihan checkout</p>
+                            </CardContent>
                         </Card>
-                        <Card className="p-4 border-muted-foreground/20">
-                            <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
-                                <span>Metode Nonaktif</span>
-                                <Badge variant="outline" className="text-muted-foreground text-[10px]">
-                                    Disembunyikan
-                                </Badge>
-                            </div>
-                            <div className="text-2xl font-bold text-muted-foreground mt-1">{metrics.inactive_methods}</div>
+                        <Card className="py-4">
+                            <CardContent className="p-0 px-6">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-medium text-muted-foreground">Metode Nonaktif</span>
+                                    <XCircle className="size-4 text-muted-foreground" />
+                                </div>
+                                <div className="text-2xl font-bold mt-2 text-muted-foreground">{metrics.inactive_methods}</div>
+                                <p className="text-xs text-muted-foreground mt-1">Disembunyikan dari pelanggan</p>
+                            </CardContent>
                         </Card>
                     </div>
                 )}
@@ -255,7 +263,7 @@ export default function AdminPaymentMethodsIndex({
                 </Card>
 
                 {/* Payment Methods Table Card */}
-                <Card className="py-0">
+                <Card className="py-0 overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full caption-bottom text-sm">
                             <thead className="border-b bg-muted/50 text-muted-foreground">
@@ -272,9 +280,11 @@ export default function AdminPaymentMethodsIndex({
                                 {paymentMethods.data.length === 0 ? (
                                     <tr>
                                         <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                                            <CreditCard className="size-8 mx-auto mb-2 opacity-30" />
-                                            <p className="font-medium text-foreground">Tidak ada metode pembayaran ditemukan.</p>
-                                            <p className="text-[11px] mt-1">Sesuaikan kata kunci pencarian atau tambahkan metode pembayaran baru.</p>
+                                            <div className="flex flex-col items-center justify-center gap-2">
+                                                <CreditCard className="size-8 text-muted-foreground/40" />
+                                                <p className="text-sm font-medium text-foreground">Tidak ada metode pembayaran ditemukan</p>
+                                                <p className="text-xs text-muted-foreground">Sesuaikan kata kunci pencarian atau tambahkan metode pembayaran baru.</p>
+                                            </div>
                                         </td>
                                     </tr>
                                 ) : (
@@ -336,7 +346,7 @@ export default function AdminPaymentMethodsIndex({
                                                             href={`/manajemen-pembayaran/${pm.id}/edit`}
                                                             title="Edit Metode Pembayaran"
                                                         >
-                                                            <Edit3 className="size-4 text-foreground/80 hover:text-foreground" />
+                                                            <Edit3 className="size-3.5 text-foreground/80 hover:text-foreground" />
                                                         </Link>
                                                     </Button>
 
@@ -347,7 +357,7 @@ export default function AdminPaymentMethodsIndex({
                                                         className="size-8 text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer"
                                                         title="Hapus Metode Pembayaran"
                                                     >
-                                                        <Trash2 className="size-4" />
+                                                        <Trash2 className="size-3.5" />
                                                     </Button>
                                                 </div>
                                             </td>
@@ -358,36 +368,40 @@ export default function AdminPaymentMethodsIndex({
                         </table>
                     </div>
 
-                    {/* Pagination Links */}
+                    {/* Pagination */}
                     {paymentMethods.links && paymentMethods.links.length > 3 && (
-                        <div className="flex items-center justify-between border-t px-4 py-3 text-xs text-muted-foreground">
-                            <div>
-                                Menampilkan halaman <span className="font-semibold text-foreground">{paymentMethods.current_page}</span> dari{' '}
-                                <span className="font-semibold text-foreground">{paymentMethods.last_page}</span> (Total{' '}
-                                <span className="font-semibold text-foreground">{paymentMethods.total}</span> metode)
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t px-6 py-4">
+                            <div className="text-xs text-muted-foreground">
+                                Menampilkan {paymentMethods.data.length > 0 ? (paymentMethods.current_page - 1) * 15 + 1 : 0} sampai{' '}
+                                {Math.min(paymentMethods.current_page * 15, paymentMethods.total)} dari {paymentMethods.total} metode
                             </div>
                             <div className="flex items-center gap-1">
                                 {paymentMethods.links.map((link, idx) => {
                                     if (!link.url) {
                                         return (
-                                            <span
+                                            <Button
                                                 key={idx}
+                                                variant="outline"
+                                                size="sm"
+                                                disabled
+                                                className="h-8 min-w-8 px-2.5 text-xs opacity-50"
                                                 dangerouslySetInnerHTML={{ __html: link.label }}
-                                                className="px-2.5 py-1 text-muted-foreground/40 rounded border border-transparent"
                                             />
                                         );
                                     }
                                     return (
-                                        <Link
+                                        <Button
                                             key={idx}
-                                            href={link.url}
-                                            dangerouslySetInnerHTML={{ __html: link.label }}
-                                            className={`px-2.5 py-1 rounded border transition-colors ${
-                                                link.active
-                                                    ? 'bg-primary text-primary-foreground border-primary font-semibold'
-                                                    : 'hover:bg-muted text-foreground border-border'
-                                            }`}
-                                        />
+                                            variant={link.active ? 'default' : 'outline'}
+                                            size="sm"
+                                            asChild
+                                            className="h-8 min-w-8 px-2.5 text-xs cursor-pointer"
+                                        >
+                                            <Link
+                                                href={link.url}
+                                                dangerouslySetInnerHTML={{ __html: link.label }}
+                                            />
+                                        </Button>
                                     );
                                 })}
                             </div>

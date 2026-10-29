@@ -12,7 +12,7 @@ class CatalogService
      *
      * @var array<int, string>
      */
-    protected static array $eagerRelations = [
+    public static array $eagerRelations = [
         'variants',
         'galleries',
         'primaryImage',
