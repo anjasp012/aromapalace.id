@@ -354,6 +354,22 @@ class OrderController extends Controller
             'payment_status' => 'paid',
         ]);
 
+        // Real-time WebSocket: Broadcast OrderPaid and ShippingUpdated so customer page updates instantly
+        try {
+            event(new OrderPaid($orderModel->fresh()));
+        } catch (\Throwable $e) {
+            Log::warning('Failed to broadcast OrderPaid event in approveManualPayment: '.$e->getMessage());
+        }
+
+        try {
+            broadcast(new ShippingUpdated($orderModel->fresh(['shipping'])));
+        } catch (\Throwable $e) {
+            Log::warning('Failed to broadcast ShippingUpdated in approveManualPayment: '.$e->getMessage());
+        }
+
+        // Outgoing Webhook dispatch
+        $this->dispatchPaymentWebhook($orderModel->fresh(), 'manual_payment.approved');
+
         try {
             app(FirebaseNotificationService::class)->notifyManualPaymentApproved($orderModel->fresh());
         } catch (\Throwable $e) {
@@ -391,6 +407,16 @@ class OrderController extends Controller
             'payment_notes' => null,
         ]);
 
+        // Real-time WebSocket: Broadcast ShippingUpdated to refresh user payment page and admin list
+        try {
+            broadcast(new ShippingUpdated($orderModel->fresh(['shipping'])));
+        } catch (\Throwable $e) {
+            Log::warning('Failed to broadcast ShippingUpdated in rejectManualPayment: '.$e->getMessage());
+        }
+
+        // Outgoing Webhook dispatch
+        $this->dispatchPaymentWebhook($orderModel->fresh(), 'manual_payment.rejected');
+
         try {
             app(FirebaseNotificationService::class)->notifyManualPaymentRejected($orderModel->fresh());
         } catch (\Throwable $e) {
@@ -398,6 +424,34 @@ class OrderController extends Controller
         }
 
         return back()->with('success', "Bukti transfer pesanan #{$orderModel->order_number} ditolak. Pelanggan akan diminta untuk mengunggah ulang.");
+    }
+
+    /**
+     * Dispatch an outgoing webhook payload to configured webhook URL if available.
+     */
+    protected function dispatchPaymentWebhook(Order $order, string $event): void
+    {
+        $webhookUrl = env('PAYMENT_WEBHOOK_URL') ?: Setting::get('payment_webhook_url');
+        if (! $webhookUrl) {
+            return;
+        }
+
+        try {
+            Http::timeout(5)->post($webhookUrl, [
+                'event' => $event,
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'status' => $order->status,
+                'payment_status' => $order->payment_status,
+                'payment_method' => $order->payment_method,
+                'payment_channel' => $order->payment_channel,
+                'total_amount' => $order->total_amount,
+                'recipient_name' => $order->recipient_name,
+                'timestamp' => now()->toIso8601String(),
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning("Failed to dispatch payment webhook [{$event}] for order #{$order->order_number}: ".$e->getMessage());
+        }
     }
 
     /**

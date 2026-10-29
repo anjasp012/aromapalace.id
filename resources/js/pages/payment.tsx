@@ -72,12 +72,12 @@ function PaymentContent({ order }: PaymentProps) {
         payment_notes: '',
     });
 
-    // Real-time WebSocket: listen for OrderPaid event via Laravel Reverb
+    // Real-time WebSocket: listen for OrderPaid and ShippingUpdated via Laravel Reverb
     useEcho(
         isPaid || isCanceled ? '' : `orders.${order.order_number}`,
-        '.OrderPaid',
+        ['.OrderPaid', 'OrderPaid', '.ShippingUpdated', 'ShippingUpdated'],
         () => {
-            // Payment confirmed via WebSocket — reload order data instantly
+            // Payment approved or rejected via WebSocket / Admin action — reload order data instantly
             router.reload({ only: ['order'] });
         },
         [order.order_number, isPaid, isCanceled],
