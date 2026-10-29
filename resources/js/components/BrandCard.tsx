@@ -28,7 +28,7 @@ export default function BrandCard({ brand, className }: BrandCardProps) {
             className={cn('block h-full group', className)}
         >
             <div
-                className="relative flex flex-col justify-between h-full rounded-2xl overflow-hidden transition-all duration-300 group-hover:scale-[1.03] group-hover:shadow-[0_8px_30px_rgba(74,7,11,0.6)]"
+                className="relative flex flex-col justify-between h-full rounded overflow-hidden transition-all duration-300 group-hover:scale-[1.03] group-hover:shadow-[0_8px_30px_rgba(74,7,11,0.6)]"
                 style={{
                     background: 'radial-gradient(circle at 50% 30%, #5C0710 0%, #3D040A 55%, #250205 100%)',
                     border: '2px solid #C5A059',
