@@ -339,7 +339,7 @@ export default function AdminVouchersIndex({
                 </Card>
 
                 {/* Vouchers Table Card */}
-                <Card className="py-0">
+                <Card className="py-0 overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full caption-bottom text-sm">
                             <thead className="border-b bg-muted/50 text-muted-foreground">
@@ -359,7 +359,11 @@ export default function AdminVouchersIndex({
                                 {vouchers.data.length === 0 ? (
                                     <tr>
                                         <td colSpan={9} className="p-8 text-center text-muted-foreground">
-                                            Tidak ada voucher promo ditemukan.
+                                            <div className="flex flex-col items-center justify-center gap-2">
+                                                <Ticket className="size-8 text-muted-foreground/40" />
+                                                <p className="text-sm font-medium text-foreground">Tidak ada voucher promo ditemukan</p>
+                                                <p className="text-xs text-muted-foreground">Coba ubah kata kunci pencarian atau filter yang dipilih.</p>
+                                            </div>
                                         </td>
                                     </tr>
                                 ) : (
@@ -509,33 +513,38 @@ export default function AdminVouchersIndex({
                     </div>
 
                     {/* Pagination */}
-                    {vouchers.links.length > 3 && (
-                        <div className="flex items-center justify-between border-t px-4 py-3">
+                    {vouchers.links && vouchers.links.length > 3 && (
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t px-6 py-4">
                             <div className="text-xs text-muted-foreground">
-                                Menampilkan {vouchers.data.length} dari {vouchers.total} voucher
+                                Menampilkan {vouchers.from || 0} sampai {vouchers.to || 0} dari {vouchers.total} voucher
                             </div>
                             <div className="flex items-center gap-1">
                                 {vouchers.links.map((link, idx) => {
                                     if (!link.url) {
                                         return (
-                                            <span
+                                            <Button
                                                 key={idx}
-                                                className="px-2.5 py-1 text-xs text-muted-foreground"
+                                                variant="outline"
+                                                size="sm"
+                                                disabled
+                                                className="h-8 min-w-8 px-2.5 text-xs opacity-50"
                                                 dangerouslySetInnerHTML={{ __html: link.label }}
                                             />
                                         );
                                     }
                                     return (
-                                        <Link
+                                        <Button
                                             key={idx}
-                                            href={link.url}
-                                            className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
-                                                link.active
-                                                    ? 'bg-primary text-primary-foreground font-medium'
-                                                    : 'hover:bg-muted text-muted-foreground hover:text-foreground'
-                                            }`}
-                                            dangerouslySetInnerHTML={{ __html: link.label }}
-                                        />
+                                            variant={link.active ? 'default' : 'outline'}
+                                            size="sm"
+                                            asChild
+                                            className="h-8 min-w-8 px-2.5 text-xs cursor-pointer"
+                                        >
+                                            <Link
+                                                href={link.url}
+                                                dangerouslySetInnerHTML={{ __html: link.label }}
+                                            />
+                                        </Button>
                                     );
                                 })}
                             </div>

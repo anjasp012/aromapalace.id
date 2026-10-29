@@ -332,9 +332,15 @@ export default function AdminUsersIndex({
                                 {users.data.length === 0 ? (
                                     <tr>
                                         <td colSpan={7} className="p-8 text-center text-muted-foreground">
-                                            {statusFilter === 'trashed'
-                                                ? 'Tidak ada akun di dalam tong sampah.'
-                                                : 'Tidak ada pengguna ditemukan.'}
+                                            <div className="flex flex-col items-center justify-center gap-2">
+                                                <Users className="size-8 text-muted-foreground/40" />
+                                                <p className="text-sm font-medium text-foreground">
+                                                    {statusFilter === 'trashed'
+                                                        ? 'Tidak ada akun di dalam tong sampah'
+                                                        : 'Tidak ada pengguna ditemukan'}
+                                                </p>
+                                                <p className="text-xs text-muted-foreground">Coba ubah kata kunci pencarian atau filter yang dipilih.</p>
+                                            </div>
                                         </td>
                                     </tr>
                                 ) : (
@@ -467,10 +473,12 @@ export default function AdminUsersIndex({
                     </div>
 
                     {/* Pagination */}
-                    {users.links.length > 3 && (
-                        <div className="flex items-center justify-between border-t px-4 py-3">
+                    {users.links && users.links.length > 3 && (
+                        <div className="flex flex-col sm:flex-row items-center justify-between border-t px-4 py-3 gap-3">
                             <div className="text-xs text-muted-foreground">
-                                Menampilkan {users.data.length} dari {users.total} pengguna
+                                Menampilkan <span className="font-medium text-foreground">{users.from || 0}</span> sampai{' '}
+                                <span className="font-medium text-foreground">{users.to || 0}</span> dari{' '}
+                                <span className="font-medium text-foreground">{users.total}</span> pengguna
                             </div>
                             <div className="flex items-center gap-1">
                                 {users.links.map((link, idx) => {
@@ -478,22 +486,24 @@ export default function AdminUsersIndex({
                                         return (
                                             <span
                                                 key={idx}
-                                                className="px-2.5 py-1 text-xs text-muted-foreground"
+                                                className="px-2.5 py-1 text-xs text-muted-foreground/40 rounded border border-transparent"
                                                 dangerouslySetInnerHTML={{ __html: link.label }}
                                             />
                                         );
                                     }
                                     return (
-                                        <Link
+                                        <Button
                                             key={idx}
-                                            href={link.url}
-                                            className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
-                                                link.active
-                                                    ? 'bg-primary text-primary-foreground font-medium'
-                                                    : 'hover:bg-muted text-muted-foreground hover:text-foreground'
-                                            }`}
-                                            dangerouslySetInnerHTML={{ __html: link.label }}
-                                        />
+                                            variant={link.active ? 'default' : 'outline'}
+                                            size="sm"
+                                            asChild
+                                            className="h-8 min-w-8 px-2.5 text-xs cursor-pointer"
+                                        >
+                                            <Link
+                                                href={link.url}
+                                                dangerouslySetInnerHTML={{ __html: link.label }}
+                                            />
+                                        </Button>
                                     );
                                 })}
                             </div>

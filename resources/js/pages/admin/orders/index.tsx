@@ -30,6 +30,14 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+} from '@/components/ui/dialog';
 
 interface OrderItemPreview {
     name: string;
@@ -278,7 +286,65 @@ export default function AdminOrdersIndex({
             title="Daftar Pesanan"
             subtitle="Pantau alur transaksi dan kelola pengiriman atau pengambilan pesanan."
         >
-            <div className="space-y-4">
+            <Head title="Daftar Pesanan - Admin Panel" />
+
+            <div className="space-y-6">
+                {/* Metric Summary Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <Card className="py-4">
+                        <CardContent className="p-0 px-6">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-muted-foreground">Total Pesanan</span>
+                                <ShoppingBag className="size-4 text-primary" />
+                            </div>
+                            <div className="text-2xl font-bold mt-2 text-foreground">{tab_counts.all}</div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                                {tab_counts.selesai} Selesai &bull; {tab_counts.dibatalkan} Batal
+                                {(tab_counts.sampah ?? 0) > 0 && (
+                                    <span className="text-destructive font-semibold"> &bull; {tab_counts.sampah} Sampah</span>
+                                )}
+                            </p>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="py-4">
+                        <CardContent className="p-0 px-6">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-amber-600 dark:text-amber-400">Menunggu &amp; Diproses</span>
+                                <Clock className="size-4 text-amber-500" />
+                            </div>
+                            <div className="text-2xl font-bold mt-2 text-amber-600 dark:text-amber-400">
+                                {tab_counts.menunggu_pembayaran + tab_counts.diproses}
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">{tab_counts.menunggu_pembayaran} Menunggu &bull; {tab_counts.diproses} Diproses</p>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="py-4">
+                        <CardContent className="p-0 px-6">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-blue-600 dark:text-blue-400">Dalam Pengiriman</span>
+                                <Truck className="size-4 text-blue-500" />
+                            </div>
+                            <div className="text-2xl font-bold mt-2 text-blue-600 dark:text-blue-400">
+                                {tab_counts.dikirim + tab_counts.pengambilan}
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">{tab_counts.dikirim} Kurir &bull; {tab_counts.pengambilan} Ambil butik</p>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="py-4">
+                        <CardContent className="p-0 px-6">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">Pesanan Selesai</span>
+                                <CheckCircle2 className="size-4 text-emerald-500" />
+                            </div>
+                            <div className="text-2xl font-bold mt-2 text-emerald-600 dark:text-emerald-400">{tab_counts.selesai}</div>
+                            <p className="text-xs text-muted-foreground mt-1">Transaksi sukses terbayar</p>
+                        </CardContent>
+                    </Card>
+                </div>
+
                 {/* Status Tabs Navigation */}
                 <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
                     {TABS.map((tab) => {
@@ -547,7 +613,11 @@ export default function AdminOrdersIndex({
                                 {orders.data.length === 0 && (
                                     <tr>
                                         <td colSpan={7} className="p-8 text-center text-muted-foreground">
-                                            Tidak ada pesanan yang sesuai filter.
+                                            <div className="flex flex-col items-center justify-center gap-2">
+                                                <ShoppingBag className="size-8 text-muted-foreground/40" />
+                                                <p className="text-sm font-medium text-foreground">Tidak ada pesanan ditemukan</p>
+                                                <p className="text-xs text-muted-foreground">Coba ubah filter status, jenis pengiriman, atau kata kunci pencarian.</p>
+                                            </div>
                                         </td>
                                     </tr>
                                 )}
@@ -556,9 +626,9 @@ export default function AdminOrdersIndex({
                     </div>
 
                     {/* Pagination */}
-                    {orders.links.length > 3 && (
-                        <div className="p-4 border-t flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
-                            <div>
+                    {orders.links && orders.links.length > 3 && (
+                        <div className="flex flex-col sm:flex-row items-center justify-between border-t px-4 py-3 gap-3">
+                            <div className="text-xs text-muted-foreground">
                                 Menampilkan <span className="font-medium text-foreground">{orders.from || 0}</span> sampai{' '}
                                 <span className="font-medium text-foreground">{orders.to || 0}</span> dari{' '}
                                 <span className="font-medium text-foreground">{orders.total}</span> pesanan
@@ -570,8 +640,8 @@ export default function AdminOrdersIndex({
                                         return (
                                             <span
                                                 key={idx}
+                                                className="px-2.5 py-1 text-xs text-muted-foreground/40 rounded border border-transparent"
                                                 dangerouslySetInnerHTML={{ __html: link.label }}
-                                                className="px-2.5 py-1 rounded border text-muted-foreground/40 text-xs"
                                             />
                                         );
                                     }
@@ -581,7 +651,7 @@ export default function AdminOrdersIndex({
                                             variant={link.active ? 'default' : 'outline'}
                                             size="sm"
                                             asChild
-                                            className="h-8 px-2.5 text-xs"
+                                            className="h-8 min-w-8 px-2.5 text-xs cursor-pointer"
                                         >
                                             <Link
                                                 href={link.url}
@@ -597,150 +667,128 @@ export default function AdminOrdersIndex({
             </div>
 
             {/* Quick Status Modal */}
-            {quickStatusOrder && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in"
-                    onClick={() => setQuickStatusOrder(null)}
-                >
-                    <Card
-                        className="max-w-md w-full shadow-lg"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <CardHeader className="flex flex-row items-center justify-between pb-3">
-                            <div>
-                                <CardTitle className="text-base font-semibold">Ubah Status Pesanan</CardTitle>
-                                <CardDescription className="font-mono text-xs">#{quickStatusOrder.order_number}</CardDescription>
+            <Dialog open={Boolean(quickStatusOrder)} onOpenChange={(open) => !open && setQuickStatusOrder(null)}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Ubah Status Pesanan</DialogTitle>
+                        {quickStatusOrder && (
+                            <DialogDescription className="font-mono text-xs">
+                                #{quickStatusOrder.order_number}
+                            </DialogDescription>
+                        )}
+                    </DialogHeader>
+                    {quickStatusOrder && (
+                        <form onSubmit={handleQuickStatusSubmit} className="space-y-4 text-xs">
+                            <div className="space-y-1.5">
+                                <label className="font-medium text-foreground">Status Baru:</label>
+                                <Select
+                                    value={targetStatus}
+                                    onValueChange={(val) => setTargetStatus(val)}
+                                >
+                                    <SelectTrigger className="h-9 w-full text-xs">
+                                        <SelectValue placeholder="Pilih status baru" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="menunggu_pembayaran">1. Menunggu Pembayaran</SelectItem>
+                                        <SelectItem value="diproses">2. Diproses</SelectItem>
+                                        <SelectItem value="dikirim">
+                                            {quickStatusOrder.delivery_type === 'pickup'
+                                                ? '3. Siap Diambil di Butik'
+                                                : '3. Dikirim Kurir'}
+                                        </SelectItem>
+                                        <SelectItem value="selesai">4. Selesai</SelectItem>
+                                        <SelectItem value="dibatalkan">Dibatalkan</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => setQuickStatusOrder(null)}
-                                className="size-8"
-                            >
-                                <X className="size-4" />
-                            </Button>
-                        </CardHeader>
-                        <CardContent>
-                            <form onSubmit={handleQuickStatusSubmit} className="space-y-4 text-xs">
-                                <div className="space-y-1.5">
-                                    <label className="font-medium text-foreground">Status Baru:</label>
-                                    <Select
-                                        value={targetStatus}
-                                        onValueChange={(val) => setTargetStatus(val)}
-                                    >
-                                        <SelectTrigger className="h-9 w-full text-xs">
-                                            <SelectValue placeholder="Pilih status baru" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="menunggu_pembayaran">1. Menunggu Pembayaran</SelectItem>
-                                            <SelectItem value="diproses">2. Diproses</SelectItem>
-                                            <SelectItem value="dikirim">
-                                                {quickStatusOrder.delivery_type === 'pickup'
-                                                    ? '3. Siap Diambil di Butik'
-                                                    : '3. Dikirim Kurir'}
-                                            </SelectItem>
-                                            <SelectItem value="selesai">4. Selesai</SelectItem>
-                                            <SelectItem value="dibatalkan">Dibatalkan</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
 
-                                <div className="space-y-1.5">
-                                    <label className="font-medium text-foreground">Catatan (Opsional):</label>
-                                    <textarea
-                                        value={statusNotes}
-                                        onChange={(e) => setStatusNotes(e.target.value)}
-                                        placeholder="Catatan admin / nomor resi..."
-                                        rows={3}
-                                        className="w-full rounded-md border border-input bg-transparent p-3 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                    />
-                                </div>
+                            <div className="space-y-1.5">
+                                <label className="font-medium text-foreground">Catatan (Opsional):</label>
+                                <textarea
+                                    value={statusNotes}
+                                    onChange={(e) => setStatusNotes(e.target.value)}
+                                    placeholder="Catatan admin / nomor resi..."
+                                    rows={3}
+                                    className="w-full rounded-md border border-input bg-transparent p-3 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                />
+                            </div>
 
-                                <div className="flex justify-end gap-2 pt-2">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setQuickStatusOrder(null)}
-                                    >
-                                        Batal
-                                    </Button>
-                                    <Button type="submit" size="sm" disabled={isUpdating}>
-                                        {isUpdating ? 'Menyimpan...' : 'Simpan'}
-                                    </Button>
-                                </div>
-                            </form>
-                        </CardContent>
-                    </Card>
-                </div>
-            )}
+                            <DialogFooter className="gap-2 sm:gap-0">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setQuickStatusOrder(null)}
+                                    className="h-8 text-xs cursor-pointer"
+                                >
+                                    Batal
+                                </Button>
+                                <Button type="submit" size="sm" disabled={isUpdating} className="h-8 text-xs cursor-pointer">
+                                    {isUpdating ? 'Menyimpan...' : 'Simpan'}
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    )}
+                </DialogContent>
+            </Dialog>
 
             {/* Delete (Soft Delete) Modal */}
-            {deleteTarget && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in"
-                    onClick={() => setDeleteTarget(null)}
-                >
-                    <Card className="max-w-sm w-full shadow-lg" onClick={(e) => e.stopPropagation()}>
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-base font-semibold">Pindahkan ke Sampah?</CardTitle>
-                            <CardDescription>
-                                Apakah Anda yakin ingin memindahkan pesanan #<strong>{deleteTarget.order_number}</strong> ke Sampah? Pesanan dapat dipulihkan kapan saja.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex justify-end gap-2 pt-2">
-                            <Button variant="outline" size="sm" onClick={() => setDeleteTarget(null)}>
-                                Batal
-                            </Button>
-                            <Button
-                                variant="destructive"
-                                size="sm"
-                                disabled={isDeleting}
-                                onClick={handleDeleteOrder}
-                            >
-                                {isDeleting ? 'Memindahkan...' : 'Ya, Hapus'}
-                            </Button>
-                        </CardContent>
-                    </Card>
-                </div>
-            )}
+            <Dialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Pindahkan ke Sampah?</DialogTitle>
+                        <DialogDescription>
+                            Apakah Anda yakin ingin memindahkan pesanan #<strong>{deleteTarget?.order_number}</strong> ke Sampah? Pesanan dapat dipulihkan kapan saja.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button variant="outline" size="sm" onClick={() => setDeleteTarget(null)} className="h-8 text-xs cursor-pointer">
+                            Batal
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            size="sm"
+                            disabled={isDeleting}
+                            onClick={handleDeleteOrder}
+                            className="h-8 text-xs cursor-pointer"
+                        >
+                            {isDeleting ? 'Memindahkan...' : 'Ya, Hapus'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             {/* Force Delete Modal */}
-            {forceDeleteTarget && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in"
-                    onClick={() => setForceDeleteTarget(null)}
-                >
-                    <Card className="max-w-md w-full shadow-lg border-destructive/50" onClick={(e) => e.stopPropagation()}>
-                        <CardHeader className="pb-2">
-                            <div className="flex items-center gap-2 text-destructive mb-1">
-                                <AlertTriangle className="size-5" />
-                                <CardTitle className="text-base font-semibold text-destructive">Hapus Permanen Pesanan?</CardTitle>
-                            </div>
-                            <CardDescription>
-                                Apakah Anda yakin ingin menghapus pesanan #<strong>{forceDeleteTarget.order_number}</strong> secara <strong>PERMANEN</strong> dari database?
-                                <span className="block mt-2 text-rose-600 font-medium">
-                                    PERINGATAN: Seluruh item pesanan dan data resi pengiriman terkait akan dihapus total dari database dan TIDAK DAPAT dipulihkan kembali!
-                                </span>
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex justify-end gap-2 pt-2">
-                            <Button variant="outline" size="sm" onClick={() => setForceDeleteTarget(null)}>
-                                Batal
-                            </Button>
-                            <Button
-                                variant="destructive"
-                                size="sm"
-                                disabled={isForceDeleting}
-                                onClick={handleForceDeleteOrder}
-                            >
-                                {isForceDeleting ? 'Menghapus Total...' : 'Ya, Hapus Total'}
-                            </Button>
-                        </CardContent>
-                    </Card>
-                </div>
-            )}
+            <Dialog open={Boolean(forceDeleteTarget)} onOpenChange={(open) => !open && setForceDeleteTarget(null)}>
+                <DialogContent className="sm:max-w-md border-destructive/50">
+                    <DialogHeader>
+                        <div className="flex items-center gap-2 text-destructive mb-1">
+                            <AlertTriangle className="size-5" />
+                            <DialogTitle className="text-destructive">Hapus Permanen Pesanan?</DialogTitle>
+                        </div>
+                        <DialogDescription>
+                            Apakah Anda yakin ingin menghapus pesanan #<strong>{forceDeleteTarget?.order_number}</strong> secara <strong>PERMANEN</strong> dari database?
+                            <span className="block mt-2 text-rose-600 font-medium">
+                                PERINGATAN: Seluruh item pesanan dan data resi pengiriman terkait akan dihapus total dari database dan TIDAK DAPAT dipulihkan kembali!
+                            </span>
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button variant="outline" size="sm" onClick={() => setForceDeleteTarget(null)} className="h-8 text-xs cursor-pointer">
+                            Batal
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            size="sm"
+                            disabled={isForceDeleting}
+                            onClick={handleForceDeleteOrder}
+                            className="h-8 text-xs cursor-pointer"
+                        >
+                            {isForceDeleting ? 'Menghapus Total...' : 'Ya, Hapus Total'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </AdminLayout>
     );
 }
