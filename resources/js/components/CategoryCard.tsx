@@ -40,18 +40,18 @@ export default function CategoryCard({ category, className }: CategoryCardProps)
                 className
             )}
         >
-            {/* Pure Image Container - Unrounded, Borderless, Transparent Background */}
-            <div className="relative w-full aspect-square flex items-center justify-center p-2 sm:p-3 bg-transparent rounded-none overflow-visible">
+            {/* Pure Image Container - Full size, No BG, Never Clipped */}
+            <div className="relative w-full aspect-square flex items-center justify-center bg-transparent rounded-none overflow-visible">
                 {category.image ? (
                     <img
                         src={category.image}
                         alt={category.name}
                         loading="lazy"
                         decoding="async"
-                        className="max-h-full max-w-full w-auto h-auto object-contain rounded-none transition-transform duration-300 ease-out group-hover:scale-105 select-none pointer-events-none"
+                        className="w-full h-full object-contain rounded-none transition-transform duration-300 ease-out group-hover:scale-105 select-none pointer-events-none"
                     />
                 ) : (
-                    <div className="w-full h-full flex items-center justify-center text-muted-foreground/30 font-light text-2xl uppercase tracking-widest transition-transform duration-300 group-hover:scale-105">
+                    <div className="w-full h-full flex items-center justify-center text-muted-foreground/30 font-light text-3xl uppercase tracking-widest transition-transform duration-300 group-hover:scale-105">
                         {category.name ? category.name.charAt(0).toUpperCase() : 'A'}
                     </div>
                 )}

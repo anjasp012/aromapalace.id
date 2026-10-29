@@ -76,17 +76,17 @@ export default function ScentCard({
                 className
             )}
         >
-            <div className="relative w-full aspect-square flex items-center justify-center p-2 sm:p-3 bg-transparent rounded-none overflow-visible">
+            <div className="relative w-full aspect-square flex items-center justify-center bg-transparent rounded-none overflow-visible">
                 {scent.image ? (
                     <img
                         src={scent.image}
                         alt={displayName}
                         loading="lazy"
                         decoding="async"
-                        className="max-h-full max-w-full w-auto h-auto object-contain rounded-none transition-transform duration-300 ease-out group-hover:scale-105 select-none pointer-events-none"
+                        className="w-full h-full object-contain rounded-none transition-transform duration-300 ease-out group-hover:scale-105 select-none pointer-events-none"
                     />
                 ) : (
-                    <div className="w-full h-full flex items-center justify-center text-muted-foreground/30 font-light text-2xl uppercase tracking-widest transition-transform duration-300 group-hover:scale-105">
+                    <div className="w-full h-full flex items-center justify-center text-muted-foreground/30 font-light text-3xl uppercase tracking-widest transition-transform duration-300 group-hover:scale-105">
                         {displayName.charAt(0).toUpperCase()}
                     </div>
                 )}
