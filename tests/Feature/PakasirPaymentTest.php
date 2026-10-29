@@ -186,7 +186,7 @@ test('checkout index provides active payment methods from database', function ()
 
     $response->assertInertia(fn ($page) => $page
         ->component('checkout')
-        ->has('payment_methods', 11)
+        ->has('payment_methods', 13)
         ->where('payment_methods.0.code', 'payment_link')
         ->where('payment_methods.1.code', 'qris')
     );
