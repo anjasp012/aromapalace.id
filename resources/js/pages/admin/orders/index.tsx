@@ -15,6 +15,9 @@ import {
     X,
     Eye,
     Package,
+    RotateCcw,
+    Trash2,
+    AlertTriangle,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -60,6 +63,9 @@ interface OrderSummary {
     items_preview: OrderItemPreview[];
     created_at: string;
     created_at_human?: string;
+    is_deleted?: boolean;
+    deleted_at?: string;
+    deleted_at_human?: string;
 }
 
 interface PaginationLink {
@@ -91,6 +97,7 @@ interface OrdersIndexProps {
         pengambilan: number;
         selesai: number;
         dibatalkan: number;
+        sampah?: number;
     };
 }
 
@@ -102,9 +109,14 @@ export default function AdminOrdersIndex({
     const [search, setSearch] = useState(filters.search || '');
     const [selectedDeliveryType, setSelectedDeliveryType] = useState(filters.delivery_type || 'all');
     const [quickStatusOrder, setQuickStatusOrder] = useState<OrderSummary | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<OrderSummary | null>(null);
+    const [forceDeleteTarget, setForceDeleteTarget] = useState<OrderSummary | null>(null);
     const [targetStatus, setTargetStatus] = useState<string>('');
     const [statusNotes, setStatusNotes] = useState<string>('');
     const [isUpdating, setIsUpdating] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [isForceDeleting, setIsForceDeleting] = useState(false);
+    const [restoringOrder, setRestoringOrder] = useState<string | null>(null);
 
     const activeTab = filters.status || 'all';
 
@@ -201,7 +213,39 @@ export default function AdminOrdersIndex({
         );
     };
 
-    const renderStatusBadge = (status: string, label: string) => {
+    const handleRestoreOrder = (order: OrderSummary) => {
+        setRestoringOrder(order.order_number);
+        router.post(`/manajemen-pesanan/${order.order_number}/pulihkan`, {}, {
+            onFinish: () => setRestoringOrder(null),
+        });
+    };
+
+    const handleDeleteOrder = () => {
+        if (!deleteTarget) return;
+        setIsDeleting(true);
+        router.delete(`/manajemen-pesanan/${deleteTarget.order_number}`, {
+            onSuccess: () => setDeleteTarget(null),
+            onFinish: () => setIsDeleting(false),
+        });
+    };
+
+    const handleForceDeleteOrder = () => {
+        if (!forceDeleteTarget) return;
+        setIsForceDeleting(true);
+        router.delete(`/manajemen-pesanan/${forceDeleteTarget.order_number}/hapus-permanen`, {
+            onSuccess: () => setForceDeleteTarget(null),
+            onFinish: () => setIsForceDeleting(false),
+        });
+    };
+
+    const renderStatusBadge = (status: string, label: string, isDeleted?: boolean) => {
+        if (isDeleted) {
+            return (
+                <Badge variant="destructive" className="bg-rose-600 text-white gap-1">
+                    <Trash2 className="size-3" /> Terhapus
+                </Badge>
+            );
+        }
         switch (status) {
             case 'selesai':
                 return <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-200"><CheckCircle2 className="size-3 mr-1" /> Selesai</Badge>;
@@ -226,6 +270,7 @@ export default function AdminOrdersIndex({
         { key: 'pengambilan', label: 'Ambil di Butik', count: tab_counts.pengambilan },
         { key: 'selesai', label: 'Selesai', count: tab_counts.selesai },
         { key: 'dibatalkan', label: 'Dibatalkan', count: tab_counts.dibatalkan },
+        { key: 'sampah', label: 'Sampah', count: tab_counts.sampah || 0 },
     ];
 
     return (
@@ -428,31 +473,72 @@ export default function AdminOrdersIndex({
                                             </td>
 
                                             <td className="p-4 align-middle whitespace-nowrap">
-                                                {renderStatusBadge(order.order_status, order.status_label)}
+                                                {renderStatusBadge(order.order_status, order.status_label, order.is_deleted)}
                                             </td>
 
                                             <td className="p-4 align-middle whitespace-nowrap text-right">
-                                                <div className="flex items-center justify-end gap-1.5">
-                                                    <Button
-                                                        type="button"
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => {
-                                                            setQuickStatusOrder(order);
-                                                            setTargetStatus(order.order_status);
-                                                        }}
-                                                        className="h-8 text-xs"
-                                                    >
-                                                        Status
-                                                    </Button>
+                                                {order.is_deleted ? (
+                                                    <div className="flex items-center justify-end gap-1.5">
+                                                        <Button
+                                                            type="button"
+                                                            size="sm"
+                                                            variant="outline"
+                                                            disabled={restoringOrder === order.order_number}
+                                                            onClick={() => handleRestoreOrder(order)}
+                                                            className="h-8 text-xs text-emerald-600 border-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 cursor-pointer"
+                                                            title="Pulihkan Pesanan"
+                                                        >
+                                                            <RotateCcw className={`size-3.5 mr-1 ${restoringOrder === order.order_number ? 'animate-spin' : ''}`} />
+                                                            <span>Pulihkan</span>
+                                                        </Button>
+                                                        <Button
+                                                            type="button"
+                                                            size="sm"
+                                                            variant="destructive"
+                                                            onClick={() => setForceDeleteTarget(order)}
+                                                            className="h-8 text-xs cursor-pointer"
+                                                            title="Hapus Total dari Database"
+                                                        >
+                                                            <Trash2 className="size-3.5 mr-1" />
+                                                            <span>Hapus Total</span>
+                                                        </Button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center justify-end gap-1.5">
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => {
+                                                                setQuickStatusOrder(order);
+                                                                setTargetStatus(order.order_status);
+                                                            }}
+                                                            className="h-8 text-xs cursor-pointer"
+                                                        >
+                                                            Status
+                                                        </Button>
 
-                                                    <Button size="sm" variant="default" asChild className="h-8">
-                                                        <Link href={`/manajemen-pesanan/${order.order_number}`}>
-                                                            <Eye className="size-3.5 mr-1" />
-                                                            <span>Detail</span>
-                                                        </Link>
-                                                    </Button>
-                                                </div>
+                                                        <Button size="sm" variant="default" asChild className="h-8 cursor-pointer">
+                                                            <Link href={`/manajemen-pesanan/${order.order_number}`}>
+                                                                <Eye className="size-3.5 mr-1" />
+                                                                <span>Detail</span>
+                                                            </Link>
+                                                        </Button>
+
+                                                        {order.order_status === 'dibatalkan' && (
+                                                            <Button
+                                                                type="button"
+                                                                size="icon"
+                                                                variant="ghost"
+                                                                onClick={() => setDeleteTarget(order)}
+                                                                className="size-8 text-destructive hover:bg-destructive/10 cursor-pointer"
+                                                                title="Pindahkan ke Sampah"
+                                                            >
+                                                                <Trash2 className="size-3.5" />
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </td>
                                         </tr>
                                     );
@@ -585,6 +671,72 @@ export default function AdminOrdersIndex({
                                     </Button>
                                 </div>
                             </form>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
+
+            {/* Delete (Soft Delete) Modal */}
+            {deleteTarget && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in"
+                    onClick={() => setDeleteTarget(null)}
+                >
+                    <Card className="max-w-sm w-full shadow-lg" onClick={(e) => e.stopPropagation()}>
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-base font-semibold">Pindahkan ke Sampah?</CardTitle>
+                            <CardDescription>
+                                Apakah Anda yakin ingin memindahkan pesanan #<strong>{deleteTarget.order_number}</strong> ke Sampah? Pesanan dapat dipulihkan kapan saja.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex justify-end gap-2 pt-2">
+                            <Button variant="outline" size="sm" onClick={() => setDeleteTarget(null)}>
+                                Batal
+                            </Button>
+                            <Button
+                                variant="destructive"
+                                size="sm"
+                                disabled={isDeleting}
+                                onClick={handleDeleteOrder}
+                            >
+                                {isDeleting ? 'Memindahkan...' : 'Ya, Hapus'}
+                            </Button>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
+
+            {/* Force Delete Modal */}
+            {forceDeleteTarget && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in"
+                    onClick={() => setForceDeleteTarget(null)}
+                >
+                    <Card className="max-w-md w-full shadow-lg border-destructive/50" onClick={(e) => e.stopPropagation()}>
+                        <CardHeader className="pb-2">
+                            <div className="flex items-center gap-2 text-destructive mb-1">
+                                <AlertTriangle className="size-5" />
+                                <CardTitle className="text-base font-semibold text-destructive">Hapus Permanen Pesanan?</CardTitle>
+                            </div>
+                            <CardDescription>
+                                Apakah Anda yakin ingin menghapus pesanan #<strong>{forceDeleteTarget.order_number}</strong> secara <strong>PERMANEN</strong> dari database?
+                                <span className="block mt-2 text-rose-600 font-medium">
+                                    PERINGATAN: Seluruh item pesanan dan data resi pengiriman terkait akan dihapus total dari database dan TIDAK DAPAT dipulihkan kembali!
+                                </span>
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex justify-end gap-2 pt-2">
+                            <Button variant="outline" size="sm" onClick={() => setForceDeleteTarget(null)}>
+                                Batal
+                            </Button>
+                            <Button
+                                variant="destructive"
+                                size="sm"
+                                disabled={isForceDeleting}
+                                onClick={handleForceDeleteOrder}
+                            >
+                                {isForceDeleting ? 'Menghapus Total...' : 'Ya, Hapus Total'}
+                            </Button>
                         </CardContent>
                     </Card>
                 </div>

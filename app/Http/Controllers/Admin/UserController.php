@@ -28,10 +28,18 @@ class UserController extends Controller
     {
         $search = trim((string) $request->query('search', ''));
         $role = (string) $request->query('role', 'all');
+        $status = (string) $request->query('status', 'all');
 
         $query = User::withCount(['orders'])
             ->with(['membership'])
-            ->latest();
+            ->latest('id');
+
+        if ($status === 'trashed' || $status === 'sampah') {
+            $query = User::onlyTrashed()
+                ->withCount(['orders'])
+                ->with(['membership'])
+                ->latest('deleted_at');
+        }
 
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
@@ -51,6 +59,7 @@ class UserController extends Controller
             'total_customers' => User::where('role', 'customer')->count(),
             'total_admins' => User::where('role', 'admin')->count(),
             'total_members' => Membership::count(),
+            'total_trashed' => User::onlyTrashed()->count(),
         ];
 
         return Inertia::render('admin/users/index', [
@@ -68,10 +77,14 @@ class UserController extends Controller
                 ] : null,
                 'created_at' => $user->created_at?->format('d M Y'),
                 'created_at_human' => $user->created_at?->diffForHumans(),
+                'is_deleted' => (bool) $user->deleted_at,
+                'deleted_at' => $user->deleted_at?->format('d M Y, H:i'),
+                'deleted_at_human' => $user->deleted_at?->diffForHumans(),
             ]),
             'filters' => [
                 'search' => $search,
                 'role' => $role,
+                'status' => $status,
             ],
             'metrics' => $metrics,
         ]);
@@ -369,5 +382,37 @@ class UserController extends Controller
         $user->delete();
 
         return redirect()->route('admin.users.index')->with('success', "Akun {$name} berhasil dihapus.");
+    }
+
+    /**
+     * Restore a soft-deleted customer/user account.
+     */
+    public function restore(int|string $id): RedirectResponse
+    {
+        $user = User::onlyTrashed()->findOrFail($id);
+        $user->restore();
+
+        return back()->with('success', "Akun {$user->name} berhasil dipulihkan.");
+    }
+
+    /**
+     * Permanently delete a user account from database.
+     */
+    public function forceDelete(int|string $id): RedirectResponse
+    {
+        $user = User::onlyTrashed()->findOrFail($id);
+        $name = $user->name;
+
+        // Clean up any remaining related records
+        $user->cartItems()->delete();
+        $user->wishlists()->delete();
+        $user->addresses()->delete();
+        if ($user->membership) {
+            $user->membership->delete();
+        }
+
+        $user->forceDelete();
+
+        return back()->with('success', "Akun {$name} berhasil dihapus permanen dari database.");
     }
 }

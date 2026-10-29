@@ -29,7 +29,36 @@ class OrderController extends Controller
         $deliveryType = (string) $request->query('delivery_type', 'all');
         $search = trim((string) $request->query('search', ''));
 
-        $query = Order::with(['items', 'store', 'user', 'voucher'])->latest();
+        if ($status === 'sampah' || $status === 'trashed') {
+            $query = Order::onlyTrashed()->with(['items', 'store', 'user', 'voucher'])->latest('deleted_at');
+        } else {
+            $query = Order::with(['items', 'store', 'user', 'voucher'])->latest('id');
+
+            if ($status === 'menunggu_pembayaran') {
+                $query->where(function ($q) {
+                    $q->where('status', 'menunggu_pembayaran')
+                        ->orWhere(fn ($sub) => $sub->whereNull('status')->where('payment_status', 'pending'));
+                });
+            } elseif ($status === 'diproses') {
+                $query->where('status', 'diproses');
+            } elseif ($status === 'dikirim') {
+                $query->where('status', 'dikirim')->where(function ($q) {
+                    $q->where('delivery_type', 'delivery')->orWhereNull('delivery_type');
+                });
+            } elseif ($status === 'pengambilan') {
+                $query->where('status', 'dikirim')->where('delivery_type', 'pickup');
+            } elseif ($status === 'selesai') {
+                $query->where(function ($q) {
+                    $q->where('status', 'selesai')
+                        ->orWhere(fn ($sub) => $sub->whereNull('status')->where('payment_status', 'paid'));
+                });
+            } elseif ($status === 'dibatalkan') {
+                $query->where(function ($q) {
+                    $q->where('status', 'dibatalkan')
+                        ->orWhere('payment_status', 'cancelled');
+                });
+            }
+        }
 
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
@@ -48,31 +77,6 @@ class OrderController extends Controller
             $query->where('delivery_type', $deliveryType);
         }
 
-        if ($status === 'menunggu_pembayaran') {
-            $query->where(function ($q) {
-                $q->where('status', 'menunggu_pembayaran')
-                    ->orWhere(fn ($sub) => $sub->whereNull('status')->where('payment_status', 'pending'));
-            });
-        } elseif ($status === 'diproses') {
-            $query->where('status', 'diproses');
-        } elseif ($status === 'dikirim') {
-            $query->where('status', 'dikirim')->where(function ($q) {
-                $q->where('delivery_type', 'delivery')->orWhereNull('delivery_type');
-            });
-        } elseif ($status === 'pengambilan') {
-            $query->where('status', 'dikirim')->where('delivery_type', 'pickup');
-        } elseif ($status === 'selesai') {
-            $query->where(function ($q) {
-                $q->where('status', 'selesai')
-                    ->orWhere(fn ($sub) => $sub->whereNull('status')->where('payment_status', 'paid'));
-            });
-        } elseif ($status === 'dibatalkan') {
-            $query->where(function ($q) {
-                $q->where('status', 'dibatalkan')
-                    ->orWhere('payment_status', 'cancelled');
-            });
-        }
-
         $orders = $query->paginate(15)->withQueryString()->through(fn (Order $order) => $this->mapOrderSummary($order));
 
         $tabCounts = [
@@ -89,6 +93,7 @@ class OrderController extends Controller
                 ->orWhere(fn ($q) => $q->whereNull('status')->where('payment_status', 'paid'))
                 ->count(),
             'dibatalkan' => Order::where('status', 'dibatalkan')->orWhere('payment_status', 'cancelled')->count(),
+            'sampah' => Order::onlyTrashed()->count(),
         ];
 
         return Inertia::render('admin/orders/index', [
@@ -338,6 +343,40 @@ class OrderController extends Controller
     }
 
     /**
+     * Restore a soft-deleted cancelled order.
+     */
+    public function restore(string $order): RedirectResponse
+    {
+        $orderModel = Order::onlyTrashed()->where(function ($q) use ($order) {
+            $q->where('order_number', $order)->orWhere('id', $order);
+        })->firstOrFail();
+
+        $orderNumber = $orderModel->order_number;
+        $orderModel->restore();
+
+        return back()->with('success', "Pesanan #{$orderNumber} berhasil dipulihkan.");
+    }
+
+    /**
+     * Permanently delete an order and its items from database.
+     */
+    public function forceDelete(string $order): RedirectResponse
+    {
+        $orderModel = Order::onlyTrashed()->where(function ($q) use ($order) {
+            $q->where('order_number', $order)->orWhere('id', $order);
+        })->firstOrFail();
+
+        $orderNumber = $orderModel->order_number;
+
+        // Clean up child relations
+        $orderModel->items()->delete();
+        $orderModel->shipping()->delete();
+        $orderModel->forceDelete();
+
+        return back()->with('success', "Pesanan #{$orderNumber} berhasil dihapus permanen dari database.");
+    }
+
+    /**
      * Map order for summary list views.
      *
      * @return array<string, mixed>
@@ -392,6 +431,9 @@ class OrderController extends Controller
             ]),
             'created_at' => $order->created_at?->format('d M Y, H:i').' WIB',
             'created_at_human' => $order->created_at?->diffForHumans(),
+            'is_deleted' => (bool) $order->deleted_at,
+            'deleted_at' => $order->deleted_at?->format('d M Y, H:i').' WIB',
+            'deleted_at_human' => $order->deleted_at?->diffForHumans(),
         ];
     }
 

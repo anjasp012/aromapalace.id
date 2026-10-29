@@ -32,7 +32,22 @@ class ProductController extends Controller
         $stockFilter = (string) $request->query('stock_filter', 'all');
         $statusFilter = (string) $request->query('status', 'all');
 
-        $query = Product::with(['categories', 'brand', 'variants', 'galleries'])->latest('id');
+        if ($statusFilter === 'trashed' || $statusFilter === 'sampah') {
+            $query = Product::onlyTrashed()->with([
+                'categories',
+                'brand',
+                'variants' => fn ($vq) => $vq->withTrashed(),
+                'galleries',
+            ])->latest('deleted_at');
+        } else {
+            $query = Product::with(['categories', 'brand', 'variants', 'galleries'])->latest('id');
+
+            if ($statusFilter === 'draft') {
+                $query->where('is_draft', true);
+            } elseif ($statusFilter === 'published') {
+                $query->where('is_draft', false);
+            }
+        }
 
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
@@ -70,12 +85,6 @@ class ProductController extends Controller
             $query->whereDoesntHave('variants', function ($vq) {
                 $vq->where('stock', '>', 0);
             });
-        }
-
-        if ($statusFilter === 'draft') {
-            $query->where('is_draft', true);
-        } elseif ($statusFilter === 'published') {
-            $query->where('is_draft', false);
         }
 
         $products = $query->paginate(12)->withQueryString()->through(function (Product $product) {
@@ -132,6 +141,9 @@ class ProductController extends Controller
                 'is_special_offers' => (bool) $product->is_special_offers,
                 'is_draft' => (bool) $product->is_draft,
                 'created_at' => $product->created_at?->format('d M Y'),
+                'is_deleted' => (bool) $product->deleted_at,
+                'deleted_at' => $product->deleted_at?->format('d M Y, H:i'),
+                'deleted_at_human' => $product->deleted_at?->diffForHumans(),
             ];
         });
 
@@ -142,6 +154,7 @@ class ProductController extends Controller
         $totalVariants = ProductVariant::count();
         $lowStockCount = Product::whereHas('variants', fn ($q) => $q->where('stock', '>', 0)->where('stock', '<=', 10))->count();
         $outOfStockCount = Product::whereDoesntHave('variants', fn ($q) => $q->where('stock', '>', 0))->count();
+        $trashedCount = Product::onlyTrashed()->count();
 
         $categories = Category::select('id', 'name', 'type')->orderBy('type')->orderBy('name')->get();
         $brands = Brand::select('id', 'name')->orderBy('name')->get();
@@ -164,6 +177,7 @@ class ProductController extends Controller
                 'total_variants' => $totalVariants,
                 'low_stock_count' => $lowStockCount,
                 'out_of_stock_count' => $outOfStockCount,
+                'trashed_count' => $trashedCount,
                 'total_categories' => $categories->count(),
                 'total_brands' => $brands->count(),
             ],
@@ -639,5 +653,53 @@ class ProductController extends Controller
         }
 
         return $slug;
+    }
+
+    /**
+     * Restore a soft-deleted product and its variants.
+     */
+    public function restore(int|string $id): RedirectResponse
+    {
+        $product = Product::onlyTrashed()->findOrFail($id);
+        $name = $product->name;
+
+        $product->restore();
+        $product->variants()->onlyTrashed()->restore();
+
+        return back()->with('success', "Produk \"{$name}\" berhasil dipulihkan.");
+    }
+
+    /**
+     * Permanently delete a product, variants, and its images.
+     */
+    public function forceDelete(int|string $id): RedirectResponse
+    {
+        $product = Product::onlyTrashed()->with(['galleries', 'variants' => fn ($q) => $q->withTrashed()])->findOrFail($id);
+        $name = $product->name;
+
+        // Check if there are active orders with this product
+        $hasActiveOrders = OrderItem::where('product_id', $product->id)
+            ->whereHas('order', fn ($q) => $q->whereNull('deleted_at')->whereIn('status', ['menunggu_pembayaran', 'diproses', 'dikirim']))
+            ->exists();
+
+        if ($hasActiveOrders) {
+            return back()->with('error', "Produk \"{$name}\" tidak dapat dihapus permanen karena masih tercatat pada transaksi pesanan aktif.");
+        }
+
+        // Delete gallery image files
+        foreach ($product->galleries as $gallery) {
+            if ($gallery->image && ! str_starts_with($gallery->image, 'http')) {
+                $cleanPath = preg_replace('/^\/?storage\//', '', $gallery->image);
+                Storage::disk('public')->delete($cleanPath);
+            }
+            $gallery->delete();
+        }
+
+        // Force delete variants and product
+        $product->variants()->withTrashed()->forceDelete();
+        $product->categories()->detach();
+        $product->forceDelete();
+
+        return back()->with('success', "Produk \"{$name}\" berhasil dihapus permanen dari database.");
     }
 }

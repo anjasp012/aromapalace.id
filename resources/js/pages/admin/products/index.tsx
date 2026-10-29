@@ -15,6 +15,7 @@ import {
     ExternalLink,
     Boxes,
     X,
+    RotateCcw,
 } from 'lucide-react';
 import {
     Card,
@@ -71,6 +72,9 @@ interface ProductItem {
     is_special_offers?: boolean;
     is_draft?: boolean;
     created_at?: string;
+    is_deleted?: boolean;
+    deleted_at?: string;
+    deleted_at_human?: string;
 }
 
 interface PaginationLink {
@@ -105,6 +109,7 @@ interface ProductsIndexProps {
         total_variants: number;
         low_stock_count: number;
         out_of_stock_count: number;
+        trashed_count?: number;
         total_categories: number;
         total_brands: number;
     };
@@ -132,7 +137,10 @@ export default function AdminProductsIndex({
     const [isSavingStock, setIsSavingStock] = useState(false);
 
     const [deleteTarget, setDeleteTarget] = useState<ProductItem | null>(null);
+    const [forceDeleteTarget, setForceDeleteTarget] = useState<ProductItem | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isForceDeleting, setIsForceDeleting] = useState(false);
+    const [restoringId, setRestoringId] = useState<number | null>(null);
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -187,6 +195,23 @@ export default function AdminProductsIndex({
         });
     };
 
+    const handleRestoreProduct = (product: ProductItem) => {
+        setRestoringId(product.id);
+        router.post(`/manajemen-produk/${product.id}/pulihkan`, {}, {
+            onFinish: () => setRestoringId(null),
+        });
+    };
+
+    const handleForceDeleteProduct = () => {
+        if (!forceDeleteTarget) return;
+
+        setIsForceDeleting(true);
+        router.delete(`/manajemen-produk/${forceDeleteTarget.id}/hapus-permanen`, {
+            onSuccess: () => setForceDeleteTarget(null),
+            onFinish: () => setIsForceDeleting(false),
+        });
+    };
+
     return (
         <AdminLayout
             title="Katalog Produk"
@@ -204,6 +229,9 @@ export default function AdminProductsIndex({
                             <div className="text-2xl font-bold">{metrics.total_products}</div>
                             <p className="text-xs text-muted-foreground mt-1">
                                 {metrics.published_count ?? metrics.total_products} Terbit &bull; {metrics.draft_count ?? 0} Draft
+                                {(metrics.trashed_count ?? 0) > 0 && (
+                                    <span className="text-destructive font-semibold"> &bull; {metrics.trashed_count} Sampah</span>
+                                )}
                             </p>
                         </CardContent>
                     </Card>
@@ -337,6 +365,9 @@ export default function AdminProductsIndex({
                                     <SelectItem value="all">Semua Status</SelectItem>
                                     <SelectItem value="published">Publikasi ({metrics.published_count ?? 0})</SelectItem>
                                     <SelectItem value="draft">Draft ({metrics.draft_count ?? 0})</SelectItem>
+                                    <SelectItem value="trashed" className="text-destructive font-medium">
+                                        Sampah ({metrics.trashed_count ?? 0})
+                                    </SelectItem>
                                 </SelectContent>
                             </Select>
 
@@ -461,7 +492,12 @@ export default function AdminProductsIndex({
                                         <td className="p-4 align-middle whitespace-nowrap">
                                             <div className="space-y-1">
                                                 <div>
-                                                    {product.is_draft ? (
+                                                    {product.is_deleted ? (
+                                                        <Badge variant="destructive" className="text-[10px] gap-1 font-semibold">
+                                                            <Trash2 className="size-3" />
+                                                            Terhapus
+                                                        </Badge>
+                                                    ) : product.is_draft ? (
                                                         <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-700 border-amber-300 dark:text-amber-400 dark:border-amber-800 font-semibold gap-1">
                                                             <span className="size-1.5 rounded-full bg-amber-500 animate-pulse" />
                                                             Draft
@@ -518,6 +554,7 @@ export default function AdminProductsIndex({
 
                                                         <button
                                                             type="button"
+                                                            disabled={product.is_deleted}
                                                             onClick={() => {
                                                                 setQuickStockTarget({
                                                                     productId: product.id,
@@ -526,13 +563,13 @@ export default function AdminProductsIndex({
                                                                 });
                                                                 setNewStockValue(v.stock);
                                                             }}
-                                                            className={`px-1.5 py-0.5 rounded text-[10px] font-medium border cursor-pointer ${v.stock <= 0
+                                                            className={`px-1.5 py-0.5 rounded text-[10px] font-medium border ${product.is_deleted ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'} ${v.stock <= 0
                                                                     ? 'bg-destructive/10 text-destructive border-destructive/20'
                                                                     : v.stock <= 10
                                                                         ? 'bg-amber-50 text-amber-700 border-amber-200'
                                                                         : 'bg-muted text-muted-foreground'
                                                                 }`}
-                                                            title="Klik untuk ubah stok"
+                                                            title={product.is_deleted ? "Produk di sampah" : "Klik untuk ubah stok"}
                                                         >
                                                             {v.stock} unit
                                                         </button>
@@ -551,24 +588,52 @@ export default function AdminProductsIndex({
                                         </td>
 
                                         <td className="p-4 whitespace-nowrap align-middle text-right">
-                                            <div className="flex items-center justify-end gap-1">
-                                                <Button variant="outline" size="sm" asChild className="h-8">
-                                                    <Link href={`/manajemen-produk/${product.id}/edit`}>
-                                                        <Edit3 className="size-3.5 mr-1" />
-                                                        <span>Edit</span>
-                                                    </Link>
-                                                </Button>
+                                            {product.is_deleted ? (
+                                                <div className="flex items-center justify-end gap-1.5">
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        disabled={restoringId === product.id}
+                                                        onClick={() => handleRestoreProduct(product)}
+                                                        className="h-8 text-xs text-emerald-600 border-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 cursor-pointer"
+                                                        title="Pulihkan Produk"
+                                                    >
+                                                        <RotateCcw className={`size-3.5 mr-1 ${restoringId === product.id ? 'animate-spin' : ''}`} />
+                                                        <span>Pulihkan</span>
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        variant="destructive"
+                                                        size="sm"
+                                                        onClick={() => setForceDeleteTarget(product)}
+                                                        className="h-8 text-xs cursor-pointer"
+                                                        title="Hapus Total dari Database"
+                                                    >
+                                                        <Trash2 className="size-3.5 mr-1" />
+                                                        <span>Hapus Total</span>
+                                                    </Button>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center justify-end gap-1">
+                                                    <Button variant="outline" size="sm" asChild className="h-8">
+                                                        <Link href={`/manajemen-produk/${product.id}/edit`}>
+                                                            <Edit3 className="size-3.5 mr-1" />
+                                                            <span>Edit</span>
+                                                        </Link>
+                                                    </Button>
 
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => setDeleteTarget(product)}
-                                                    className="size-8 text-destructive hover:bg-destructive/10"
-                                                    title="Hapus"
-                                                >
-                                                    <Trash2 className="size-3.5" />
-                                                </Button>
-                                            </div>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => setDeleteTarget(product)}
+                                                        className="size-8 text-destructive hover:bg-destructive/10 cursor-pointer"
+                                                        title="Hapus ke Sampah"
+                                                    >
+                                                        <Trash2 className="size-3.5" />
+                                                    </Button>
+                                                </div>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}
@@ -667,7 +732,7 @@ export default function AdminProductsIndex({
                 </div>
             )}
 
-            {/* Delete Modal */}
+            {/* Delete Modal (Soft Delete) */}
             {deleteTarget && (
                 <div
                     className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in"
@@ -675,9 +740,9 @@ export default function AdminProductsIndex({
                 >
                     <Card className="max-w-sm w-full shadow-lg" onClick={(e) => e.stopPropagation()}>
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-base font-semibold">Hapus Produk?</CardTitle>
+                            <CardTitle className="text-base font-semibold">Pindahkan ke Sampah?</CardTitle>
                             <CardDescription>
-                                Apakah Anda yakin ingin menghapus parfum "{deleteTarget.name}"? Seluruh varian dan galeri terkait akan dihapus.
+                                Apakah Anda yakin ingin menghapus parfum "{deleteTarget.name}"? Produk akan dipindahkan ke folder Sampah dan dapat dipulihkan kapan saja.
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="flex justify-end gap-2 pt-2">
@@ -690,7 +755,43 @@ export default function AdminProductsIndex({
                                 disabled={isDeleting}
                                 onClick={handleDeleteProduct}
                             >
-                                {isDeleting ? 'Menghapus...' : 'Hapus'}
+                                {isDeleting ? 'Memindahkan...' : 'Ya, Hapus'}
+                            </Button>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
+
+            {/* Force Delete Modal */}
+            {forceDeleteTarget && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in"
+                    onClick={() => setForceDeleteTarget(null)}
+                >
+                    <Card className="max-w-md w-full shadow-lg border-destructive/50" onClick={(e) => e.stopPropagation()}>
+                        <CardHeader className="pb-2">
+                            <div className="flex items-center gap-2 text-destructive mb-1">
+                                <AlertTriangle className="size-5" />
+                                <CardTitle className="text-base font-semibold text-destructive">Hapus Permanen Produk?</CardTitle>
+                            </div>
+                            <CardDescription>
+                                Apakah Anda yakin ingin menghapus parfum "<strong>{forceDeleteTarget.name}</strong>" secara <strong>PERMANEN</strong> dari database?
+                                <span className="block mt-2 text-rose-600 font-medium">
+                                    PERINGATAN: Seluruh varian dan file foto produk akan dihapus selamanya dan TIDAK DAPAT dipulihkan kembali!
+                                </span>
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex justify-end gap-2 pt-2">
+                            <Button variant="outline" size="sm" onClick={() => setForceDeleteTarget(null)}>
+                                Batal
+                            </Button>
+                            <Button
+                                variant="destructive"
+                                size="sm"
+                                disabled={isForceDeleting}
+                                onClick={handleForceDeleteProduct}
+                            >
+                                {isForceDeleting ? 'Menghapus Total...' : 'Ya, Hapus Permanen'}
                             </Button>
                         </CardContent>
                     </Card>

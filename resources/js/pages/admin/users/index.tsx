@@ -12,6 +12,8 @@ import {
     Trash2,
     RefreshCw,
     Plus,
+    RotateCcw,
+    AlertTriangle,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -41,6 +43,9 @@ interface UserItem {
     membership: MembershipSummary | null;
     created_at: string;
     created_at_human: string;
+    is_deleted?: boolean;
+    deleted_at?: string;
+    deleted_at_human?: string;
 }
 
 interface PaginationLink {
@@ -62,12 +67,14 @@ interface UsersIndexProps {
     filters: {
         search: string;
         role: string;
+        status?: string;
     };
     metrics: {
         total_users: number;
         total_customers: number;
         total_admins: number;
         total_members: number;
+        total_trashed?: number;
     };
 }
 
@@ -78,15 +85,20 @@ export default function AdminUsersIndex({
 }: UsersIndexProps) {
     const [search, setSearch] = useState(filters.search || '');
     const [roleFilter, setRoleFilter] = useState(filters.role || 'all');
+    const [statusFilter, setStatusFilter] = useState(filters.status || 'all');
     const [deleteTarget, setDeleteTarget] = useState<UserItem | null>(null);
+    const [forceDeleteTarget, setForceDeleteTarget] = useState<UserItem | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isForceDeleting, setIsForceDeleting] = useState(false);
+    const [restoringId, setRestoringId] = useState<number | null>(null);
 
-    const applyFilter = (newVals: { search?: string; role?: string }) => {
+    const applyFilter = (newVals: { search?: string; role?: string; status?: string }) => {
         router.get(
             '/manajemen-pengguna',
             {
                 search: newVals.search !== undefined ? newVals.search : (search || undefined),
                 role: newVals.role !== undefined ? (newVals.role !== 'all' ? newVals.role : undefined) : (roleFilter !== 'all' ? roleFilter : undefined),
+                status: newVals.status !== undefined ? (newVals.status !== 'all' ? newVals.status : undefined) : (statusFilter !== 'all' ? statusFilter : undefined),
             },
             { preserveState: true }
         );
@@ -102,9 +114,15 @@ export default function AdminUsersIndex({
         applyFilter({ role });
     };
 
+    const handleStatusFilterChange = (status: string) => {
+        setStatusFilter(status);
+        applyFilter({ status });
+    };
+
     const handleResetFilter = () => {
         setSearch('');
         setRoleFilter('all');
+        setStatusFilter('all');
         router.get('/manajemen-pengguna');
     };
 
@@ -115,6 +133,24 @@ export default function AdminUsersIndex({
             onFinish: () => {
                 setIsDeleting(false);
                 setDeleteTarget(null);
+            },
+        });
+    };
+
+    const handleRestoreUser = (user: UserItem) => {
+        setRestoringId(user.id);
+        router.post(`/manajemen-pengguna/${user.id}/pulihkan`, {}, {
+            onFinish: () => setRestoringId(null),
+        });
+    };
+
+    const handleForceDeleteSubmit = () => {
+        if (!forceDeleteTarget) return;
+        setIsForceDeleting(true);
+        router.delete(`/manajemen-pengguna/${forceDeleteTarget.id}/hapus-permanen`, {
+            onFinish: () => {
+                setIsForceDeleting(false);
+                setForceDeleteTarget(null);
             },
         });
     };
@@ -197,34 +233,61 @@ export default function AdminUsersIndex({
                             <div className="flex rounded-md border p-0.5 bg-muted/40">
                                 <Button
                                     type="button"
-                                    variant={roleFilter === 'all' ? 'default' : 'ghost'}
+                                    variant={statusFilter !== 'trashed' && roleFilter === 'all' ? 'default' : 'ghost'}
                                     size="sm"
-                                    onClick={() => handleRoleFilterChange('all')}
+                                    onClick={() => {
+                                        setStatusFilter('all');
+                                        handleRoleFilterChange('all');
+                                    }}
                                     className="h-7 text-xs px-2.5 cursor-pointer"
                                 >
                                     Semua
                                 </Button>
                                 <Button
                                     type="button"
-                                    variant={roleFilter === 'customer' ? 'default' : 'ghost'}
+                                    variant={statusFilter !== 'trashed' && roleFilter === 'customer' ? 'default' : 'ghost'}
                                     size="sm"
-                                    onClick={() => handleRoleFilterChange('customer')}
+                                    onClick={() => {
+                                        setStatusFilter('all');
+                                        handleRoleFilterChange('customer');
+                                    }}
                                     className="h-7 text-xs px-2.5 cursor-pointer"
                                 >
                                     Pelanggan
                                 </Button>
                                 <Button
                                     type="button"
-                                    variant={roleFilter === 'admin' ? 'default' : 'ghost'}
+                                    variant={statusFilter !== 'trashed' && roleFilter === 'admin' ? 'default' : 'ghost'}
                                     size="sm"
-                                    onClick={() => handleRoleFilterChange('admin')}
+                                    onClick={() => {
+                                        setStatusFilter('all');
+                                        handleRoleFilterChange('admin');
+                                    }}
                                     className="h-7 text-xs px-2.5 cursor-pointer"
                                 >
                                     Admin
                                 </Button>
+                                <Button
+                                    type="button"
+                                    variant={statusFilter === 'trashed' ? 'destructive' : 'ghost'}
+                                    size="sm"
+                                    onClick={() => handleStatusFilterChange(statusFilter === 'trashed' ? 'all' : 'trashed')}
+                                    className="h-7 text-xs px-2.5 cursor-pointer gap-1"
+                                >
+                                    <Trash2 className="size-3" />
+                                    <span>Sampah</span>
+                                    {metrics.total_trashed ? (
+                                        <Badge
+                                            variant={statusFilter === 'trashed' ? 'secondary' : 'destructive'}
+                                            className="text-[9px] px-1 py-0 h-4 font-bold"
+                                        >
+                                            {metrics.total_trashed}
+                                        </Badge>
+                                    ) : null}
+                                </Button>
                             </div>
 
-                            {(search !== '' || roleFilter !== 'all') && (
+                            {(search !== '' || roleFilter !== 'all' || statusFilter !== 'all') && (
                                 <Button
                                     type="button"
                                     variant="outline"
@@ -259,7 +322,9 @@ export default function AdminUsersIndex({
                                     <th className="h-10 px-4 text-left font-medium">Status Member</th>
                                     <th className="h-10 px-4 text-left font-medium">Saldo Poin</th>
                                     <th className="h-10 px-4 text-left font-medium">Pesanan</th>
-                                    <th className="h-10 px-4 text-left font-medium">Bergabung</th>
+                                    <th className="h-10 px-4 text-left font-medium">
+                                        {statusFilter === 'trashed' ? 'Waktu Dihapus' : 'Bergabung'}
+                                    </th>
                                     <th className="h-10 px-4 text-right font-medium">Aksi</th>
                                 </tr>
                             </thead>
@@ -267,18 +332,25 @@ export default function AdminUsersIndex({
                                 {users.data.length === 0 ? (
                                     <tr>
                                         <td colSpan={7} className="p-8 text-center text-muted-foreground">
-                                            Tidak ada pengguna ditemukan.
+                                            {statusFilter === 'trashed'
+                                                ? 'Tidak ada akun di dalam tong sampah.'
+                                                : 'Tidak ada pengguna ditemukan.'}
                                         </td>
                                     </tr>
                                 ) : (
                                     users.data.map((user) => (
-                                        <tr key={user.id} className="hover:bg-muted/50 transition-colors">
+                                        <tr key={user.id} className={`hover:bg-muted/50 transition-colors ${user.is_deleted ? 'bg-destructive/5' : ''}`}>
                                             <td className="p-4 align-middle">
                                                 <div className="font-medium text-foreground">{user.name}</div>
                                                 <div className="text-muted-foreground text-[11px]">{user.email}</div>
                                             </td>
                                             <td className="p-4 align-middle">
-                                                {user.role === 'admin' ? (
+                                                {user.is_deleted ? (
+                                                    <Badge variant="destructive" className="text-[10px] gap-1">
+                                                        <Trash2 className="size-3" />
+                                                        Terhapus
+                                                    </Badge>
+                                                ) : user.role === 'admin' ? (
                                                     <Badge variant="destructive" className="text-[10px]">
                                                         Admin
                                                     </Badge>
@@ -310,45 +382,82 @@ export default function AdminUsersIndex({
                                                 {user.orders_count} pesanan
                                             </td>
                                             <td className="p-4 align-middle text-muted-foreground">
-                                                {user.created_at}
+                                                {user.is_deleted ? (
+                                                    <div className="text-destructive font-medium text-[11px]">
+                                                        {user.deleted_at || '-'}
+                                                        <span className="block text-[10px] text-muted-foreground font-normal">
+                                                            {user.deleted_at_human}
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    user.created_at
+                                                )}
                                             </td>
                                             <td className="p-4 align-middle text-right">
-                                                <div className="flex items-center justify-end gap-1.5">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        asChild
-                                                        className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
-                                                        title="Lihat Detail & Mutasi Poin"
-                                                    >
-                                                        <Link href={`/manajemen-pengguna/${user.id}`}>
-                                                            <Eye className="size-3.5" />
-                                                        </Link>
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        asChild
-                                                        className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
-                                                        title="Edit Data Pengguna"
-                                                    >
-                                                        <Link href={`/manajemen-pengguna/${user.id}/edit`}>
-                                                            <Edit3 className="size-3.5" />
-                                                        </Link>
-                                                    </Button>
-                                                    {user.role !== 'admin' && (
+                                                {user.is_deleted ? (
+                                                    <div className="flex items-center justify-end gap-1.5">
                                                         <Button
                                                             type="button"
+                                                            variant="outline"
+                                                            size="sm"
+                                                            disabled={restoringId === user.id}
+                                                            onClick={() => handleRestoreUser(user)}
+                                                            className="h-8 text-xs text-emerald-600 border-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 cursor-pointer"
+                                                            title="Pulihkan Akun"
+                                                        >
+                                                            <RotateCcw className={`size-3.5 mr-1 ${restoringId === user.id ? 'animate-spin' : ''}`} />
+                                                            <span>Pulihkan</span>
+                                                        </Button>
+                                                        <Button
+                                                            type="button"
+                                                            variant="destructive"
+                                                            size="sm"
+                                                            onClick={() => setForceDeleteTarget(user)}
+                                                            className="h-8 text-xs cursor-pointer"
+                                                            title="Hapus Total dari Database"
+                                                        >
+                                                            <Trash2 className="size-3.5 mr-1" />
+                                                            <span>Hapus Total</span>
+                                                        </Button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center justify-end gap-1.5">
+                                                        <Button
                                                             variant="ghost"
                                                             size="icon"
-                                                            onClick={() => setDeleteTarget(user)}
-                                                            className="size-8 text-destructive hover:bg-destructive/10 cursor-pointer"
-                                                            title="Hapus Pengguna"
+                                                            asChild
+                                                            className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
+                                                            title="Lihat Detail & Mutasi Poin"
                                                         >
-                                                            <Trash2 className="size-3.5" />
+                                                            <Link href={`/manajemen-pengguna/${user.id}`}>
+                                                                <Eye className="size-3.5" />
+                                                            </Link>
                                                         </Button>
-                                                    )}
-                                                </div>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            asChild
+                                                            className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
+                                                            title="Edit Data Pengguna"
+                                                        >
+                                                            <Link href={`/manajemen-pengguna/${user.id}/edit`}>
+                                                                <Edit3 className="size-3.5" />
+                                                            </Link>
+                                                        </Button>
+                                                        {user.role !== 'admin' && (
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                onClick={() => setDeleteTarget(user)}
+                                                                className="size-8 text-destructive hover:bg-destructive/10 cursor-pointer"
+                                                                title="Hapus Pengguna"
+                                                            >
+                                                                <Trash2 className="size-3.5" />
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </td>
                                         </tr>
                                     ))
@@ -393,13 +502,13 @@ export default function AdminUsersIndex({
                 </Card>
             </div>
 
-            {/* Delete Confirmation Dialog */}
+            {/* Soft Delete Confirmation Dialog */}
             <Dialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Hapus Pengguna</DialogTitle>
+                        <DialogTitle>Pindahkan Pengguna ke Sampah?</DialogTitle>
                         <DialogDescription>
-                            Apakah Anda yakin ingin menghapus akun <strong>{deleteTarget?.name}</strong>? Tindakan ini tidak dapat dibatalkan.
+                            Apakah Anda yakin ingin menghapus akun <strong>{deleteTarget?.name}</strong>? Akun akan dipindahkan ke folder Sampah dan dapat dipulihkan kapan saja.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="gap-2 sm:gap-0">
@@ -419,6 +528,43 @@ export default function AdminUsersIndex({
                             onClick={handleDeleteSubmit}
                         >
                             {isDeleting ? 'Menghapus...' : 'Ya, Hapus'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Force Delete Confirmation Dialog */}
+            <Dialog open={Boolean(forceDeleteTarget)} onOpenChange={(open) => !open && setForceDeleteTarget(null)}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <div className="flex items-center gap-2 text-destructive mb-1">
+                            <AlertTriangle className="size-5" />
+                            <DialogTitle className="text-destructive">Hapus Permanen Akun?</DialogTitle>
+                        </div>
+                        <DialogDescription>
+                            Apakah Anda yakin ingin menghapus akun <strong>{forceDeleteTarget?.name}</strong> secara <strong>PERMANEN</strong> dari database?
+                            <span className="block mt-2 text-rose-600 font-semibold">
+                                PERINGATAN: Tindakan ini akan menghapus total data pengguna dan TIDAK DAPAT dipulihkan kembali!
+                            </span>
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setForceDeleteTarget(null)}
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            disabled={isForceDeleting}
+                            onClick={handleForceDeleteSubmit}
+                        >
+                            {isForceDeleting ? 'Menghapus Permanen...' : 'Ya, Hapus Total'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

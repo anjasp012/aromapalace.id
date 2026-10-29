@@ -46,6 +46,8 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/manajemen-pesanan/{order}', [OrderController::class, 'show'])->name('orders.show');
     Route::get('/manajemen-pesanan/{order}/shipping-label', [OrderController::class, 'shippingLabel'])->name('orders.shipping-label');
     Route::patch('/manajemen-pesanan/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
+    Route::post('/manajemen-pesanan/{order}/pulihkan', [OrderController::class, 'restore'])->name('orders.restore');
+    Route::delete('/manajemen-pesanan/{order}/hapus-permanen', [OrderController::class, 'forceDelete'])->name('orders.force-delete');
     Route::delete('/manajemen-pesanan/{order}', [OrderController::class, 'destroy'])->name('orders.destroy');
     Route::post('/manajemen-pesanan/{order}/sync-resi', [OrderController::class, 'syncResi'])->name('orders.sync-resi');
     Route::get('/api/shipping/track/{awb}', [ShippingController::class, 'track'])->name('admin.shipping.track');
@@ -61,6 +63,8 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('/manajemen-produk', [ProductController::class, 'store'])->name('products.store');
     Route::get('/manajemen-produk/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
     Route::match(['put', 'patch', 'post'], '/manajemen-produk/{product}', [ProductController::class, 'update'])->name('products.update');
+    Route::post('/manajemen-produk/{id}/pulihkan', [ProductController::class, 'restore'])->name('products.restore');
+    Route::delete('/manajemen-produk/{id}/hapus-permanen', [ProductController::class, 'forceDelete'])->name('products.force-delete');
     Route::delete('/manajemen-produk/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
 
     Route::patch('/manajemen-produk/{product}/variants/{variant}/stock', [ProductController::class, 'updateVariantStock'])->name('products.variants.update-stock');
@@ -134,6 +138,8 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::patch('/manajemen-pengguna/{user}/role', [UserController::class, 'updateRole'])->name('users.update-role');
     Route::post('/manajemen-pengguna/{user}/points/add', [UserController::class, 'addPoints'])->name('users.points.add');
     Route::post('/manajemen-pengguna/{user}/points/deduct', [UserController::class, 'deductPoints'])->name('users.points.deduct');
+    Route::post('/manajemen-pengguna/{id}/pulihkan', [UserController::class, 'restore'])->name('users.restore');
+    Route::delete('/manajemen-pengguna/{id}/hapus-permanen', [UserController::class, 'forceDelete'])->name('users.force-delete');
     Route::delete('/manajemen-pengguna/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 
     // Store & Origin Shipping Settings
