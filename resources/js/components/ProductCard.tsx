@@ -115,17 +115,17 @@ export default function ProductCard({
                         </Badge>
                     )}
                     {(product.is_new_arrivals || product.isNew) && (
-                        <Badge className="text-[10px] bg-emerald-600 hover:bg-emerald-600 text-white font-medium border-0 shadow-xs">
+                        <Badge className="text-[10px] bg-[#176b62] hover:bg-[#176b62] text-white font-medium border-0 shadow-xs">
                             New Arrival
                         </Badge>
                     )}
                     {product.is_best_sellers && (
-                        <Badge className="text-[10px] bg-amber-500 hover:bg-amber-500 text-amber-950 font-bold border-0 shadow-xs">
+                        <Badge className="text-[10px] bg-[#c29a4a] hover:bg-[#c29a4a] text-white font-medium border-0 shadow-xs">
                             Best Seller
                         </Badge>
                     )}
                     {product.is_special_offers && (
-                        <Badge className="text-[10px] bg-[#4A070B] hover:bg-[#4A070B] text-white font-medium border-0 shadow-xs">
+                        <Badge className="text-[10px] bg-[#8c263e] hover:bg-[#8c263e] text-white font-medium border-0 shadow-xs">
                             Special Offer
                         </Badge>
                     )}

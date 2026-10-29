@@ -146,7 +146,7 @@ export default function ProductQuickViewModal({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="w-[calc(100vw-32px)] max-w-[calc(100vw-32px)] sm:w-full sm:max-w-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-                    <div className="md:col-span-5 bg-muted rounded-xl overflow-hidden aspect-square">
+                    <div className="relative md:col-span-5 bg-muted rounded-xl overflow-hidden aspect-square">
                         {product.image ? (
                             <img
                                 src={product.image}
@@ -158,6 +158,24 @@ export default function ProductQuickViewModal({
                                 No Image
                             </div>
                         )}
+                        {/* Badges Container */}
+                        <div className="absolute top-2 left-2 flex flex-col gap-1 items-start pointer-events-none z-10">
+                            {(product.is_new_arrivals || product.isNew) && (
+                                <Badge className="text-[10px] bg-[#176b62] hover:bg-[#176b62] text-white font-medium border-0 shadow-xs">
+                                    New Arrival
+                                </Badge>
+                            )}
+                            {product.is_best_sellers && (
+                                <Badge className="text-[10px] bg-[#c29a4a] hover:bg-[#c29a4a] text-white font-medium border-0 shadow-xs">
+                                    Best Seller
+                                </Badge>
+                            )}
+                            {product.is_special_offers && (
+                                <Badge className="text-[10px] bg-[#8c263e] hover:bg-[#8c263e] text-white font-medium border-0 shadow-xs">
+                                    Special Offer
+                                </Badge>
+                            )}
+                        </div>
                     </div>
 
                     <div className="md:col-span-7 space-y-4">

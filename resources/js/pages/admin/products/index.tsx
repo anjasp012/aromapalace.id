@@ -563,17 +563,17 @@ export default function AdminProductsIndex({
                                                 {(product.is_new_arrivals || product.is_best_sellers || product.is_special_offers) && (
                                                     <div className="flex flex-wrap gap-1 max-w-[150px]">
                                                         {product.is_new_arrivals && (
-                                                            <Badge className="text-[9px] bg-emerald-600 hover:bg-emerald-600 text-white border-0 py-0 h-4">
+                                                            <Badge className="text-[9px] bg-[#176b62] hover:bg-[#176b62] text-white border-0 py-0 h-4 font-medium">
                                                                 New Arrival
                                                             </Badge>
                                                         )}
                                                         {product.is_best_sellers && (
-                                                            <Badge className="text-[9px] bg-amber-500 hover:bg-amber-500 text-amber-950 font-bold border-0 py-0 h-4">
+                                                            <Badge className="text-[9px] bg-[#c29a4a] hover:bg-[#c29a4a] text-white border-0 py-0 h-4 font-medium">
                                                                 Best Seller
                                                             </Badge>
                                                         )}
                                                         {product.is_special_offers && (
-                                                            <Badge className="text-[9px] bg-[#4A070B] hover:bg-[#4A070B] text-white border-0 py-0 h-4">
+                                                            <Badge className="text-[9px] bg-[#8c263e] hover:bg-[#8c263e] text-white border-0 py-0 h-4 font-medium">
                                                                 Special Offer
                                                             </Badge>
                                                         )}

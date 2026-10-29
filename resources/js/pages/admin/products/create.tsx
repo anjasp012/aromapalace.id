@@ -535,7 +535,7 @@ export default function AdminProductCreate({
                                     <div
                                         onClick={() => setData('is_new_arrivals', !data.is_new_arrivals)}
                                         className={`p-3 rounded-xl border cursor-pointer transition-all flex items-start gap-3 select-none ${data.is_new_arrivals
-                                            ? 'bg-emerald-500/10 border-emerald-500/50 dark:bg-emerald-950/20'
+                                            ? 'bg-[#176b62]/10 border-[#176b62]/50 dark:bg-[#176b62]/20'
                                             : 'bg-card hover:bg-muted/40 border-border/70'
                                             }`}
                                     >
@@ -543,12 +543,12 @@ export default function AdminProductCreate({
                                             type="checkbox"
                                             checked={data.is_new_arrivals}
                                             onChange={(e) => setData('is_new_arrivals', e.target.checked)}
-                                            className="mt-0.5 rounded text-emerald-600 focus:ring-emerald-500"
+                                            className="mt-0.5 rounded text-[#176b62] focus:ring-[#176b62]"
                                         />
                                         <div className="space-y-1">
                                             <div className="flex items-center gap-1.5">
                                                 <span className="font-semibold text-xs text-foreground">New Arrivals</span>
-                                                <Badge className="text-[9px] bg-emerald-600 hover:bg-emerald-600 text-white border-0 py-0 h-4">
+                                                <Badge className="text-[9px] bg-[#176b62] hover:bg-[#176b62] text-white border-0 py-0 h-4 font-medium">
                                                     Baru
                                                 </Badge>
                                             </div>
@@ -562,7 +562,7 @@ export default function AdminProductCreate({
                                     <div
                                         onClick={() => setData('is_best_sellers', !data.is_best_sellers)}
                                         className={`p-3 rounded-xl border cursor-pointer transition-all flex items-start gap-3 select-none ${data.is_best_sellers
-                                            ? 'bg-amber-500/10 border-amber-500/50 dark:bg-amber-950/20'
+                                            ? 'bg-[#c29a4a]/10 border-[#c29a4a]/50 dark:bg-[#c29a4a]/20'
                                             : 'bg-card hover:bg-muted/40 border-border/70'
                                             }`}
                                     >
@@ -570,12 +570,12 @@ export default function AdminProductCreate({
                                             type="checkbox"
                                             checked={data.is_best_sellers}
                                             onChange={(e) => setData('is_best_sellers', e.target.checked)}
-                                            className="mt-0.5 rounded text-amber-600 focus:ring-amber-500"
+                                            className="mt-0.5 rounded text-[#c29a4a] focus:ring-[#c29a4a]"
                                         />
                                         <div className="space-y-1">
                                             <div className="flex items-center gap-1.5">
                                                 <span className="font-semibold text-xs text-foreground">Best Sellers</span>
-                                                <Badge className="text-[9px] bg-amber-500 hover:bg-amber-500 text-amber-950 font-bold border-0 py-0 h-4">
+                                                <Badge className="text-[9px] bg-[#c29a4a] hover:bg-[#c29a4a] text-white font-medium border-0 py-0 h-4">
                                                     Terlaris
                                                 </Badge>
                                             </div>
@@ -589,7 +589,7 @@ export default function AdminProductCreate({
                                     <div
                                         onClick={() => setData('is_special_offers', !data.is_special_offers)}
                                         className={`p-3 rounded-xl border cursor-pointer transition-all flex items-start gap-3 select-none ${data.is_special_offers
-                                            ? 'bg-[#4A070B]/10 border-[#4A070B]/40 dark:bg-rose-950/20'
+                                            ? 'bg-[#8c263e]/10 border-[#8c263e]/40 dark:bg-[#8c263e]/20'
                                             : 'bg-card hover:bg-muted/40 border-border/70'
                                             }`}
                                     >
@@ -597,12 +597,12 @@ export default function AdminProductCreate({
                                             type="checkbox"
                                             checked={data.is_special_offers}
                                             onChange={(e) => setData('is_special_offers', e.target.checked)}
-                                            className="mt-0.5 rounded text-[#4A070B] focus:ring-[#4A070B]"
+                                            className="mt-0.5 rounded text-[#8c263e] focus:ring-[#8c263e]"
                                         />
                                         <div className="space-y-1">
                                             <div className="flex items-center gap-1.5">
                                                 <span className="font-semibold text-xs text-foreground">Special Offers</span>
-                                                <Badge className="text-[9px] bg-[#4A070B] hover:bg-[#4A070B] text-white border-0 py-0 h-4">
+                                                <Badge className="text-[9px] bg-[#8c263e] hover:bg-[#8c263e] text-white border-0 py-0 h-4 font-medium">
                                                     Spesial
                                                 </Badge>
                                             </div>
