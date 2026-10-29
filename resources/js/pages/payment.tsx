@@ -10,7 +10,6 @@ interface BankDetails {
     bank_name: string;
     account_number: string;
     account_name: string;
-    instructions: string;
 }
 
 interface PaymentProps {
@@ -588,13 +587,129 @@ function PaymentContent({ order }: PaymentProps) {
                                     </div>
                                 </div>
 
-                                {/* Instructions */}
-                                {order.bank_details.instructions && (
-                                    <div className="text-xs text-muted-foreground leading-relaxed bg-muted/30 rounded-lg p-3 border border-border/50">
-                                        <p className="font-semibold text-foreground mb-1">{isEn ? 'Transfer Instructions' : 'Petunjuk Transfer'}</p>
-                                        <p>{order.bank_details.instructions}</p>
+                            </div>
+                        )}
+
+                        {/* Cara Pembayaran Accordion */}
+                        {order.bank_details && (
+                            <div className="bg-card/70 backdrop-blur-xs border border-border/80 rounded-2xl p-5 sm:p-6 shadow-none">
+                                <p className="text-xs font-bold text-foreground mb-3 uppercase tracking-wide">
+                                    {isEn ? 'Payment Instructions' : 'Cara Pembayaran'}
+                                </p>
+                                <div className="divide-y divide-border/60">
+
+                                    {/* ATM */}
+                                    <div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setOpenAccordion(openAccordion === 'atm' ? null : 'atm')}
+                                            className="w-full py-3 flex items-center justify-between text-left font-semibold text-sm text-foreground hover:text-foreground/80 transition cursor-pointer"
+                                        >
+                                            <span>ATM {order.bank_details.bank_name}</span>
+                                            <svg className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${openAccordion === 'atm' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                            </svg>
+                                        </button>
+                                        {openAccordion === 'atm' && (
+                                            <ol className="list-decimal list-inside text-[11.5px] text-muted-foreground space-y-1.5 pb-3 pl-1 leading-relaxed">
+                                                {isEn ? (
+                                                    <>
+                                                        <li>Insert your ATM card and enter your PIN.</li>
+                                                        <li>Select <strong>Other Transactions</strong> &gt; <strong>Transfer</strong> &gt; <strong>To {order.bank_details.bank_name} Account</strong> (or <strong>To Other Bank</strong> if using a different bank card).</li>
+                                                        <li>Enter destination account number: <strong className="text-foreground font-mono">{order.bank_details.account_number}</strong>, then press Correct.</li>
+                                                        <li>Enter the exact transfer amount: <strong className="text-foreground font-mono">{order.total_amount_formatted}</strong>.</li>
+                                                        <li>Verify recipient name: <strong className="text-foreground">{order.bank_details.account_name}</strong>. If correct, select <strong>Yes/Correct</strong> to complete the transfer.</li>
+                                                        <li>Save the receipt, then take a photo and upload it in the <strong>Upload Transfer Proof</strong> form below.</li>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <li>Masukkan kartu ATM dan PIN Anda.</li>
+                                                        <li>Pilih menu <strong>Transaksi Lainnya</strong> &gt; <strong>Transfer</strong> &gt; <strong>Ke Rekening {order.bank_details.bank_name}</strong> (atau <strong>Ke Rekening Bank Lain</strong> jika menggunakan kartu bank selain {order.bank_details.bank_name}).</li>
+                                                        <li>Masukkan nomor rekening tujuan: <strong className="text-foreground font-mono">{order.bank_details.account_number}</strong> lalu tekan Benar.</li>
+                                                        <li>Masukkan nominal transfer tepat sejumlah: <strong className="text-foreground font-mono">{order.total_amount_formatted}</strong>.</li>
+                                                        <li>Periksa nama penerima: <strong className="text-foreground">{order.bank_details.account_name}</strong>. Jika sesuai, pilih <strong>Ya/Benar</strong> untuk menyelesaikan transfer.</li>
+                                                        <li>Simpan struk bukti transfer, lalu foto dan unggah pada formulir <strong>Unggah Bukti Transfer</strong> di bawah.</li>
+                                                    </>
+                                                )}
+                                            </ol>
+                                        )}
                                     </div>
-                                )}
+
+                                    {/* Mobile Banking */}
+                                    <div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setOpenAccordion(openAccordion === 'mbanking' ? null : 'mbanking')}
+                                            className="w-full py-3 flex items-center justify-between text-left font-semibold text-sm text-foreground hover:text-foreground/80 transition cursor-pointer"
+                                        >
+                                            <span>Mobile Banking {order.bank_details.bank_name}</span>
+                                            <svg className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${openAccordion === 'mbanking' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                            </svg>
+                                        </button>
+                                        {openAccordion === 'mbanking' && (
+                                            <ol className="list-decimal list-inside text-[11.5px] text-muted-foreground space-y-1.5 pb-3 pl-1 leading-relaxed">
+                                                {isEn ? (
+                                                    <>
+                                                        <li>Open the {order.bank_details.bank_name} mobile app and log in with your credentials.</li>
+                                                        <li>Select <strong>m-Transfer</strong> &gt; <strong>Between Accounts</strong> (or <strong>Inter-Bank</strong> if from a different bank).</li>
+                                                        <li>Enter destination account number <strong className="text-foreground font-mono">{order.bank_details.account_number}</strong> on behalf of <strong className="text-foreground">{order.bank_details.account_name}</strong>.</li>
+                                                        <li>Enter the exact transfer amount: <strong className="text-foreground font-mono">{order.total_amount_formatted}</strong>.</li>
+                                                        <li>Review the transfer details, then confirm and enter your PIN.</li>
+                                                        <li>Save the screenshot of the successful transfer and upload it in the <strong>Upload Transfer Proof</strong> form below.</li>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <li>Buka aplikasi <strong>{order.bank_details.bank_name} mobile</strong> dan masukkan kode akses/PIN Anda.</li>
+                                                        <li>Pilih menu <strong>m-Transfer</strong> &gt; <strong>Antar Rekening</strong> (atau <strong>Antar Bank</strong> jika dari bank lain).</li>
+                                                        <li>Masukkan nomor rekening tujuan <strong className="text-foreground font-mono">{order.bank_details.account_number}</strong> atas nama <strong className="text-foreground">{order.bank_details.account_name}</strong>.</li>
+                                                        <li>Masukkan nominal transfer tepat sejumlah: <strong className="text-foreground font-mono">{order.total_amount_formatted}</strong>.</li>
+                                                        <li>Periksa rincian transfer, lalu konfirmasi dan masukkan PIN transaksi Anda.</li>
+                                                        <li>Simpan tangkapan layar (<em>screenshot</em>) bukti transfer berhasil, lalu unggah pada formulir <strong>Unggah Bukti Transfer</strong> di bawah.</li>
+                                                    </>
+                                                )}
+                                            </ol>
+                                        )}
+                                    </div>
+
+                                    {/* Internet Banking */}
+                                    <div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setOpenAccordion(openAccordion === 'ibanking' ? null : 'ibanking')}
+                                            className="w-full py-3 flex items-center justify-between text-left font-semibold text-sm text-foreground hover:text-foreground/80 transition cursor-pointer"
+                                        >
+                                            <span>Internet Banking</span>
+                                            <svg className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${openAccordion === 'ibanking' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                            </svg>
+                                        </button>
+                                        {openAccordion === 'ibanking' && (
+                                            <ol className="list-decimal list-inside text-[11.5px] text-muted-foreground space-y-1.5 pb-3 pl-1 leading-relaxed">
+                                                {isEn ? (
+                                                    <>
+                                                        <li>Log in to your bank's Internet Banking portal with your User ID and PIN.</li>
+                                                        <li>Select <strong>Fund Transfer</strong> &gt; <strong>Transfer to {order.bank_details.bank_name} Account</strong> (or <strong>Transfer to Other Bank</strong>).</li>
+                                                        <li>Enter destination account number <strong className="text-foreground font-mono">{order.bank_details.account_number}</strong> on behalf of <strong className="text-foreground">{order.bank_details.account_name}</strong>.</li>
+                                                        <li>Enter the exact transfer amount: <strong className="text-foreground font-mono">{order.total_amount_formatted}</strong>.</li>
+                                                        <li>Enter your security token (KeyBCA/OTP) to complete the transaction.</li>
+                                                        <li>Save the transfer receipt (receipt/PDF/screenshot) and upload it in the <strong>Upload Transfer Proof</strong> form below.</li>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <li>Login ke layanan Internet Banking Anda dengan User ID dan PIN.</li>
+                                                        <li>Pilih menu <strong>Transfer Dana</strong> &gt; <strong>Transfer ke Rekening {order.bank_details.bank_name}</strong> (atau <strong>Transfer ke Bank Lain</strong>).</li>
+                                                        <li>Masukkan nomor rekening tujuan <strong className="text-foreground font-mono">{order.bank_details.account_number}</strong> atas nama <strong className="text-foreground">{order.bank_details.account_name}</strong>.</li>
+                                                        <li>Masukkan nominal transfer tepat sejumlah: <strong className="text-foreground font-mono">{order.total_amount_formatted}</strong>.</li>
+                                                        <li>Masukkan respon dari token keamanan Anda (KeyBCA/OTP) untuk menyelesaikan transaksi.</li>
+                                                        <li>Simpan bukti transfer (struk/PDF/screenshot), lalu unggah pada formulir <strong>Unggah Bukti Transfer</strong> di bawah.</li>
+                                                    </>
+                                                )}
+                                            </ol>
+                                        )}
+                                    </div>
+
+                                </div>
                             </div>
                         )}
 
