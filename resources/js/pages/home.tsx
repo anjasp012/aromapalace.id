@@ -453,13 +453,13 @@ export default function Home({
                             </Button>
                         </div>
 
-                        <div className="-mx-4 px-4 sm:mx-0 sm:px-0 scroll-pl-4 sm:scroll-pl-0 flex sm:grid overflow-x-auto sm:overflow-visible gap-3 sm:gap-5 pb-3 sm:pb-0 scrollbar-none snap-x snap-mandatory sm:grid-cols-4 md:grid-cols-8 lg:grid-cols-8 justify-center justify-items-center">
+                        <div className="-mx-4 px-4 sm:mx-0 sm:px-0 scroll-pl-4 sm:scroll-pl-0 flex overflow-x-auto sm:overflow-visible gap-3 sm:gap-5 pb-3 sm:pb-0 scrollbar-none snap-x snap-mandatory justify-start sm:justify-center sm:flex-wrap sm:items-center">
                             {scentsList.map((scent, idx) => (
                                 <ScentCard
                                     key={scent.slug}
                                     scent={scent}
                                     colorIndex={idx}
-                                    className="w-[calc((100%-24px)/3.5)] sm:w-full shrink-0 sm:shrink snap-start"
+                                    className="w-[calc((100%-24px)/3.5)] sm:w-[calc((100%-60px)/4)] md:w-[calc((100%-140px)/8)] sm:max-w-[140px] shrink-0 snap-start"
                                 />
                             ))}
                         </div>
