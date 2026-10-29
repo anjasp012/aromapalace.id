@@ -44,7 +44,7 @@ export default function BrandCard({ brand, className }: BrandCardProps) {
                 />
 
                 {/* 1. Brand Logo (Direct on maroon background, no inner container) */}
-                <div className="flex-1 flex items-center justify-center p-3 sm:p-5 pt-4 sm:pt-6">
+                <div className="flex-1 flex items-center justify-center p-3 sm:p-5 pt-4 sm:pt-6 pb-3">
                     <div className="w-full aspect-square max-w-[130px] flex items-center justify-center">
                         <img
                             src={brand.image}

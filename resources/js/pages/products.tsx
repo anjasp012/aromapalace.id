@@ -471,6 +471,142 @@ export default function Products({
         }
     }, [props?.auth?.wishlist_ids]);
 
+    // Detect active tag / collection from serverFilters or URL query
+    const activeTag = useMemo(() => {
+        if (serverFilters?.tag) return serverFilters.tag;
+        const searchStr = typeof window !== 'undefined'
+            ? window.location.search
+            : (url && url.includes('?') ? url.slice(url.indexOf('?')) : '');
+        const params = new URLSearchParams(searchStr);
+        const tagParam = params.get('tag') || params.get('collection');
+        if (tagParam) return tagParam;
+        if (params.get('new_arrivals') || params.get('is_new_arrivals') || url.includes('new-arrivals') || url.includes('new_arrivals')) return 'new-arrivals';
+        if (params.get('best_sellers') || params.get('is_best_sellers') || url.includes('best-sellers') || url.includes('best_sellers')) return 'best-sellers';
+        if (params.get('special_offers') || params.get('is_special_offers') || url.includes('special-offers') || url.includes('special_offers')) return 'special-offers';
+        return null;
+    }, [serverFilters, url]);
+
+    // Distinct Jumbotron Header Configuration based on tag / collection
+    const jumbotronConfig = useMemo(() => {
+        if (activeTag === 'new-arrivals' || activeTag === 'new_arrivals') {
+            return {
+                headTitle: isEn ? 'New Arrivals' : 'Produk Baru',
+                title: (
+                    <span>
+                        <span className="text-4xl sm:text-5xl md:text-6xl font-normal">N</span>EW{' '}
+                        <span className="text-4xl sm:text-5xl md:text-6xl font-normal">A</span>RRIVALS
+                    </span>
+                ),
+                subtitle1: isEn ? 'DISCOVER OUR LATEST ARRIVALS' : 'JELAJAHI KOLEKSI TERBARU KAMI',
+                subtitle2: isEn ? (
+                    <>
+                        EXCEPTIONAL FRAGRANCES CURATED<br />
+                        FOR THE TRUE FRAGRANCE LOVERS
+                    </>
+                ) : (
+                    <>
+                        WEWANGIAN ISTIMEWA YANG DIKURASI<br />
+                        UNTUK PARA PECINTA PARFUM SEJATI
+                    </>
+                ),
+            };
+        }
+
+        if (activeTag === 'best-sellers' || activeTag === 'best_sellers') {
+            return {
+                headTitle: isEn ? 'Best Sellers' : 'Parfum Terlaris',
+                title: (
+                    <span>
+                        <span className="text-4xl sm:text-5xl md:text-6xl font-normal">B</span>EST{' '}
+                        <span className="text-4xl sm:text-5xl md:text-6xl font-normal">S</span>ELLERS
+                    </span>
+                ),
+                subtitle1: isEn ? 'DISCOVER OUR MOST ICONIC FRAGRANCES' : 'TEMUKAN WEWANGIAN PALING DIMINATI',
+                subtitle2: isEn ? (
+                    <>
+                        TIMELESS SCENTS CELEBRATED WORLDWIDE<br />
+                        HANDPICKED FOR THEIR UNMATCHED ALLURE
+                    </>
+                ) : (
+                    <>
+                        AROMA IKONIK PILIHAN TERBAIK<br />
+                        DIPILIH KARENA DAYA TARIK TAK TERTANDINGI
+                    </>
+                ),
+            };
+        }
+
+        if (activeTag === 'special-offers' || activeTag === 'special_offers' || onlyDiscount) {
+            return {
+                headTitle: isEn ? 'Special Offers' : 'Penawaran Spesial',
+                title: (
+                    <span>
+                        <span className="text-4xl sm:text-5xl md:text-6xl font-normal">S</span>PECIAL{' '}
+                        <span className="text-4xl sm:text-5xl md:text-6xl font-normal">O</span>FFERS
+                    </span>
+                ),
+                subtitle1: isEn ? 'EXCLUSIVE DEALS & PRIVILEGED OFFERS' : 'PENAWARAN EKSKLUSIF & HARGA SPESIAL',
+                subtitle2: isEn ? (
+                    <>
+                        INDULGE IN LUXURY PERFUMES AT PRIVILEGED PRICES<br />
+                        AVAILABLE FOR A LIMITED TIME ONLY
+                    </>
+                ) : (
+                    <>
+                        NIKMATI PARFUM MEWAH DENGAN HARGA ISTIMEWA<br />
+                        TERSEDIA HANYA UNTUK PERIODE TERBATAS
+                    </>
+                ),
+            };
+        }
+
+        if (activeBrand && activeBrand !== 'All') {
+            return {
+                headTitle: activeBrand,
+                title: (
+                    <span>
+                        <span className="text-4xl sm:text-5xl md:text-6xl font-normal">{activeBrand.slice(0, 1)}</span>
+                        {activeBrand.slice(1).toUpperCase()}
+                    </span>
+                ),
+                subtitle1: isEn ? `EXQUISITE CREATIONS BY ${activeBrand.toUpperCase()}` : `KOLEKSI EKSKLUSIF DARI ${activeBrand.toUpperCase()}`,
+                subtitle2: isEn ? (
+                    <>
+                        SIGNATURE LUXURY SCENTS<br />
+                        CRAFTED FOR DISTINGUISHED TASTES
+                    </>
+                ) : (
+                    <>
+                        AROMA MEWAH BERKARAKTER TINGGI<br />
+                        DIRANCANG DENGAN KESEMPURNAAN KUALITAS
+                    </>
+                ),
+            };
+        }
+
+        return {
+            headTitle: isEn ? 'Catalog of Exclusive Fragrances' : 'Katalog Wewangian Eksklusif',
+            title: (
+                <span>
+                    <span className="text-4xl sm:text-5xl md:text-6xl font-normal">O</span>UR{' '}
+                    <span className="text-4xl sm:text-5xl md:text-6xl font-normal">C</span>OLLECTION
+                </span>
+            ),
+            subtitle1: isEn ? 'CURATED LUXURY PERFUME CATALOG' : 'KATALOG PARFUM MEWAH TERKURASI',
+            subtitle2: isEn ? (
+                <>
+                    EXCEPTIONAL FRAGRANCES CURATED<br />
+                    FOR THE TRUE FRAGRANCE LOVERS
+                </>
+            ) : (
+                <>
+                    PILIHAN PARFUM ARTISANAL DAN EXTRAIT MURNI<br />
+                    DENGAN DAYA TAHAN DAN AROMA MEWAH MEMIKAT
+                </>
+            ),
+        };
+    }, [activeTag, activeBrand, onlyDiscount, isEn]);
+
     // Refs to control initial mount and track applied params to avoid redundant fetches
     const isFirstMountRef = useRef(true);
     const lastAppliedParamsRef = useRef<string>('');
@@ -550,6 +686,7 @@ export default function Products({
         if (minRating > 0) params.rating = minRating.toString();
         if (onlyDiscount) params.discount = '1';
         if (sortBy) params.sort = sortBy;
+        if (activeTag) params.tag = activeTag;
 
         const paramsStr = JSON.stringify(params);
 
@@ -1146,19 +1283,40 @@ export default function Products({
 
     return (
         <Layout>
-            <Head title={isEn ? 'Luxury Fragrance Collection Catalog • Aroma Palace' : 'Katalog Koleksi Parfum Mewah • Aroma Palace'} />
+            <Head title={`${jumbotronConfig.headTitle} • Aroma Palace`} />
 
-            {/* PAGE HEADER */}
+            {/* LUXURY EDITORIAL JUMBOTRON HEADER */}
             <div className="border-b border-border/70 bg-background py-10 sm:py-14">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center space-y-3">
-                    <h1 className="text-3xl sm:text-4xl lg:text-5xl tracking-tight text-foreground">
-                        <span className="font-light">{isEn ? 'Catalog of' : 'Katalog'}</span>{' '}
-                        <span className="font-bold text-[#4A070B] dark:text-[#E8D0BA]">{isEn ? 'Exclusive Fragrances' : 'Wewangian Eksklusif'}</span>
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center space-y-3 sm:space-y-3.5">
+                    <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl tracking-[0.08em] font-medium text-[#4A070B] dark:text-[#E8D0BA] uppercase select-none">
+                        {jumbotronConfig.title}
                     </h1>
-                    <p className="max-w-2xl mx-auto text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                        {isEn
-                            ? 'Curated artisanal fragrances and pure extrait concentrations boasting intense longevity and captivating luxury character.'
-                            : 'Pilihan parfum artisanal dan konsentrasi extrait murni dengan daya tahan tinggi serta karakter aroma mewah yang memikat setiap indera.'}
+
+                    {/* Gold Ornamental Divider */}
+                    <div className="flex items-center justify-center gap-3 max-w-xs sm:max-w-sm mx-auto px-4 py-0.5">
+                        <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-[#C5A059]/50 to-[#C5A059]" />
+                        <svg
+                            className="w-8 h-3.5 text-[#C5A059] shrink-0"
+                            viewBox="0 0 54 20"
+                            fill="currentColor"
+                        >
+                            <path d="M27 3 L32 10 L27 17 L22 10 Z" />
+                            <path d="M20 10 C17 6 12 7 8 10 C12 13 17 14 20 10 Z" fillOpacity="0.75" />
+                            <path d="M34 10 C37 6 42 7 46 10 C42 13 37 14 34 10 Z" fillOpacity="0.75" />
+                            <circle cx="14" cy="10" r="1.5" />
+                            <circle cx="40" cy="10" r="1.5" />
+                        </svg>
+                        <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent via-[#C5A059]/50 to-[#C5A059]" />
+                    </div>
+
+                    {/* Subtitle 1 (Spaced All-Caps Gold Bronze) */}
+                    <p className="font-serif text-xs sm:text-[13px] tracking-[0.24em] font-semibold text-[#A3835B] dark:text-[#C5A059] uppercase">
+                        {jumbotronConfig.subtitle1}
+                    </p>
+
+                    {/* Subtitle 2 (Curated Subtitle) */}
+                    <p className="font-serif text-[11px] sm:text-xs tracking-[0.2em] font-normal text-[#A3835B]/90 dark:text-[#C5A059]/80 uppercase leading-relaxed max-w-xl mx-auto">
+                        {jumbotronConfig.subtitle2}
                     </p>
                 </div>
             </div>

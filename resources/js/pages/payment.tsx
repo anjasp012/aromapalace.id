@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
-import { Loader2, AlertCircle, Clock, CheckCircle2, Copy, Check, ArrowRight, Upload, HourglassIcon, Building2 } from 'lucide-react';
+import { Loader2, AlertCircle, Clock, CheckCircle2, Copy, Check, ArrowRight, Upload, HourglassIcon, Building2, CreditCard } from 'lucide-react';
 import { useEcho } from '@laravel/echo-react';
 import { useTranslation } from '@/lib/i18n';
 
@@ -847,53 +847,51 @@ function PaymentContent({ order }: PaymentProps) {
                     </div>
                 ) : (
                     /* ======================================================== */
-                    /* PENDING STATE: INSTRUKSI PEMBAYARAN (GATEWAY) */
+                    /* PENDING STATE: INSTRUKSI PEMBAYARAN (GATEWAY / OTOMATIS) */
                     /* ======================================================== */
-                    <div className="w-full max-w-[480px] mx-auto bg-card/60 backdrop-blur-xs border border-border/80 rounded-2xl p-6 sm:p-8 shadow-none space-y-5">
-                        
-                        {/* Header: Countdown Timer */}
-                        <div className="text-center space-y-1">
+                    <div className="w-full max-w-[520px] mx-auto space-y-4">
+
+                        {/* 1. 24-Hour Countdown Timer Card (Consistent with manual payment) */}
+                        <div className="bg-card/60 backdrop-blur-xs border border-border/80 rounded-2xl p-4 sm:p-5 text-center space-y-1">
                             <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground font-normal">
                                 <Clock className="w-3.5 h-3.5 text-amber-500" />
-                                <span>{isEn ? 'Complete payment within' : 'Selesaikan pembayaran dalam'}</span>
+                                <span>{isEn ? 'Payment deadline (24 hours from order)' : 'Batas waktu bayar (24 jam sejak pesan)'}</span>
                             </div>
-                            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-foreground font-mono">
+                            <div className={`text-xl sm:text-2xl font-black tracking-tight font-mono ${timeLeft < 3600 ? 'text-rose-600 dark:text-rose-400' : 'text-foreground'}`}>
                                 {hours} {isEn ? 'hrs' : 'jam'} : {minutes} {isEn ? 'min' : 'menit'} : {seconds} {isEn ? 'sec' : 'detik'}
-                            </h2>
+                            </div>
+                            {checkMessage && (
+                                <p className="text-xs text-amber-600 dark:text-amber-400 font-medium pt-1">
+                                    {checkMessage}
+                                </p>
+                            )}
                         </div>
 
-                        {/* Status feedback message if any */}
-                        {checkMessage && (
-                            <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-200 text-center font-medium">
-                                {checkMessage}
-                            </div>
-                        )}
-
-                        {/* QRIS DISPLAY BOX (If QRIS payment) */}
+                        {/* 2. QRIS Display Card (If QRIS payment) */}
                         {isQris && (
-                            <div className="bg-white dark:bg-neutral-900 border border-border/80 rounded-xl p-4 sm:p-5 text-center space-y-3.5 shadow-xs">
+                            <div className="bg-card/70 backdrop-blur-xs border border-border/80 rounded-2xl p-6 sm:p-7 shadow-none text-center space-y-4">
                                 <div className="space-y-1">
-                                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/40 text-rose-700 dark:text-rose-300 text-[11px] font-bold">
+                                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/40 text-rose-700 dark:text-rose-300 text-xs font-bold">
                                         <span>{isEn ? 'Aroma Palace Official QRIS' : 'QRIS Resmi Aroma Palace'}</span>
                                     </div>
                                     <p className="text-xs text-muted-foreground">
-                                        {isEn ? 'Scan with BCA Mobile, Livin, GoPay, OVO, Dana, ShopeePay' : 'Scan dengan BCA Mobile, Livin, GoPay, OVO, Dana, ShopeePay'}
+                                        {isEn ? 'Scan using BCA Mobile, Livin, GoPay, OVO, Dana, ShopeePay' : 'Scan dengan BCA Mobile, Livin, GoPay, OVO, Dana, ShopeePay'}
                                     </p>
                                 </div>
 
-                                <div className="p-3 bg-white rounded-lg border border-neutral-200 inline-block shadow-inner">
+                                <div className="p-4 bg-white rounded-xl border border-neutral-200 inline-block shadow-sm">
                                     <img
-                                        src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=8&data=${encodeURIComponent(order.payment_code)}`}
+                                        src={`https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=8&data=${encodeURIComponent(order.payment_code)}`}
                                         alt={`QRIS Aroma Palace #${order.order_number}`}
-                                        className="w-48 h-48 sm:w-56 sm:h-56 object-contain mx-auto"
+                                        className="w-52 h-52 sm:w-60 sm:h-60 object-contain mx-auto"
                                     />
                                 </div>
 
-                                <div className="flex items-center justify-center gap-2">
+                                <div>
                                     <button
                                         type="button"
                                         onClick={() => handleCopy(order.payment_code, 'code')}
-                                        className="rounded-md border border-border/80 hover:bg-muted/60 px-3 py-1.5 text-xs font-semibold text-foreground flex items-center gap-1.5 transition cursor-pointer select-none"
+                                        className="rounded-md border border-border/80 hover:bg-muted/60 px-3 py-1.5 text-xs font-semibold text-foreground inline-flex items-center gap-1.5 transition cursor-pointer select-none"
                                     >
                                         {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5 text-muted-foreground" />}
                                         <span>{copiedCode ? (isEn ? 'Code Copied' : 'Kode Tersalin') : (isEn ? 'Copy QRIS Code' : 'Salin Kode QRIS')}</span>
@@ -902,83 +900,308 @@ function PaymentContent({ order }: PaymentProps) {
                             </div>
                         )}
 
-                        {/* Details Table */}
-                        <div className="space-y-4 pt-1">
-                            {/* Row 1: Metode Pembayaran */}
+                        {/* 3. Payment Details Card (Matching Manual Bank Details Card) */}
+                        <div className="bg-card/70 backdrop-blur-xs border border-border/80 rounded-2xl p-6 sm:p-7 shadow-none space-y-4">
                             <div className="flex items-center justify-between">
-                                <div>
-                                    <span className="text-xs text-muted-foreground block">
-                                        {isEn ? 'Payment Method' : 'Metode Pembayaran'}
-                                    </span>
-                                    <span className="font-extrabold text-sm sm:text-base text-foreground block mt-0.5">
-                                        {methodDisplayName}
-                                    </span>
+                                <div className="flex items-center gap-2">
+                                    <CreditCard className="w-4 h-4 text-muted-foreground" />
+                                    <h2 className="text-sm font-bold text-foreground">
+                                        {isPaymentLink
+                                            ? (isEn ? 'Payment Link Details' : 'Rincian Pembayaran')
+                                            : isQris
+                                            ? (isEn ? 'QRIS Payment Details' : 'Rincian Pembayaran QRIS')
+                                            : (isEn ? 'Virtual Account Details' : 'Rincian Virtual Account')}
+                                    </h2>
                                 </div>
                                 <div>
                                     {renderPaymentLogo()}
                                 </div>
                             </div>
 
-                            {/* Row 2: Nomor Virtual Account / Kode Bayar (jika bukan QRIS) */}
-                            {!isQris && (
+                            {/* Rounded inner container */}
+                            <div className="bg-muted/40 rounded-xl p-4 border border-border/60 space-y-3">
+                                {/* Row: Method */}
                                 <div className="flex items-center justify-between">
-                                    <div>
-                                        <span className="text-xs text-muted-foreground block">
-                                            {isPaymentLink
-                                                ? (isEn ? 'Payment Code' : 'Kode Pembayaran')
-                                                : (isEn ? 'Virtual Account Number' : 'Nomor Virtual Account')}
-                                        </span>
-                                        <span className="font-extrabold text-sm sm:text-base tracking-wide text-foreground block mt-0.5 font-mono">
-                                            {order.payment_code}
-                                        </span>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleCopy(order.payment_code, 'code')}
-                                        className="rounded-md border border-border/80 hover:bg-muted/60 px-3 py-1.5 text-xs font-semibold text-foreground flex items-center gap-1.5 transition cursor-pointer select-none"
-                                    >
-                                        {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5 text-muted-foreground" />}
-                                        <span>{copiedCode ? (isEn ? 'Copied' : 'Tersalin') : (isEn ? 'Copy' : 'Salin')}</span>
-                                    </button>
+                                    <span className="text-xs text-muted-foreground">{isEn ? 'Payment Method' : 'Metode Pembayaran'}</span>
+                                    <span className="font-extrabold text-sm text-foreground">{methodDisplayName}</span>
                                 </div>
-                            )}
+                                <div className="border-t border-border/60" />
 
-                            {/* Row 3: Total Pembayaran */}
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <span className="text-xs text-muted-foreground block">
-                                        {isEn ? 'Total Payment' : 'Total Pembayaran'}
-                                    </span>
-                                    <span className="font-extrabold text-sm sm:text-base text-foreground block mt-0.5">
-                                        {order.total_amount_formatted}
-                                    </span>
+                                {/* Row: Payment Code / VA (if not QRIS) */}
+                                {!isQris && (
+                                    <>
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <span className="text-xs text-muted-foreground block">
+                                                    {isPaymentLink
+                                                        ? (isEn ? 'Payment Code' : 'Kode Pembayaran')
+                                                        : (isEn ? 'Virtual Account Number' : 'Nomor Virtual Account')}
+                                                </span>
+                                                <span className="font-black text-base text-foreground font-mono tracking-wider mt-0.5 block">
+                                                    {order.payment_code}
+                                                </span>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleCopy(order.payment_code, 'code')}
+                                                className="rounded-md border border-border/80 hover:bg-muted/60 px-3 py-1.5 text-xs font-semibold text-foreground flex items-center gap-1.5 transition cursor-pointer select-none"
+                                            >
+                                                {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5 text-muted-foreground" />}
+                                                <span>{copiedCode ? (isEn ? 'Copied' : 'Tersalin') : (isEn ? 'Copy' : 'Salin')}</span>
+                                            </button>
+                                        </div>
+                                        <div className="border-t border-border/60" />
+                                    </>
+                                )}
+
+                                {/* Row: Total Amount */}
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs text-muted-foreground">{isEn ? 'Total Payment' : 'Jumlah Pembayaran'}</span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-extrabold text-base text-[#4A070B] dark:text-[#E8D0BA]">
+                                            {order.total_amount_formatted}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleCopy(String(order.total_amount), 'amount')}
+                                            className="rounded-md border border-border/80 hover:bg-muted/60 px-2 py-1 text-xs font-semibold text-foreground flex items-center gap-1 transition cursor-pointer select-none"
+                                        >
+                                            {copiedAmount ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3 text-muted-foreground" />}
+                                        </button>
+                                    </div>
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={() => handleCopy(String(order.total_amount), 'amount')}
-                                    className="rounded-md border border-border/80 hover:bg-muted/60 px-3 py-1.5 text-xs font-semibold text-foreground flex items-center gap-1.5 transition cursor-pointer select-none"
+                            </div>
+
+                            {/* Direct payment link button if link */}
+                            {isPaymentLink && (
+                                <a
+                                    href={order.payment_code}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-[#4A070B] to-[#7A1C22] text-white font-bold text-xs sm:text-sm hover:opacity-95 transition shadow-xs"
                                 >
-                                    {copiedAmount ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5 text-muted-foreground" />}
-                                    <span>{copiedAmount ? (isEn ? 'Copied' : 'Tersalin') : (isEn ? 'Copy' : 'Salin')}</span>
-                                </button>
+                                    <span>{isEn ? 'Open Payment Page' : 'Buka Halaman Pembayaran'}</span>
+                                    <ArrowRight className="w-4 h-4" />
+                                </a>
+                            )}
+                        </div>
+
+                        {/* 4. Cara Pembayaran Accordion Card (Consistent with manual payment) */}
+                        <div className="bg-card/70 backdrop-blur-xs border border-border/80 rounded-2xl p-5 sm:p-6 shadow-none">
+                            <p className="text-xs font-bold text-foreground mb-3 uppercase tracking-wide">
+                                {isEn ? 'Payment Instructions' : 'Cara Pembayaran'}
+                            </p>
+                            <div className="divide-y divide-border/60">
+                                {isQris ? (
+                                    <>
+                                        {/* QRIS: E-Wallet */}
+                                        <div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setOpenAccordion(openAccordion === 'qris_app' ? null : 'qris_app')}
+                                                className="w-full py-3 flex items-center justify-between text-left font-semibold text-sm text-foreground hover:text-foreground/80 transition cursor-pointer"
+                                            >
+                                                <span>{isEn ? 'E-Wallet Apps (GoPay, OVO, DANA, ShopeePay)' : 'Aplikasi E-Wallet (GoPay, OVO, DANA, ShopeePay)'}</span>
+                                                <svg
+                                                    className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${openAccordion === 'qris_app' ? 'rotate-180' : ''}`}
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </button>
+                                            {openAccordion === 'qris_app' && (
+                                                <ol className="list-decimal list-inside text-[11.5px] text-muted-foreground space-y-1.5 pb-3 pl-1 leading-relaxed">
+                                                    {isEn ? (
+                                                        <>
+                                                            <li>Open your preferred e-wallet application (GoPay, OVO, DANA, ShopeePay).</li>
+                                                            <li>Select the <strong>Scan QR / Pay</strong> menu.</li>
+                                                            <li>Point your camera at the QRIS code displayed above (or select from gallery if using screenshot).</li>
+                                                            <li>Confirm that the merchant is <strong>Aroma Palace</strong> and the amount matches <strong className="text-foreground">{order.total_amount_formatted}</strong>.</li>
+                                                            <li>Enter your security PIN. Your payment will be verified automatically in real-time.</li>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <li>Buka aplikasi e-wallet pilihan Anda (GoPay, OVO, DANA, ShopeePay).</li>
+                                                            <li>Pilih menu <strong>Scan / Bayar</strong>.</li>
+                                                            <li>Arahkan kamera ke kode QRIS di atas (atau pilih dari galeri jika menggunakan screenshot).</li>
+                                                            <li>Pastikan nama merchant tertera <strong>Aroma Palace</strong> dan nominal tepat <strong className="text-foreground">{order.total_amount_formatted}</strong>.</li>
+                                                            <li>Masukkan PIN keamanan Anda. Pembayaran akan diverifikasi secara otomatis seketika tanpa perlu upload bukti transfer.</li>
+                                                        </>
+                                                    )}
+                                                </ol>
+                                            )}
+                                        </div>
+
+                                        {/* QRIS: Mobile Banking */}
+                                        <div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setOpenAccordion(openAccordion === 'qris_mbanking' ? null : 'qris_mbanking')}
+                                                className="w-full py-3 flex items-center justify-between text-left font-semibold text-sm text-foreground hover:text-foreground/80 transition cursor-pointer"
+                                            >
+                                                <span>{isEn ? 'Mobile Banking QRIS (BCA Mobile, Livin, BRImo, BNI)' : 'Mobile Banking QRIS (BCA Mobile, Livin, BRImo, BNI)'}</span>
+                                                <svg
+                                                    className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${openAccordion === 'qris_mbanking' ? 'rotate-180' : ''}`}
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </button>
+                                            {openAccordion === 'qris_mbanking' && (
+                                                <ol className="list-decimal list-inside text-[11.5px] text-muted-foreground space-y-1.5 pb-3 pl-1 leading-relaxed">
+                                                    {isEn ? (
+                                                        <>
+                                                            <li>Open your Mobile Banking app and log in.</li>
+                                                            <li>Tap the <strong>QRIS</strong> icon on the bottom or main dashboard.</li>
+                                                            <li>Scan the QRIS code displayed above.</li>
+                                                            <li>Verify recipient name <strong>Aroma Palace</strong> and total amount (<strong className="text-foreground">{order.total_amount_formatted}</strong>).</li>
+                                                            <li>Enter your m-Banking transaction PIN to complete payment.</li>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <li>Buka aplikasi Mobile Banking bank Anda dan login.</li>
+                                                            <li>Pilih menu atau ikon <strong>QRIS</strong> pada layar utama aplikasi.</li>
+                                                            <li>Pindai kode QRIS di atas.</li>
+                                                            <li>Periksa nama penerima <strong>Aroma Palace</strong> dan total tagihan (<strong className="text-foreground">{order.total_amount_formatted}</strong>).</li>
+                                                            <li>Masukkan PIN transaksi m-Banking Anda untuk menyelesaikan pembayaran secara otomatis.</li>
+                                                        </>
+                                                    )}
+                                                </ol>
+                                            )}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        {/* VA: ATM */}
+                                        <div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setOpenAccordion(openAccordion === 'atm' ? null : 'atm')}
+                                                className="w-full py-3 flex items-center justify-between text-left font-semibold text-sm text-foreground hover:text-foreground/80 transition cursor-pointer"
+                                            >
+                                                <span>ATM {order.payment_channel || (order.payment_method?.replace('_va', '').toUpperCase()) || 'Bank'}</span>
+                                                <svg
+                                                    className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${openAccordion === 'atm' ? 'rotate-180' : ''}`}
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </button>
+                                            {openAccordion === 'atm' && (
+                                                <ol className="list-decimal list-inside text-[11.5px] text-muted-foreground space-y-1.5 pb-3 pl-1 leading-relaxed">
+                                                    {isEn ? (
+                                                        <>
+                                                            <li>Insert your ATM card and enter your PIN.</li>
+                                                            <li>Select <strong>Other Transactions</strong> &gt; <strong>Transfer</strong> &gt; <strong>To Virtual Account</strong>.</li>
+                                                            <li>Enter Virtual Account number: <strong className="text-foreground font-mono">{order.payment_code}</strong>, then select Correct.</li>
+                                                            <li>Verify payment details (Merchant: <strong>Aroma Palace</strong>, Amount: <strong className="text-foreground">{order.total_amount_formatted}</strong>).</li>
+                                                            <li>Press <strong>Yes</strong> to complete transaction. Your order will be updated automatically.</li>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <li>Masukkan kartu ATM dan PIN Anda di mesin ATM.</li>
+                                                            <li>Pilih menu <strong>Transaksi Lainnya</strong> &gt; <strong>Transfer</strong> &gt; <strong>Ke Rekening Virtual Account</strong>.</li>
+                                                            <li>Masukkan nomor Virtual Account: <strong className="text-foreground font-mono">{order.payment_code}</strong> lalu pilih Benar.</li>
+                                                            <li>Periksa rincian pembayaran (Nama: <strong>Aroma Palace</strong>, Total: <strong className="text-foreground">{order.total_amount_formatted}</strong>).</li>
+                                                            <li>Pilih <strong>Ya</strong> untuk memproses pembayaran. Transaksi selesai dan status pesanan otomatis terverifikasi.</li>
+                                                        </>
+                                                    )}
+                                                </ol>
+                                            )}
+                                        </div>
+
+                                        {/* VA: Mobile Banking */}
+                                        <div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setOpenAccordion(openAccordion === 'mbanking' ? null : 'mbanking')}
+                                                className="w-full py-3 flex items-center justify-between text-left font-semibold text-sm text-foreground hover:text-foreground/80 transition cursor-pointer"
+                                            >
+                                                <span>Mobile Banking {order.payment_channel || (order.payment_method?.replace('_va', '').toUpperCase()) || ''}</span>
+                                                <svg
+                                                    className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${openAccordion === 'mbanking' ? 'rotate-180' : ''}`}
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </button>
+                                            {openAccordion === 'mbanking' && (
+                                                <ol className="list-decimal list-inside text-[11.5px] text-muted-foreground space-y-1.5 pb-3 pl-1 leading-relaxed">
+                                                    {isEn ? (
+                                                        <>
+                                                            <li>Open your Mobile Banking app and log in.</li>
+                                                            <li>Select menu <strong>Transfer / Payment</strong> &gt; <strong>Virtual Account</strong>.</li>
+                                                            <li>Enter Virtual Account number: <strong className="text-foreground font-mono">{order.payment_code}</strong>.</li>
+                                                            <li>Confirm that the total amount is <strong className="text-foreground">{order.total_amount_formatted}</strong> for <strong>Aroma Palace</strong>.</li>
+                                                            <li>Enter your Mobile Banking PIN to confirm. Payment is verified automatically in real-time.</li>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <li>Buka aplikasi Mobile Banking Anda dan lakukan login.</li>
+                                                            <li>Pilih menu <strong>Transfer</strong> atau <strong>Pembayaran</strong> &gt; <strong>Virtual Account</strong>.</li>
+                                                            <li>Masukkan nomor Virtual Account: <strong className="text-foreground font-mono">{order.payment_code}</strong>.</li>
+                                                            <li>Pastikan jumlah tagihan sesuai sebesar <strong className="text-foreground">{order.total_amount_formatted}</strong> atas nama <strong>Aroma Palace</strong>.</li>
+                                                            <li>Masukkan PIN transaksi Mobile Banking Anda. Pembayaran lunas seketika tanpa perlu kirim bukti transfer.</li>
+                                                        </>
+                                                    )}
+                                                </ol>
+                                            )}
+                                        </div>
+
+                                        {/* VA: Internet Banking */}
+                                        <div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setOpenAccordion(openAccordion === 'ibanking' ? null : 'ibanking')}
+                                                className="w-full py-3 flex items-center justify-between text-left font-semibold text-sm text-foreground hover:text-foreground/80 transition cursor-pointer"
+                                            >
+                                                <span>Internet Banking</span>
+                                                <svg
+                                                    className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${openAccordion === 'ibanking' ? 'rotate-180' : ''}`}
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </button>
+                                            {openAccordion === 'ibanking' && (
+                                                <ol className="list-decimal list-inside text-[11.5px] text-muted-foreground space-y-1.5 pb-3 pl-1 leading-relaxed">
+                                                    {isEn ? (
+                                                        <>
+                                                            <li>Log in to your bank's Internet Banking portal.</li>
+                                                            <li>Navigate to <strong>Transfer / Payment</strong> &gt; <strong>Virtual Account</strong>.</li>
+                                                            <li>Enter Virtual Account number: <strong className="text-foreground font-mono">{order.payment_code}</strong>.</li>
+                                                            <li>Verify billing information and enter your security token response / OTP.</li>
+                                                            <li>Payment is complete and will be processed immediately.</li>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <li>Masuk ke layanan Internet Banking bank Anda.</li>
+                                                            <li>Pilih menu <strong>Pembayaran / Transfer</strong> &gt; <strong>Virtual Account</strong>.</li>
+                                                            <li>Masukkan nomor Virtual Account: <strong className="text-foreground font-mono">{order.payment_code}</strong>.</li>
+                                                            <li>Periksa rincian tagihan ({order.total_amount_formatted}) lalu masukkan kode otentikasi/token PIN Anda.</li>
+                                                            <li>Transaksi selesai dan status pembayaran otomatis terverifikasi lunas.</li>
+                                                        </>
+                                                    )}
+                                                </ol>
+                                            )}
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
 
-                        {/* DIRECT PAYMENT LINK BUTTON (If link) */}
-                        {isPaymentLink && (
-                            <a
-                                href={order.payment_code}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-[#4A070B] to-[#7A1C22] text-white font-bold text-xs sm:text-sm hover:opacity-95 transition shadow-xs"
-                            >
-                                <span>{isEn ? 'Open Payment Page' : 'Buka Halaman Pembayaran'}</span>
-                                <ArrowRight className="w-4 h-4" />
-                            </a>
-                        )}
-
-                        {/* Action Buttons: 2 Columns */}
-                        <div className="grid grid-cols-2 gap-3 pt-2">
+                        {/* 5. Bottom Action Buttons: Check Status & Shop Again */}
+                        <div className="grid grid-cols-2 gap-3">
                             <Button
                                 type="button"
                                 variant="outline"
@@ -999,214 +1222,16 @@ function PaymentContent({ order }: PaymentProps) {
                             </Link>
                         </div>
 
-
-
-                        {/* Cara Pembayaran Section */}
-                        <div className="pt-2 space-y-1">
-                            <h3 className="font-bold text-xs sm:text-sm text-foreground mb-2">
-                                {isEn ? 'How to Pay' : 'Cara Pembayaran'}
-                            </h3>
-
-                            {/* Accordion List */}
-                            <div className="border-t border-border/80 divide-y divide-border/80 text-xs">
-                                {isQris ? (
-                                    <>
-                                        {/* QRIS: E-Wallet */}
-                                        <div>
-                                            <button
-                                                type="button"
-                                                onClick={() => setOpenAccordion(openAccordion === 'qris_app' ? null : 'qris_app')}
-                                                className="w-full py-3 flex items-center justify-between text-left font-medium text-foreground hover:text-foreground/80 transition cursor-pointer"
-                                            >
-                                                <span>{isEn ? 'E-Wallet Apps (GoPay, OVO, Dana, ShopeePay)' : 'Aplikasi E-Wallet (GoPay, OVO, Dana, ShopeePay)'}</span>
-                                                <svg
-                                                    className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${openAccordion === 'qris_app' ? 'rotate-180' : ''}`}
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    viewBox="0 0 24 24"
-                                                >
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                                                </svg>
-                                            </button>
-                                            {openAccordion === 'qris_app' && (
-                                                <ol className="list-decimal list-inside text-[11.5px] text-muted-foreground space-y-1.5 pb-3 pl-1 leading-relaxed">
-                                                    {isEn ? (
-                                                        <>
-                                                            <li>Open GoPay, OVO, Dana, or ShopeePay on your smartphone.</li>
-                                                            <li>Select the <strong>Scan / Pay via QRIS</strong> feature.</li>
-                                                            <li>Point camera at the QR code above (or upload a QR screenshot).</li>
-                                                            <li>Verify the merchant name <strong>Aroma Palace</strong> and total amount (<strong className="text-foreground">{order.total_amount_formatted}</strong>).</li>
-                                                            <li>Confirm payment and enter your PIN. Payment will be confirmed instantly.</li>
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <li>Buka aplikasi GoPay, OVO, Dana, atau ShopeePay di smartphone Anda.</li>
-                                                            <li>Pilih fitur <strong>Scan / Bayar via QRIS</strong>.</li>
-                                                            <li>Arahkan kamera ke kode QR di atas (atau unggah tangkapan layar kode QR).</li>
-                                                            <li>Periksa nama toko <strong>Aroma Palace</strong> dan jumlah bayar (<strong className="text-foreground">{order.total_amount_formatted}</strong>).</li>
-                                                            <li>Konfirmasi pembayaran dan masukkan PIN Anda. Pembayaran akan terkonfirmasi secara instan.</li>
-                                                        </>
-                                                    )}
-                                                </ol>
-                                            )}
-                                        </div>
-
-                                        {/* QRIS: Mobile Banking */}
-                                        <div>
-                                            <button
-                                                type="button"
-                                                onClick={() => setOpenAccordion(openAccordion === 'qris_mbanking' ? null : 'qris_mbanking')}
-                                                className="w-full py-3 flex items-center justify-between text-left font-medium text-foreground hover:text-foreground/80 transition cursor-pointer"
-                                            >
-                                                <span>{isEn ? 'Mobile Banking (BCA Mobile, Livin, BRImo, BNI)' : 'Mobile Banking (BCA Mobile, Livin, BRImo, BNI)'}</span>
-                                                <svg
-                                                    className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${openAccordion === 'qris_mbanking' ? 'rotate-180' : ''}`}
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    viewBox="0 0 24 24"
-                                                >
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                                                </svg>
-                                            </button>
-                                            {openAccordion === 'qris_mbanking' && (
-                                                <ol className="list-decimal list-inside text-[11.5px] text-muted-foreground space-y-1.5 pb-3 pl-1 leading-relaxed">
-                                                    {isEn ? (
-                                                        <>
-                                                            <li>Open your preferred mobile banking app.</li>
-                                                            <li>Tap the <strong>QRIS</strong> icon on the home screen.</li>
-                                                            <li>Scan the QR code displayed above.</li>
-                                                            <li>Verify billing details and enter your m-Banking PIN.</li>
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <li>Buka aplikasi m-Banking bank pilihan Anda.</li>
-                                                            <li>Tekan tombol logo <strong>QRIS</strong> di layar utama.</li>
-                                                            <li>Pindai kode QR yang tampil di atas.</li>
-                                                            <li>Pastikan rincian tagihan sudah sesuai, lalu masukkan PIN m-Banking Anda.</li>
-                                                        </>
-                                                    )}
-                                                </ol>
-                                            )}
-                                        </div>
-                                    </>
-                                ) : (
-                                    <>
-                                        {/* Accordion 1: ATM */}
-                                        <div>
-                                            <button
-                                                type="button"
-                                                onClick={() => setOpenAccordion(openAccordion === 'atm' ? null : 'atm')}
-                                                className="w-full py-3 flex items-center justify-between text-left font-medium text-foreground hover:text-foreground/80 transition cursor-pointer"
-                                            >
-                                                <span>ATM {order.payment_method?.replace('_va', '').toUpperCase() || 'Bank'}</span>
-                                                <svg
-                                                    className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${openAccordion === 'atm' ? 'rotate-180' : ''}`}
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    viewBox="0 0 24 24"
-                                                >
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                                                </svg>
-                                            </button>
-                                            {openAccordion === 'atm' && (
-                                                <ol className="list-decimal list-inside text-[11.5px] text-muted-foreground space-y-1.5 pb-3 pl-1 leading-relaxed">
-                                                    {isEn ? (
-                                                        <>
-                                                            <li>Insert your ATM card and enter your PIN.</li>
-                                                            <li>Select <strong>Other Transactions</strong> &gt; <strong>Transfer</strong> &gt; <strong>To Virtual Account</strong>.</li>
-                                                            <li>Enter Virtual Account number: <strong className="text-foreground font-mono">{order.payment_code}</strong> and press Correct.</li>
-                                                            <li>Verify bill details (<strong className="text-foreground">{order.total_amount_formatted}</strong>), then complete the transaction.</li>
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <li>Masukkan kartu ATM dan PIN Anda.</li>
-                                                            <li>Pilih menu <strong>Transaksi Lainnya</strong> &gt; <strong>Transfer</strong> &gt; <strong>Ke Rekening Virtual Account</strong>.</li>
-                                                            <li>Masukkan nomor Virtual Account: <strong className="text-foreground font-mono">{order.payment_code}</strong> lalu tekan Benar.</li>
-                                                            <li>Pastikan rincian tagihan (<strong className="text-foreground">{order.total_amount_formatted}</strong>) sudah benar, lalu selesaikan pembayaran.</li>
-                                                        </>
-                                                    )}
-                                                </ol>
-                                            )}
-                                        </div>
-
-                                        {/* Accordion 2: M-Banking */}
-                                        <div>
-                                            <button
-                                                type="button"
-                                                onClick={() => setOpenAccordion(openAccordion === 'mbanking' ? null : 'mbanking')}
-                                                className="w-full py-3 flex items-center justify-between text-left font-medium text-foreground hover:text-foreground/80 transition cursor-pointer"
-                                            >
-                                                <span>Mobile Banking {order.payment_method?.replace('_va', '').toUpperCase() || ''}</span>
-                                                <svg
-                                                    className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${openAccordion === 'mbanking' ? 'rotate-180' : ''}`}
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    viewBox="0 0 24 24"
-                                                >
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                                                </svg>
-                                            </button>
-                                            {openAccordion === 'mbanking' && (
-                                                <ol className="list-decimal list-inside text-[11.5px] text-muted-foreground space-y-1.5 pb-3 pl-1 leading-relaxed">
-                                                    {isEn ? (
-                                                        <>
-                                                            <li>Open your Mobile Banking app and log in.</li>
-                                                            <li>Select <strong>Transfer / Payment</strong> &gt; <strong>Virtual Account</strong>.</li>
-                                                            <li>Enter Virtual Account number: <strong className="text-foreground font-mono">{order.payment_code}</strong>.</li>
-                                                            <li>Verify recipient name &amp; bill amount (<strong className="text-foreground">{order.total_amount_formatted}</strong>), then enter your PIN.</li>
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <li>Buka aplikasi Mobile Banking dan masuk ke akun Anda.</li>
-                                                            <li>Pilih menu <strong>Transfer / Pembayaran</strong> &gt; <strong>Virtual Account</strong>.</li>
-                                                            <li>Masukkan nomor Virtual Account: <strong className="text-foreground font-mono">{order.payment_code}</strong>.</li>
-                                                            <li>Periksa nama pemesan &amp; jumlah bayar (<strong className="text-foreground">{order.total_amount_formatted}</strong>), lalu masukkan PIN transaksi Anda.</li>
-                                                        </>
-                                                    )}
-                                                </ol>
-                                            )}
-                                        </div>
-
-                                        {/* Accordion 3: Internet Banking */}
-                                        <div>
-                                            <button
-                                                type="button"
-                                                onClick={() => setOpenAccordion(openAccordion === 'ibanking' ? null : 'ibanking')}
-                                                className="w-full py-3 flex items-center justify-between text-left font-medium text-foreground hover:text-foreground/80 transition cursor-pointer"
-                                            >
-                                                <span>Internet Banking</span>
-                                                <svg
-                                                    className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${openAccordion === 'ibanking' ? 'rotate-180' : ''}`}
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    viewBox="0 0 24 24"
-                                                >
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                                                </svg>
-                                            </button>
-                                            {openAccordion === 'ibanking' && (
-                                                <ol className="list-decimal list-inside text-[11.5px] text-muted-foreground space-y-1.5 pb-3 pl-1 leading-relaxed">
-                                                    {isEn ? (
-                                                        <>
-                                                            <li>Log in to your bank's Internet Banking portal.</li>
-                                                            <li>Select <strong>Fund Transfer</strong> &gt; <strong>Transfer to Virtual Account</strong>.</li>
-                                                            <li>Enter Virtual Account number: <strong className="text-foreground font-mono">{order.payment_code}</strong>.</li>
-                                                            <li>Verify bill amount and enter your security token/PIN to confirm.</li>
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <li>Login ke layanan Internet Banking Anda.</li>
-                                                            <li>Pilih menu <strong>Transfer Dana</strong> &gt; <strong>Transfer ke Virtual Account</strong>.</li>
-                                                            <li>Ketikkan nomor Virtual Account: <strong className="text-foreground font-mono">{order.payment_code}</strong>.</li>
-                                                            <li>Verifikasi nominal tagihan dan masukkan token/PIN otentikasi untuk konfirmasi pembayaran.</li>
-                                                        </>
-                                                    )}
-                                                </ol>
-                                            )}
-                                        </div>
-                                    </>
-                                )}
-                            </div>
+                        <div className="pt-0.5">
+                            <Link href="/account/orders" className="block w-full">
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    className="w-full h-10 rounded-md font-semibold text-xs text-muted-foreground hover:text-foreground hover:bg-muted/40 cursor-pointer shadow-none"
+                                >
+                                    {isEn ? 'View My Orders' : 'Lihat Pesanan Saya'}
+                                </Button>
+                            </Link>
                         </div>
 
                     </div>
