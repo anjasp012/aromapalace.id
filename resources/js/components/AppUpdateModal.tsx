@@ -27,6 +27,21 @@ export interface AppUpdateConfig {
     message?: string;
     playstore_url?: string;
     appstore_url?: string;
+    /** Per-platform versions; iOS and Android are released separately. */
+    platforms?: Partial<Record<'ios' | 'android', { min_version?: string; latest_version?: string }>>;
+}
+
+const DEFAULT_APPSTORE_URL = 'https://apps.apple.com/app/id6825154655';
+
+/** Minimum/latest version for the running platform, falling back to the shared values. */
+function versionsFor(config: AppUpdateConfig, fallbackVersion: string): { min: string; latest: string } {
+    const platform = Capacitor.getPlatform();
+    const platformConfig = platform === 'ios' || platform === 'android' ? config.platforms?.[platform] : undefined;
+
+    return {
+        min: platformConfig?.min_version || config.min_version || '1.0.0',
+        latest: platformConfig?.latest_version || config.latest_version || fallbackVersion,
+    };
 }
 
 /**
@@ -114,8 +129,7 @@ export default function AppUpdateModal() {
 
             setCurrentVersion(installedVer);
 
-            const minVer = activeConfig.min_version || '1.0.0';
-            const latestVer = activeConfig.latest_version || installedVer;
+            const { min: minVer, latest: latestVer } = versionsFor(activeConfig, installedVer);
 
             // Determine if below minimum or below latest
             const isBelowMin = compareSemVer(installedVer, minVer) < 0;
@@ -232,7 +246,7 @@ export default function AppUpdateModal() {
                     } catch {
                         const fallbackUrl =
                             config.appstore_url ||
-                            'https://apps.apple.com/app/aromapalace/id6740000000';
+                            DEFAULT_APPSTORE_URL;
                         window.open(fallbackUrl, '_system');
                     }
                 } else {
@@ -257,7 +271,7 @@ export default function AppUpdateModal() {
     const handleDismiss = () => {
         if (isMandatory) return;
         try {
-            const verToSave = config.latest_version || currentVersion;
+            const verToSave = versionsFor(config, currentVersion).latest;
             sessionStorage.setItem('ap_dismissed_update_version', verToSave);
         } catch {}
         setIsOpen(false);
@@ -273,7 +287,7 @@ export default function AppUpdateModal() {
         config.message ||
         'Versi baru aplikasi Aroma Palace telah tersedia dengan peningkatan stabilitas dan fitur belanja terbaik. Mohon perbarui aplikasi Anda.';
 
-    const targetVersion = config.latest_version || '1.1.0';
+    const targetVersion = versionsFor(config, currentVersion).latest;
 
     return (
         <Dialog

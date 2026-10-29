@@ -3,8 +3,8 @@
 namespace App\Http\Middleware;
 
 use App\Models\Notification;
-use App\Models\Setting;
 use App\Models\Voucher;
+use App\Support\AppUpdatePolicy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Middleware;
@@ -95,15 +95,7 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
             ],
-            'app_update' => fn () => [
-                'min_version' => (string) Setting::get('app_min_version', '1.0.0'),
-                'latest_version' => (string) Setting::get('app_latest_version', '1.0.0'),
-                'force_update' => filter_var(Setting::get('app_force_update', false), FILTER_VALIDATE_BOOLEAN),
-                'title' => (string) Setting::get('app_update_title', 'Pembaruan Aplikasi Tersedia'),
-                'message' => (string) Setting::get('app_update_message', 'Versi baru aplikasi Aroma Palace telah tersedia dengan peningkatan fitur dan stabilitas. Mohon perbarui aplikasi Anda untuk melanjutkan berbelanja.'),
-                'playstore_url' => (string) Setting::get('app_playstore_url', 'https://play.google.com/store/apps/details?id=com.aromapalace.app'),
-                'appstore_url' => (string) Setting::get('app_appstore_url', 'https://apps.apple.com/app/aromapalace/id6740000000'),
-            ],
+            'app_update' => fn () => AppUpdatePolicy::toArray(),
             'header_vouchers' => fn () => Cache::remember('active_header_vouchers', 600, function () {
                 return Voucher::query()
                     ->where('is_active', true)

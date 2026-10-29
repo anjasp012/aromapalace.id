@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use App\Services\KiriminAjaService;
+use App\Support\AppUpdatePolicy;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -31,13 +32,18 @@ class SettingController extends Controller
         $settings['longitude'] = $settings['shipping_longitude'];
 
         // Ensure defaults for Mobile App & Update settings
-        $settings['app_min_version'] = $settings['app_min_version'] ?? '1.0.0';
-        $settings['app_latest_version'] = $settings['app_latest_version'] ?? '1.0.0';
-        $settings['app_force_update'] = filter_var($settings['app_force_update'] ?? false, FILTER_VALIDATE_BOOLEAN);
-        $settings['app_update_title'] = $settings['app_update_title'] ?? 'Pembaruan Aplikasi Tersedia';
-        $settings['app_update_message'] = $settings['app_update_message'] ?? 'Versi baru aplikasi Aroma Palace telah tersedia dengan peningkatan fitur dan stabilitas. Mohon perbarui aplikasi Anda untuk melanjutkan berbelanja.';
-        $settings['app_playstore_url'] = $settings['app_playstore_url'] ?? 'https://play.google.com/store/apps/details?id=com.aromapalace.app';
-        $settings['app_appstore_url'] = $settings['app_appstore_url'] ?? 'https://apps.apple.com/app/aromapalace/id6740000000';
+        $appUpdate = AppUpdatePolicy::toArray();
+        $settings['app_min_version'] = $appUpdate['min_version'];
+        $settings['app_latest_version'] = $appUpdate['latest_version'];
+        $settings['app_min_version_ios'] = $appUpdate['platforms']['ios']['min_version'];
+        $settings['app_latest_version_ios'] = $appUpdate['platforms']['ios']['latest_version'];
+        $settings['app_min_version_android'] = $appUpdate['platforms']['android']['min_version'];
+        $settings['app_latest_version_android'] = $appUpdate['platforms']['android']['latest_version'];
+        $settings['app_force_update'] = $appUpdate['force_update'];
+        $settings['app_update_title'] = $appUpdate['title'];
+        $settings['app_update_message'] = $appUpdate['message'];
+        $settings['app_playstore_url'] = $appUpdate['playstore_url'];
+        $settings['app_appstore_url'] = $appUpdate['appstore_url'];
 
         $kiriminAja = app(KiriminAjaService::class);
         $fetchWithRetry = function (callable $callback): array {
@@ -124,6 +130,10 @@ class SettingController extends Controller
             // Mobile App & Update Settings
             'app_min_version' => ['nullable', 'string', 'max:25'],
             'app_latest_version' => ['nullable', 'string', 'max:25'],
+            'app_min_version_ios' => ['nullable', 'string', 'max:25', 'regex:/^\d+(\.\d+){0,3}$/'],
+            'app_latest_version_ios' => ['nullable', 'string', 'max:25', 'regex:/^\d+(\.\d+){0,3}$/'],
+            'app_min_version_android' => ['nullable', 'string', 'max:25', 'regex:/^\d+(\.\d+){0,3}$/'],
+            'app_latest_version_android' => ['nullable', 'string', 'max:25', 'regex:/^\d+(\.\d+){0,3}$/'],
             'app_force_update' => ['nullable', 'boolean'],
             'app_update_title' => ['nullable', 'string', 'max:255'],
             'app_update_message' => ['nullable', 'string', 'max:1000'],
@@ -132,6 +142,10 @@ class SettingController extends Controller
         ], [
             'shipping_sender_phone.regex' => 'Nomor telepon pengirim harus dimulai dengan 08, 628, +628, atau 02 dan hanya berisi angka.',
             'store_phone.regex' => 'Nomor telepon toko harus dimulai dengan 08, 628, +628, atau 02 dan hanya berisi angka.',
+            'app_min_version_ios.regex' => 'Format versi harus angka bertitik, contoh 1.0.2.',
+            'app_latest_version_ios.regex' => 'Format versi harus angka bertitik, contoh 1.0.2.',
+            'app_min_version_android.regex' => 'Format versi harus angka bertitik, contoh 1.0.2.',
+            'app_latest_version_android.regex' => 'Format versi harus angka bertitik, contoh 1.0.2.',
             'store_whatsapp.regex' => 'Nomor WhatsApp toko harus dimulai dengan 08, 628, +628, atau 02 dan hanya berisi angka.',
         ]);
 
@@ -188,6 +202,10 @@ class SettingController extends Controller
             'kiriminaja_pin' => ['group' => 'shipping', 'type' => 'string'],
             'app_min_version' => ['group' => 'app_update', 'type' => 'string'],
             'app_latest_version' => ['group' => 'app_update', 'type' => 'string'],
+            'app_min_version_ios' => ['group' => 'app_update', 'type' => 'string'],
+            'app_latest_version_ios' => ['group' => 'app_update', 'type' => 'string'],
+            'app_min_version_android' => ['group' => 'app_update', 'type' => 'string'],
+            'app_latest_version_android' => ['group' => 'app_update', 'type' => 'string'],
             'app_force_update' => ['group' => 'app_update', 'type' => 'boolean'],
             'app_update_title' => ['group' => 'app_update', 'type' => 'string'],
             'app_update_message' => ['group' => 'app_update', 'type' => 'string'],

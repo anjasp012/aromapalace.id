@@ -84,11 +84,15 @@ export default function SettingsIndex({
         // Mobile App Update (Capacitor)
         app_min_version: settings.app_min_version || '1.0.0',
         app_latest_version: settings.app_latest_version || '1.0.0',
+        app_min_version_ios: settings.app_min_version_ios || settings.app_min_version || '1.0.0',
+        app_latest_version_ios: settings.app_latest_version_ios || settings.app_latest_version || '1.0.0',
+        app_min_version_android: settings.app_min_version_android || settings.app_min_version || '1.0.0',
+        app_latest_version_android: settings.app_latest_version_android || settings.app_latest_version || '1.0.0',
         app_force_update: Boolean(settings.app_force_update === '1' || settings.app_force_update === true || settings.app_force_update === 1),
         app_update_title: settings.app_update_title || 'Pembaruan Aplikasi Tersedia',
         app_update_message: settings.app_update_message || 'Versi baru aplikasi Aroma Palace telah tersedia dengan peningkatan fitur dan stabilitas. Mohon perbarui aplikasi Anda untuk melanjutkan berbelanja.',
         app_playstore_url: settings.app_playstore_url || 'https://play.google.com/store/apps/details?id=com.aromapalace.app',
-        app_appstore_url: settings.app_appstore_url || 'https://apps.apple.com/app/aromapalace/id6740000000',
+        app_appstore_url: settings.app_appstore_url || 'https://apps.apple.com/app/id6825154655',
     });
 
     const [showApiKey, setShowApiKey] = useState(false);
@@ -694,48 +698,48 @@ export default function SettingsIndex({
                                     </div>
                                 </label>
 
-                                {/* Input Versi */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-semibold text-foreground flex items-center justify-between">
-                                            <span>Versi Minimum yang Diizinkan</span>
-                                            <span className="text-[10px] text-muted-foreground font-mono">Semver</span>
-                                        </label>
-                                        <Input
-                                            type="text"
-                                            placeholder="1.0.0"
-                                            value={data.app_min_version}
-                                            onChange={(e) => setData('app_min_version', e.target.value)}
-                                            className="h-9 text-xs font-mono"
-                                        />
-                                        <p className="text-[10px] text-muted-foreground">
-                                            Versi di bawah ini otomatis dipaksa update (wajib).
-                                        </p>
-                                        {errors.app_min_version && (
-                                            <p className="text-xs text-destructive">{errors.app_min_version}</p>
-                                        )}
-                                    </div>
+                                {/* Input Versi per Platform (iOS & Android dirilis terpisah) */}
+                                {([
+                                    { key: 'ios', label: 'iOS (App Store)', placeholder: '1.0.2' },
+                                    { key: 'android', label: 'Android (Play Store)', placeholder: '1.2' },
+                                ] as const).map((platform) => {
+                                    const minKey = `app_min_version_${platform.key}` as const;
+                                    const latestKey = `app_latest_version_${platform.key}` as const;
 
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-semibold text-foreground flex items-center justify-between">
-                                            <span>Versi Terbaru di App Store</span>
-                                            <span className="text-[10px] text-muted-foreground font-mono">Semver</span>
-                                        </label>
-                                        <Input
-                                            type="text"
-                                            placeholder="1.1.0"
-                                            value={data.app_latest_version}
-                                            onChange={(e) => setData('app_latest_version', e.target.value)}
-                                            className="h-9 text-xs font-mono"
-                                        />
-                                        <p className="text-[10px] text-muted-foreground">
-                                            Nomor versi rilis terbaru yang siap diunduh.
-                                        </p>
-                                        {errors.app_latest_version && (
-                                            <p className="text-xs text-destructive">{errors.app_latest_version}</p>
-                                        )}
-                                    </div>
-                                </div>
+                                    return (
+                                        <div key={platform.key} className="space-y-2 p-3 rounded-xl border border-border/80">
+                                            <div className="text-xs font-bold text-foreground">{platform.label}</div>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                <div className="space-y-1.5">
+                                                    <label className="text-xs font-semibold text-foreground">Versi Minimum</label>
+                                                    <Input
+                                                        type="text"
+                                                        inputMode="decimal"
+                                                        placeholder={platform.placeholder}
+                                                        value={data[minKey]}
+                                                        onChange={(e) => setData(minKey, e.target.value)}
+                                                        className="h-9 text-xs font-mono"
+                                                    />
+                                                    <p className="text-[10px] text-muted-foreground">Di bawah versi ini pengguna wajib update.</p>
+                                                    {errors[minKey] && <p className="text-xs text-destructive">{errors[minKey]}</p>}
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    <label className="text-xs font-semibold text-foreground">Versi Terbaru di Store</label>
+                                                    <Input
+                                                        type="text"
+                                                        inputMode="decimal"
+                                                        placeholder={platform.placeholder}
+                                                        value={data[latestKey]}
+                                                        onChange={(e) => setData(latestKey, e.target.value)}
+                                                        className="h-9 text-xs font-mono"
+                                                    />
+                                                    <p className="text-[10px] text-muted-foreground">Isi hanya setelah versi ini sudah tersedia di store.</p>
+                                                    {errors[latestKey] && <p className="text-xs text-destructive">{errors[latestKey]}</p>}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
 
                                 {/* Judul & Pesan Update */}
                                 <div className="space-y-1.5">
@@ -794,7 +798,7 @@ export default function SettingsIndex({
                                         </label>
                                         <Input
                                             type="url"
-                                            placeholder="https://apps.apple.com/app/aromapalace/id6740000000"
+                                            placeholder="https://apps.apple.com/app/id6825154655"
                                             value={data.app_appstore_url}
                                             onChange={(e) => setData('app_appstore_url', e.target.value)}
                                             className="h-9 text-xs font-mono"
