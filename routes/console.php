@@ -16,3 +16,5 @@ Schedule::command('orders:auto-complete')->everyTenMinutes();
 
 // Remind admins every hour about paid orders not shipped after 24 hours (FCM + DB notification)
 Schedule::command('orders:remind-unprocessed')->hourly();
+// Remind users 1 hour before 24h payment deadline (runs every 10 min)
+Schedule::command('orders:remind-expiring-payments')->everyTenMinutes();
