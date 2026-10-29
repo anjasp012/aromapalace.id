@@ -17,7 +17,6 @@ import {
     ChevronDown,
     Check,
     Loader2,
-    ArrowUpDown,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -342,17 +341,6 @@ export default function AdminCategoriesIndex({
                                 </Link>
                             </Button>
                         </div>
-                    </div>
-
-                    {/* Hint: Drag and drop to sort */}
-                    <div className="mt-3 pt-3 border-t flex items-center justify-between text-xs text-muted-foreground">
-                        <div className="flex items-center gap-1.5">
-                            <ArrowUpDown className="size-3.5 text-primary" />
-                            <span><strong>Tips Sort:</strong> Tarik dan geser kartu untuk mengubah urutan tampilan pada katalog. Urutan tersimpan otomatis.</span>
-                        </div>
-                        <Badge variant="outline" className="font-mono text-[10px]">
-                            {items.length} {meta.itemName}
-                        </Badge>
                     </div>
                 </Card>
 
