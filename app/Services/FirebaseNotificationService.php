@@ -970,4 +970,99 @@ class FirebaseNotificationService
             ]
         );
     }
+
+    /**
+     * 14. Notifikasi Pembayaran Manual Disetujui (oleh Admin):
+     * - Ke Customer: "Pembayaran Manual Dikonfirmasi!"
+     */
+    public function notifyManualPaymentApproved(Order $order): void
+    {
+        $cacheKey = "fcm_manual_approved_{$order->id}";
+        if (Cache::has($cacheKey)) {
+            Log::info("Suppressing duplicate notifyManualPaymentApproved for order #{$order->order_number}");
+
+            return;
+        }
+        Cache::put($cacheKey, true, now()->addMinutes(10));
+
+        $formattedTotal = 'Rp '.number_format($order->total_amount, 0, ',', '.');
+
+        if ($order->user_id) {
+            $titleId = '✅ Pembayaran Dikonfirmasi! #'.$order->order_number;
+            $bodyId = "Bukti transfer {$formattedTotal} Anda telah diverifikasi. Pesanan wewangian Anda sedang kami siapkan.";
+            $titleEn = '✅ Payment Confirmed! #'.$order->order_number;
+            $bodyEn = "Your transfer proof of {$formattedTotal} has been verified. Your luxury fragrance order is being prepared.";
+
+            $this->sendToUser(
+                user: $order->user_id,
+                title: $titleId,
+                body: $bodyId,
+                url: url('/account/orders'),
+                data: [
+                    'order_id' => (string) $order->id,
+                    'order_number' => (string) $order->order_number,
+                    'payment_method' => 'manual',
+                    'type' => 'payment_success',
+                    'title_en' => $titleEn,
+                    'body_en' => $bodyEn,
+                    'title_id' => $titleId,
+                    'body_id' => $bodyId,
+                ]
+            );
+        }
+
+        // Also notify admin side (same as notifyPaymentSuccess admin branch)
+        $this->sendToAdmins(
+            title: 'Pembayaran Manual Diterima! #'.$order->order_number,
+            body: "Pembayaran {$formattedTotal} dari {$order->recipient_name} telah dikonfirmasi secara manual.",
+            url: '/manajemen-pesanan/'.$order->id,
+            data: [
+                'order_id' => (string) $order->id,
+                'order_number' => (string) $order->order_number,
+                'payment_method' => 'manual',
+                'type' => 'admin_payment_received',
+            ]
+        );
+    }
+
+    /**
+     * 15. Notifikasi Pembayaran Manual Ditolak (oleh Admin):
+     * - Ke Customer: "Bukti Transfer Ditolak"
+     */
+    public function notifyManualPaymentRejected(Order $order): void
+    {
+        $cacheKey = "fcm_manual_rejected_{$order->id}";
+        if (Cache::has($cacheKey)) {
+            Log::info("Suppressing duplicate notifyManualPaymentRejected for order #{$order->order_number}");
+
+            return;
+        }
+        Cache::put($cacheKey, true, now()->addMinutes(10));
+
+        $formattedTotal = 'Rp '.number_format($order->total_amount, 0, ',', '.');
+
+        if ($order->user_id) {
+            $titleId = '❌ Bukti Transfer Ditolak #'.$order->order_number;
+            $bodyId = "Bukti transfer {$formattedTotal} tidak dapat diverifikasi oleh admin. Pesanan dibatalkan. Hubungi CS Aroma Palace untuk bantuan.";
+            $titleEn = '❌ Transfer Proof Rejected #'.$order->order_number;
+            $bodyEn = "Your transfer proof of {$formattedTotal} could not be verified. Order has been canceled. Please contact Aroma Palace customer support.";
+
+            $this->sendToUser(
+                user: $order->user_id,
+                title: $titleId,
+                body: $bodyId,
+                url: url('/account/orders'),
+                data: [
+                    'order_id' => (string) $order->id,
+                    'order_number' => (string) $order->order_number,
+                    'payment_method' => 'manual',
+                    'type' => 'order_canceled',
+                    'title_en' => $titleEn,
+                    'body_en' => $bodyEn,
+                    'title_id' => $titleId,
+                    'body_id' => $bodyId,
+                ]
+            );
+        }
+    }
 }
