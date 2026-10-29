@@ -176,21 +176,7 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
     const [promoModalOpen, setPromoModalOpen] = useState(false);
 
     // Header Vouchers from Inertia shared props (cached with rememberForever)
-    const headerVouchers: HeaderVoucher[] = (props.header_vouchers && props.header_vouchers.length > 0)
-        ? props.header_vouchers
-        : [
-            {
-                id: 1,
-                code: 'AROMA40',
-                name: 'Aroma Royale Special 40%',
-                description: 'Nikmati diskon istimewa sebesar 40% untuk seluruh koleksi wewangian artisanal pilihan Aroma Palace.',
-                terms: ['Berlaku untuk semua produk wewangian tanpa terkecuali.', 'Dapat digunakan untuk 1 kali checkout per akun.'],
-                type: 'percentage',
-                value: 40,
-                min_order_amount: 0,
-                max_discount_amount: null,
-            },
-        ];
+    const headerVouchers: HeaderVoucher[] = props.header_vouchers || [];
 
     const [currentVoucherIndex, setCurrentVoucherIndex] = useState(0);
     const [isVoucherFading, setIsVoucherFading] = useState(false);
@@ -219,24 +205,12 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
         return () => clearInterval(timer);
     }, [headerVouchers.length]);
 
-    const activeHeaderVoucher = headerVouchers[currentVoucherIndex] || headerVouchers[0];
+    const activeHeaderVoucher = headerVouchers[currentVoucherIndex] || headerVouchers[0] || null;
 
-    const promoFullText = useMemo(() => {
-        if (activeHeaderVoucher) {
-            if (activeHeaderVoucher.type === 'percentage') {
-                return isEn
-                    ? `Special Offer \u2013 Up to ${activeHeaderVoucher.value}% off! Claim Voucher \u2192`
-                    : `Promo Spesial \u2013 Diskon hingga ${activeHeaderVoucher.value}%! Klaim Voucher \u2192`;
-            }
-            return isEn
-                ? `Special Offer \u2013 Rp ${new Intl.NumberFormat('id-ID').format(activeHeaderVoucher.value)} off! Claim Voucher \u2192`
-                : `Promo Spesial \u2013 Potongan Rp ${new Intl.NumberFormat('id-ID').format(activeHeaderVoucher.value)}! Klaim Voucher \u2192`;
-        }
-        return isEn ? 'Special Offer \u2013 Up to 40% off! Claim Voucher \u2192' : 'Promo Spesial \u2013 Diskon hingga 40%! Klaim Voucher \u2192';
-    }, [activeHeaderVoucher, isEn]);
-
-    const handleOpenVoucherModal = (voucherToOpen?: HeaderVoucher) => {
-        setSelectedHeaderVoucher(voucherToOpen || activeHeaderVoucher);
+    const handleOpenVoucherModal = (voucherToOpen?: HeaderVoucher | null) => {
+        const target = voucherToOpen || activeHeaderVoucher;
+        if (!target) return;
+        setSelectedHeaderVoucher(target);
         setPromoModalOpen(true);
     };
 
@@ -825,26 +799,33 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
             {/* Top Announcement Bar (Scrolls normally with page, NOT sticky on mobile) */}
             <div className="bg-[#360407] text-white text-xs pt-[env(safe-area-inset-top,0px)]" suppressHydrationWarning>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between py-1.5 sm:py-2 gap-2">
-                    <button
-                        type="button"
-                        onClick={() => handleOpenVoucherModal(activeHeaderVoucher)}
-                        className="max-w-[210px] sm:max-w-[340px] md:max-w-[420px] lg:max-w-lg min-w-0 flex items-center justify-start gap-1.5 sm:gap-2 text-xs text-white/95 hover:text-white transition cursor-pointer text-left group overflow-hidden"
-                        title={isEn ? "Click to view voucher details" : "Klik untuk melihat detail voucher"}
-                    >
-                        <span className="text-[#E5A844] text-xs shrink-0 animate-pulse select-none">✦</span>
-                        <span className={cn(
-                            "font-medium text-[10.5px] sm:text-xs tracking-tight transition-all duration-300 truncate",
-                            isVoucherFading ? "opacity-0 -translate-y-1 scale-95" : "opacity-100 translate-y-0 scale-100"
-                        )}>
-                            <span>
-                                {activeHeaderVoucher?.type === 'percentage'
-                                    ? (isEn ? `Up to ${activeHeaderVoucher.value}% off! Claim →` : `Diskon hingga ${activeHeaderVoucher.value}%! Klaim →`)
-                                    : (isEn
-                                        ? `Rp ${new Intl.NumberFormat('id-ID').format(activeHeaderVoucher?.value || 0)} off! Claim →`
-                                        : `Potongan Rp ${new Intl.NumberFormat('id-ID').format(activeHeaderVoucher?.value || 0)}! Klaim →`)}
+                    {activeHeaderVoucher ? (
+                        <button
+                            type="button"
+                            onClick={() => handleOpenVoucherModal(activeHeaderVoucher)}
+                            className="max-w-[210px] sm:max-w-[340px] md:max-w-[420px] lg:max-w-lg min-w-0 flex items-center justify-start gap-1.5 sm:gap-2 text-xs text-white/95 hover:text-white transition cursor-pointer text-left group overflow-hidden"
+                            title={isEn ? "Click to view voucher details" : "Klik untuk melihat detail voucher"}
+                        >
+                            <span className="text-[#E5A844] text-xs shrink-0 animate-pulse select-none">✦</span>
+                            <span className={cn(
+                                "font-medium text-[10.5px] sm:text-xs tracking-tight transition-all duration-300 truncate",
+                                isVoucherFading ? "opacity-0 -translate-y-1 scale-95" : "opacity-100 translate-y-0 scale-100"
+                            )}>
+                                <span>
+                                    {activeHeaderVoucher.type === 'percentage'
+                                        ? (isEn ? `Up to ${activeHeaderVoucher.value}% off! Claim →` : `Diskon hingga ${activeHeaderVoucher.value}%! Klaim →`)
+                                        : (isEn
+                                            ? `Rp ${new Intl.NumberFormat('id-ID').format(activeHeaderVoucher.value)} off! Claim →`
+                                            : `Potongan Rp ${new Intl.NumberFormat('id-ID').format(activeHeaderVoucher.value)}! Klaim →`)}
+                                </span>
                             </span>
-                        </span>
-                    </button>
+                        </button>
+                    ) : (
+                        <div className="flex items-center gap-1.5 text-[10.5px] sm:text-xs text-white/80 select-none">
+                            <span className="text-[#E5A844] text-xs shrink-0 select-none">✦</span>
+                            <span className="truncate">{isEn ? 'Official Luxury Fragrance Boutique' : 'Butik Parfum Mewah & Eksklusif'}</span>
+                        </div>
+                    )}
 
                     <div className="flex items-center gap-3 sm:gap-4 lg:gap-5 text-[11px] shrink-0">
                         {/* Gratis Ongkir */}
