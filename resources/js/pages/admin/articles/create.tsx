@@ -8,6 +8,7 @@ import {
     Clock,
     FileText,
     Upload,
+    FileEdit,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,7 +23,7 @@ export default function AdminArticleCreate() {
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useState(false);
 
-    const { data, setData, post, processing, errors } = useForm<{
+    const { data, setData, post, processing, errors, transform } = useForm<{
         title: string;
         title_en: string;
         slug: string;
@@ -32,6 +33,7 @@ export default function AdminArticleCreate() {
         excerpt_en: string;
         content: string;
         content_en: string;
+        is_draft: boolean;
     }>({
         title: '',
         title_en: '',
@@ -42,6 +44,7 @@ export default function AdminArticleCreate() {
         excerpt_en: '',
         content: '',
         content_en: '',
+        is_draft: false,
     });
 
     const slugify = (text: string) => {
@@ -100,11 +103,20 @@ export default function AdminArticleCreate() {
         }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSave = (asDraft: boolean) => {
+        setData('is_draft', asDraft);
+        transform((prev) => ({
+            ...prev,
+            is_draft: asDraft,
+        }));
         post('/manajemen-artikel', {
             forceFormData: true,
         });
+    };
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        handleSave(data.is_draft);
     };
 
     return (
@@ -113,7 +125,7 @@ export default function AdminArticleCreate() {
             subtitle="Publikasikan panduan parfum, edukasi notes piramida, atau cerita di balik aroma."
         >
             <form onSubmit={handleSubmit} className="w-full space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <Button variant="ghost" size="sm" asChild className="p-0 hover:bg-transparent">
                         <Link href="/manajemen-artikel" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
                             <ArrowLeft className="size-4" />
@@ -121,13 +133,30 @@ export default function AdminArticleCreate() {
                         </Link>
                     </Button>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
                             <Link href="/manajemen-artikel">Batal</Link>
                         </Button>
-                        <Button type="submit" size="sm" disabled={processing}>
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            disabled={processing}
+                            onClick={() => handleSave(true)}
+                            className="border border-border text-amber-700 dark:text-amber-400"
+                        >
+                            <FileEdit className="size-4 mr-1.5" />
+                            <span>Simpan Draft</span>
+                        </Button>
+                        <Button
+                            type="button"
+                            size="sm"
+                            disabled={processing}
+                            onClick={() => handleSave(false)}
+                            className="bg-[#4A070B] hover:bg-[#380508] text-white"
+                        >
                             <Save className="size-4 mr-1.5" />
-                            <span>{processing ? 'Menyimpan...' : 'Terbitkan Artikel'}</span>
+                            <span>{processing ? 'Menyimpan...' : 'Simpan & Publikasikan'}</span>
                         </Button>
                     </div>
                 </div>
@@ -385,13 +414,30 @@ export default function AdminArticleCreate() {
                     </CardContent>
                 </Card>
 
-                <div className="flex justify-end gap-2 pt-2">
+                <div className="flex flex-wrap items-center justify-end gap-2 pt-2">
                     <Button variant="outline" size="sm" asChild>
                         <Link href="/manajemen-artikel">Batal</Link>
                     </Button>
-                    <Button type="submit" size="sm" disabled={processing}>
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        disabled={processing}
+                        onClick={() => handleSave(true)}
+                        className="border border-border text-amber-700 dark:text-amber-400"
+                    >
+                        <FileEdit className="size-4 mr-1.5" />
+                        <span>Simpan Draft</span>
+                    </Button>
+                    <Button
+                        type="button"
+                        size="sm"
+                        disabled={processing}
+                        onClick={() => handleSave(false)}
+                        className="bg-[#4A070B] hover:bg-[#380508] text-white"
+                    >
                         <Save className="size-4 mr-1.5" />
-                        <span>{processing ? 'Menyimpan...' : 'Terbitkan Artikel'}</span>
+                        <span>{processing ? 'Menyimpan...' : 'Simpan & Publikasikan'}</span>
                     </Button>
                 </div>
             </form>

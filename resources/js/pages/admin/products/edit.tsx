@@ -14,6 +14,8 @@ import {
     Check,
     Tags,
     Sparkles,
+    Clock,
+    FileEdit,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -65,6 +67,7 @@ interface ProductDetailProps {
     is_new_arrivals?: boolean;
     is_best_sellers?: boolean;
     is_special_offers?: boolean;
+    is_draft?: boolean;
     images: string[];
     variants: VariantFormItem[];
 }
@@ -89,7 +92,7 @@ export default function AdminProductEdit({
     const [newImagePreviews, setNewImagePreviews] = useState<UploadedPreview[]>([]);
     const [isDragging, setIsDragging] = useState(false);
 
-    const { data, setData, post, processing, errors } = useForm<{
+    const { data, setData, post, processing, errors, transform } = useForm<{
         _method: string;
         name: string;
         slug: string;
@@ -100,6 +103,7 @@ export default function AdminProductEdit({
         is_new_arrivals: boolean;
         is_best_sellers: boolean;
         is_special_offers: boolean;
+        is_draft: boolean;
         existing_images: string[];
         images: File[];
         variants: VariantFormItem[];
@@ -116,6 +120,7 @@ export default function AdminProductEdit({
         is_new_arrivals: Boolean(product.is_new_arrivals),
         is_best_sellers: Boolean(product.is_best_sellers),
         is_special_offers: Boolean(product.is_special_offers),
+        is_draft: Boolean(product.is_draft),
         existing_images: product.images || [],
         images: [],
         variants: product.variants.map((v) => ({
@@ -312,11 +317,20 @@ export default function AdminProductEdit({
         }));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSave = (asDraft: boolean) => {
+        setData('is_draft', asDraft);
+        transform((prev) => ({
+            ...prev,
+            is_draft: asDraft,
+        }));
         post(`/manajemen-produk/${product.id}`, {
             forceFormData: true,
         });
+    };
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        handleSave(data.is_draft);
     };
 
     const handleDeleteProduct = () => {
@@ -343,18 +357,24 @@ export default function AdminProductEdit({
                         </Link>
                     </Button>
 
-                    <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" asChild>
-                            <a
-                                href={getStorefrontUrl(`/products/${product.slug}`)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-1.5"
-                            >
-                                <span>Lihat di Toko</span>
-                                <ExternalLink className="size-3.5" />
-                            </a>
-                        </Button>
+                    <div className="flex flex-wrap items-center gap-2">
+                        {data.is_draft ? (
+                            <Button variant="outline" size="sm" disabled className="opacity-60 cursor-not-allowed">
+                                <span className="text-muted-foreground text-xs">Draft (Belum Publik)</span>
+                            </Button>
+                        ) : (
+                            <Button variant="outline" size="sm" asChild>
+                                <a
+                                    href={getStorefrontUrl(`/products/${product.slug}`)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1.5"
+                                >
+                                    <span>Lihat di Toko</span>
+                                    <ExternalLink className="size-3.5" />
+                                </a>
+                            </Button>
+                        )}
 
                         <Button
                             type="button"
@@ -367,9 +387,27 @@ export default function AdminProductEdit({
                             <span>Hapus</span>
                         </Button>
 
-                        <Button type="submit" size="sm" disabled={processing}>
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            disabled={processing}
+                            onClick={() => handleSave(true)}
+                            className="border border-border text-amber-700 dark:text-amber-400"
+                        >
+                            <FileEdit className="size-4 mr-1.5" />
+                            <span>Simpan Draft</span>
+                        </Button>
+
+                        <Button
+                            type="button"
+                            size="sm"
+                            disabled={processing}
+                            onClick={() => handleSave(false)}
+                            className="bg-[#4A070B] hover:bg-[#380508] text-white"
+                        >
                             <Save className="size-4 mr-1.5" />
-                            <span>{processing ? 'Menyimpan...' : 'Perbarui Produk'}</span>
+                            <span>{processing ? 'Menyimpan...' : 'Perbarui & Publikasikan'}</span>
                         </Button>
                     </div>
                 </div>
@@ -429,7 +467,6 @@ export default function AdminProductEdit({
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <label className="font-semibold text-foreground flex items-center gap-2 text-sm">
-                                            <Tags className="size-4 text-primary" />
                                             <span>Kategori Produk (Gender, Konsentrasi, Scent)</span>
                                         </label>
                                         <p className="text-[11px] text-muted-foreground mt-0.5">
@@ -455,11 +492,10 @@ export default function AdminProductEdit({
                                                         key={c.id}
                                                         type="button"
                                                         onClick={() => toggleCategory(c.id)}
-                                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 border ${
-                                                            isSelected
-                                                                ? 'bg-[#4A070B] text-white border-[#4A070B] shadow-xs'
-                                                                : 'bg-card hover:bg-muted text-foreground border-border/80'
-                                                        }`}
+                                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 border ${isSelected
+                                                            ? 'bg-[#4A070B] text-white border-[#4A070B] shadow-xs'
+                                                            : 'bg-card hover:bg-muted text-foreground border-border/80'
+                                                            }`}
                                                     >
                                                         {isSelected && <Check className="size-3.5" />}
                                                         <span>{c.name}</span>
@@ -484,11 +520,10 @@ export default function AdminProductEdit({
                                                         key={c.id}
                                                         type="button"
                                                         onClick={() => toggleCategory(c.id)}
-                                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 border ${
-                                                            isSelected
-                                                                ? 'bg-amber-700 text-white border-amber-700 shadow-xs'
-                                                                : 'bg-card hover:bg-muted text-foreground border-border/80'
-                                                        }`}
+                                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 border ${isSelected
+                                                            ? 'bg-amber-700 text-white border-amber-700 shadow-xs'
+                                                            : 'bg-card hover:bg-muted text-foreground border-border/80'
+                                                            }`}
                                                     >
                                                         {isSelected && <Check className="size-3.5" />}
                                                         <span>{c.name}</span>
@@ -513,11 +548,10 @@ export default function AdminProductEdit({
                                                         key={c.id}
                                                         type="button"
                                                         onClick={() => toggleCategory(c.id)}
-                                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 border ${
-                                                            isSelected
-                                                                ? 'bg-purple-800 text-white border-purple-800 shadow-xs'
-                                                                : 'bg-card hover:bg-muted text-foreground border-border/80'
-                                                        }`}
+                                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 border ${isSelected
+                                                            ? 'bg-purple-800 text-white border-purple-800 shadow-xs'
+                                                            : 'bg-card hover:bg-muted text-foreground border-border/80'
+                                                            }`}
                                                     >
                                                         {isSelected && <Check className="size-3.5" />}
                                                         <span>{c.name}</span>
@@ -542,11 +576,10 @@ export default function AdminProductEdit({
                                                         key={c.id}
                                                         type="button"
                                                         onClick={() => toggleCategory(c.id)}
-                                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 border ${
-                                                            isSelected
-                                                                ? 'bg-zinc-800 text-white border-zinc-800 shadow-xs'
-                                                                : 'bg-card hover:bg-muted text-foreground border-border/80'
-                                                        }`}
+                                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 border ${isSelected
+                                                            ? 'bg-zinc-800 text-white border-zinc-800 shadow-xs'
+                                                            : 'bg-card hover:bg-muted text-foreground border-border/80'
+                                                            }`}
                                                     >
                                                         {isSelected && <Check className="size-3.5" />}
                                                         <span>{c.name}</span>
@@ -564,7 +597,6 @@ export default function AdminProductEdit({
                             <div className="space-y-3 col-span-full pt-3 border-t border-border/70">
                                 <div>
                                     <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                                        <Sparkles className="size-3.5 text-amber-500" />
                                         <span>Highlight & Label Produk (Navbar & Badge)</span>
                                     </label>
                                     <p className="text-[11px] text-muted-foreground mt-0.5">
@@ -576,11 +608,10 @@ export default function AdminProductEdit({
                                     {/* New Arrivals */}
                                     <div
                                         onClick={() => setData('is_new_arrivals', !data.is_new_arrivals)}
-                                        className={`p-3 rounded-xl border cursor-pointer transition-all flex items-start gap-3 select-none ${
-                                            data.is_new_arrivals
-                                                ? 'bg-emerald-500/10 border-emerald-500/50 dark:bg-emerald-950/20'
-                                                : 'bg-card hover:bg-muted/40 border-border/70'
-                                        }`}
+                                        className={`p-3 rounded-xl border cursor-pointer transition-all flex items-start gap-3 select-none ${data.is_new_arrivals
+                                            ? 'bg-emerald-500/10 border-emerald-500/50 dark:bg-emerald-950/20'
+                                            : 'bg-card hover:bg-muted/40 border-border/70'
+                                            }`}
                                     >
                                         <input
                                             type="checkbox"
@@ -604,11 +635,10 @@ export default function AdminProductEdit({
                                     {/* Best Sellers */}
                                     <div
                                         onClick={() => setData('is_best_sellers', !data.is_best_sellers)}
-                                        className={`p-3 rounded-xl border cursor-pointer transition-all flex items-start gap-3 select-none ${
-                                            data.is_best_sellers
-                                                ? 'bg-amber-500/10 border-amber-500/50 dark:bg-amber-950/20'
-                                                : 'bg-card hover:bg-muted/40 border-border/70'
-                                        }`}
+                                        className={`p-3 rounded-xl border cursor-pointer transition-all flex items-start gap-3 select-none ${data.is_best_sellers
+                                            ? 'bg-amber-500/10 border-amber-500/50 dark:bg-amber-950/20'
+                                            : 'bg-card hover:bg-muted/40 border-border/70'
+                                            }`}
                                     >
                                         <input
                                             type="checkbox"
@@ -632,11 +662,10 @@ export default function AdminProductEdit({
                                     {/* Special Offers */}
                                     <div
                                         onClick={() => setData('is_special_offers', !data.is_special_offers)}
-                                        className={`p-3 rounded-xl border cursor-pointer transition-all flex items-start gap-3 select-none ${
-                                            data.is_special_offers
-                                                ? 'bg-[#4A070B]/10 border-[#4A070B]/40 dark:bg-rose-950/20'
-                                                : 'bg-card hover:bg-muted/40 border-border/70'
-                                        }`}
+                                        className={`p-3 rounded-xl border cursor-pointer transition-all flex items-start gap-3 select-none ${data.is_special_offers
+                                            ? 'bg-[#4A070B]/10 border-[#4A070B]/40 dark:bg-rose-950/20'
+                                            : 'bg-card hover:bg-muted/40 border-border/70'
+                                            }`}
                                     >
                                         <input
                                             type="checkbox"
@@ -723,11 +752,10 @@ export default function AdminProductEdit({
                                 onDragLeave={handleDragLeave}
                                 onDrop={handleDrop}
                                 onClick={() => fileInputRef.current?.click()}
-                                className={`border-2 border-dashed rounded-xl p-8 text-center flex flex-col items-center justify-center cursor-pointer transition-all ${
-                                    isDragging
-                                        ? 'border-primary bg-primary/5 scale-[0.99]'
-                                        : 'border-muted-foreground/25 hover:border-primary/50 bg-muted/10 hover:bg-muted/20'
-                                }`}
+                                className={`border-2 border-dashed rounded-xl p-8 text-center flex flex-col items-center justify-center cursor-pointer transition-all ${isDragging
+                                    ? 'border-primary bg-primary/5 scale-[0.99]'
+                                    : 'border-muted-foreground/25 hover:border-primary/50 bg-muted/10 hover:bg-muted/20'
+                                    }`}
                             >
                                 <div className="size-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-3">
                                     <Upload className="size-6" />
@@ -811,11 +839,10 @@ export default function AdminProductEdit({
                                     onDragLeave={handleDragLeave}
                                     onDrop={handleDrop}
                                     onClick={() => fileInputRef.current?.click()}
-                                    className={`border-2 border-dashed rounded-lg flex flex-col items-center justify-center aspect-square transition-all cursor-pointer ${
-                                        isDragging
-                                            ? 'border-primary bg-primary/10 text-primary scale-95'
-                                            : 'border-muted-foreground/25 hover:border-primary/50 text-muted-foreground hover:text-foreground bg-muted/10 hover:bg-muted/20'
-                                    }`}
+                                    className={`border-2 border-dashed rounded-lg flex flex-col items-center justify-center aspect-square transition-all cursor-pointer ${isDragging
+                                        ? 'border-primary bg-primary/10 text-primary scale-95'
+                                        : 'border-muted-foreground/25 hover:border-primary/50 text-muted-foreground hover:text-foreground bg-muted/10 hover:bg-muted/20'
+                                        }`}
                                 >
                                     <Plus className="size-6 mb-1" />
                                     <span className="text-xs font-medium">Tambah Foto</span>
@@ -960,13 +987,30 @@ export default function AdminProductEdit({
                 </Card>
 
                 {/* Bottom Actions */}
-                <div className="flex justify-end gap-2 pt-2">
+                <div className="flex flex-wrap items-center justify-end gap-2 pt-2">
                     <Button variant="outline" size="sm" asChild>
                         <Link href="/manajemen-produk">Batal</Link>
                     </Button>
-                    <Button type="submit" size="sm" disabled={processing}>
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        disabled={processing}
+                        onClick={() => handleSave(true)}
+                        className="border border-border text-amber-700 dark:text-amber-400"
+                    >
+                        <FileEdit className="size-4 mr-1.5" />
+                        <span>Simpan Draft</span>
+                    </Button>
+                    <Button
+                        type="button"
+                        size="sm"
+                        disabled={processing}
+                        onClick={() => handleSave(false)}
+                        className="bg-[#4A070B] hover:bg-[#380508] text-white"
+                    >
                         <Save className="size-4 mr-1.5" />
-                        <span>{processing ? 'Menyimpan...' : 'Perbarui Produk'}</span>
+                        <span>{processing ? 'Menyimpan...' : 'Perbarui & Publikasikan'}</span>
                     </Button>
                 </div>
             </form>

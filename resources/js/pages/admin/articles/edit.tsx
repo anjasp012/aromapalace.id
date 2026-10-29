@@ -7,6 +7,8 @@ import {
     ExternalLink,
     Trash2,
     Upload,
+    Clock,
+    FileEdit,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,6 +37,7 @@ interface ArticleItem {
     excerpt_en?: string | null;
     content: string;
     content_en?: string | null;
+    is_draft?: boolean;
 }
 
 interface ArticleEditProps {
@@ -46,7 +49,7 @@ export default function AdminArticleEdit({ article }: ArticleEditProps) {
     const [previewUrl, setPreviewUrl] = useState<string | null>(article.thumbnail || null);
     const [isDragging, setIsDragging] = useState(false);
 
-    const { data, setData, post, processing, errors } = useForm<{
+    const { data, setData, post, processing, errors, transform } = useForm<{
         _method: string;
         title: string;
         title_en: string;
@@ -57,6 +60,7 @@ export default function AdminArticleEdit({ article }: ArticleEditProps) {
         excerpt_en: string;
         content: string;
         content_en: string;
+        is_draft: boolean;
     }>({
         _method: 'put',
         title: article.title || '',
@@ -68,6 +72,7 @@ export default function AdminArticleEdit({ article }: ArticleEditProps) {
         excerpt_en: article.excerpt_en || '',
         content: article.content || '',
         content_en: article.content_en || '',
+        is_draft: Boolean(article.is_draft),
     });
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -121,11 +126,20 @@ export default function AdminArticleEdit({ article }: ArticleEditProps) {
         }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSave = (asDraft: boolean) => {
+        setData('is_draft', asDraft);
+        transform((prev) => ({
+            ...prev,
+            is_draft: asDraft,
+        }));
         post(`/manajemen-artikel/${article.id}`, {
             forceFormData: true,
         });
+    };
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        handleSave(data.is_draft);
     };
 
     const handleDeleteArticle = () => {
@@ -150,18 +164,24 @@ export default function AdminArticleEdit({ article }: ArticleEditProps) {
                         </Link>
                     </Button>
 
-                    <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" asChild>
-                            <a
-                                href={`/articles/${article.slug}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-1.5"
-                            >
-                                <span>Lihat Publik</span>
-                                <ExternalLink className="size-3.5" />
-                            </a>
-                        </Button>
+                    <div className="flex flex-wrap items-center gap-2">
+                        {data.is_draft ? (
+                            <Button variant="outline" size="sm" disabled className="opacity-60 cursor-not-allowed">
+                                <span className="text-muted-foreground text-xs">Draft (Belum Publik)</span>
+                            </Button>
+                        ) : (
+                            <Button variant="outline" size="sm" asChild>
+                                <a
+                                    href={`/articles/${article.slug}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1.5"
+                                >
+                                    <span>Lihat Publik</span>
+                                    <ExternalLink className="size-3.5" />
+                                </a>
+                            </Button>
+                        )}
 
                         <Button
                             type="button"
@@ -174,9 +194,27 @@ export default function AdminArticleEdit({ article }: ArticleEditProps) {
                             <span>Hapus</span>
                         </Button>
 
-                        <Button type="submit" size="sm" disabled={processing}>
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            disabled={processing}
+                            onClick={() => handleSave(true)}
+                            className="border border-border text-amber-700 dark:text-amber-400"
+                        >
+                            <FileEdit className="size-4 mr-1.5" />
+                            <span>Simpan Draft</span>
+                        </Button>
+
+                        <Button
+                            type="button"
+                            size="sm"
+                            disabled={processing}
+                            onClick={() => handleSave(false)}
+                            className="bg-[#4A070B] hover:bg-[#380508] text-white"
+                        >
                             <Save className="size-4 mr-1.5" />
-                            <span>{processing ? 'Menyimpan...' : 'Perbarui Artikel'}</span>
+                            <span>{processing ? 'Menyimpan...' : 'Perbarui & Publikasikan'}</span>
                         </Button>
                     </div>
                 </div>
@@ -430,13 +468,30 @@ export default function AdminArticleEdit({ article }: ArticleEditProps) {
                     </CardContent>
                 </Card>
 
-                <div className="flex justify-end gap-2 pt-2">
+                <div className="flex flex-wrap items-center justify-end gap-2 pt-2">
                     <Button variant="outline" size="sm" asChild>
                         <Link href="/manajemen-artikel">Batal</Link>
                     </Button>
-                    <Button type="submit" size="sm" disabled={processing}>
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        disabled={processing}
+                        onClick={() => handleSave(true)}
+                        className="border border-border text-amber-700 dark:text-amber-400"
+                    >
+                        <FileEdit className="size-4 mr-1.5" />
+                        <span>Simpan Draft</span>
+                    </Button>
+                    <Button
+                        type="button"
+                        size="sm"
+                        disabled={processing}
+                        onClick={() => handleSave(false)}
+                        className="bg-[#4A070B] hover:bg-[#380508] text-white"
+                    >
                         <Save className="size-4 mr-1.5" />
-                        <span>{processing ? 'Menyimpan...' : 'Perbarui Artikel'}</span>
+                        <span>{processing ? 'Menyimpan...' : 'Perbarui & Publikasikan'}</span>
                     </Button>
                 </div>
             </form>

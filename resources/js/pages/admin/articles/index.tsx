@@ -25,6 +25,13 @@ import {
     DialogDescription,
     DialogFooter,
 } from '@/components/ui/dialog';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 
 interface ArticleItem {
     id: number;
@@ -33,6 +40,7 @@ interface ArticleItem {
     thumbnail?: string | null;
     read_time: string;
     excerpt: string;
+    is_draft?: boolean;
     created_at?: string;
 }
 
@@ -52,9 +60,12 @@ interface ArticlesIndexProps {
     };
     filters: {
         search: string;
+        status?: string;
     };
     metrics: {
         total_articles: number;
+        draft_count?: number;
+        published_count?: number;
     };
 }
 
@@ -64,16 +75,29 @@ export default function AdminArticlesIndex({
     metrics,
 }: ArticlesIndexProps) {
     const [search, setSearch] = useState(filters.search || '');
+    const [selectedStatus, setSelectedStatus] = useState(filters.status || 'all');
     const [deleteTarget, setDeleteTarget] = useState<ArticleItem | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
+    const applyFilters = (newValues: { search?: string; status?: string }) => {
+        router.get(
+            '/manajemen-artikel',
+            {
+                search: newValues.search !== undefined ? newValues.search : (search || undefined),
+                status: newValues.status !== undefined ? (newValues.status !== 'all' ? newValues.status : undefined) : (selectedStatus !== 'all' ? selectedStatus : undefined),
+            },
+            { preserveState: true }
+        );
+    };
+
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        router.get('/manajemen-artikel', { search: search || undefined }, { preserveState: true });
+        applyFilters({ search });
     };
 
     const handleResetSearch = () => {
         setSearch('');
+        setSelectedStatus('all');
         router.get('/manajemen-artikel');
     };
 
@@ -103,7 +127,9 @@ export default function AdminArticlesIndex({
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{metrics.total_articles}</div>
-                            <p className="text-xs text-muted-foreground mt-1">Publikasi jurnal wewangian aktif</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                                {metrics.published_count ?? metrics.total_articles} Terbit &bull; {metrics.draft_count ?? 0} Draft
+                            </p>
                         </CardContent>
                     </Card>
 
@@ -146,8 +172,25 @@ export default function AdminArticlesIndex({
                             </Button>
                         </form>
 
-                        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                            {search !== '' && (
+                        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
+                            <Select
+                                value={selectedStatus}
+                                onValueChange={(val) => {
+                                    setSelectedStatus(val);
+                                    applyFilters({ status: val });
+                                }}
+                            >
+                                <SelectTrigger className="h-9 w-[150px] text-xs">
+                                    <SelectValue placeholder="Semua Status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Semua Status</SelectItem>
+                                    <SelectItem value="published">Publikasi ({metrics.published_count ?? 0})</SelectItem>
+                                    <SelectItem value="draft">Draft ({metrics.draft_count ?? 0})</SelectItem>
+                                </SelectContent>
+                            </Select>
+
+                            {(search !== '' || selectedStatus !== 'all') && (
                                 <Button
                                     type="button"
                                     variant="outline"
@@ -178,6 +221,7 @@ export default function AdminArticlesIndex({
                             <thead className="border-b bg-muted/50 text-muted-foreground">
                                 <tr className="border-b transition-colors text-xs">
                                     <th className="h-10 px-4 text-left font-medium">Artikel &amp; Thumbnail</th>
+                                    <th className="h-10 px-4 text-left font-medium">Status</th>
                                     <th className="h-10 px-4 text-left font-medium">Slug</th>
                                     <th className="h-10 px-4 text-left font-medium">Waktu Baca</th>
                                     <th className="h-10 px-4 text-left font-medium">Cuplikan</th>
@@ -212,9 +256,27 @@ export default function AdminArticlesIndex({
                                                         )}
                                                     </div>
                                                     <div className="max-w-xs">
-                                                        <div className="font-semibold line-clamp-1">{art.title}</div>
+                                                        <Link
+                                                            href={`/manajemen-artikel/${art.id}/edit`}
+                                                            className="font-semibold line-clamp-1 hover:underline text-foreground"
+                                                        >
+                                                            {art.title}
+                                                        </Link>
                                                     </div>
                                                 </div>
+                                            </td>
+                                            <td className="p-4 align-middle whitespace-nowrap">
+                                                {art.is_draft ? (
+                                                    <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-700 border-amber-300 dark:text-amber-400 dark:border-amber-800 font-semibold gap-1">
+                                                        <span className="size-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                                        Draft
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-700 border-emerald-300 dark:text-emerald-400 dark:border-emerald-800 font-semibold gap-1">
+                                                        <span className="size-1.5 rounded-full bg-emerald-500" />
+                                                        Publik
+                                                    </Badge>
+                                                )}
                                             </td>
                                             <td className="p-4 align-middle font-mono text-muted-foreground">
                                                 /{art.slug}
@@ -237,22 +299,28 @@ export default function AdminArticlesIndex({
                                             </td>
                                             <td className="p-4 align-middle text-right">
                                                 <div className="flex items-center justify-end gap-1.5">
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        asChild
-                                                        className="size-8 text-muted-foreground hover:text-foreground"
-                                                        title="Lihat Halaman Publik"
-                                                    >
-                                                        <a
-                                                            href={getStorefrontUrl(`/articles/${art.slug}`)}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
+                                                    {!art.is_draft ? (
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            asChild
+                                                            className="size-8 text-muted-foreground hover:text-foreground"
+                                                            title="Lihat Halaman Publik"
                                                         >
-                                                            <ExternalLink className="size-3.5" />
-                                                        </a>
-                                                    </Button>
+                                                            <a
+                                                                href={getStorefrontUrl(`/articles/${art.slug}`)}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                            >
+                                                                <ExternalLink className="size-3.5" />
+                                                            </a>
+                                                        </Button>
+                                                    ) : (
+                                                        <span className="text-[10px] text-amber-600 dark:text-amber-400 italic px-2">
+                                                            Draft
+                                                        </span>
+                                                    )}
                                                     <Button
                                                         type="button"
                                                         variant="ghost"
