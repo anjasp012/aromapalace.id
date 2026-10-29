@@ -28,11 +28,10 @@ export default function BrandCard({ brand, className }: BrandCardProps) {
             className={cn('block h-full group', className)}
         >
             <div
-                className="relative flex flex-col justify-between h-full rounded-xl overflow-hidden transition-all duration-300 group-hover:scale-[1.03] group-hover:shadow-[0_8px_30px_rgba(74,7,11,0.6)]"
+                className="relative flex flex-col justify-between h-full rounded-xl overflow-hidden transition-all duration-300 group-hover:scale-[1.03]"
                 style={{
                     background: 'radial-gradient(circle at 50% 30%, #5C0710 0%, #3D040A 55%, #250205 100%)',
                     border: '2px solid #C5A059',
-                    boxShadow: '0 4px 18px rgba(0,0,0,0.45)',
                 }}
             >
                 {/* Subtle top-corner golden sheen */}
@@ -107,7 +106,6 @@ export function BrandCardSkeleton({ className }: { className?: string }) {
             style={{
                 background: 'radial-gradient(circle at 50% 30%, #5C0710 0%, #3D040A 55%, #250205 100%)',
                 border: '2px solid rgba(197, 160, 89, 0.5)',
-                boxShadow: '0 4px 18px rgba(0,0,0,0.45)',
             }}
         >
             <div className="flex-1 flex items-center justify-center p-3 sm:p-5 pt-4 sm:pt-6">
