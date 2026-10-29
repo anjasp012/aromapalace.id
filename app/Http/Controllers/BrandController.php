@@ -17,7 +17,7 @@ class BrandController extends Controller
         $search = trim((string) $request->input('search', $request->input('q', '')));
 
         $query = Brand::query()
-            ->withCount('products')
+            ->withCount(['products' => fn ($q) => $q->published()])
             ->orderBy('name');
 
         if ($search !== '') {

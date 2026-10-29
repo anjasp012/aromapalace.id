@@ -16,7 +16,7 @@ class ArticleController extends Controller
     {
         $search = trim((string) $request->input('search', $request->input('q', '')));
 
-        $query = Article::query()->latest();
+        $query = Article::published()->latest();
 
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
@@ -39,11 +39,11 @@ class ArticleController extends Controller
      */
     public function show(string $slug): Response
     {
-        $article = Article::query()
+        $article = Article::published()
             ->where('slug', $slug)
             ->firstOrFail();
 
-        $relatedArticles = Article::query()
+        $relatedArticles = Article::published()
             ->where('id', '!=', $article->id)
             ->latest()
             ->take(4)

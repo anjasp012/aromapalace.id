@@ -24,7 +24,7 @@ class SearchController extends Controller
             ]);
         }
 
-        $products = Product::with([
+        $products = Product::published()->with([
             'variants',
             'categories',
             'brandRelation',

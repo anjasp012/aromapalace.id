@@ -12,6 +12,8 @@ import {
     Check,
     Tags,
     Sparkles,
+    Clock,
+    FileEdit,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -77,6 +79,7 @@ export default function AdminProductCreate({
         is_new_arrivals: boolean;
         is_best_sellers: boolean;
         is_special_offers: boolean;
+        is_draft: boolean;
         images: File[];
         variants: VariantFormItem[];
     }>({
@@ -89,6 +92,7 @@ export default function AdminProductCreate({
         is_new_arrivals: false,
         is_best_sellers: false,
         is_special_offers: false,
+        is_draft: false,
         images: [],
         variants: [
             {
@@ -859,13 +863,91 @@ export default function AdminProductCreate({
                     </CardContent>
                 </Card>
 
-                <div className="flex justify-end gap-2 pt-2">
+                {/* Status Publikasi Card */}
+                <Card className="border border-border/80">
+                    <CardHeader className="pb-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="space-y-1">
+                                <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
+                                    <Clock className="size-4 text-amber-500" />
+                                    <span>Status Publikasi Produk</span>
+                                    {data.is_draft ? (
+                                        <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-700 border-amber-300 dark:text-amber-400 dark:border-amber-800 font-semibold">
+                                            Mode Draft
+                                        </Badge>
+                                    ) : (
+                                        <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-700 border-emerald-300 dark:text-emerald-400 dark:border-emerald-800 font-semibold">
+                                            Siap Terbit
+                                        </Badge>
+                                    )}
+                                </CardTitle>
+                                <CardDescription className="text-xs">
+                                    {data.is_draft
+                                        ? 'Produk akan disimpan sebagai DRAFT dan TIDAK AKAN MUNCUL di katalog pembeli saat Anda masih melakukan pengeditan.'
+                                        : 'Produk akan LANGSUNG TAMPIL di etalase toko dan siap dipesan oleh pelanggan saat disimpan.'}
+                                </CardDescription>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                    type="button"
+                                    onClick={() => setData('is_draft', false)}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
+                                        !data.is_draft
+                                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                                            : 'bg-muted/40 text-muted-foreground border-border hover:bg-muted'
+                                    }`}
+                                >
+                                    Publikasikan
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setData('is_draft', true)}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
+                                        data.is_draft
+                                            ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
+                                            : 'bg-muted/40 text-muted-foreground border-border hover:bg-muted'
+                                    }`}
+                                >
+                                    Simpan Sebagai Draft
+                                </button>
+                            </div>
+                        </div>
+                    </CardHeader>
+                </Card>
+
+                <div className="flex flex-wrap items-center justify-end gap-2 pt-2">
                     <Button variant="outline" size="sm" asChild>
                         <Link href="/manajemen-produk">Batal</Link>
                     </Button>
-                    <Button type="submit" size="sm" disabled={processing}>
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        disabled={processing}
+                        onClick={() => {
+                            setData('is_draft', true);
+                            setTimeout(() => {
+                                post('/manajemen-produk');
+                            }, 50);
+                        }}
+                        className="border border-border text-amber-700 dark:text-amber-400"
+                    >
+                        <FileEdit className="size-4 mr-1.5" />
+                        <span>Simpan Draft</span>
+                    </Button>
+                    <Button
+                        type="submit"
+                        size="sm"
+                        disabled={processing}
+                        className={data.is_draft ? 'bg-amber-600 hover:bg-amber-700 text-white' : ''}
+                    >
                         <Save className="size-4 mr-1.5" />
-                        <span>{processing ? 'Menyimpan...' : 'Simpan Produk'}</span>
+                        <span>
+                            {processing
+                                ? 'Menyimpan...'
+                                : (data.is_draft ? 'Simpan Sebagai Draft' : 'Simpan & Publikasikan')}
+                        </span>
                     </Button>
                 </div>
             </form>

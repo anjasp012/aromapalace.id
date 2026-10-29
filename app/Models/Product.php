@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\FlushesCatalogCache;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -22,6 +23,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $brand_id
  * @property string|null $description
  * @property string|null $description_en
+ * @property bool $is_draft
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Collection<int, Category> $categories
@@ -46,6 +48,7 @@ use Illuminate\Support\Carbon;
     'is_new_arrivals',
     'is_best_sellers',
     'is_special_offers',
+    'is_draft',
 ])]
 class Product extends Model
 {
@@ -62,7 +65,30 @@ class Product extends Model
             'is_new_arrivals' => 'boolean',
             'is_best_sellers' => 'boolean',
             'is_special_offers' => 'boolean',
+            'is_draft' => 'boolean',
         ];
+    }
+
+    /**
+     * Scope a query to only include published (non-draft) products.
+     *
+     * @param  Builder<Product>  $query
+     * @return Builder<Product>
+     */
+    public function scopePublished(Builder $query): Builder
+    {
+        return $query->where('is_draft', false);
+    }
+
+    /**
+     * Scope a query to only include draft products.
+     *
+     * @param  Builder<Product>  $query
+     * @return Builder<Product>
+     */
+    public function scopeDraft(Builder $query): Builder
+    {
+        return $query->where('is_draft', true);
     }
 
     /**

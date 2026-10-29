@@ -28,7 +28,8 @@ class CatalogService
      */
     public static function all(): array
     {
-        return CatalogCache::remember('products:all', fn () => Product::with(static::$eagerRelations)
+        return CatalogCache::remember('products:all', fn () => Product::published()
+            ->with(static::$eagerRelations)
             ->orderBy('id')
             ->get()
             ->map(fn (Product $p) => static::formatProduct($p))
@@ -42,7 +43,7 @@ class CatalogService
      */
     public static function find(int $id): ?array
     {
-        $product = Product::with(static::$eagerRelations)->find($id);
+        $product = Product::published()->with(static::$eagerRelations)->find($id);
 
         return $product ? static::formatProduct($product) : null;
     }
@@ -55,9 +56,12 @@ class CatalogService
     public static function findBySlug(string $slug): ?array
     {
         return CatalogCache::remember('products:slug:'.md5($slug), function () use ($slug) {
-            $product = Product::with(static::$eagerRelations)
-                ->where('slug', $slug)
-                ->orWhere('id', is_numeric($slug) ? (int) $slug : 0)
+            $product = Product::published()
+                ->with(static::$eagerRelations)
+                ->where(function ($q) use ($slug) {
+                    $q->where('slug', $slug)
+                        ->orWhere('id', is_numeric($slug) ? (int) $slug : 0);
+                })
                 ->first();
 
             return $product ? static::formatProduct($product) : null;
@@ -72,7 +76,8 @@ class CatalogService
      */
     public static function findMany(array $ids): array
     {
-        return Product::with(static::$eagerRelations)
+        return Product::published()
+            ->with(static::$eagerRelations)
             ->whereIn('id', $ids)
             ->get()
             ->map(fn (Product $p) => static::formatProduct($p))
@@ -173,6 +178,7 @@ class CatalogService
             'is_new_arrivals' => (bool) $p->is_new_arrivals,
             'is_best_sellers' => (bool) $p->is_best_sellers,
             'is_special_offers' => (bool) $p->is_special_offers,
+            'is_draft' => (bool) $p->is_draft,
             'isNew' => (bool) $p->is_new_arrivals,
             'image' => $primaryImg,
             'gallery' => $galleryImgs,

@@ -31,7 +31,7 @@ class HomeController extends Controller
     protected function homeData(): array
     {
         // 1. Popular Products from DB (ordered by reviews or highest rating)
-        $popularProducts = Product::with([
+        $popularProducts = Product::published()->with([
             'variants',
             'galleries',
             'primaryImage',
@@ -53,7 +53,7 @@ class HomeController extends Controller
             ->all();
 
         // 2. Discounted Products from DB (having variants with original_price > price)
-        $discountedProducts = Product::with([
+        $discountedProducts = Product::published()->with([
             'variants',
             'galleries',
             'primaryImage',
@@ -73,7 +73,7 @@ class HomeController extends Controller
         }
 
         // 3. Recommended Products from DB (Curated Just For You - Limit 5)
-        $recommendedProducts = Product::with([
+        $recommendedProducts = Product::published()->with([
             'variants',
             'galleries',
             'primaryImage',
@@ -170,7 +170,7 @@ class HomeController extends Controller
             ->all();
 
         // 7. Articles from DB
-        $articles = Article::query()
+        $articles = Article::published()
             ->latest()
             ->take(4)
             ->get()

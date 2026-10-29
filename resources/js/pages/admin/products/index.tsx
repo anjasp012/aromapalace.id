@@ -69,6 +69,7 @@ interface ProductItem {
     is_new_arrivals?: boolean;
     is_best_sellers?: boolean;
     is_special_offers?: boolean;
+    is_draft?: boolean;
     created_at?: string;
 }
 
@@ -95,9 +96,12 @@ interface ProductsIndexProps {
         category_id: string | number;
         brand_id: string | number;
         stock_filter: string;
+        status?: string;
     };
     metrics: {
         total_products: number;
+        draft_count?: number;
+        published_count?: number;
         total_variants: number;
         low_stock_count: number;
         out_of_stock_count: number;
@@ -117,6 +121,7 @@ export default function AdminProductsIndex({
     const [selectedCategory, setSelectedCategory] = useState(String(filters.category_id || 'all'));
     const [selectedBrand, setSelectedBrand] = useState(String(filters.brand_id || 'all'));
     const [selectedStockFilter, setSelectedStockFilter] = useState(filters.stock_filter || 'all');
+    const [selectedStatus, setSelectedStatus] = useState(filters.status || 'all');
 
     const [quickStockTarget, setQuickStockTarget] = useState<{
         productId: number;
@@ -142,6 +147,7 @@ export default function AdminProductsIndex({
                 category_id: newValues.category_id !== undefined ? (newValues.category_id !== 'all' ? newValues.category_id : undefined) : (selectedCategory !== 'all' ? selectedCategory : undefined),
                 brand_id: newValues.brand_id !== undefined ? (newValues.brand_id !== 'all' ? newValues.brand_id : undefined) : (selectedBrand !== 'all' ? selectedBrand : undefined),
                 stock_filter: newValues.stock_filter !== undefined ? (newValues.stock_filter !== 'all' ? newValues.stock_filter : undefined) : (selectedStockFilter !== 'all' ? selectedStockFilter : undefined),
+                status: newValues.status !== undefined ? (newValues.status !== 'all' ? newValues.status : undefined) : (selectedStatus !== 'all' ? selectedStatus : undefined),
             },
             { preserveState: true }
         );
@@ -152,6 +158,7 @@ export default function AdminProductsIndex({
         setSelectedCategory('all');
         setSelectedBrand('all');
         setSelectedStockFilter('all');
+        setSelectedStatus('all');
         router.get('/manajemen-produk');
     };
 
@@ -196,7 +203,7 @@ export default function AdminProductsIndex({
                         <CardContent>
                             <div className="text-2xl font-bold">{metrics.total_products}</div>
                             <p className="text-xs text-muted-foreground mt-1">
-                                {metrics.total_categories} Kategori &bull; {metrics.total_brands} Brand
+                                {metrics.published_count ?? metrics.total_products} Terbit &bull; {metrics.draft_count ?? 0} Draft
                             </p>
                         </CardContent>
                     </Card>
@@ -316,7 +323,24 @@ export default function AdminProductsIndex({
                                 </SelectContent>
                             </Select>
 
-                            {(search !== '' || selectedCategory !== 'all' || selectedBrand !== 'all' || selectedStockFilter !== 'all') && (
+                            <Select
+                                value={selectedStatus}
+                                onValueChange={(val) => {
+                                    setSelectedStatus(val);
+                                    applyFilters({ status: val });
+                                }}
+                            >
+                                <SelectTrigger className="h-9 w-[150px] text-xs">
+                                    <SelectValue placeholder="Semua Status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Semua Status</SelectItem>
+                                    <SelectItem value="published">Publikasi ({metrics.published_count ?? 0})</SelectItem>
+                                    <SelectItem value="draft">Draft ({metrics.draft_count ?? 0})</SelectItem>
+                                </SelectContent>
+                            </Select>
+
+                            {(search !== '' || selectedCategory !== 'all' || selectedBrand !== 'all' || selectedStockFilter !== 'all' || selectedStatus !== 'all') && (
                                 <Button
                                     type="button"
                                     variant="outline"
@@ -376,15 +400,21 @@ export default function AdminProductsIndex({
                                                         /{product.slug}
                                                     </div>
                                                     <div className="flex items-center gap-2 mt-1">
-                                                        <a
-                                                            href={getStorefrontUrl(`/products/${product.slug}`)}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline"
-                                                        >
-                                                            <span>Lihat Toko</span>
-                                                            <ExternalLink className="size-2.5" />
-                                                        </a>
+                                                        {product.is_draft ? (
+                                                            <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium italic">
+                                                                (Draft &bull; Tidak tampil di toko)
+                                                            </span>
+                                                        ) : (
+                                                            <a
+                                                                href={getStorefrontUrl(`/products/${product.slug}`)}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline"
+                                                            >
+                                                                <span>Lihat Toko</span>
+                                                                <ExternalLink className="size-2.5" />
+                                                            </a>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
@@ -429,27 +459,40 @@ export default function AdminProductsIndex({
                                         </td>
 
                                         <td className="p-4 align-middle whitespace-nowrap">
-                                            {(product.is_new_arrivals || product.is_best_sellers || product.is_special_offers) ? (
-                                                <div className="flex flex-wrap gap-1 max-w-[150px]">
-                                                    {product.is_new_arrivals && (
-                                                        <Badge className="text-[9px] bg-emerald-600 hover:bg-emerald-600 text-white border-0 py-0 h-4">
-                                                            New Arrival
+                                            <div className="space-y-1">
+                                                <div>
+                                                    {product.is_draft ? (
+                                                        <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-700 border-amber-300 dark:text-amber-400 dark:border-amber-800 font-semibold gap-1">
+                                                            <span className="size-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                                            Draft
                                                         </Badge>
-                                                    )}
-                                                    {product.is_best_sellers && (
-                                                        <Badge className="text-[9px] bg-amber-500 hover:bg-amber-500 text-amber-950 font-bold border-0 py-0 h-4">
-                                                            Best Seller
-                                                        </Badge>
-                                                    )}
-                                                    {product.is_special_offers && (
-                                                        <Badge className="text-[9px] bg-[#4A070B] hover:bg-[#4A070B] text-white border-0 py-0 h-4">
-                                                            Special Offer
+                                                    ) : (
+                                                        <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-700 border-emerald-300 dark:text-emerald-400 dark:border-emerald-800 font-semibold gap-1">
+                                                            <span className="size-1.5 rounded-full bg-emerald-500" />
+                                                            Publik
                                                         </Badge>
                                                     )}
                                                 </div>
-                                            ) : (
-                                                <span className="text-muted-foreground">-</span>
-                                            )}
+                                                {(product.is_new_arrivals || product.is_best_sellers || product.is_special_offers) && (
+                                                    <div className="flex flex-wrap gap-1 max-w-[150px]">
+                                                        {product.is_new_arrivals && (
+                                                            <Badge className="text-[9px] bg-emerald-600 hover:bg-emerald-600 text-white border-0 py-0 h-4">
+                                                                New Arrival
+                                                            </Badge>
+                                                        )}
+                                                        {product.is_best_sellers && (
+                                                            <Badge className="text-[9px] bg-amber-500 hover:bg-amber-500 text-amber-950 font-bold border-0 py-0 h-4">
+                                                                Best Seller
+                                                            </Badge>
+                                                        )}
+                                                        {product.is_special_offers && (
+                                                            <Badge className="text-[9px] bg-[#4A070B] hover:bg-[#4A070B] text-white border-0 py-0 h-4">
+                                                                Special Offer
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </td>
 
                                         <td className="p-4 align-middle">

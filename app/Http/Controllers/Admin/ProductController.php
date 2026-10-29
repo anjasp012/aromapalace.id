@@ -30,6 +30,7 @@ class ProductController extends Controller
         $categoryId = $request->query('category_id');
         $brandId = $request->query('brand_id');
         $stockFilter = (string) $request->query('stock_filter', 'all');
+        $statusFilter = (string) $request->query('status', 'all');
 
         $query = Product::with(['categories', 'brand', 'variants', 'galleries'])->latest('id');
 
@@ -69,6 +70,12 @@ class ProductController extends Controller
             $query->whereDoesntHave('variants', function ($vq) {
                 $vq->where('stock', '>', 0);
             });
+        }
+
+        if ($statusFilter === 'draft') {
+            $query->where('is_draft', true);
+        } elseif ($statusFilter === 'published') {
+            $query->where('is_draft', false);
         }
 
         $products = $query->paginate(12)->withQueryString()->through(function (Product $product) {
@@ -123,12 +130,15 @@ class ProductController extends Controller
                 'is_new_arrivals' => (bool) $product->is_new_arrivals,
                 'is_best_sellers' => (bool) $product->is_best_sellers,
                 'is_special_offers' => (bool) $product->is_special_offers,
+                'is_draft' => (bool) $product->is_draft,
                 'created_at' => $product->created_at?->format('d M Y'),
             ];
         });
 
         // Summary metrics
         $totalProducts = Product::count();
+        $draftCount = Product::where('is_draft', true)->count();
+        $publishedCount = Product::where('is_draft', false)->count();
         $totalVariants = ProductVariant::count();
         $lowStockCount = Product::whereHas('variants', fn ($q) => $q->where('stock', '>', 0)->where('stock', '<=', 10))->count();
         $outOfStockCount = Product::whereDoesntHave('variants', fn ($q) => $q->where('stock', '>', 0))->count();
@@ -145,9 +155,12 @@ class ProductController extends Controller
                 'category_id' => $categoryId ?: 'all',
                 'brand_id' => $brandId ?: 'all',
                 'stock_filter' => $stockFilter,
+                'status' => $statusFilter,
             ],
             'metrics' => [
                 'total_products' => $totalProducts,
+                'draft_count' => $draftCount,
+                'published_count' => $publishedCount,
                 'total_variants' => $totalVariants,
                 'low_stock_count' => $lowStockCount,
                 'out_of_stock_count' => $outOfStockCount,
@@ -188,6 +201,7 @@ class ProductController extends Controller
             'is_new_arrivals' => ['nullable', 'boolean'],
             'is_best_sellers' => ['nullable', 'boolean'],
             'is_special_offers' => ['nullable', 'boolean'],
+            'is_draft' => ['nullable', 'boolean'],
             'images' => ['nullable', 'array'],
             'images.*' => ['nullable'],
             'variants' => ['required', 'array', 'min:1'],
@@ -221,6 +235,7 @@ class ProductController extends Controller
                 'is_new_arrivals' => $request->boolean('is_new_arrivals'),
                 'is_best_sellers' => $request->boolean('is_best_sellers'),
                 'is_special_offers' => $request->boolean('is_special_offers'),
+                'is_draft' => $request->boolean('is_draft'),
             ]);
 
             // Sync categories (supports category_ids array or single category_id)
@@ -344,6 +359,7 @@ class ProductController extends Controller
                 'is_new_arrivals' => (bool) $product->is_new_arrivals,
                 'is_best_sellers' => (bool) $product->is_best_sellers,
                 'is_special_offers' => (bool) $product->is_special_offers,
+                'is_draft' => (bool) $product->is_draft,
                 'images' => $product->galleries->pluck('image')->all(),
                 'variants' => $product->variants->map(fn (ProductVariant $variant) => [
                     'id' => $variant->id,
@@ -384,6 +400,7 @@ class ProductController extends Controller
             'is_new_arrivals' => ['nullable', 'boolean'],
             'is_best_sellers' => ['nullable', 'boolean'],
             'is_special_offers' => ['nullable', 'boolean'],
+            'is_draft' => ['nullable', 'boolean'],
             'existing_images' => ['nullable', 'array'],
             'existing_images.*' => ['string'],
             'images' => ['nullable', 'array'],
@@ -420,6 +437,7 @@ class ProductController extends Controller
                 'is_new_arrivals' => $request->boolean('is_new_arrivals'),
                 'is_best_sellers' => $request->boolean('is_best_sellers'),
                 'is_special_offers' => $request->boolean('is_special_offers'),
+                'is_draft' => $request->boolean('is_draft'),
             ]);
 
             // Sync categories (supports category_ids array or single category_id)

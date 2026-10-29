@@ -38,7 +38,7 @@ class ProductController extends Controller
      */
     protected function productIndexData(Request $request): array
     {
-        $query = Product::with([
+        $query = Product::published()->with([
             'variants',
             'categories',
             'brandRelation',

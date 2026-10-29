@@ -18,6 +18,7 @@ class ArticleController extends Controller
     public function index(Request $request): Response
     {
         $search = $request->string('search')->trim()->value();
+        $statusFilter = (string) $request->query('status', 'all');
 
         $articlesQuery = Article::query()
             ->when($search, function ($query, $search) {
@@ -27,18 +28,23 @@ class ArticleController extends Controller
                         ->orWhere('excerpt', 'like', "%{$search}%");
                 });
             })
+            ->when($statusFilter === 'draft', fn ($q) => $q->where('is_draft', true))
+            ->when($statusFilter === 'published', fn ($q) => $q->where('is_draft', false))
             ->latest('id');
 
         $articles = $articlesQuery->paginate(15)->withQueryString();
 
         $metrics = [
             'total_articles' => Article::count(),
+            'draft_count' => Article::where('is_draft', true)->count(),
+            'published_count' => Article::where('is_draft', false)->count(),
         ];
 
         return Inertia::render('admin/articles/index', [
             'articles' => $articles,
             'filters' => [
                 'search' => $search,
+                'status' => $statusFilter,
             ],
             'metrics' => $metrics,
         ]);
@@ -61,6 +67,7 @@ class ArticleController extends Controller
             'excerpt_en' => ['nullable', 'string', 'max:1000'],
             'content' => ['required', 'string'],
             'content_en' => ['nullable', 'string'],
+            'is_draft' => ['nullable', 'boolean'],
         ]);
 
         $thumbnail = null;
@@ -90,11 +97,15 @@ class ArticleController extends Controller
         }
 
         $validated['read_time'] = $validated['read_time'] ?: '4 mnt';
+        $validated['is_draft'] = $request->boolean('is_draft');
 
         $article = Article::create($validated);
 
-        return redirect()->route('admin.articles.index')
-            ->with('success', "Artikel '{$article->title}' berhasil dipublikasikan.");
+        $msg = $article->is_draft
+            ? "Artikel '{$article->title}' berhasil disimpan sebagai draft."
+            : "Artikel '{$article->title}' berhasil dipublikasikan.";
+
+        return redirect()->route('admin.articles.index')->with('success', $msg);
     }
 
     public function edit(Article $article): Response
@@ -116,6 +127,7 @@ class ArticleController extends Controller
             'excerpt_en' => ['nullable', 'string', 'max:1000'],
             'content' => ['required', 'string'],
             'content_en' => ['nullable', 'string'],
+            'is_draft' => ['nullable', 'boolean'],
         ]);
 
         $thumbnail = $article->thumbnail;
@@ -138,6 +150,7 @@ class ArticleController extends Controller
         }
 
         $validated['read_time'] = $validated['read_time'] ?: '4 mnt';
+        $validated['is_draft'] = $request->boolean('is_draft');
 
         $article->update($validated);
 
