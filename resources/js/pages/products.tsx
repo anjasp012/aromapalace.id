@@ -555,20 +555,20 @@ export default function Products({
                 headTitle: isEn ? 'Special Offers' : 'Penawaran Spesial',
                 titleClassName: 'font-black text-3xl sm:text-4xl lg:text-5xl tracking-[0.06em]',
                 title: isEn ? (
-                    <div className="flex flex-col sm:flex-row items-center justify-center sm:gap-3.5 leading-[0.92] sm:leading-normal">
+                    <div className="flex flex-row items-center justify-center gap-2 sm:gap-3.5 leading-normal">
                         <span className="inline-block">
                             <span className="text-[1.24em]">S</span>PECIAL
                         </span>
-                        <span className="inline-block -mt-1 sm:mt-0">
+                        <span className="inline-block">
                             <span className="text-[1.24em]">O</span>FFERS
                         </span>
                     </div>
                 ) : (
-                    <div className="flex flex-col sm:flex-row items-center justify-center sm:gap-3.5 leading-[0.92] sm:leading-normal">
+                    <div className="flex flex-row items-center justify-center gap-2 sm:gap-3.5 leading-normal">
                         <span className="inline-block">
                             <span className="text-[1.24em]">P</span>ENAWARAN
                         </span>
-                        <span className="inline-block -mt-1 sm:mt-0">
+                        <span className="inline-block">
                             <span className="text-[1.24em]">S</span>PESIAL
                         </span>
                     </div>
@@ -617,34 +617,34 @@ export default function Products({
             headTitle: isEn ? 'Catalog of Exclusive Fragrances' : 'Katalog Wewangian Eksklusif',
             titleClassName: 'font-black text-3xl sm:text-4xl lg:text-5xl tracking-[0.06em]',
             title: isEn ? (
-                <div className="flex flex-col sm:flex-row items-center justify-center sm:gap-3.5 leading-[0.92] sm:leading-normal">
+                <div className="flex flex-row items-center justify-center gap-2 sm:gap-3.5 leading-normal">
                     <span className="inline-block">
                         <span className="text-[1.24em]">O</span>UR
                     </span>
-                    <span className="inline-block -mt-1 sm:mt-0">
+                    <span className="inline-block">
                         <span className="text-[1.24em]">C</span>OLLECTION
                     </span>
                 </div>
             ) : (
-                <div className="flex flex-col sm:flex-row items-center justify-center sm:gap-3.5 leading-[0.92] sm:leading-normal">
+                <div className="flex flex-row items-center justify-center gap-2 sm:gap-3.5 leading-normal">
                     <span className="inline-block">
                         <span className="text-[1.24em]">K</span>OLEKSI
                     </span>
-                    <span className="inline-block -mt-1 sm:mt-0">
+                    <span className="inline-block">
                         <span className="text-[1.24em]">K</span>AMI
                     </span>
                 </div>
             ),
-            subtitle1: isEn ? 'CURATED LUXURY PERFUME CATALOG' : 'KATALOG PARFUM MEWAH TERKURASI',
+            subtitle1: isEn ? 'A WORLD OF EXTRAORDINARY FRAGRANCES.' : 'DUNIA WEWANGIAN LUAR BIASA.',
             subtitle2: isEn ? (
                 <>
-                    EXCEPTIONAL FRAGRANCES CURATED<br />
-                    FOR THE TRUE FRAGRANCE LOVERS
+                    ICONIC BRANDS. UNIQUE SCENTS.<br />
+                    FOR EVERY OCCASION.
                 </>
             ) : (
                 <>
-                    PILIHAN PARFUM ARTISANAL DAN EXTRAIT MURNI<br />
-                    DENGAN DAYA TAHAN DAN AROMA MEWAH MEMIKAT
+                    BRAND IKONIK. AROMA UNIK.<br />
+                    UNTUK SETIAP MOMEN.
                 </>
             ),
         };

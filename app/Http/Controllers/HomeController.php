@@ -114,9 +114,9 @@ class HomeController extends Controller
             ->values()
             ->all();
 
-        // 5. Brands from DB (Featured Brands - Limit 5)
+        // 5. Brands from DB (Featured Brands - Limit 6)
         $brands = Brand::withCount('products')
-            ->take(5)
+            ->take(6)
             ->get()
             ->map(function (Brand $b) {
                 return [
