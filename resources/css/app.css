@@ -14,6 +14,9 @@
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
 
+    --font-serif:
+        'Playfair Display', Georgia, Cambria, 'Times New Roman', Times, serif;
+
     --color-background: var(--background);
     --color-foreground: var(--foreground);
     --color-card: var(--card);

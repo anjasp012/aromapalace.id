@@ -490,11 +490,16 @@ export default function Products({
     const jumbotronConfig = useMemo(() => {
         if (activeTag === 'new-arrivals' || activeTag === 'new_arrivals') {
             return {
-                headTitle: isEn ? 'New Arrivals' : 'Produk Baru',
-                title: (
+                headTitle: isEn ? 'New Arrivals' : 'Koleksi Terbaru',
+                title: isEn ? (
                     <span>
                         <span className="text-4xl sm:text-5xl md:text-6xl font-normal">N</span>EW{' '}
                         <span className="text-4xl sm:text-5xl md:text-6xl font-normal">A</span>RRIVALS
+                    </span>
+                ) : (
+                    <span>
+                        <span className="text-4xl sm:text-5xl md:text-6xl font-normal">K</span>OLEKSI{' '}
+                        <span className="text-4xl sm:text-5xl md:text-6xl font-normal">T</span>ERBARU
                     </span>
                 ),
                 subtitle1: isEn ? 'DISCOVER OUR LATEST ARRIVALS' : 'JELAJAHI KOLEKSI TERBARU KAMI',
@@ -514,23 +519,28 @@ export default function Products({
 
         if (activeTag === 'best-sellers' || activeTag === 'best_sellers') {
             return {
-                headTitle: isEn ? 'Best Sellers' : 'Parfum Terlaris',
-                title: (
+                headTitle: isEn ? 'Best Sellers' : 'Produk Terlaris',
+                title: isEn ? (
                     <span>
                         <span className="text-4xl sm:text-5xl md:text-6xl font-normal">B</span>EST{' '}
                         <span className="text-4xl sm:text-5xl md:text-6xl font-normal">S</span>ELLERS
                     </span>
+                ) : (
+                    <span>
+                        <span className="text-4xl sm:text-5xl md:text-6xl font-normal">P</span>RODUK{' '}
+                        <span className="text-4xl sm:text-5xl md:text-6xl font-normal">T</span>ERLARIS
+                    </span>
                 ),
-                subtitle1: isEn ? 'DISCOVER OUR MOST ICONIC FRAGRANCES' : 'TEMUKAN WEWANGIAN PALING DIMINATI',
+                subtitle1: isEn ? 'DISCOVER OUR MOST LOVED FRAGRANCES' : 'TEMUKAN WEWANGIAN PALING DICINTAI',
                 subtitle2: isEn ? (
                     <>
-                        TIMELESS SCENTS CELEBRATED WORLDWIDE<br />
-                        HANDPICKED FOR THEIR UNMATCHED ALLURE
+                        HANDPICKED FAVOURITES, CHOSEN BY<br />
+                        OUR CUSTOMERS, TIME AND TIME AGAIN.
                     </>
                 ) : (
                     <>
-                        AROMA IKONIK PILIHAN TERBAIK<br />
-                        DIPILIH KARENA DAYA TARIK TAK TERTANDINGI
+                        PILIHAN FAVORIT TERBAIK, DIPILIH OLEH<br />
+                        PELANGGAN KAMI, DARI WAKTU KE WAKTU.
                     </>
                 ),
             };
@@ -539,22 +549,31 @@ export default function Products({
         if (activeTag === 'special-offers' || activeTag === 'special_offers' || onlyDiscount) {
             return {
                 headTitle: isEn ? 'Special Offers' : 'Penawaran Spesial',
-                title: (
+                title: isEn ? (
                     <span>
                         <span className="text-4xl sm:text-5xl md:text-6xl font-normal">S</span>PECIAL{' '}
-                        <span className="text-4xl sm:text-5xl md:text-6xl font-normal">O</span>FFERS
+                        <span className="sm:inline block">
+                            <span className="text-4xl sm:text-5xl md:text-6xl font-normal">O</span>FFERS
+                        </span>
+                    </span>
+                ) : (
+                    <span>
+                        <span className="text-4xl sm:text-5xl md:text-6xl font-normal">P</span>ENAWARAN{' '}
+                        <span className="sm:inline block">
+                            <span className="text-4xl sm:text-5xl md:text-6xl font-normal">S</span>PESIAL
+                        </span>
                     </span>
                 ),
-                subtitle1: isEn ? 'EXCLUSIVE DEALS & PRIVILEGED OFFERS' : 'PENAWARAN EKSKLUSIF & HARGA SPESIAL',
+                subtitle1: isEn ? 'EXCLUSIVE DEALS ON YOUR FAVOURITE FRAGRANCES.' : 'PENAWARAN EKSKLUSIF UNTUK WEWANGIAN FAVORIT ANDA.',
                 subtitle2: isEn ? (
                     <>
-                        INDULGE IN LUXURY PERFUMES AT PRIVILEGED PRICES<br />
-                        AVAILABLE FOR A LIMITED TIME ONLY
+                        LIMITED TIME ONLY,<br />
+                        DON'T MISS OUT.
                     </>
                 ) : (
                     <>
-                        NIKMATI PARFUM MEWAH DENGAN HARGA ISTIMEWA<br />
-                        TERSEDIA HANYA UNTUK PERIODE TERBATAS
+                        HANYA UNTUK WAKTU TERBATAS,<br />
+                        JANGAN SAMPAI KETINGGALAN.
                     </>
                 ),
             };
