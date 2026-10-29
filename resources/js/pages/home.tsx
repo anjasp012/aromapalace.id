@@ -438,15 +438,15 @@ export default function Home({
                         </Card>
                     </section>
 
-                    {/* 2. PRODUCT BY SCENTS */}
+                    {/* 2. CATEGORY SCENTS */}
                     <section id="scents">
                         <div className="flex items-center justify-between mb-4 sm:mb-6">
                             <h2 className="text-xl sm:text-2xl tracking-tight text-foreground">
-                                <span className="font-normal">{isEn ? 'Product by' : 'Produk Berdasarkan'}</span>{' '}
+                                <span className="font-normal">{isEn ? 'Category' : 'Kategori'}</span>{' '}
                                 <span className="font-bold">{isEn ? 'Scents' : 'Aroma'}</span>
                             </h2>
                             <Button asChild variant="ghost" size="sm" className="text-xs">
-                                <Link href="/products" onClick={() => setLoadingButtonId('scents_all')}>
+                                <Link href="/categories" onClick={() => setLoadingButtonId('scents_all')}>
                                     {loadingButtonId === 'scents_all' && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
                                     <span>{t('common.see_all')} &rarr;</span>
                                 </Link>
