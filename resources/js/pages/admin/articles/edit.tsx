@@ -88,6 +88,14 @@ export default function AdminArticleEdit({ article }: ArticleEditProps) {
             .replace(/\-\-+/g, '-');
     };
 
+    const handleTitleChange = (val: string) => {
+        setData((prev) => ({
+            ...prev,
+            title: val,
+            slug: prev.slug === '' || prev.slug === slugify(prev.title) ? slugify(val) : prev.slug,
+        }));
+    };
+
     const handleFile = (file: File) => {
         if (!file.type.startsWith('image/')) {
             alert('Silakan pilih file gambar (JPG, PNG, WEBP).');
@@ -331,32 +339,7 @@ export default function AdminArticleEdit({ article }: ArticleEditProps) {
                             {errors.thumbnail && <p className="text-destructive text-[11px] pt-1">{errors.thumbnail}</p>}
                         </div>
 
-                        {/* 2. Permalink & Waktu Baca */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-1.5">
-                                <label className="font-medium text-foreground">URL Slug</label>
-                                <Input
-                                    type="text"
-                                    value={data.slug}
-                                    onChange={(e) => setData('slug', slugify(e.target.value))}
-                                    className="h-9 font-mono"
-                                />
-                                {errors.slug && <p className="text-destructive text-[11px]">{errors.slug}</p>}
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <label className="font-medium text-foreground">Estimasi Waktu Baca</label>
-                                <Input
-                                    type="text"
-                                    value={data.read_time}
-                                    onChange={(e) => setData('read_time', e.target.value)}
-                                    className="h-9"
-                                />
-                                {errors.read_time && <p className="text-destructive text-[11px]">{errors.read_time}</p>}
-                            </div>
-                        </div>
-
-                        {/* 3. Konten Dwibahasa (Tab Indonesia & Tab English) */}
+                        {/* 2. Konten Dwibahasa (Tab Indonesia & Tab English) */}
                         <div className="pt-2 border-t border-border">
                             <Tabs defaultValue="id" className="w-full">
                                 <TabsList className="grid grid-cols-2 max-w-sm mb-4">
@@ -380,11 +363,45 @@ export default function AdminArticleEdit({ article }: ArticleEditProps) {
                                         <Input
                                             type="text"
                                             value={data.title}
-                                            onChange={(e) => setData('title', e.target.value)}
+                                            onChange={(e) => handleTitleChange(e.target.value)}
                                             className="h-9"
                                             required
                                         />
                                         {errors.title && <p className="text-destructive text-[11px]">{errors.title}</p>}
+                                    </div>
+
+                                    {/* URL Slug & Estimasi Waktu Baca (Tampil Langsung di Bawah Judul) */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 rounded-lg bg-muted/20 border border-border/60">
+                                        <div className="space-y-1.5">
+                                            <div className="flex items-center justify-between">
+                                                <label className="font-medium text-foreground">URL Slug</label>
+                                                <span className="text-[10px] text-muted-foreground font-mono">otomatis dari judul</span>
+                                            </div>
+                                            <Input
+                                                type="text"
+                                                value={data.slug}
+                                                onChange={(e) => setData('slug', slugify(e.target.value))}
+                                                className="h-9 font-mono text-xs"
+                                            />
+                                            {errors.slug && <p className="text-destructive text-[11px]">{errors.slug}</p>}
+                                            <p className="text-[10px] text-muted-foreground font-mono truncate">
+                                                aromapalace.id/articles/{data.slug || 'url-artikel'}
+                                            </p>
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="font-medium text-foreground">Estimasi Waktu Baca</label>
+                                            <Input
+                                                type="text"
+                                                value={data.read_time}
+                                                onChange={(e) => setData('read_time', e.target.value)}
+                                                className="h-9 text-xs"
+                                            />
+                                            {errors.read_time && <p className="text-destructive text-[11px]">{errors.read_time}</p>}
+                                            <p className="text-[10px] text-muted-foreground">
+                                                Perkiraan durasi pembaca (default: 4 mnt)
+                                            </p>
+                                        </div>
                                     </div>
 
                                     <div className="space-y-1.5">
@@ -432,6 +449,40 @@ export default function AdminArticleEdit({ article }: ArticleEditProps) {
                                             className="h-9"
                                         />
                                         {errors.title_en && <p className="text-destructive text-[11px]">{errors.title_en}</p>}
+                                    </div>
+
+                                    {/* URL Slug & Estimasi Waktu Baca (English Tab) */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 rounded-lg bg-muted/20 border border-border/60">
+                                        <div className="space-y-1.5">
+                                            <div className="flex items-center justify-between">
+                                                <label className="font-medium text-foreground">URL Slug (Permalink)</label>
+                                                <span className="text-[10px] text-muted-foreground font-mono">shared permalink</span>
+                                            </div>
+                                            <Input
+                                                type="text"
+                                                value={data.slug}
+                                                onChange={(e) => setData('slug', slugify(e.target.value))}
+                                                className="h-9 font-mono text-xs"
+                                            />
+                                            {errors.slug && <p className="text-destructive text-[11px]">{errors.slug}</p>}
+                                            <p className="text-[10px] text-muted-foreground font-mono truncate">
+                                                aromapalace.id/articles/{data.slug || 'url-artikel'}
+                                            </p>
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="font-medium text-foreground">Estimated Read Time</label>
+                                            <Input
+                                                type="text"
+                                                value={data.read_time}
+                                                onChange={(e) => setData('read_time', e.target.value)}
+                                                className="h-9 text-xs"
+                                            />
+                                            {errors.read_time && <p className="text-destructive text-[11px]">{errors.read_time}</p>}
+                                            <p className="text-[10px] text-muted-foreground">
+                                                Estimated reading duration (default: 4 mnt)
+                                            </p>
+                                        </div>
                                     </div>
 
                                     <div className="space-y-1.5">
