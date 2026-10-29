@@ -19,12 +19,12 @@ use Illuminate\Support\Carbon;
  * @property string $slug
  * @property string|null $thumbnail
  * @property string|null $description
- * @property string|null $description_en
+ * @property int $sort_order
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Collection<int, Product> $products
  */
-#[Fillable(['name', 'name_en', 'type', 'slug', 'thumbnail', 'description', 'description_en'])]
+#[Fillable(['name', 'name_en', 'type', 'slug', 'thumbnail', 'description', 'description_en', 'sort_order'])]
 class Category extends Model
 {
     use FlushesCatalogCache, HasFactory;

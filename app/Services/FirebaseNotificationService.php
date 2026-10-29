@@ -1042,21 +1042,21 @@ class FirebaseNotificationService
         $formattedTotal = 'Rp '.number_format($order->total_amount, 0, ',', '.');
 
         if ($order->user_id) {
-            $titleId = 'Bukti Transfer Ditolak #'.$order->order_number;
-            $bodyId = "Bukti transfer {$formattedTotal} tidak dapat diverifikasi oleh admin. Pesanan dibatalkan. Hubungi CS Aroma Palace untuk bantuan.";
-            $titleEn = 'Transfer Proof Rejected #'.$order->order_number;
-            $bodyEn = "Your transfer proof of {$formattedTotal} could not be verified. Order has been canceled. Please contact Aroma Palace customer support.";
+            $titleId = 'Bukti Transfer Belum Sesuai #'.$order->order_number;
+            $bodyId = "Bukti transfer {$formattedTotal} belum dapat diverifikasi oleh admin. Silakan unggah ulang bukti transfer yang valid.";
+            $titleEn = 'Transfer Proof Unverified #'.$order->order_number;
+            $bodyEn = "Your transfer proof of {$formattedTotal} could not be verified. Please re-upload a valid transfer receipt on the payment page.";
 
             $this->sendToUser(
                 user: $order->user_id,
                 title: $titleId,
                 body: $bodyId,
-                url: url('/account/orders'),
+                url: url('/payment/'.$order->order_number),
                 data: [
                     'order_id' => (string) $order->id,
                     'order_number' => (string) $order->order_number,
                     'payment_method' => 'manual',
-                    'type' => 'order_canceled',
+                    'type' => 'payment_proof_rejected',
                     'title_en' => $titleEn,
                     'body_en' => $bodyEn,
                     'title_id' => $titleId,
