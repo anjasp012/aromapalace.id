@@ -1,13 +1,12 @@
 import { Head, Link } from '@inertiajs/react';
 import Layout from '@/components/Layout';
 import CategoryCard, { type CategoryItem } from '@/components/CategoryCard';
-import ScentCard, { type ScentItem } from '@/components/ScentCard';
 import { useTranslation } from '@/lib/i18n';
 
 interface CategoriesPageProps {
     genders?: CategoryItem[];
     concentrates?: CategoryItem[];
-    scents?: ScentItem[];
+    scents?: CategoryItem[];
     categories?: CategoryItem[];
     searchQuery?: string;
 }
@@ -24,11 +23,11 @@ export default function CategoriesPage({
     // Fallbacks if data passed through single categories array
     const gendersList = genders.length > 0 ? genders : categories.filter((c) => c.type === 'genders');
     const concentratesList = concentrates.length > 0 ? concentrates : categories.filter((c) => c.type === 'concentrates');
-    const scentsList = scents.length > 0 ? scents : (categories.filter((c) => c.type === 'scents') as ScentItem[]);
+    const scentsList = scents.length > 0 ? scents : categories.filter((c) => c.type === 'scents');
 
     const totalCount = gendersList.length + concentratesList.length + scentsList.length;
 
-    const itemWidthClass = 'w-[calc(50%-0.5rem)] sm:w-[calc(25%-0.75rem)] md:w-[calc(16.666%-0.85rem)] lg:w-[calc(12.5%-1.1rem)] max-w-[150px] shrink-0';
+    const gridClass = 'grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 sm:gap-6';
 
     return (
         <Layout>
@@ -90,14 +89,13 @@ export default function CategoriesPage({
                                     </h2>
                                 </div>
 
-                                <div className="flex flex-wrap justify-center gap-3 sm:gap-4 lg:gap-5">
+                                <div className={gridClass}>
                                     {gendersList.map((category, idx) => (
-                                        <div key={category.slug} className={itemWidthClass}>
-                                            <CategoryCard
-                                                category={category}
-                                                colorIndex={idx}
-                                            />
-                                        </div>
+                                        <CategoryCard
+                                            key={category.slug}
+                                            category={category}
+                                            colorIndex={idx}
+                                        />
                                     ))}
                                 </div>
                             </section>
@@ -113,14 +111,13 @@ export default function CategoriesPage({
                                     </h2>
                                 </div>
 
-                                <div className="flex flex-wrap justify-center gap-3 sm:gap-4 lg:gap-5">
+                                <div className={gridClass}>
                                     {concentratesList.map((category, idx) => (
-                                        <div key={category.slug} className={itemWidthClass}>
-                                            <CategoryCard
-                                                category={category}
-                                                colorIndex={idx + 3}
-                                            />
-                                        </div>
+                                        <CategoryCard
+                                            key={category.slug}
+                                            category={category}
+                                            colorIndex={idx + 3}
+                                        />
                                     ))}
                                 </div>
                             </section>
@@ -136,14 +133,13 @@ export default function CategoriesPage({
                                     </h2>
                                 </div>
 
-                                <div className="flex flex-wrap justify-center gap-3 sm:gap-4 lg:gap-5">
+                                <div className={gridClass}>
                                     {scentsList.map((scent, idx) => (
-                                        <div key={scent.slug} className={itemWidthClass}>
-                                            <ScentCard
-                                                scent={scent}
-                                                colorIndex={idx + 7}
-                                            />
-                                        </div>
+                                        <CategoryCard
+                                            key={scent.slug}
+                                            category={scent}
+                                            colorIndex={idx + 7}
+                                        />
                                     ))}
                                 </div>
                             </section>
