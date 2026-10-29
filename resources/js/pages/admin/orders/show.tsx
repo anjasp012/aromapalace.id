@@ -559,7 +559,7 @@ export default function AdminOrderShow({ order, pickupSchedules }: OrderShowProp
                                         }`}>
                                         <CreditCard className="size-4" />
                                     </div>
-                                    <span className="text-xs font-medium mt-1.5 text-foreground">1. Bayar (PG)</span>
+                                    <span className="text-xs font-medium mt-1.5 text-foreground">1. Bayar</span>
                                     <span className="text-[10px] text-muted-foreground">{currentStep > 1 ? 'Lunas' : 'Menunggu'}</span>
                                 </div>
 
@@ -1227,15 +1227,15 @@ export default function AdminOrderShow({ order, pickupSchedules }: OrderShowProp
                                                 key={idx}
                                                 onClick={() => setSelectedSchedule(schedule.clock)}
                                                 className={`p-3 rounded-lg border text-left cursor-pointer transition select-none flex items-center justify-between gap-3 ${isSelected
-                                                        ? 'border-[#4A070B] dark:border-[#E8D0BA] bg-[#4A070B]/5 dark:bg-[#E8D0BA]/5 ring-1 ring-[#4A070B] dark:ring-[#E8D0BA]'
-                                                        : 'border-border/80 hover:border-border bg-background/50 hover:bg-muted/40'
+                                                    ? 'border-[#4A070B] dark:border-[#E8D0BA] bg-[#4A070B]/5 dark:bg-[#E8D0BA]/5 ring-1 ring-[#4A070B] dark:ring-[#E8D0BA]'
+                                                    : 'border-border/80 hover:border-border bg-background/50 hover:bg-muted/40'
                                                     }`}
                                             >
                                                 <div className="flex items-center gap-3 min-w-0">
                                                     <div
                                                         className={`w-9 h-9 rounded-md flex items-center justify-center shrink-0 transition-colors ${isSelected
-                                                                ? 'bg-[#4A070B] text-white dark:bg-[#E8D0BA] dark:text-[#4A070B]'
-                                                                : 'bg-muted text-muted-foreground'
+                                                            ? 'bg-[#4A070B] text-white dark:bg-[#E8D0BA] dark:text-[#4A070B]'
+                                                            : 'bg-muted text-muted-foreground'
                                                             }`}
                                                     >
                                                         <Clock className="size-4" />
@@ -1256,8 +1256,8 @@ export default function AdminOrderShow({ order, pickupSchedules }: OrderShowProp
                                                 {/* Radio indicator */}
                                                 <div
                                                     className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 border transition ${isSelected
-                                                            ? 'border-[#4A070B] dark:border-[#E8D0BA] bg-background'
-                                                            : 'border-border/80'
+                                                        ? 'border-[#4A070B] dark:border-[#E8D0BA] bg-background'
+                                                        : 'border-border/80'
                                                         }`}
                                                 >
                                                     {isSelected && (

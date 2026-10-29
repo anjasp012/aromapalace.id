@@ -615,17 +615,25 @@ export default function Products({
 
         return {
             headTitle: isEn ? 'Catalog of Exclusive Fragrances' : 'Katalog Wewangian Eksklusif',
-            titleClassName: 'font-black text-3xl sm:text-4xl lg:text-5xl tracking-[0.08em]',
+            titleClassName: 'font-black text-3xl sm:text-4xl lg:text-5xl tracking-[0.06em]',
             title: isEn ? (
-                <span>
-                    <span className="text-[1.22em]">O</span>UR{' '}
-                    <span className="text-[1.22em]">C</span>OLLECTION
-                </span>
+                <div className="flex flex-col sm:flex-row items-center justify-center sm:gap-3.5 leading-[0.92] sm:leading-normal">
+                    <span className="inline-block">
+                        <span className="text-[1.24em]">O</span>UR
+                    </span>
+                    <span className="inline-block -mt-1 sm:mt-0">
+                        <span className="text-[1.24em]">C</span>OLLECTION
+                    </span>
+                </div>
             ) : (
-                <span>
-                    <span className="text-[1.22em]">K</span>OLEKSI{' '}
-                    <span className="text-[1.22em]">K</span>AMI
-                </span>
+                <div className="flex flex-col sm:flex-row items-center justify-center sm:gap-3.5 leading-[0.92] sm:leading-normal">
+                    <span className="inline-block">
+                        <span className="text-[1.24em]">K</span>OLEKSI
+                    </span>
+                    <span className="inline-block -mt-1 sm:mt-0">
+                        <span className="text-[1.24em]">K</span>AMI
+                    </span>
+                </div>
             ),
             subtitle1: isEn ? 'CURATED LUXURY PERFUME CATALOG' : 'KATALOG PARFUM MEWAH TERKURASI',
             subtitle2: isEn ? (
