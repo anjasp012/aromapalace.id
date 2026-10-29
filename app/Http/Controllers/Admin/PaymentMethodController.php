@@ -71,7 +71,6 @@ class PaymentMethodController extends Controller
             'type' => ['nullable', 'string', 'in:automatic,manual'],
             'account_number' => ['nullable', 'string', 'max:100'],
             'account_name' => ['nullable', 'string', 'max:255'],
-            'instructions' => ['nullable', 'string'],
             'icon' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp,svg', 'max:2048'],
             'is_active' => ['nullable', 'boolean'],
         ]);
@@ -94,7 +93,6 @@ class PaymentMethodController extends Controller
             'type' => $validated['type'] ?? 'automatic',
             'account_number' => $validated['account_number'] ?? null,
             'account_name' => $validated['account_name'] ?? null,
-            'instructions' => $validated['instructions'] ?? null,
             'is_active' => $request->has('is_active') ? $request->boolean('is_active') : true,
         ]);
 
@@ -117,7 +115,6 @@ class PaymentMethodController extends Controller
             'type' => ['nullable', 'string', 'in:automatic,manual'],
             'account_number' => ['nullable', 'string', 'max:100'],
             'account_name' => ['nullable', 'string', 'max:255'],
-            'instructions' => ['nullable', 'string'],
             'icon' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp,svg', 'max:2048'],
             'remove_icon' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
@@ -143,7 +140,6 @@ class PaymentMethodController extends Controller
             'type' => $validated['type'] ?? ($paymentMethod->type ?? 'automatic'),
             'account_number' => $validated['account_number'] ?? null,
             'account_name' => $validated['account_name'] ?? null,
-            'instructions' => $validated['instructions'] ?? null,
             'is_active' => $request->has('is_active') ? $request->boolean('is_active') : $paymentMethod->is_active,
         ]);
 

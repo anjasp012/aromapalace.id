@@ -17,7 +17,6 @@ use Illuminate\Support\Carbon;
  * @property string $type
  * @property string|null $account_number
  * @property string|null $account_name
- * @property string|null $instructions
  * @property bool $is_active
  * @property-read bool $is_manual
  * @property Carbon|null $created_at
@@ -30,7 +29,6 @@ use Illuminate\Support\Carbon;
     'type',
     'account_number',
     'account_name',
-    'instructions',
     'is_active',
 ])]
 class PaymentMethod extends Model

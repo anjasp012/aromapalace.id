@@ -76,7 +76,6 @@ class PaymentMethodSeeder extends Seeder
                 'type' => 'manual',
                 'account_number' => '8720-1234-5678',
                 'account_name' => 'PT Aroma Palace Indonesia',
-                'instructions' => 'Transfer tepat sesuai nominal yang tertera, lalu unggah foto/screenshot bukti transfer di halaman pembayaran.',
             ],
             [
                 'code' => 'manual_mandiri',
@@ -85,7 +84,6 @@ class PaymentMethodSeeder extends Seeder
                 'type' => 'manual',
                 'account_number' => '1370-0098-7654',
                 'account_name' => 'PT Aroma Palace Indonesia',
-                'instructions' => 'Transfer tepat sesuai nominal yang tertera, lalu unggah foto/screenshot bukti transfer di halaman pembayaran.',
             ],
         ];
 
