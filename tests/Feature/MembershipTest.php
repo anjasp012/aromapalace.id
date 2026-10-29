@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\LoyaltyPointHistory;
-use App\Models\LoyaltyReward;
 use App\Models\Order;
 use App\Models\User;
 use App\Models\Voucher;
@@ -126,15 +125,18 @@ test('user can redeem loyalty points for a voucher reward', function () {
         'lifetime_points' => 500,
     ]);
 
-    $reward = LoyaltyReward::where('points_required', '<=', 500)->first();
+    $reward = Voucher::where('voucher_type', 'reward')->whereNull('user_id')->where('points_required', '<=', 500)->first();
     if (! $reward) {
-        $reward = LoyaltyReward::create([
+        $reward = Voucher::create([
+            'code' => 'REW-TEST50K',
             'name' => 'Voucher Diskon Rp 50.000',
             'description' => 'Potongan langsung Rp 50.000',
             'points_required' => 200,
-            'reward_type' => 'fixed',
-            'reward_value' => 50000,
+            'type' => 'fixed',
+            'value' => 50000,
             'min_order_amount' => 150000,
+            'voucher_type' => 'reward',
+            'user_id' => null,
             'is_active' => true,
         ]);
     }
@@ -146,11 +148,11 @@ test('user can redeem loyalty points for a voucher reward', function () {
     $membership->refresh();
     expect($membership->points)->toBe(500 - $reward->points_required);
 
-    // Check that a voucher was created in vouchers table
-    $voucher = Voucher::where('value', $reward->reward_value)->latest()->first();
-    expect($voucher)->not->toBeNull();
-    expect($voucher->is_active)->toBeTrue();
-    expect($voucher->code)->toStartWith('REW-');
+    // Check that a redeemed voucher was created in vouchers table for this user
+    $userVoucher = Voucher::where('user_id', $user->id)->where('value', $reward->value)->latest()->first();
+    expect($userVoucher)->not->toBeNull();
+    expect($userVoucher->is_active)->toBeTrue();
+    expect($userVoucher->code)->toStartWith('REW-');
 
     // Check that redemption history was logged
     $redeemHistory = LoyaltyPointHistory::where('membership_id', $membership->id)
@@ -159,7 +161,7 @@ test('user can redeem loyalty points for a voucher reward', function () {
 
     expect($redeemHistory)->not->toBeNull();
     expect($redeemHistory->points)->toBe(-$reward->points_required);
-    expect($redeemHistory->reference_id)->toBe($voucher->code);
+    expect($redeemHistory->reference_id)->toBe($userVoucher->code);
 });
 
 test('user cannot redeem reward if points are insufficient', function () {
@@ -170,13 +172,16 @@ test('user cannot redeem reward if points are insufficient', function () {
     // User only has 100 points
     expect($membership->points)->toBe(100);
 
-    $reward = LoyaltyReward::create([
+    $reward = Voucher::create([
+        'code' => 'REW-TEST200K',
         'name' => 'Voucher Diskon Rp 200.000',
         'description' => 'Potongan langsung Rp 200.000',
         'points_required' => 800,
-        'reward_type' => 'fixed',
-        'reward_value' => 200000,
+        'type' => 'fixed',
+        'value' => 200000,
         'min_order_amount' => 500000,
+        'voucher_type' => 'reward',
+        'user_id' => null,
         'is_active' => true,
     ]);
 

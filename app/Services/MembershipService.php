@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\LoyaltyPointHistory;
-use App\Models\LoyaltyReward;
 use App\Models\Membership;
 use App\Models\Order;
 use App\Models\User;
@@ -185,7 +184,7 @@ class MembershipService
      *
      * @return array{success: bool, message: string, voucher?: Voucher}
      */
-    public function redeemReward(User $user, Voucher|LoyaltyReward $reward): array
+    public function redeemReward(User $user, Voucher $reward): array
     {
         $membership = $user->membership()->first();
         $isEn = app()->getLocale() === 'en';
@@ -222,22 +221,19 @@ class MembershipService
             // Generate unique voucher code
             $voucherCode = 'REW-'.strtoupper(Str::random(6));
 
-            $rewardType = $reward instanceof Voucher ? $reward->type : $reward->reward_type;
-            $rewardValue = $reward instanceof Voucher ? $reward->value : $reward->reward_value;
-
             $voucher = Voucher::create([
                 'user_id' => $user->id,
                 'voucher_type' => 'reward',
                 'points_required' => $pointsRequired,
-                'applicable_type' => $reward instanceof Voucher ? ($reward->applicable_type ?? 'all') : 'all',
-                'applicable_product_ids' => $reward instanceof Voucher ? $reward->applicable_product_ids : null,
+                'applicable_type' => $reward->applicable_type ?? 'all',
+                'applicable_product_ids' => $reward->applicable_product_ids,
                 'code' => $voucherCode,
                 'name' => "Reward Royale: {$reward->name}",
                 'name_en' => ! empty($reward->name_en) ? "Royale Reward: {$reward->name_en}" : null,
                 'description' => "Voucher hasil penukaran {$pointsRequired} loyalty points oleh {$user->name}.",
                 'description_en' => $reward->description_en,
-                'type' => $rewardType,
-                'value' => $rewardValue,
+                'type' => $reward->type,
+                'value' => $reward->value,
                 'min_order_amount' => $reward->min_order_amount ?? 0,
                 'max_discount_amount' => $reward->max_discount_amount,
                 'usage_limit' => 1,

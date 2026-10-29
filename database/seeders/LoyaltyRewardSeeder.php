@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\LoyaltyReward;
 use App\Models\Voucher;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
@@ -99,11 +98,6 @@ class LoyaltyRewardSeeder extends Seeder
         ];
 
         foreach ($rewards as $reward) {
-            LoyaltyReward::updateOrCreate(
-                ['name' => $reward['name']],
-                $reward
-            );
-
             $code = $codes[$reward['name']] ?? ('REW-'.strtoupper(Str::random(6)));
 
             Voucher::updateOrCreate(

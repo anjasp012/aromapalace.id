@@ -103,17 +103,17 @@ class EnglishTranslationsSeeder extends Seeder
             DB::table('brands')->where('id', $id)->update(['description_en' => $en]);
         }
 
-        // 6. Loyalty Rewards
+        // 6. Reward Vouchers English Translations
         $rewardTranslations = [
-            1 => ['name_en' => 'Rp 25,000 Discount Voucher', 'description_en' => 'Instant Rp 25,000 price deduction on your preferred perfume with no complicated conditions.'],
-            2 => ['name_en' => 'Free Express VIP Shipping Voucher', 'description_en' => 'Complimentary expedited delivery to any city across Indonesia via VIP courier.'],
-            3 => ['name_en' => 'Rp 50,000 Discount Voucher', 'description_en' => 'Special Rp 50,000 privilege valid for all Dubai perfume variants at Aroma Palace.'],
-            4 => ['name_en' => 'Rp 100,000 Discount Voucher', 'description_en' => 'Exclusive Rp 100,000 price deduction on our luxury artisanal collection.'],
-            5 => ['name_en' => 'Special 20% Off Voucher', 'description_en' => '20% discount across all product categories on your upcoming fragrance order.'],
-            6 => ['name_en' => 'Royale Privilege 35% Off Voucher', 'description_en' => 'Top-tier Royale Privilege 35% discount for dedicated collectors of rare Dubai fragrances.'],
+            'REW-POT25K' => ['name_en' => 'Rp 25,000 Discount Voucher', 'description_en' => 'Instant Rp 25,000 price deduction on your preferred perfume with no complicated conditions.'],
+            'REW-VIPONGKIR' => ['name_en' => 'Free Express VIP Shipping Voucher', 'description_en' => 'Complimentary expedited delivery to any city across Indonesia via VIP courier.'],
+            'REW-POT50K' => ['name_en' => 'Rp 50,000 Discount Voucher', 'description_en' => 'Special Rp 50,000 privilege valid for all Dubai perfume variants at Aroma Palace.'],
+            'REW-POT100K' => ['name_en' => 'Rp 100,000 Discount Voucher', 'description_en' => 'Exclusive Rp 100,000 price deduction on our luxury artisanal collection.'],
+            'REW-DISKON20' => ['name_en' => 'Special 20% Off Voucher', 'description_en' => '20% discount across all product categories on your upcoming fragrance order.'],
+            'REW-ROYALE35' => ['name_en' => 'Royale Privilege 35% Off Voucher', 'description_en' => 'Top-tier Royale Privilege 35% discount for dedicated collectors of rare Dubai fragrances.'],
         ];
-        foreach ($rewardTranslations as $id => $data) {
-            DB::table('loyalty_rewards')->where('id', $id)->update($data);
+        foreach ($rewardTranslations as $code => $data) {
+            DB::table('vouchers')->where('code', $code)->update($data);
         }
 
         // 7. Stores

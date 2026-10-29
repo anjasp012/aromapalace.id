@@ -80,7 +80,7 @@ test('admin can store a fixed voucher', function () {
     ]);
 });
 
-test('admin can store a reward voucher with points required and sync with LoyaltyReward', function () {
+test('admin can store a reward voucher with points required', function () {
     $admin = User::factory()->admin()->create();
 
     $response = $this->actingAs($admin)
@@ -100,12 +100,6 @@ test('admin can store a reward voucher with points required and sync with Loyalt
         'code' => 'REWTEST50',
         'voucher_type' => 'reward',
         'points_required' => 250,
-    ]);
-
-    $this->assertDatabaseHas('loyalty_rewards', [
-        'name' => 'Voucher Hadiah Poin 50',
-        'points_required' => 250,
-        'reward_value' => 50000,
     ]);
 });
 

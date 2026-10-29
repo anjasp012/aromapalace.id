@@ -3,12 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\LoyaltyPointHistory;
-use App\Models\LoyaltyReward;
 use App\Models\Voucher;
 use App\Services\MembershipService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -100,7 +98,7 @@ class MembershipController extends Controller
         }
 
         // Available catalog rewards to redeem directly from vouchers database table
-        $rewardVouchers = Voucher::query()
+        $rewards = Voucher::query()
             ->where('voucher_type', 'reward')
             ->whereNull('user_id')
             ->where('is_active', true)
@@ -109,61 +107,27 @@ class MembershipController extends Controller
                     ->orWhere('expires_at', '>=', now());
             })
             ->orderBy('points_required', 'asc')
-            ->get();
+            ->get()
+            ->map(function (Voucher $v) use ($membership) {
+                $userPoints = $membership ? $membership->points : 0;
+                $pointsReq = $v->points_required ?? 0;
+                $canRedeem = $membership && ($userPoints >= $pointsReq);
 
-        // Fallback: if vouchers table has no reward vouchers yet, sync from legacy loyalty_rewards
-        if ($rewardVouchers->isEmpty() && class_exists(LoyaltyReward::class)) {
-            $legacyRewards = LoyaltyReward::where('is_active', true)->orderBy('points_required', 'asc')->get();
-            if ($legacyRewards->isNotEmpty()) {
-                foreach ($legacyRewards as $legacy) {
-                    Voucher::firstOrCreate(
-                        ['name' => $legacy->name, 'voucher_type' => 'reward', 'user_id' => null],
-                        [
-                            'code' => 'REW-'.strtoupper(Str::random(6)),
-                            'name_en' => $legacy->name_en,
-                            'description' => $legacy->description,
-                            'description_en' => $legacy->description_en,
-                            'type' => $legacy->reward_type === 'free_shipping' ? 'fixed' : $legacy->reward_type,
-                            'value' => $legacy->reward_value,
-                            'min_order_amount' => $legacy->min_order_amount ?? 0,
-                            'max_discount_amount' => $legacy->max_discount_amount,
-                            'voucher_type' => 'reward',
-                            'points_required' => $legacy->points_required,
-                            'applicable_type' => 'all',
-                            'is_active' => $legacy->is_active,
-                        ]
-                    );
-                }
-
-                $rewardVouchers = Voucher::query()
-                    ->where('voucher_type', 'reward')
-                    ->whereNull('user_id')
-                    ->where('is_active', true)
-                    ->orderBy('points_required', 'asc')
-                    ->get();
-            }
-        }
-
-        $rewards = $rewardVouchers->map(function (Voucher $v) use ($membership) {
-            $userPoints = $membership ? $membership->points : 0;
-            $pointsReq = $v->points_required ?? 0;
-            $canRedeem = $membership && ($userPoints >= $pointsReq);
-
-            return [
-                'id' => $v->id,
-                'name' => $v->name,
-                'name_en' => $v->name_en,
-                'description' => $v->description,
-                'description_en' => $v->description_en,
-                'points_required' => $pointsReq,
-                'reward_type' => $v->type,
-                'reward_value' => $v->value,
-                'formatted_discount' => $v->getFormattedDiscount(),
-                'min_order_formatted' => $v->min_order_amount > 0 ? 'Min. Belanja Rp '.number_format($v->min_order_amount, 0, ',', '.') : 'Tanpa Min. Belanja',
-                'can_redeem' => $canRedeem,
-                'shortage' => max(0, $pointsReq - $userPoints),
-            ];
-        })->all();
+                return [
+                    'id' => $v->id,
+                    'name' => $v->name,
+                    'name_en' => $v->name_en,
+                    'description' => $v->description,
+                    'description_en' => $v->description_en,
+                    'points_required' => $pointsReq,
+                    'reward_type' => $v->type,
+                    'reward_value' => $v->value,
+                    'formatted_discount' => $v->getFormattedDiscount(),
+                    'min_order_formatted' => $v->min_order_amount > 0 ? 'Min. Belanja Rp '.number_format($v->min_order_amount, 0, ',', '.') : 'Tanpa Min. Belanja',
+                    'can_redeem' => $canRedeem,
+                    'shortage' => max(0, $pointsReq - $userPoints),
+                ];
+            })->all();
 
         return Inertia::render('membership', [
             'is_member' => (bool) $membership,
@@ -205,14 +169,6 @@ class MembershipController extends Controller
         }
 
         $voucher = $reward instanceof Voucher ? $reward : Voucher::find($reward);
-
-        // Fallback check for legacy loyalty_rewards ID if needed
-        if (! $voucher && class_exists(LoyaltyReward::class)) {
-            $legacy = LoyaltyReward::find($reward);
-            if ($legacy) {
-                $voucher = Voucher::where('name', $legacy->name)->where('voucher_type', 'reward')->first();
-            }
-        }
 
         if (! $voucher) {
             return back()->with('error', 'Reward voucher tidak ditemukan.');
