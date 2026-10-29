@@ -1,8 +1,7 @@
 import { Link } from '@inertiajs/react';
-import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { useTranslation, formatCategoryName } from '@/lib/i18n';
+import { useTranslation } from '@/lib/i18n';
 
 export interface CategoryItem {
     id?: number;
@@ -20,76 +19,8 @@ interface CategoryCardProps {
     category: CategoryItem;
     colorIndex?: number;
     className?: string;
-}
-
-const CATEGORY_BG_PALETTES = [
-    {
-        gradient: 'from-[#4A070B] via-[#630E14] to-[#2B0407]',
-        text: 'text-rose-100',
-        capsule: 'bg-rose-400/20 text-rose-100 border-rose-300/30',
-        glow: 'from-rose-500/25 to-transparent',
-    },
-    {
-        gradient: 'from-[#92400E] via-[#B45309] to-[#78350F]',
-        text: 'text-amber-100',
-        capsule: 'bg-amber-400/20 text-amber-100 border-amber-300/30',
-        glow: 'from-amber-500/25 to-transparent',
-    },
-    {
-        gradient: 'from-[#065F46] via-[#047857] to-[#064E3B]',
-        text: 'text-emerald-100',
-        capsule: 'bg-emerald-400/20 text-emerald-100 border-emerald-300/30',
-        glow: 'from-emerald-500/25 to-transparent',
-    },
-    {
-        gradient: 'from-[#1E3A8A] via-[#1D4ED8] to-[#172554]',
-        text: 'text-blue-100',
-        capsule: 'bg-blue-400/20 text-blue-100 border-blue-300/30',
-        glow: 'from-blue-500/25 to-transparent',
-    },
-    {
-        gradient: 'from-[#581C87] via-[#7E22CE] to-[#3B0764]',
-        text: 'text-purple-100',
-        capsule: 'bg-purple-400/20 text-purple-100 border-purple-300/30',
-        glow: 'from-purple-500/25 to-transparent',
-    },
-    {
-        gradient: 'from-[#831843] via-[#BE185D] to-[#500724]',
-        text: 'text-pink-100',
-        capsule: 'bg-pink-400/20 text-pink-100 border-pink-300/30',
-        glow: 'from-pink-500/25 to-transparent',
-    },
-    {
-        gradient: 'from-[#0F766E] via-[#0D9488] to-[#134E4A]',
-        text: 'text-teal-100',
-        capsule: 'bg-teal-400/20 text-teal-100 border-teal-300/30',
-        glow: 'from-teal-500/25 to-transparent',
-    },
-    {
-        gradient: 'from-[#C2410C] via-[#EA580C] to-[#7C2D12]',
-        text: 'text-orange-100',
-        capsule: 'bg-orange-400/20 text-orange-100 border-orange-300/30',
-        glow: 'from-orange-500/25 to-transparent',
-    },
-    {
-        gradient: 'from-[#312E81] via-[#4338CA] to-[#1E1B4B]',
-        text: 'text-indigo-100',
-        capsule: 'bg-indigo-400/20 text-indigo-100 border-indigo-300/30',
-        glow: 'from-indigo-500/25 to-transparent',
-    },
-];
-
-function getPalette(colorIndex?: number, name?: string) {
-    if (typeof colorIndex === 'number' && colorIndex >= 0) {
-        return CATEGORY_BG_PALETTES[colorIndex % CATEGORY_BG_PALETTES.length];
-    }
-    const str = name || '';
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        hash = (hash << 5) - hash + str.charCodeAt(i);
-        hash |= 0;
-    }
-    return CATEGORY_BG_PALETTES[Math.abs(hash) % CATEGORY_BG_PALETTES.length];
+    compact?: boolean;
+    aspectRatio?: 'portrait' | 'square';
 }
 
 function getInitialLetter(name: string): string {
@@ -99,12 +30,29 @@ function getInitialLetter(name: string): string {
     return match ? match[0].toUpperCase() : clean.charAt(0).toUpperCase();
 }
 
-export default function CategoryCard({ category, colorIndex, className }: CategoryCardProps) {
+export default function CategoryCard({
+    category,
+    className,
+    compact = false,
+    aspectRatio = 'portrait',
+}: CategoryCardProps) {
     const { pickText, isEn } = useTranslation();
-    const rawName = pickText(category.name, category.name_en);
-    const displayName = formatCategoryName(rawName, isEn);
+    const rawName = pickText(category.name, category.name_en) || category.name || '';
+
+    // Tampilkan apa adanya dari database (Men ya Men, Women ya Women, dsb)
+    let displayName = rawName;
+    const lower = rawName.toLowerCase().trim();
+    if (lower === 'men' || category.slug === 'men' || category.slug === 'parfum-pria') {
+        displayName = 'Men';
+    } else if (lower === 'women' || category.slug === 'women' || category.slug === 'parfum-wanita') {
+        displayName = 'Women';
+    } else if (lower === 'unisex' || category.slug === 'unisex' || category.slug === 'unisex-fragrance') {
+        displayName = 'Unisex';
+    }
+
+    const displayDescription = pickText(category.description, category.description_en) || category.description || '';
     const initial = getInitialLetter(displayName);
-    const palette = getPalette(colorIndex, category.slug || category.name);
+
     const href = category.type === 'scents'
         ? `/products?scent=${encodeURIComponent(category.slug)}`
         : category.type === 'concentrates'
@@ -113,69 +61,76 @@ export default function CategoryCard({ category, colorIndex, className }: Catego
         ? `/products?gender=${encodeURIComponent(category.slug)}`
         : `/products?category=${encodeURIComponent(category.slug)}`;
 
+    const aspectClass = aspectRatio === 'square' ? 'aspect-square' : 'aspect-[4/5]';
+
     return (
         <Link
             href={href}
             prefetch="hover"
             cacheFor={['30s', '1m']}
-            className={cn('group block h-full select-none', className)}
+            className={cn('group block h-full select-none rounded-none border-0 bg-transparent', className)}
         >
-            <Card className="overflow-hidden relative aspect-square py-0 gap-0 shadow-none rounded-xl w-full h-full border border-border/70 hover:border-[#4A070B]/40 hover:shadow-md transition-all duration-300 bg-card">
-                {category.image ? (
-                    <>
+            <div className="w-full flex flex-col rounded-none border-0">
+                {/* Image / Thumbnail Container - Strictly Sharp (No Rounded) & No Border */}
+                <div className={cn('relative w-full overflow-hidden bg-muted/30 rounded-none border-0', aspectClass)}>
+                    {category.image ? (
                         <img
                             src={category.image}
                             alt={displayName}
                             loading="lazy"
                             decoding="async"
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            className="w-full h-full object-cover rounded-none transition-transform duration-700 ease-out group-hover:scale-105"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent pointer-events-none" />
-                        <div className="absolute inset-x-0 bottom-0 p-2 sm:p-3 text-center pointer-events-none">
-                            <h3 className="text-[10px] sm:text-xs font-semibold text-white tracking-tight leading-tight line-clamp-1 sm:line-clamp-2">
-                                {displayName}
-                            </h3>
+                    ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center p-6 bg-muted/20 group-hover:bg-muted/35 transition-colors rounded-none">
+                            <span className="font-serif text-3xl sm:text-5xl font-light text-foreground/35 tracking-widest uppercase transition-colors group-hover:text-[#4A070B] dark:group-hover:text-[#E8D0BA]">
+                                {initial}
+                            </span>
                         </div>
-                    </>
-                ) : (
-                    /* Initial Letter with Dynamic Alternating Gradient */
-                    <div className={cn(
-                        'w-full h-full bg-gradient-to-br flex flex-col items-center justify-between p-2.5 sm:p-3 relative overflow-hidden transition-all duration-500 group-hover:scale-[1.02]',
-                        palette.gradient
-                    )}>
-                        <div className={cn('absolute -top-6 -right-6 w-24 h-24 rounded-full bg-gradient-to-br blur-xl opacity-60 pointer-events-none', palette.glow)} />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-white/10 pointer-events-none" />
+                    )}
+                </div>
 
-                        <div className="flex-1 flex items-center justify-center relative z-10 my-auto">
-                            <div className={cn(
-                                'size-10 sm:size-12 md:size-13 rounded-full flex items-center justify-center border backdrop-blur-md shadow-md transition-all duration-300 group-hover:scale-110',
-                                palette.capsule
-                            )}>
-                                <span className={cn('font-serif font-black text-xl sm:text-2xl tracking-tight leading-none', palette.text)}>
-                                    {initial}
-                                </span>
-                            </div>
-                        </div>
-
-                        <div className="w-full text-center relative z-10 pt-1 pointer-events-none">
-                            <h3 className="text-[10px] sm:text-xs font-bold text-white tracking-tight leading-tight line-clamp-1">
-                                {displayName}
-                            </h3>
-                        </div>
+                {/* Database Metadata - Plain & Direct as in DB */}
+                <div className="pt-3.5 pb-1 flex flex-col">
+                    <div className="flex items-baseline justify-between gap-2">
+                        <h3 className="font-serif text-base sm:text-lg font-semibold text-foreground tracking-tight group-hover:text-[#4A070B] dark:group-hover:text-[#E8D0BA] transition-colors line-clamp-1">
+                            {displayName}
+                        </h3>
+                        {typeof category.productsCount === 'number' && (
+                            <span className="text-[11px] uppercase tracking-wider text-muted-foreground shrink-0 font-medium">
+                                {category.productsCount} {isEn ? 'Products' : 'Produk'}
+                            </span>
+                        )}
                     </div>
-                )}
-            </Card>
+
+                    {!compact && displayDescription && (
+                        <p className="text-xs text-muted-foreground leading-relaxed mt-1.5 line-clamp-2">
+                            {displayDescription}
+                        </p>
+                    )}
+
+                    {!compact && (
+                        <div className="mt-2.5 inline-flex items-center gap-1.5 text-xs font-medium text-foreground/75 group-hover:text-[#4A070B] dark:group-hover:text-[#E8D0BA] transition-colors">
+                            <span>{isEn ? 'Explore Collection' : 'Jelajahi Koleksi'}</span>
+                            <span className="transition-transform duration-300 group-hover:translate-x-1">&rarr;</span>
+                        </div>
+                    )}
+                </div>
+            </div>
         </Link>
     );
 }
 
 export function CategoryCardSkeleton({ className }: { className?: string }) {
     return (
-        <Card className={cn('overflow-hidden relative aspect-square py-0 gap-0 shadow-none rounded-xl w-full h-full bg-muted/60', className)}>
-            <Skeleton className="w-full h-full" />
-            <div className="absolute inset-x-0 bottom-0 p-2.5 sm:p-3 pointer-events-none">
-                <Skeleton className="h-3 w-3/4 bg-white/40 dark:bg-white/20 mx-auto" />
+        <div className={cn('block h-full select-none rounded-none border-0', className)}>
+            <div className="relative aspect-[4/5] w-full overflow-hidden bg-muted/40 rounded-none border-0">
+                <Skeleton className="w-full h-full rounded-none" />
             </div>
-        </Card>
+            <div className="pt-3.5 pb-1 space-y-2">
+                <Skeleton className="h-4 w-3/4 rounded-none" />
+                <Skeleton className="h-3 w-full rounded-none" />
+            </div>
+        </div>
     );
 }

@@ -459,6 +459,7 @@ export default function Home({
                                     key={scent.slug}
                                     scent={scent}
                                     colorIndex={idx}
+                                    compact
                                     className="w-[calc((100%-24px)/3.5)] sm:w-[calc((100%-60px)/4)] md:w-[calc((100%-140px)/8)] sm:max-w-[140px] shrink-0 snap-start"
                                 />
                             ))}

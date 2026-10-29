@@ -15,8 +15,8 @@ class CategorySeeder extends Seeder
         $categories = [
             // Genders
             [
-                'name' => 'Parfum Pria',
-                'name_en' => 'Men Fragrance',
+                'name' => 'Men',
+                'name_en' => 'Men',
                 'type' => 'genders',
                 'slug' => 'parfum-pria',
                 'thumbnail' => 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?auto=format&fit=crop&w=400&q=80',
@@ -24,8 +24,8 @@ class CategorySeeder extends Seeder
                 'description_en' => 'Masculine fragrance collection with bold, luxurious, and authoritative character.',
             ],
             [
-                'name' => 'Parfum Wanita',
-                'name_en' => 'Women Fragrance',
+                'name' => 'Women',
+                'name_en' => 'Women',
                 'type' => 'genders',
                 'slug' => 'parfum-wanita',
                 'thumbnail' => 'https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?auto=format&fit=crop&w=400&q=80',
@@ -33,8 +33,8 @@ class CategorySeeder extends Seeder
                 'description_en' => 'Feminine fragrance of elegance, sensuality, and allure crafted from rare florals.',
             ],
             [
-                'name' => 'Unisex Fragrance',
-                'name_en' => 'Unisex Fragrance',
+                'name' => 'Unisex',
+                'name_en' => 'Unisex',
                 'type' => 'genders',
                 'slug' => 'unisex-fragrance',
                 'thumbnail' => 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=400&q=80',

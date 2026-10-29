@@ -42,11 +42,14 @@ export default function CategoriesPage({
                 />
             </Head>
 
-            {/* PAGE HEADER BANNER */}
-            <div className="border-b border-border/70 bg-background py-8 sm:py-12">
+            {/* PAGE HEADER BANNER - Pure Luxury Editorial: No Borders, No Rounded */}
+            <div className="bg-background py-10 sm:py-16">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center space-y-3">
-                    <h1 className="text-3xl sm:text-4xl lg:text-5xl tracking-tight text-foreground">
-                        <span className="font-normal">{isEn ? 'Fragrance' : 'Kategori'}</span>{' '}
+                    <p className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground font-medium">
+                        {isEn ? 'The Fragrance Directory' : 'Direktori Wewangian'}
+                    </p>
+                    <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl tracking-tight text-foreground font-normal">
+                        <span>{isEn ? 'Fragrance' : 'Kategori'}</span>{' '}
                         <span className="font-bold">{isEn ? 'Categories' : 'Wewangian'}</span>
                     </h1>
                     <p className="max-w-2xl mx-auto text-xs sm:text-sm text-muted-foreground leading-relaxed">
@@ -57,11 +60,11 @@ export default function CategoriesPage({
                 </div>
             </div>
 
-            {/* MAIN CONTENT: 3 DISTINCT SECTIONS */}
-            <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-14 bg-background min-h-[50vh] space-y-10 sm:space-y-16">
+            {/* MAIN CONTENT: 3 DISTINCT SECTIONS - No Borders, No Rounded, Pure DB Data */}
+            <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-16 sm:pb-24 bg-background min-h-[50vh] space-y-16 sm:space-y-24">
                 {totalCount === 0 ? (
-                    <div className="text-center py-16 px-4 space-y-3 max-w-md mx-auto">
-                        <h3 className="text-base sm:text-lg font-bold text-foreground">
+                    <div className="text-center py-20 px-4 space-y-3 max-w-md mx-auto">
+                        <h3 className="font-serif text-lg font-bold text-foreground">
                             {t('categories.empty_title')}
                         </h3>
                         <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
@@ -81,17 +84,22 @@ export default function CategoriesPage({
                         {/* 1. GENDER SECTION */}
                         {gendersList.length > 0 && (
                             <section id="genders">
-                                <div className="flex items-center justify-between mb-4 sm:mb-6">
-                                    <h2 className="text-xl sm:text-2xl tracking-tight text-foreground">
-                                        <span className="font-normal">{isEn ? 'Category' : 'Kategori'}</span>{' '}
-                                        <span className="font-bold">{isEn ? 'Gender' : 'Gender'}</span>
-                                    </h2>
-                                    <span className="text-xs text-muted-foreground font-medium shrink-0">
+                                <div className="flex items-end justify-between mb-6 sm:mb-8 pb-2">
+                                    <div>
+                                        <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground font-medium">
+                                            {isEn ? 'Collection by' : 'Koleksi Berdasarkan'}
+                                        </p>
+                                        <h2 className="font-serif text-2xl sm:text-3xl tracking-tight text-foreground mt-1">
+                                            <span className="font-normal">{isEn ? 'Category' : 'Kategori'}</span>{' '}
+                                            <span className="font-bold">{isEn ? 'Gender' : 'Gender'}</span>
+                                        </h2>
+                                    </div>
+                                    <span className="text-xs uppercase tracking-wider text-muted-foreground font-medium shrink-0">
                                         {gendersList.length} {isEn ? 'Categories' : 'Pilihan'}
                                     </span>
                                 </div>
 
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-5">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 lg:gap-10">
                                     {gendersList.map((category, idx) => (
                                         <CategoryCard
                                             key={category.slug}
@@ -106,17 +114,22 @@ export default function CategoriesPage({
                         {/* 2. CONCENTRATE SECTION */}
                         {concentratesList.length > 0 && (
                             <section id="concentrates">
-                                <div className="flex items-center justify-between mb-4 sm:mb-6">
-                                    <h2 className="text-xl sm:text-2xl tracking-tight text-foreground">
-                                        <span className="font-normal">{isEn ? 'Category' : 'Kategori'}</span>{' '}
-                                        <span className="font-bold">{isEn ? 'Concentration' : 'Konsentrasi'}</span>
-                                    </h2>
-                                    <span className="text-xs text-muted-foreground font-medium shrink-0">
+                                <div className="flex items-end justify-between mb-6 sm:mb-8 pb-2">
+                                    <div>
+                                        <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground font-medium">
+                                            {isEn ? 'Pure Essence' : 'Kemurnian Esensial'}
+                                        </p>
+                                        <h2 className="font-serif text-2xl sm:text-3xl tracking-tight text-foreground mt-1">
+                                            <span className="font-normal">{isEn ? 'Category' : 'Kategori'}</span>{' '}
+                                            <span className="font-bold">{isEn ? 'Concentration' : 'Konsentrasi'}</span>
+                                        </h2>
+                                    </div>
+                                    <span className="text-xs uppercase tracking-wider text-muted-foreground font-medium shrink-0">
                                         {concentratesList.length} {isEn ? 'Types' : 'Pilihan'}
                                     </span>
                                 </div>
 
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-5">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
                                     {concentratesList.map((category, idx) => (
                                         <CategoryCard
                                             key={category.slug}
@@ -131,17 +144,22 @@ export default function CategoriesPage({
                         {/* 3. SCENT SECTION */}
                         {scentsList.length > 0 && (
                             <section id="scents">
-                                <div className="flex items-center justify-between mb-4 sm:mb-6">
-                                    <h2 className="text-xl sm:text-2xl tracking-tight text-foreground">
-                                        <span className="font-normal">{isEn ? 'Category' : 'Kategori'}</span>{' '}
-                                        <span className="font-bold">{isEn ? 'Scents' : 'Aroma'}</span>
-                                    </h2>
-                                    <span className="text-xs text-muted-foreground font-medium shrink-0">
+                                <div className="flex items-end justify-between mb-6 sm:mb-8 pb-2">
+                                    <div>
+                                        <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground font-medium">
+                                            {isEn ? 'Olfactory Families' : 'Keluarga Aroma'}
+                                        </p>
+                                        <h2 className="font-serif text-2xl sm:text-3xl tracking-tight text-foreground mt-1">
+                                            <span className="font-normal">{isEn ? 'Category' : 'Kategori'}</span>{' '}
+                                            <span className="font-bold">{isEn ? 'Scents' : 'Aroma'}</span>
+                                        </h2>
+                                    </div>
+                                    <span className="text-xs uppercase tracking-wider text-muted-foreground font-medium shrink-0">
                                         {scentsList.length} {isEn ? 'Aromas' : 'Pilihan'}
                                     </span>
                                 </div>
 
-                                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8">
                                     {scentsList.map((scent, idx) => (
                                         <ScentCard
                                             key={scent.slug}
