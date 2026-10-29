@@ -237,7 +237,8 @@ class ProductController extends Controller
         $fragrances = $query->get()->map(fn (Product $p) => CatalogService::formatProduct($p))->all();
 
         $genderItems = Category::where('type', 'genders')
-            ->orderBy('name')
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('name', 'asc')
             ->get(['id', 'name', 'name_en', 'slug'])
             ->map(fn ($c) => [
                 'id' => $c->id,
@@ -247,7 +248,8 @@ class ProductController extends Controller
             ])->all();
 
         $concentrationItems = Category::where('type', 'concentrates')
-            ->orderBy('name')
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('name', 'asc')
             ->get(['id', 'name', 'name_en', 'slug'])
             ->map(fn ($c) => [
                 'id' => $c->id,
@@ -257,7 +259,8 @@ class ProductController extends Controller
             ])->all();
 
         $scentItems = Category::where('type', 'scents')
-            ->orderBy('name')
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('name', 'asc')
             ->get(['id', 'name', 'name_en', 'slug'])
             ->map(fn ($c) => [
                 'id' => $c->id,
@@ -266,7 +269,8 @@ class ProductController extends Controller
                 'slug' => $c->slug,
             ])->all();
 
-        $brandItems = Brand::orderBy('name')
+        $brandItems = Brand::orderBy('sort_order', 'asc')
+            ->orderBy('name', 'asc')
             ->get(['id', 'name', 'slug'])
             ->map(fn ($b) => [
                 'id' => $b->id,
@@ -274,12 +278,12 @@ class ProductController extends Controller
                 'slug' => $b->slug,
             ])->all();
 
-        $dbCategories = Category::orderBy('name')->pluck('name')->all();
+        $dbCategories = Category::orderBy('sort_order', 'asc')->orderBy('name', 'asc')->pluck('name')->all();
         $categories = array_values(array_unique(array_merge(['All'], $dbCategories)));
 
         $brands = array_values(array_unique(array_merge(
             ['All'],
-            Brand::orderBy('name')->pluck('name')->all()
+            Brand::orderBy('sort_order', 'asc')->orderBy('name', 'asc')->pluck('name')->all()
         )));
 
         $genders = array_values(array_unique(array_merge(['All'], array_column($genderItems, 'name'))));

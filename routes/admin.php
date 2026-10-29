@@ -74,6 +74,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
     // Category Management
     Route::get('/manajemen-kategori', [CategoryController::class, 'index'])->name('categories.index');
+    Route::post('/manajemen-kategori/reorder', [CategoryController::class, 'reorder'])->name('categories.reorder');
     Route::get('/manajemen-kategori/create', [CategoryController::class, 'create'])->name('categories.create');
     Route::post('/manajemen-kategori', [CategoryController::class, 'store'])->name('categories.store');
     Route::get('/manajemen-kategori/{category}/edit', [CategoryController::class, 'edit'])->name('categories.edit');
@@ -82,6 +83,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
     // Brand Management
     Route::get('/manajemen-brand', [BrandController::class, 'index'])->name('brands.index');
+    Route::post('/manajemen-brand/reorder', [BrandController::class, 'reorder'])->name('brands.reorder');
     Route::get('/manajemen-brand/create', [BrandController::class, 'create'])->name('brands.create');
     Route::post('/manajemen-brand', [BrandController::class, 'store'])->name('brands.store');
     Route::get('/manajemen-brand/{brand}/edit', [BrandController::class, 'edit'])->name('brands.edit');

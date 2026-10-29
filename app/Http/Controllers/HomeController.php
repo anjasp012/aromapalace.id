@@ -95,6 +95,7 @@ class HomeController extends Controller
         // 4. Scents from DB (Product by Scents - Only Scents, limit 7)
         $scents = Category::scents()
             ->withCount('products')
+            ->orderBy('sort_order', 'asc')
             ->orderBy('id', 'asc')
             ->take(7)
             ->get()
@@ -116,6 +117,8 @@ class HomeController extends Controller
 
         // 5. Brands from DB (Featured Brands - Limit 6)
         $brands = Brand::withCount('products')
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('id', 'asc')
             ->take(6)
             ->get()
             ->map(function (Brand $b) {

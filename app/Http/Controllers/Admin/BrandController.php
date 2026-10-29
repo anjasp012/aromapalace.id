@@ -28,9 +28,10 @@ class BrandController extends Controller
                         ->orWhere('description', 'like', "%{$search}%");
                 });
             })
-            ->latest('id');
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('id', 'asc');
 
-        $brands = $brandsQuery->paginate(15)->withQueryString();
+        $brands = $brandsQuery->paginate(50)->withQueryString();
 
         $metrics = [
             'total_brands' => Brand::count(),
@@ -147,5 +148,25 @@ class BrandController extends Controller
 
         return redirect()->route('admin.brands.index')
             ->with('success', "Brand '{$name}' berhasil dihapus.");
+    }
+
+    /**
+     * Reorder brands by updating sort_order for each item.
+     */
+    public function reorder(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'items' => ['required', 'array'],
+            'items.*.id' => ['required', 'integer', 'exists:brands,id'],
+            'items.*.sort_order' => ['required', 'integer'],
+        ]);
+
+        foreach ($validated['items'] as $item) {
+            Brand::where('id', $item['id'])->update(['sort_order' => $item['sort_order']]);
+        }
+
+        \App\Support\CatalogCache::flush();
+
+        return back()->with('success', 'Urutan brand berhasil disimpan.');
     }
 }

@@ -18,7 +18,8 @@ class CategoryController extends Controller
 
         $query = Category::query()
             ->withCount(['products' => fn ($q) => $q->published()])
-            ->orderBy('id');
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('id', 'asc');
 
         if ($search !== '') {
             $query->where(function ($q) use ($search) {

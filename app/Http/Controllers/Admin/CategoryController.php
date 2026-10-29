@@ -34,9 +34,10 @@ class CategoryController extends Controller
                         ->orWhere('description', 'like', "%{$search}%");
                 });
             })
-            ->latest('id');
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('id', 'asc');
 
-        $categories = $categoriesQuery->paginate(15)->withQueryString();
+        $categories = $categoriesQuery->paginate(50)->withQueryString();
 
         $metrics = [
             'total_in_type' => Category::where('type', $type)->count(),
@@ -198,5 +199,25 @@ class CategoryController extends Controller
 
         return redirect()->route('admin.categories.index', ['type' => $type])
             ->with('success', "{$label} '{$name}' berhasil dihapus.");
+    }
+
+    /**
+     * Reorder categories by updating sort_order for each item.
+     */
+    public function reorder(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'items' => ['required', 'array'],
+            'items.*.id' => ['required', 'integer', 'exists:categories,id'],
+            'items.*.sort_order' => ['required', 'integer'],
+        ]);
+
+        foreach ($validated['items'] as $item) {
+            Category::where('id', $item['id'])->update(['sort_order' => $item['sort_order']]);
+        }
+
+        \App\Support\CatalogCache::flush();
+
+        return back()->with('success', 'Urutan kategori berhasil disimpan.');
     }
 }
