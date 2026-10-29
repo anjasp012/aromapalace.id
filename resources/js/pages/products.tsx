@@ -1204,30 +1204,25 @@ export default function Products({
 
                             {/* Right: Filter Buttons (Desktop & Mobile) & Sort Dropdown side by side */}
                             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                                {/* Desktop Filter Toggle Button */}
+                                {/* Desktop Filter Toggle Button: JUST ICON */}
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    size="sm"
+                                    size="icon"
                                     onClick={() => setShowDesktopFilter((prev) => !prev)}
                                     aria-label={showDesktopFilter ? (isEn ? 'Hide Filters' : 'Sembunyikan Filter') : (isEn ? 'Show Filters' : 'Tampilkan Filter')}
-                                    className={`hidden lg:inline-flex items-center gap-1.5 h-8 sm:h-8.5 px-3 text-xs border rounded-md shadow-none cursor-pointer shrink-0 transition-colors ${
+                                    className={`hidden lg:flex relative h-8.5 w-8.5 border rounded-md shadow-none cursor-pointer shrink-0 transition-colors ${
                                         showDesktopFilter
-                                            ? 'border-[#4A070B]/30 text-[#4A070B] bg-[#4A070B]/5 hover:bg-[#4A070B]/10 dark:text-[#E8D0BA]'
-                                            : 'border-border/80 text-foreground hover:border-[#4A070B]/40 hover:text-[#4A070B]'
+                                            ? 'border-[#4A070B]/40 text-[#4A070B] bg-[#4A070B]/10 hover:bg-[#4A070B]/15 dark:text-[#E8D0BA]'
+                                            : 'border-border/80 text-muted-foreground hover:border-[#4A070B]/40 hover:text-[#4A070B]'
                                     }`}
                                     title={showDesktopFilter ? (isEn ? 'Hide filter sidebar' : 'Sembunyikan filter') : (isEn ? 'Show filter sidebar' : 'Tampilkan filter')}
                                 >
-                                    <svg className="w-4 h-4 text-[#4A070B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                                     </svg>
-                                    <span>
-                                        {showDesktopFilter
-                                            ? (isEn ? 'Hide Filter' : 'Sembunyikan Filter')
-                                            : (isEn ? 'Filter' : 'Filter')}
-                                    </span>
                                     {activeFiltersCount > 0 && (
-                                        <span className="w-4 h-4 rounded-full bg-[#4A070B] text-white text-[9px] font-bold flex items-center justify-center">
+                                        <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#4A070B] text-white text-[9px] font-bold flex items-center justify-center ring-2 ring-background">
                                             {activeFiltersCount}
                                         </span>
                                     )}
