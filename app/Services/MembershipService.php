@@ -185,7 +185,7 @@ class MembershipService
      *
      * @return array{success: bool, message: string, voucher?: Voucher}
      */
-    public function redeemReward(User $user, LoyaltyReward $reward): array
+    public function redeemReward(User $user, Voucher|LoyaltyReward $reward): array
     {
         $membership = $user->membership()->first();
         $isEn = app()->getLocale() === 'en';
@@ -198,8 +198,13 @@ class MembershipService
             ];
         }
 
-        if ($membership->points < $reward->points_required) {
-            $shortage = $reward->points_required - $membership->points;
+        $pointsRequired = (int) ($reward->points_required ?? 0);
+        if ($pointsRequired <= 0) {
+            $pointsRequired = 100;
+        }
+
+        if ($membership->points < $pointsRequired) {
+            $shortage = $pointsRequired - $membership->points;
 
             return [
                 'success' => false,
@@ -209,25 +214,31 @@ class MembershipService
             ];
         }
 
-        return DB::transaction(function () use ($user, $membership, $reward, $isEn) {
+        return DB::transaction(function () use ($user, $membership, $reward, $pointsRequired, $isEn) {
             // Deduct points
-            $membership->points -= $reward->points_required;
+            $membership->points -= $pointsRequired;
             $membership->save();
 
             // Generate unique voucher code
             $voucherCode = 'REW-'.strtoupper(Str::random(6));
 
+            $rewardType = $reward instanceof Voucher ? $reward->type : $reward->reward_type;
+            $rewardValue = $reward instanceof Voucher ? $reward->value : $reward->reward_value;
+
             $voucher = Voucher::create([
                 'user_id' => $user->id,
                 'voucher_type' => 'reward',
-                'points_required' => $reward->points_required,
-                'applicable_type' => 'all',
+                'points_required' => $pointsRequired,
+                'applicable_type' => $reward instanceof Voucher ? ($reward->applicable_type ?? 'all') : 'all',
+                'applicable_product_ids' => $reward instanceof Voucher ? $reward->applicable_product_ids : null,
                 'code' => $voucherCode,
                 'name' => "Reward Royale: {$reward->name}",
-                'description' => "Voucher hasil penukaran {$reward->points_required} loyalty points oleh {$user->name}.",
-                'type' => $reward->reward_type,
-                'value' => $reward->reward_value,
-                'min_order_amount' => $reward->min_order_amount,
+                'name_en' => ! empty($reward->name_en) ? "Royale Reward: {$reward->name_en}" : null,
+                'description' => "Voucher hasil penukaran {$pointsRequired} loyalty points oleh {$user->name}.",
+                'description_en' => $reward->description_en,
+                'type' => $rewardType,
+                'value' => $rewardValue,
+                'min_order_amount' => $reward->min_order_amount ?? 0,
                 'max_discount_amount' => $reward->max_discount_amount,
                 'usage_limit' => 1,
                 'used_count' => 0,
@@ -241,15 +252,15 @@ class MembershipService
                 'user_id' => $user->id,
                 'membership_id' => $membership->id,
                 'type' => 'redeemed',
-                'points' => -$reward->points_required,
+                'points' => -$pointsRequired,
                 'balance_after' => $membership->points,
-                'description' => "Tukar Reward: {$reward->name} (-{$reward->points_required} Poin)",
+                'description' => "Tukar Reward: {$reward->name} (-{$pointsRequired} Poin)",
                 'reference_id' => $voucherCode,
                 'created_at' => now(),
             ]);
 
             try {
-                app(FirebaseNotificationService::class)->notifyPointsRedeemed($user, $reward->points_required, $voucherCode, $reward->name);
+                app(FirebaseNotificationService::class)->notifyPointsRedeemed($user, $pointsRequired, $voucherCode, $reward->name);
             } catch (\Throwable $e) {
                 Log::warning('Failed to dispatch points redeemed notification: '.$e->getMessage());
             }

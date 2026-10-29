@@ -248,4 +248,20 @@ class Voucher extends Model
     {
         return $this->hasMany(Order::class);
     }
+
+    /**
+     * Get human-readable formatted discount label.
+     */
+    public function getFormattedDiscount(): string
+    {
+        if (str_contains(strtolower($this->name), 'bebas ongkir') || str_contains(strtolower($this->name), 'free shipping')) {
+            return 'Bebas Ongkir';
+        }
+
+        if ($this->type === 'percentage') {
+            return "Diskon {$this->value}%";
+        }
+
+        return 'Potongan Rp '.number_format($this->value, 0, ',', '.');
+    }
 }
