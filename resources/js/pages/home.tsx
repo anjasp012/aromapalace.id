@@ -17,7 +17,6 @@ import {
 import ProductCard, { type ProductItem } from '@/components/ProductCard';
 import ProductQuickViewModal from '@/components/ProductQuickViewModal';
 import CategoryCard, { type CategoryItem } from '@/components/CategoryCard';
-import ScentCard, { type ScentItem } from '@/components/ScentCard';
 import VoucherCard, { type VoucherItem } from '@/components/VoucherCard';
 import ArticleCard, { type ArticleItem } from '@/components/ArticleCard';
 import BrandCard, { type BrandItem } from '@/components/BrandCard';
@@ -38,7 +37,7 @@ interface HomeProps {
     popularProducts?: ProductItem[];
     discountedProducts?: ProductItem[];
     recommendedProducts?: ProductItem[];
-    scents?: ScentItem[];
+    scents?: CategoryItem[];
     categories?: CategoryItem[];
     brands?: BrandItem[];
     vouchers?: VoucherItem[];
@@ -269,9 +268,9 @@ export default function Home({
     const categoriesList: CategoryItem[] = (propCategories.length > 0
         ? propCategories
         : (cachedHome?.categories || [])).slice(0, 9);
-    const scentsList: ScentItem[] = (propScents.length > 0
+    const scentsList: CategoryItem[] = (propScents.length > 0
         ? propScents
-        : (propCategories.length > 0 ? propCategories : (cachedHome?.scents || cachedHome?.categories || []))).slice(0, 8);
+        : (propCategories.length > 0 ? propCategories : (cachedHome?.scents || cachedHome?.categories || []))).slice(0, 7);
     const brandList: BrandItem[] = (propBrands.length > 0
         ? propBrands
         : (cachedHome?.brands || [])).slice(0, 5);
@@ -453,14 +452,13 @@ export default function Home({
                             </Button>
                         </div>
 
-                        <div className="-mx-4 px-4 sm:mx-0 sm:px-0 scroll-pl-4 sm:scroll-pl-0 flex overflow-x-auto sm:overflow-visible gap-3 sm:gap-5 pb-3 sm:pb-0 scrollbar-none snap-x snap-mandatory justify-start sm:justify-center sm:flex-wrap sm:items-center">
+                        <div className="-mx-4 px-4 sm:mx-0 sm:px-0 scroll-pl-4 sm:scroll-pl-0 flex sm:grid overflow-x-auto sm:overflow-visible gap-3 sm:gap-5 pb-2 sm:pb-0 scrollbar-none snap-x snap-mandatory sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7">
                             {scentsList.map((scent, idx) => (
-                                <ScentCard
+                                <CategoryCard
                                     key={scent.slug}
-                                    scent={scent}
+                                    category={scent}
                                     colorIndex={idx}
-                                    compact
-                                    className="w-[calc((100%-24px)/3.5)] sm:w-[calc((100%-60px)/4)] md:w-[calc((100%-140px)/8)] sm:max-w-[140px] shrink-0 snap-start"
+                                    className="w-[calc((100%-24px)/3.5)] sm:w-auto shrink-0 sm:shrink snap-start"
                                 />
                             ))}
                         </div>

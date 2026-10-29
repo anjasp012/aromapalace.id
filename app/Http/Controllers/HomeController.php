@@ -92,11 +92,11 @@ class HomeController extends Controller
             $recommendedProducts = $popularProducts;
         }
 
-        // 4. Scents from DB (Product by Scents - Only Scents, limit 8)
+        // 4. Scents from DB (Product by Scents - Only Scents, limit 7)
         $scents = Category::scents()
             ->withCount('products')
             ->orderBy('id', 'asc')
-            ->take(8)
+            ->take(7)
             ->get()
             ->map(function (Category $c) {
                 return [

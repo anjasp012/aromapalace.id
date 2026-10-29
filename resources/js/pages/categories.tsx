@@ -27,7 +27,7 @@ export default function CategoriesPage({
 
     const totalCount = gendersList.length + concentratesList.length + scentsList.length;
 
-    const gridClass = 'grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 sm:gap-6';
+    const gridClass = 'grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-4 sm:gap-6';
 
     return (
         <Layout>

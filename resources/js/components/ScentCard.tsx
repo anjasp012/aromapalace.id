@@ -4,7 +4,7 @@ export type ScentItem = CategoryItem;
 
 export default function ScentCard(props: any) {
     const category = props.scent || props.category;
-    const showTitle = props.showTitle !== undefined ? props.showTitle : Boolean(props.compact);
+    const showTitle = props.showTitle !== undefined ? props.showTitle : false;
     return <CategoryCard {...props} category={category} showTitle={showTitle} />;
 }
 
