@@ -920,7 +920,7 @@ export default function Products({
         onlyDiscount,
     ]);
 
-    // Reset all filters and clear URL query string via server-side reload
+    // Reset all filters and clear URL query string via server-side reload while preserving activeTag
     const resetAllFilters = () => {
         setSearchQuery('');
         setActiveBrand('All');
@@ -935,8 +935,14 @@ export default function Products({
         setOnlyDiscount(false);
         setSortBy('price-asc');
 
+        const resetParams: Record<string, string> = {};
+        if (activeTag) {
+            resetParams.tag = activeTag;
+        }
+
+        lastAppliedParamsRef.current = JSON.stringify(resetParams);
         setIsServerFiltering(true);
-        router.get('/products', {}, {
+        router.get('/products', resetParams, {
             preserveState: true,
             preserveScroll: true,
             replace: true,
@@ -1344,7 +1350,7 @@ export default function Products({
             {/* LUXURY EDITORIAL JUMBOTRON HEADER */}
             <div className="border-b border-border/70 bg-background py-10 sm:py-14">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center space-y-3 sm:space-y-3.5">
-                    <h1 className={`font-serif text-[#4A070B] dark:text-[#E8D0BA] uppercase select-none ${jumbotronConfig.titleClassName || 'text-3xl sm:text-4xl lg:text-5xl tracking-[0.08em] font-medium'}`}>
+                    <h1 className={`font-serif text-[#4A070B] dark:text-[#E8D0BA] uppercase select-none ${jumbotronConfig.titleClassName || 'text-3xl sm:text-4xl lg:text-5xl tracking-[0.08em] font-black'}`}>
                         {jumbotronConfig.title}
                     </h1>
 
