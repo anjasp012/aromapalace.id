@@ -1026,6 +1026,33 @@ export default function AdminOrderShow({ order, pickupSchedules }: OrderShowProp
                 </div>
             </div>
 
+            {/* Proof Image Full-Size Preview Dialog */}
+            {order.payment_proof && !order.payment_proof.toLowerCase().endsWith('.pdf') && (
+                <Dialog open={isProofDialogOpen} onOpenChange={setIsProofDialogOpen}>
+                    <DialogContent className="sm:max-w-2xl p-2">
+                        <DialogHeader className="px-3 pt-2 pb-1">
+                            <DialogTitle className="flex items-center gap-2 text-sm">
+                                <FileCheck2 className="size-4 text-orange-500" />
+                                Bukti Transfer — #{order.order_number}
+                            </DialogTitle>
+                            {order.payment_sender_name && (
+                                <DialogDescription className="text-xs">
+                                    Atas nama: <span className="font-medium text-foreground">{order.payment_sender_name}</span>
+                                    {order.payment_proof_uploaded_at && <> · {order.payment_proof_uploaded_at}</>}
+                                </DialogDescription>
+                            )}
+                        </DialogHeader>
+                        <div className="overflow-auto max-h-[75vh] rounded-md border">
+                            <img
+                                src={order.payment_proof}
+                                alt="Bukti Transfer"
+                                className="w-full h-auto object-contain"
+                            />
+                        </div>
+                    </DialogContent>
+                </Dialog>
+            )}
+
             {/* Modal Dialog Input Resi Manual */}
             <Dialog open={isManualModalOpen} onOpenChange={setIsManualModalOpen}>
                 <DialogContent className="sm:max-w-md">
