@@ -549,20 +549,25 @@ export default function Products({
         if (activeTag === 'special-offers' || activeTag === 'special_offers' || onlyDiscount) {
             return {
                 headTitle: isEn ? 'Special Offers' : 'Penawaran Spesial',
+                titleClassName: 'font-bold sm:font-extrabold text-4xl sm:text-5xl lg:text-6xl tracking-[0.06em]',
                 title: isEn ? (
-                    <span>
-                        <span className="text-4xl sm:text-5xl md:text-6xl font-normal">S</span>PECIAL{' '}
-                        <span className="sm:inline block">
-                            <span className="text-4xl sm:text-5xl md:text-6xl font-normal">O</span>FFERS
+                    <div className="flex flex-col items-center justify-center leading-[0.9] sm:leading-[0.88]">
+                        <span className="block">
+                            <span className="text-[1.24em]">S</span>PECIAL
                         </span>
-                    </span>
+                        <span className="block -mt-1 sm:-mt-2">
+                            <span className="text-[1.24em]">O</span>FFERS
+                        </span>
+                    </div>
                 ) : (
-                    <span>
-                        <span className="text-4xl sm:text-5xl md:text-6xl font-normal">P</span>ENAWARAN{' '}
-                        <span className="sm:inline block">
-                            <span className="text-4xl sm:text-5xl md:text-6xl font-normal">S</span>PESIAL
+                    <div className="flex flex-col items-center justify-center leading-[0.9] sm:leading-[0.88]">
+                        <span className="block">
+                            <span className="text-[1.24em]">P</span>ENAWARAN
                         </span>
-                    </span>
+                        <span className="block -mt-1 sm:-mt-2">
+                            <span className="text-[1.24em]">S</span>PESIAL
+                        </span>
+                    </div>
                 ),
                 subtitle1: isEn ? 'EXCLUSIVE DEALS ON YOUR FAVOURITE FRAGRANCES.' : 'PENAWARAN EKSKLUSIF UNTUK WEWANGIAN FAVORIT ANDA.',
                 subtitle2: isEn ? (
@@ -1307,7 +1312,7 @@ export default function Products({
             {/* LUXURY EDITORIAL JUMBOTRON HEADER */}
             <div className="border-b border-border/70 bg-background py-10 sm:py-14">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center space-y-3 sm:space-y-3.5">
-                    <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl tracking-[0.08em] font-medium text-[#4A070B] dark:text-[#E8D0BA] uppercase select-none">
+                    <h1 className={`font-serif text-[#4A070B] dark:text-[#E8D0BA] uppercase select-none ${jumbotronConfig.titleClassName || 'text-3xl sm:text-4xl lg:text-5xl tracking-[0.08em] font-medium'}`}>
                         {jumbotronConfig.title}
                     </h1>
 
