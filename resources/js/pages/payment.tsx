@@ -824,17 +824,23 @@ function PaymentContent({ order }: PaymentProps) {
                             </div>
                         )}
 
-                        {/* Bottom navigation */}
+                        {/* Bottom action buttons: Cek Status Bayar & Belanja Lagi */}
+                        {checkMessage && (
+                            <p className="text-xs text-amber-600 dark:text-amber-400 font-medium text-center">
+                                {checkMessage}
+                            </p>
+                        )}
                         <div className="grid grid-cols-2 gap-3">
-                            <Link href="/account/orders" className="block w-full">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="w-full h-11 rounded-md font-bold text-xs sm:text-sm text-foreground border-border/80 hover:bg-muted/50 cursor-pointer shadow-none"
-                                >
-                                    {isEn ? 'Order History' : 'Riwayat Pesanan'}
-                                </Button>
-                            </Link>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={handleCheckStatus}
+                                disabled={isChecking}
+                                className="h-11 rounded-md font-bold text-xs sm:text-sm text-foreground border-border/80 hover:bg-muted/50 cursor-pointer shadow-none flex items-center justify-center gap-1.5"
+                            >
+                                {isChecking && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                                <span>{isChecking ? (isEn ? 'Checking...' : 'Mengecek...') : (isEn ? 'Check Status' : 'Cek Status Bayar')}</span>
+                            </Button>
                             <Link href="/products" className="block w-full">
                                 <Button
                                     type="button"
@@ -1221,19 +1227,6 @@ function PaymentContent({ order }: PaymentProps) {
                                 </Button>
                             </Link>
                         </div>
-
-                        <div className="pt-0.5">
-                            <Link href="/account/orders" className="block w-full">
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    className="w-full h-10 rounded-md font-semibold text-xs text-muted-foreground hover:text-foreground hover:bg-muted/40 cursor-pointer shadow-none"
-                                >
-                                    {isEn ? 'View My Orders' : 'Lihat Pesanan Saya'}
-                                </Button>
-                            </Link>
-                        </div>
-
                     </div>
                 )}
             </div>

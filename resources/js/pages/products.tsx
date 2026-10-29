@@ -471,8 +471,8 @@ export default function Products({
         }
     }, [props?.auth?.wishlist_ids]);
 
-    // Detect active tag / collection from serverFilters or URL query
-    const activeTag = useMemo(() => {
+    // Detect initial active tag / collection from serverFilters or URL query
+    const initialTag = useMemo(() => {
         if (serverFilters?.tag) return serverFilters.tag;
         const searchStr = typeof window !== 'undefined'
             ? window.location.search
@@ -484,23 +484,25 @@ export default function Products({
         if (params.get('best_sellers') || params.get('is_best_sellers') || url.includes('best-sellers') || url.includes('best_sellers')) return 'best-sellers';
         if (params.get('special_offers') || params.get('is_special_offers') || url.includes('special-offers') || url.includes('special_offers')) return 'special-offers';
         return null;
-    }, [serverFilters, url]);
+    }, []);
+
+    const [activeTag, setActiveTag] = useState<string | null>(initialTag);
 
     // Distinct Jumbotron Header Configuration based on tag / collection
     const jumbotronConfig = useMemo(() => {
         if (activeTag === 'new-arrivals' || activeTag === 'new_arrivals') {
             return {
                 headTitle: isEn ? 'New Arrivals' : 'Koleksi Terbaru',
-                titleClassName: 'font-bold sm:font-extrabold text-3xl sm:text-4xl lg:text-5xl tracking-[0.08em]',
+                titleClassName: 'font-black text-3xl sm:text-4xl lg:text-5xl tracking-[0.08em]',
                 title: isEn ? (
                     <span>
-                        <span className="text-4xl sm:text-5xl md:text-6xl font-bold sm:font-extrabold">N</span>EW{' '}
-                        <span className="text-4xl sm:text-5xl md:text-6xl font-bold sm:font-extrabold">A</span>RRIVALS
+                        <span className="text-[1.22em]">N</span>EW{' '}
+                        <span className="text-[1.22em]">A</span>RRIVALS
                     </span>
                 ) : (
                     <span>
-                        <span className="text-4xl sm:text-5xl md:text-6xl font-bold sm:font-extrabold">K</span>OLEKSI{' '}
-                        <span className="text-4xl sm:text-5xl md:text-6xl font-bold sm:font-extrabold">T</span>ERBARU
+                        <span className="text-[1.22em]">K</span>OLEKSI{' '}
+                        <span className="text-[1.22em]">T</span>ERBARU
                     </span>
                 ),
                 subtitle1: isEn ? 'DISCOVER OUR LATEST ARRIVALS' : 'JELAJAHI KOLEKSI TERBARU KAMI',
@@ -521,16 +523,16 @@ export default function Products({
         if (activeTag === 'best-sellers' || activeTag === 'best_sellers') {
             return {
                 headTitle: isEn ? 'Best Sellers' : 'Produk Terlaris',
-                titleClassName: 'font-bold sm:font-extrabold text-3xl sm:text-4xl lg:text-5xl tracking-[0.08em]',
+                titleClassName: 'font-black text-3xl sm:text-4xl lg:text-5xl tracking-[0.08em]',
                 title: isEn ? (
                     <span>
-                        <span className="text-4xl sm:text-5xl md:text-6xl font-bold sm:font-extrabold">B</span>EST{' '}
-                        <span className="text-4xl sm:text-5xl md:text-6xl font-bold sm:font-extrabold">S</span>ELLERS
+                        <span className="text-[1.22em]">B</span>EST{' '}
+                        <span className="text-[1.22em]">S</span>ELLERS
                     </span>
                 ) : (
                     <span>
-                        <span className="text-4xl sm:text-5xl md:text-6xl font-bold sm:font-extrabold">P</span>RODUK{' '}
-                        <span className="text-4xl sm:text-5xl md:text-6xl font-bold sm:font-extrabold">T</span>ERLARIS
+                        <span className="text-[1.22em]">P</span>RODUK{' '}
+                        <span className="text-[1.22em]">T</span>ERLARIS
                     </span>
                 ),
                 subtitle1: isEn ? 'DISCOVER OUR MOST LOVED FRAGRANCES' : 'TEMUKAN WEWANGIAN PALING DICINTAI',
@@ -551,22 +553,22 @@ export default function Products({
         if (activeTag === 'special-offers' || activeTag === 'special_offers' || onlyDiscount) {
             return {
                 headTitle: isEn ? 'Special Offers' : 'Penawaran Spesial',
-                titleClassName: 'font-bold sm:font-extrabold text-3xl sm:text-4xl lg:text-5xl tracking-[0.06em]',
+                titleClassName: 'font-black text-3xl sm:text-4xl lg:text-5xl tracking-[0.06em]',
                 title: isEn ? (
-                    <div className="flex flex-col sm:flex-row items-center justify-center sm:gap-3 leading-[0.9] sm:leading-normal">
-                        <span className="block">
+                    <div className="flex flex-col sm:flex-row items-center justify-center sm:gap-3.5 leading-[0.92] sm:leading-normal">
+                        <span className="inline-block">
                             <span className="text-[1.24em]">S</span>PECIAL
                         </span>
-                        <span className="block -mt-1 sm:mt-0">
+                        <span className="inline-block -mt-1 sm:mt-0">
                             <span className="text-[1.24em]">O</span>FFERS
                         </span>
                     </div>
                 ) : (
-                    <div className="flex flex-col sm:flex-row items-center justify-center sm:gap-3 leading-[0.9] sm:leading-normal">
-                        <span className="block">
+                    <div className="flex flex-col sm:flex-row items-center justify-center sm:gap-3.5 leading-[0.92] sm:leading-normal">
+                        <span className="inline-block">
                             <span className="text-[1.24em]">P</span>ENAWARAN
                         </span>
-                        <span className="block -mt-1 sm:mt-0">
+                        <span className="inline-block -mt-1 sm:mt-0">
                             <span className="text-[1.24em]">S</span>PESIAL
                         </span>
                     </div>
@@ -589,9 +591,10 @@ export default function Products({
         if (activeBrand && activeBrand !== 'All') {
             return {
                 headTitle: activeBrand,
+                titleClassName: 'font-black text-3xl sm:text-4xl lg:text-5xl tracking-[0.08em]',
                 title: (
                     <span>
-                        <span className="text-4xl sm:text-5xl md:text-6xl font-normal">{activeBrand.slice(0, 1)}</span>
+                        <span className="text-[1.22em]">{activeBrand.slice(0, 1)}</span>
                         {activeBrand.slice(1).toUpperCase()}
                     </span>
                 ),
@@ -612,10 +615,16 @@ export default function Products({
 
         return {
             headTitle: isEn ? 'Catalog of Exclusive Fragrances' : 'Katalog Wewangian Eksklusif',
-            title: (
+            titleClassName: 'font-black text-3xl sm:text-4xl lg:text-5xl tracking-[0.08em]',
+            title: isEn ? (
                 <span>
-                    <span className="text-4xl sm:text-5xl md:text-6xl font-normal">O</span>UR{' '}
-                    <span className="text-4xl sm:text-5xl md:text-6xl font-normal">C</span>OLLECTION
+                    <span className="text-[1.22em]">O</span>UR{' '}
+                    <span className="text-[1.22em]">C</span>OLLECTION
+                </span>
+            ) : (
+                <span>
+                    <span className="text-[1.22em]">K</span>OLEKSI{' '}
+                    <span className="text-[1.22em]">K</span>AMI
                 </span>
             ),
             subtitle1: isEn ? 'CURATED LUXURY PERFUME CATALOG' : 'KATALOG PARFUM MEWAH TERKURASI',
@@ -682,6 +691,25 @@ export default function Products({
         setOnlyDiscount(nextFilters.onlyDiscount);
         setSortBy(nextFilters.sortBy);
 
+        // Check incoming tag from serverFilters or URL navigation
+        const searchStr = typeof window !== 'undefined' ? window.location.search : (url && url.includes('?') ? url.slice(url.indexOf('?')) : '');
+        const urlParams = new URLSearchParams(searchStr);
+        const incomingTag = serverFilters?.tag || urlParams.get('tag') || urlParams.get('collection') || (
+            (urlParams.get('new_arrivals') || urlParams.get('is_new_arrivals') || url.includes('new-arrivals') || url.includes('new_arrivals')) ? 'new-arrivals' :
+            (urlParams.get('best_sellers') || urlParams.get('is_best_sellers') || url.includes('best-sellers') || url.includes('best_sellers')) ? 'best-sellers' :
+            (urlParams.get('special_offers') || urlParams.get('is_special_offers') || url.includes('special-offers') || url.includes('special_offers')) ? 'special-offers' :
+            null
+        );
+
+        let resolvedTag = activeTag;
+        if (incomingTag) {
+            resolvedTag = incomingTag;
+            setActiveTag(incomingTag);
+        } else if (url === '/products' || url === '/products/') {
+            resolvedTag = null;
+            setActiveTag(null);
+        }
+
         const currentParams: Record<string, string> = {};
         if (nextFilters.searchQuery.trim()) currentParams.search = nextFilters.searchQuery.trim();
         if (nextFilters.activeBrand && nextFilters.activeBrand !== 'All') currentParams.brand = nextFilters.activeBrand;
@@ -694,6 +722,7 @@ export default function Products({
         if (nextFilters.minRating > 0) currentParams.rating = nextFilters.minRating.toString();
         if (nextFilters.onlyDiscount) currentParams.discount = '1';
         if (nextFilters.sortBy) currentParams.sort = nextFilters.sortBy;
+        if (resolvedTag) currentParams.tag = resolvedTag;
 
         lastAppliedParamsRef.current = JSON.stringify(currentParams);
     }, [serverFilters, selectedCategory, selectedBrand, selectedGender, selectedConcentration, selectedScent, url]);
@@ -767,6 +796,7 @@ export default function Products({
         minRating,
         onlyDiscount,
         sortBy,
+        activeTag,
     ]);
 
     const toggleWishlist = (id: number, name: string) => {
