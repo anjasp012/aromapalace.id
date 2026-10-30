@@ -56,7 +56,7 @@ const config: CapacitorConfig = {
       // Hidden from JS (resources/js/lib/native-app.ts) once the first page is painted.
       launchAutoHide: false,
       launchShowDuration: 8000,
-      backgroundColor: '#210302',
+      backgroundColor: '#0E0201',
       androidSplashResourceName: 'splash',
       androidScaleType: 'CENTER_CROP',
       splashFullScreen: true,
