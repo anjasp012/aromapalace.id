@@ -176,3 +176,13 @@ Route::any('/admin/{path?}', function (Request $request, ?string $path = null) {
 
     return redirect($targetUrl);
 })->where('path', '.*');
+
+use App\Http\Controllers\RajaOngkirController;
+
+Route::get('/raja-provinces', [RajaOngkirController::class, 'provinces']);
+Route::get('/raja-cities/{province_id}', [RajaOngkirController::class, 'cities']);
+Route::get('/raja-districts/{city_id}', [RajaOngkirController::class, 'districts']);
+Route::get('/raja-subdistricts/{district_id}', [RajaOngkirController::class, 'subdistricts']);
+Route::get('/raja-calculate/{destination}/{wight}/{price}', [RajaOngkirController::class, 'calculateCost']);
+
+Route::get('/raja-paymentmethods', [RajaOngkirController::class, 'paymentMethods']);

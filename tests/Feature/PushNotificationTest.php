@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\DeviceToken;
+use App\Models\Notification;
 use App\Models\Order;
 use App\Models\ProductVariant;
 use App\Models\User;
@@ -248,4 +249,39 @@ test('remind expiring payments command sends reminder to orders created 23 hours
         ->expectsOutput('Checking for orders expiring in the next hour...')
         ->expectsOutput('No orders entering the 1-hour expiry window at this time.')
         ->assertSuccessful();
+});
+
+test('remind unprocessed orders command sends alert to admins with positive hours', function () {
+    $customer = User::factory()->create(['role' => 'customer']);
+
+    $order = Order::create([
+        'order_number' => 'ARPL-STUCK-1',
+        'user_id' => $customer->id,
+        'recipient_name' => 'Cita',
+        'recipient_phone' => '0812345678',
+        'address' => 'Jakarta',
+        'city' => 'Jakarta',
+        'courier' => 'JNE',
+        'shipping_cost' => 0,
+        'payment_method' => 'manual_bca',
+        'payment_status' => 'paid',
+        'status' => 'dikemas',
+        'subtotal' => 436500,
+        'discount_amount' => 0,
+        'total_amount' => 436500,
+    ]);
+    $order->timestamps = false;
+    $order->updated_at = now()->subHours(26);
+    $order->save();
+
+    $this->artisan('orders:remind-unprocessed')
+        ->expectsOutput('Checking for paid orders stuck in processing for more than 24 hours...')
+        ->expectsOutput('Sent 1 reminder notification(s) to admins.')
+        ->assertSuccessful();
+
+    $notification = Notification::where('type', 'admin_order_unprocessed')->first();
+    expect($notification)->not->toBeNull();
+    expect($notification->body)->toContain('26 jam lalu');
+    expect($notification->body)->not->toContain('-26');
+    expect($notification->data['hours_stuck'])->toBe('26');
 });

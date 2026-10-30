@@ -41,4 +41,8 @@ return [
         'webhook_secret' => env('PAKASIR_WEBHOOK_SECRET'),
         'base_url' => env('PAKASIR_BASE_URL', 'https://app.pakasir.com'),
     ],
+    'rajaongkir' => [
+        'shipping_key' => env('RAJAONGKIR_API_SPIPPING_KEY'),
+        'payment_key' => env('RAJAONGKIR_API_PAYMENT_KEY'),
+    ],
 ];
