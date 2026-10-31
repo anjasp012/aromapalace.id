@@ -40,8 +40,8 @@ class RajaOngkirPaymentService
     {
         return $this->request()
             ->post($this->baseUrl.'/payment/create', [
-                'order_id' => $order_number,
-                'payment_type' => $bank_transfer,
+                'order_id' => $order_number ?? null,
+                'payment_type' => $bank_transfer ?? null,
                 'channel_code' => $channel_code,
                 'amount' => (float) $amount,
                 'customer' => [
