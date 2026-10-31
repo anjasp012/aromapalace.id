@@ -58,11 +58,11 @@ class RajaOngkirController extends Controller
     public function createPayment(Request $request)
     {
         $order_id = $request->order_id;
-        $bank_transfer = $request->bank_transfer;
+        $payment_type = $request->payment_type;
         $channel_code = $request->channel_code;
         $amount = $request->amount;
 
-        $data = $this->rajaOngkirPaymentService->createPayment($order_id, $bank_transfer, $channel_code, $amount);
+        $data = $this->rajaOngkirPaymentService->createPayment($order_id, $payment_type, $channel_code, $amount);
 
         return response()->json($data);
     }

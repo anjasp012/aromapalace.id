@@ -36,14 +36,14 @@ class RajaOngkirPaymentService
             ->json();
     }
 
-    public function createPayment($order_number, $bank_transfer, $channel_code, $amount)
+    public function createPayment($order_number, $payment_type, $channel_code, $amount)
     {
         return $this->request()
             ->post($this->baseUrl.'/payment/create', [
                 $order_number ?: 'order_id' => $order_number,
-                $bank_transfer ?: 'payment_type' => $bank_transfer,
-                'channel_code' => $channel_code,
-                'amount' => (float) $amount,
+                'payment_type' => $payment_type,
+                $channel_code ?: 'channel_code' => $channel_code,
+                $amount ?: 'amount' => (float) $amount,
                 'customer' => [
                     'name' => 'anjas',
                     'email' => 'anjas@gmail.com',
