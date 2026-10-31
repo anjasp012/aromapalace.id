@@ -22,7 +22,6 @@ class RajaOngkirShippingCostService
     {
         return $this->request()
             ->get($this->baseUrl.'/destination/province')
-            ->throw()
             ->json();
     }
 
@@ -31,7 +30,6 @@ class RajaOngkirShippingCostService
 
         return $this->request()
             ->get($this->baseUrl.'/destination/city/'.$province_id)
-            ->throw()
             ->json();
     }
 
@@ -39,7 +37,6 @@ class RajaOngkirShippingCostService
     {
         return $this->request()
             ->get($this->baseUrl.'/destination/district/'.$city_id)
-            ->throw()
             ->json();
     }
 
@@ -47,7 +44,6 @@ class RajaOngkirShippingCostService
     {
         return $this->request()
             ->get($this->baseUrl.'/destination/sub-district/'.$district_id)
-            ->throw()
             ->json();
     }
 
@@ -65,7 +61,6 @@ class RajaOngkirShippingCostService
                 'courier' => 'jne:sicepat:ide:sap:jnt:ninja:tiki:lion:anteraja:pos:ncs:rex:rpx',
                 'price' => $price,
             ])
-            ->throw()
             ->json();
     }
 }
