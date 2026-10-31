@@ -75,6 +75,11 @@ class RajaOngkirController extends Controller
             return response()->json($data, 200);
 
         } catch (\Exception $e) {
+            Log::error('KOMERCE CALLBACK ERROR', [
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
