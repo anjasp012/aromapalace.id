@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\RajaOngkirPaymentService;
 use App\Services\RajaOngkirShippingCostService;
+use Illuminate\Http\Request;
 
 class RajaOngkirController extends Controller
 {
@@ -63,16 +64,23 @@ class RajaOngkirController extends Controller
 
     public function callbackPayment(Request $request)
     {
-        Log::info('CALLBACK MASUK', [
-            'ip' => $request->ip(),
-            'body' => $request->getContent(),
-            'headers' => $request->headers->all(),
-        ]);
+        $rawBody = $request->getContent();
+        $signature = $request->header('X-Callback-Api-Key');
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Callback received',
-        ]);
+        try {
+            $data = $this->rajaOngkirPaymentService->callbackPayment(
+                $rawBody,
+                $signature
+            );
+
+            return response()->json($data, 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], in_array($e->getCode(), [400, 401]) ? $e->getCode() : 500);
+        }
 
     }
 }
