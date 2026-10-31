@@ -33,7 +33,6 @@ class RajaOngkirPaymentService
     {
         return $this->request()
             ->get($this->baseUrl.'/methods')
-            ->throw()
             ->json();
     }
 
@@ -61,7 +60,6 @@ class RajaOngkirPaymentService
                 'callback_url' => $this->callbackUrl,
                 'callback_API_KEY' => $this->secretKey,
             ])
-            ->throw()
             ->json();
     }
 
@@ -69,7 +67,6 @@ class RajaOngkirPaymentService
     {
         return $this->request()
             ->get($this->baseUrl.'/payment/status/'.$order_number)
-            ->throw()
             ->json();
     }
 
@@ -80,7 +77,6 @@ class RajaOngkirPaymentService
                 'payment_id' => 'KPAY-c8e8/KM/2026',
                 'reason' => 'Customer canceled the order',
             ])
-            ->throw()
             ->json();
     }
 
