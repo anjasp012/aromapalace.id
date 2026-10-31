@@ -72,8 +72,6 @@ class RajaOngkirPaymentService
 
     public function cancelPayment($order_number)
     {
-        dd($order_number);
-
         return $this->request()
             ->post($this->baseUrl.'/payment/cancel', [
                 'payment_id' => $order_number,
