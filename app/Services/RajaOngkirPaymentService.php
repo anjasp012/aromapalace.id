@@ -37,14 +37,14 @@ class RajaOngkirPaymentService
             ->json();
     }
 
-    public function createPayment()
+    public function createPayment($order_number, $bank_transfer, $channel_code, $amount)
     {
         return $this->request()
             ->post($this->baseUrl.'/payment/create', [
-                'order_id' => 'coba'.rand(1, 1000),
-                'payment_type' => 'bank_transfer',
-                'channel_code' => 'BCA',
-                'amount' => 10000,
+                'order_id' => $order_number,
+                'payment_type' => $bank_transfer,
+                'channel_code' => $channel_code,
+                'amount' => $amount,
                 'customer' => [
                     'name' => 'anjas',
                     'email' => 'anjas@gmail.com',
@@ -65,10 +65,21 @@ class RajaOngkirPaymentService
             ->json();
     }
 
-    public function getPaymentStatus($order_number)
+    public function getPaymentStatus($order_number = 'KPAY-c8e8/KM/2026')
     {
         return $this->request()
-            ->get($this->baseUrl.'/status'.$order_number)
+            ->get($this->baseUrl.'/payment/status/'.$order_number)
+            ->throw()
+            ->json();
+    }
+
+    public function cancelPayment($order_number = 'KPAY-c8e8/KM/2026')
+    {
+        return $this->request()
+            ->post($this->baseUrl.'/payment/cancel', [
+                'payment_id' => 'KPAY-c8e8/KM/2026',
+                'reason' => 'Customer canceled the order',
+            ])
             ->throw()
             ->json();
     }
@@ -103,23 +114,5 @@ class RajaOngkirPaymentService
             'success' => true,
             'message' => 'Callback received',
         ];
-    }
-
-    public function cancelPayment(
-        int $destination = 30,
-        int $weight = 1000,
-        string $price = 'lowest'
-    ) {
-        return $this->request()
-            ->asForm()
-            ->post($this->baseUrl.'/user/cancel', [
-                'origin' => $this->origin,
-                'destination' => $destination,
-                'weight' => $weight,
-                'courier' => 'jne:sicepat:ide:sap:jnt:ninja:tiki:lion:anteraja:pos:ncs:rex:rpx',
-                'price' => $price,
-            ])
-            ->throw()
-            ->json();
     }
 }

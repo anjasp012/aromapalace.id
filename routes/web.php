@@ -179,12 +179,14 @@ Route::any('/admin/{path?}', function (Request $request, ?string $path = null) {
 
 use App\Http\Controllers\RajaOngkirController;
 
-Route::get('/raja-provinces', [RajaOngkirController::class, 'provinces']);
-Route::get('/raja-cities/{province_id}', [RajaOngkirController::class, 'cities']);
-Route::get('/raja-districts/{city_id}', [RajaOngkirController::class, 'districts']);
-Route::get('/raja-subdistricts/{district_id}', [RajaOngkirController::class, 'subdistricts']);
-Route::get('/raja-calculate/{destination}/{wight}/{price}', [RajaOngkirController::class, 'calculateCost']);
+Route::get('/rajaongkir/provinces', [RajaOngkirController::class, 'provinces']);
+Route::get('/rajaongkir/cities/{province_id}', [RajaOngkirController::class, 'cities']);
+Route::get('/rajaongkir/districts/{city_id}', [RajaOngkirController::class, 'districts']);
+Route::get('/rajaongkir/subdistricts/{district_id}', [RajaOngkirController::class, 'subdistricts']);
+Route::get('/rajaongkir/calculate/{destination}/{wight}/{price}', [RajaOngkirController::class, 'calculateCost']);
 
-Route::get('/raja-getpaymentmethods', [RajaOngkirController::class, 'getPaymentMethods']);
-Route::get('/raja-createpayment', [RajaOngkirController::class, 'createPayment']);
-Route::post('/raja-callbackpayment', [RajaOngkirController::class, 'callbackPayment']);
+Route::get('/rajaongkir/getpaymentmethods', [RajaOngkirController::class, 'getPaymentMethods']);
+Route::post('/rajaongkir/createpayment', [RajaOngkirController::class, 'createPayment']);
+Route::get('/rajaongkir/getpaymentstatus', [RajaOngkirController::class, 'getPaymentStatus']);
+Route::get('/rajaongkir/cancelpayment', [RajaOngkirController::class, 'cancelPayment']);
+Route::post('/rajaongkir/callbackpayment', [RajaOngkirController::class, 'callbackPayment']);

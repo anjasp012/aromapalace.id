@@ -55,9 +55,28 @@ class RajaOngkirController extends Controller
         return response()->json($data);
     }
 
-    public function createPayment()
+    public function createPayment(Request $request)
     {
-        $data = $this->rajaOngkirPaymentService->createPayment();
+        $order_id = $request->$order_number;
+        $bank_transfer = $request->$bank_transfer;
+        $channel_code = $request->$bank_code;
+        $amount = $request->total_price;
+
+        $data = $this->rajaOngkirPaymentService->createPayment($order_id, $bank_transfer, $channel_code, $amount);
+
+        return response()->json($data);
+    }
+
+    public function getPaymentStatus()
+    {
+        $data = $this->rajaOngkirPaymentService->getPaymentStatus();
+
+        return response()->json($data);
+    }
+
+    public function cancelPayment()
+    {
+        $data = $this->rajaOngkirPaymentService->cancelPayment();
 
         return response()->json($data);
     }
