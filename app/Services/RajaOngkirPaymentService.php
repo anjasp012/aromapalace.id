@@ -40,7 +40,7 @@ class RajaOngkirPaymentService
     {
         return $this->request()
             ->post($this->baseUrl.'/payment/create', [
-                'order_id' => 'njir',
+                'order_id' => 'coba'.rand(1, 1000),
                 'payment_type' => 'bank_transfer',
                 'channel_code' => 'BCA',
                 'amount' => 10000,
