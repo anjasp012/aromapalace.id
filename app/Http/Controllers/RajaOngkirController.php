@@ -66,9 +66,20 @@ class RajaOngkirController extends Controller
         $rawBody = $request->getContent();
         $signature = $request->header('X-Callback-Api-Key');
 
-        $data = $this->rajaOngkirPaymentService->callbackPayment($rawBody, $signature);
+        try {
+            $data = $this->rajaOngkirPaymentService->callbackPayment(
+                $rawBody,
+                $signature
+            );
 
-        return response()->json($data);
+            return response()->json($data, 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], in_array($e->getCode(), [400, 401]) ? $e->getCode() : 500);
+        }
 
     }
 }

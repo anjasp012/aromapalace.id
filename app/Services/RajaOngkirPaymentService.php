@@ -77,41 +77,31 @@ class RajaOngkirPaymentService
         $secretKey = $this->secretKey;
 
         if (! $signature || ! $secretKey) {
-            return response()->json([
-                'message' => 'Unauthorized',
-            ], 401);
+            throw new \Exception('Unauthorized', 401);
         }
 
-        // 4. Generate HMAC SHA256
         $expectedSignature = hash_hmac(
             'sha256',
             $rawBody,
             $secretKey
         );
 
-        // 5. Verifikasi signature
         if (! hash_equals($expectedSignature, $signature)) {
-            return response()->json([
-                'message' => 'Invalid signature',
-            ], 401);
+            throw new \Exception('Invalid signature', 401);
         }
 
-        // 6. Decode payload setelah signature valid
         $data = json_decode($rawBody, true);
 
         if (! is_array($data)) {
-            return response()->json([
-                'message' => 'Invalid payload',
-            ], 400);
+            throw new \Exception('Invalid payload', 400);
         }
 
-        // 7. Proses pembayaran
         Log::info('Payment Callback Received', $data);
 
-        return response()->json([
+        return [
             'success' => true,
             'message' => 'Callback received',
-        ], 200);
+        ];
     }
 
     public function cancelPayment(
