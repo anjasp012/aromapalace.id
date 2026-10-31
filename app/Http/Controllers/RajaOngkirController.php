@@ -47,10 +47,28 @@ class RajaOngkirController extends Controller
         return response()->json($data);
     }
 
-    public function paymentMethods()
+    public function getPaymentMethods()
     {
         $data = $this->rajaOngkirPaymentService->getPaymentMethods();
 
         return response()->json($data);
+    }
+
+    public function createPayment()
+    {
+        $data = $this->rajaOngkirPaymentService->createPayment();
+
+        return response()->json($data);
+    }
+
+    public function callbackPayment(Request $request)
+    {
+        $rawBody = $request->getContent();
+        $signature = $request->header('X-Callback-Api-Key');
+
+        $data = $this->rajaOngkirPaymentService->callbackPayment($rawBody, $signature);
+
+        return response()->json($data);
+
     }
 }

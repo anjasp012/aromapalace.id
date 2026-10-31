@@ -185,4 +185,6 @@ Route::get('/raja-districts/{city_id}', [RajaOngkirController::class, 'districts
 Route::get('/raja-subdistricts/{district_id}', [RajaOngkirController::class, 'subdistricts']);
 Route::get('/raja-calculate/{destination}/{wight}/{price}', [RajaOngkirController::class, 'calculateCost']);
 
-Route::get('/raja-paymentmethods', [RajaOngkirController::class, 'paymentMethods']);
+Route::get('/raja-getpaymentmethods', [RajaOngkirController::class, 'getPaymentMethods']);
+Route::get('/raja-createpayment', [RajaOngkirController::class, 'createPayment']);
+Route::post('/raja-callbackpayment', [RajaOngkirController::class, 'callbackPayment']);

@@ -44,5 +44,7 @@ return [
     'rajaongkir' => [
         'shipping_key' => env('RAJAONGKIR_API_SPIPPING_KEY'),
         'payment_key' => env('RAJAONGKIR_API_PAYMENT_KEY'),
+        'callback_url' => env('RAJAONGKIR_API_CALLBACK_URL'),
+        'callback_api_key' => env('RAJAONGKIR_API_CALLBACK_API_KEY'),
     ],
 ];
