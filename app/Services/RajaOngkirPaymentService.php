@@ -74,6 +74,8 @@ class RajaOngkirPaymentService
 
     public function callbackPayment($rawBody, $signature)
     {
+
+        Log::info('Payment Callback Received', $rawBody);
         $secretKey = $this->secretKey;
 
         if (! $signature || ! $secretKey) {
