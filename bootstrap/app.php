@@ -65,6 +65,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'api/webhooks/*',
             'api/device-tokens',
             'api/device-tokens/*',
+            'raja-callbackpayment',
         ]);
 
         $middleware->web(append: [
