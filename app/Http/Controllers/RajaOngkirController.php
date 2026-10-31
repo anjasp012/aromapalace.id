@@ -63,28 +63,16 @@ class RajaOngkirController extends Controller
 
     public function callbackPayment(Request $request)
     {
-        $rawBody = $request->getContent();
-        $signature = $request->header('X-Callback-Api-Key');
+        Log::info('CALLBACK MASUK', [
+            'ip' => $request->ip(),
+            'body' => $request->getContent(),
+            'headers' => $request->headers->all(),
+        ]);
 
-        try {
-            $data = $this->rajaOngkirPaymentService->callbackPayment(
-                $rawBody,
-                $signature
-            );
-
-            return response()->json($data, 200);
-
-        } catch (\Exception $e) {
-            Log::error('KOMERCE CALLBACK ERROR', [
-                'message' => $e->getMessage(),
-                'code' => $e->getCode(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], in_array($e->getCode(), [400, 401]) ? $e->getCode() : 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Callback received',
+        ]);
 
     }
 }
