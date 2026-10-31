@@ -285,3 +285,51 @@ test('remind unprocessed orders command sends alert to admins with positive hour
     expect($notification->body)->not->toContain('-26');
     expect($notification->data['hours_stuck'])->toBe('26');
 });
+
+test('remind unprocessed orders replaces old notification so only one reminder exists per order', function () {
+    $customer = User::factory()->create(['role' => 'customer']);
+
+    $order = Order::create([
+        'order_number' => 'ARPL-STUCK-DEDUP',
+        'user_id' => $customer->id,
+        'recipient_name' => 'Cita',
+        'recipient_phone' => '0812345678',
+        'address' => 'Jakarta',
+        'city' => 'Jakarta',
+        'courier' => 'JNE',
+        'shipping_cost' => 0,
+        'payment_method' => 'manual_bca',
+        'payment_status' => 'paid',
+        'status' => 'dikemas',
+        'subtotal' => 436500,
+        'discount_amount' => 0,
+        'total_amount' => 436500,
+    ]);
+    $order->timestamps = false;
+    $order->updated_at = now()->subHours(26);
+    $order->save();
+
+    // Seed a stale reminder as if it was sent an hour ago
+    Notification::create([
+        'for_admin' => true,
+        'type' => 'admin_order_unprocessed',
+        'title' => 'Pesanan Belum Diproses #ARPL-STUCK-DEDUP',
+        'body' => 'Pesanan Rp 436.500 dari Cita sudah dibayar 25 jam lalu dan belum dikirim.',
+        'url' => '/manajemen-pesanan/'.$order->id,
+        'data' => ['order_id' => (string) $order->id, 'order_number' => 'ARPL-STUCK-DEDUP', 'hours_stuck' => '25', 'type' => 'admin_order_unprocessed'],
+        'is_read' => false,
+    ]);
+
+    expect(Notification::where('type', 'admin_order_unprocessed')->count())->toBe(1);
+
+    $service = app(FirebaseNotificationService::class);
+    $service->notifyUnprocessedPaidOrders();
+
+    // Old one deleted, new one created — still exactly 1 per order
+    $remaining = Notification::where('type', 'admin_order_unprocessed')
+        ->whereJsonContains('data->order_id', (string) $order->id)
+        ->get();
+
+    expect($remaining)->toHaveCount(1);
+    expect($remaining->first()->body)->toContain('26 jam lalu');
+});

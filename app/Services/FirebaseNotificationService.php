@@ -899,7 +899,8 @@ class FirebaseNotificationService
 
     /**
      * Remind admins about paid orders that have not been processed to shipping
-     * after 24 hours. Sends one notification per order per hour (cached).
+     * after 24 hours. Replaces the previous reminder notification for the same
+     * order so they don't pile up — only one active reminder per order at a time.
      *
      * @return int Number of reminder notifications sent
      */
@@ -928,6 +929,13 @@ class FirebaseNotificationService
 
             $hoursStuck = (int) abs($order->updated_at->diffInHours(now()));
             $formattedTotal = 'Rp '.number_format($order->total_amount, 0, ',', '.');
+
+            // Remove previous reminder(s) for this order so the inbox doesn't pile up.
+            // We keep only the latest, freshest reminder per order.
+            Notification::where('for_admin', true)
+                ->where('type', 'admin_order_unprocessed')
+                ->whereJsonContains('data->order_id', (string) $order->id)
+                ->delete();
 
             $this->sendToAdmins(
                 title: 'Pesanan Belum Diproses #'.$order->order_number,
