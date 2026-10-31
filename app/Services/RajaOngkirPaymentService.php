@@ -57,8 +57,8 @@ class RajaOngkirPaymentService
                     ],
                 ],
                 'expiry_duration' => 3600,
-                'callback_url' => $callbackUrl,
-                'callback_API_KEY' => $secretKey,
+                'callback_url' => $this->callbackUrl,
+                'callback_API_KEY' => $this->secretKey,
             ])
             ->throw()
             ->json();
