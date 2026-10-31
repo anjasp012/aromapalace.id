@@ -43,7 +43,7 @@ class RajaOngkirPaymentService
                 ...($order_number ? ['order_id' => $order_number] : []),
                 'payment_type' => $payment_type,
                 ...($channel_code ? ['channel_code' => $channel_code] : []),
-                $amount ?: 'amount' => (float) $amount,
+                'amount' => (float) $amount,
                 'customer' => [
                     'name' => 'anjas',
                     'email' => 'anjas@gmail.com',
