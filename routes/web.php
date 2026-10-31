@@ -187,6 +187,6 @@ Route::get('/rajaongkir/calculate/{destination}/{wight}/{price}', [RajaOngkirCon
 
 Route::get('/rajaongkir/getpaymentmethods', [RajaOngkirController::class, 'getPaymentMethods']);
 Route::post('/rajaongkir/createpayment', [RajaOngkirController::class, 'createPayment']);
-Route::get('/rajaongkir/getpaymentstatus/{order_number}', [RajaOngkirController::class, 'getPaymentStatus']);
-Route::post('/rajaongkir/cancelpayment/{order_number}', [RajaOngkirController::class, 'cancelPayment']);
+Route::get('/rajaongkir/getpaymentstatus/{order_number}', [RajaOngkirController::class, 'getPaymentStatus'])->where('order_number', '.*');
+Route::post('/rajaongkir/cancelpayment/{order_number}', [RajaOngkirController::class, 'cancelPayment'])->where('order_number', '.*');
 Route::post('/rajaongkir/callbackpayment', [RajaOngkirController::class, 'callbackPayment']);
