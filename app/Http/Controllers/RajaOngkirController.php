@@ -67,16 +67,16 @@ class RajaOngkirController extends Controller
         return response()->json($data);
     }
 
-    public function getPaymentStatus()
+    public function getPaymentStatus($order_number)
     {
-        $data = $this->rajaOngkirPaymentService->getPaymentStatus();
+        $data = $this->rajaOngkirPaymentService->getPaymentStatus($order_number);
 
         return response()->json($data);
     }
 
-    public function cancelPayment()
+    public function cancelPayment($order_number)
     {
-        $data = $this->rajaOngkirPaymentService->cancelPayment();
+        $data = $this->rajaOngkirPaymentService->cancelPayment($order_number);
 
         return response()->json($data);
     }

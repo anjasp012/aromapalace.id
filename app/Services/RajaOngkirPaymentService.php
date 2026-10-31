@@ -63,18 +63,18 @@ class RajaOngkirPaymentService
             ->json();
     }
 
-    public function getPaymentStatus($order_number = 'KPAY-c8e8/KM/2026')
+    public function getPaymentStatus($order_number)
     {
         return $this->request()
             ->get($this->baseUrl.'/payment/status/'.$order_number)
             ->json();
     }
 
-    public function cancelPayment($order_number = 'KPAY-c8e8/KM/2026')
+    public function cancelPayment($order_number)
     {
         return $this->request()
             ->post($this->baseUrl.'/payment/cancel', [
-                'payment_id' => 'KPAY-c8e8/KM/2026',
+                'payment_id' => $order_number,
                 'reason' => 'Customer canceled the order',
             ])
             ->json();
