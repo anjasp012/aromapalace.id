@@ -15,20 +15,74 @@ class CoverageAreaController extends Controller
     ) {}
 
     /**
+     * Safely extract data list from API response without throwing on error responses.
+     *
+     * @return array<int, mixed>
+     */
+    protected function extractList(mixed $raw): array
+    {
+        if (! is_array($raw)) {
+            return [];
+        }
+
+        if (isset($raw['data']) && is_array($raw['data'])) {
+            return $raw['data'];
+        }
+
+        if (array_is_list($raw)) {
+            return $raw;
+        }
+
+        return [];
+    }
+
+    /**
      * Get list of provinces with automatic retry if empty.
      */
     public function provinces(): JsonResponse
     {
+        $cacheKey = 'coverage:provinces';
+        $cached = Cache::get($cacheKey);
+        if (is_array($cached) && ! empty($cached)) {
+            return response()->json([
+                'status' => true,
+                'data' => $cached,
+            ]);
+        }
+
         $raw = $this->fetchWithRetry(fn () => $this->rajaOngkirShippingCostService->getProvinces());
-        $list = $raw['data'] ?? $raw;
-        $provinces = array_values(array_map(fn ($p) => [
-            'id' => (int) $p['id'],
-            'name' => (string) ($p['name'] ?? ''),
-        ], is_array($list) ? $list : []));
+        $list = $this->extractList($raw);
+
+        $provinces = [];
+        foreach ($list as $p) {
+            if (! is_array($p)) {
+                continue;
+            }
+            $id = $p['id'] ?? $p['province_id'] ?? null;
+            if ($id === null) {
+                continue;
+            }
+            $provinces[] = [
+                'id' => (int) $id,
+                'name' => (string) ($p['name'] ?? $p['province'] ?? ''),
+            ];
+        }
+
+        if (! empty($provinces)) {
+            Cache::put($cacheKey, $provinces, now()->addDays(30));
+
+            return response()->json([
+                'status' => true,
+                'data' => $provinces,
+            ]);
+        }
+
+        $errorMessage = is_array($raw) ? ($raw['meta']['message'] ?? $raw['message'] ?? null) : null;
 
         return response()->json([
-            'status' => ! empty($provinces),
-            'data' => $provinces,
+            'status' => false,
+            'message' => $errorMessage ?: 'Data provinsi sementara belum tersedia dari layanan ekspedisi.',
+            'data' => [],
         ]);
     }
 
@@ -46,17 +100,49 @@ class CoverageAreaController extends Controller
             ], 422);
         }
 
+        $cacheKey = "coverage:cities:{$provinceId}";
+        $cached = Cache::get($cacheKey);
+        if (is_array($cached) && ! empty($cached)) {
+            return response()->json([
+                'status' => true,
+                'data' => $cached,
+            ]);
+        }
+
         $raw = $this->fetchWithRetry(fn () => $this->rajaOngkirShippingCostService->getCities($provinceId));
-        $list = $raw['data'] ?? $raw;
-        $cities = array_values(array_map(fn ($c) => [
-            'id' => (int) $c['id'],
-            'name' => (string) ($c['name'] ?? ''),
-            'type' => (string) ($c['type'] ?? ''),
-        ], is_array($list) ? $list : []));
+        $list = $this->extractList($raw);
+
+        $cities = [];
+        foreach ($list as $c) {
+            if (! is_array($c)) {
+                continue;
+            }
+            $id = $c['id'] ?? $c['city_id'] ?? null;
+            if ($id === null) {
+                continue;
+            }
+            $cities[] = [
+                'id' => (int) $id,
+                'name' => (string) ($c['name'] ?? $c['city_name'] ?? ''),
+                'type' => (string) ($c['type'] ?? ''),
+            ];
+        }
+
+        if (! empty($cities)) {
+            Cache::put($cacheKey, $cities, now()->addDays(30));
+
+            return response()->json([
+                'status' => true,
+                'data' => $cities,
+            ]);
+        }
+
+        $errorMessage = is_array($raw) ? ($raw['meta']['message'] ?? $raw['message'] ?? null) : null;
 
         return response()->json([
-            'status' => ! empty($cities),
-            'data' => $cities,
+            'status' => false,
+            'message' => $errorMessage ?: 'Data kota sementara belum tersedia dari layanan ekspedisi.',
+            'data' => [],
         ]);
     }
 
@@ -74,16 +160,48 @@ class CoverageAreaController extends Controller
             ], 422);
         }
 
+        $cacheKey = "coverage:districts:{$cityId}";
+        $cached = Cache::get($cacheKey);
+        if (is_array($cached) && ! empty($cached)) {
+            return response()->json([
+                'status' => true,
+                'data' => $cached,
+            ]);
+        }
+
         $raw = $this->fetchWithRetry(fn () => $this->rajaOngkirShippingCostService->getDistricts($cityId));
-        $list = $raw['data'] ?? $raw;
-        $districts = array_values(array_map(fn ($d) => [
-            'id' => (int) $d['id'],
-            'name' => (string) ($d['name'] ?? ''),
-        ], is_array($list) ? $list : []));
+        $list = $this->extractList($raw);
+
+        $districts = [];
+        foreach ($list as $d) {
+            if (! is_array($d)) {
+                continue;
+            }
+            $id = $d['id'] ?? $d['district_id'] ?? null;
+            if ($id === null) {
+                continue;
+            }
+            $districts[] = [
+                'id' => (int) $id,
+                'name' => (string) ($d['name'] ?? $d['district_name'] ?? ''),
+            ];
+        }
+
+        if (! empty($districts)) {
+            Cache::put($cacheKey, $districts, now()->addDays(30));
+
+            return response()->json([
+                'status' => true,
+                'data' => $districts,
+            ]);
+        }
+
+        $errorMessage = is_array($raw) ? ($raw['meta']['message'] ?? $raw['message'] ?? null) : null;
 
         return response()->json([
-            'status' => ! empty($districts),
-            'data' => $districts,
+            'status' => false,
+            'message' => $errorMessage ?: 'Data kecamatan sementara belum tersedia dari layanan ekspedisi.',
+            'data' => [],
         ]);
     }
 
@@ -101,36 +219,68 @@ class CoverageAreaController extends Controller
             ], 422);
         }
 
+        $cacheKey = "coverage:subdistricts:{$districtId}";
+        $cached = Cache::get($cacheKey);
+        if (is_array($cached) && ! empty($cached)) {
+            return response()->json([
+                'status' => true,
+                'data' => $cached,
+            ]);
+        }
+
         $raw = $this->fetchWithRetry(fn () => $this->rajaOngkirShippingCostService->getSubDistricts($districtId));
-        $list = $raw['data'] ?? $raw;
-        $subdistricts = array_values(array_map(fn ($s) => [
-            'id' => (int) $s['id'],
-            'name' => (string) ($s['name'] ?? ''),
-            'postal_code' => (string) ($s['zip_code'] ?? ($s['postal_code'] ?? '')),
-        ], is_array($list) ? $list : []));
+        $list = $this->extractList($raw);
+
+        $subdistricts = [];
+        foreach ($list as $s) {
+            if (! is_array($s)) {
+                continue;
+            }
+            $id = $s['id'] ?? $s['subdistrict_id'] ?? null;
+            if ($id === null) {
+                continue;
+            }
+            $subdistricts[] = [
+                'id' => (int) $id,
+                'name' => (string) ($s['name'] ?? $s['subdistrict_name'] ?? ''),
+                'postal_code' => (string) ($s['zip_code'] ?? ($s['postal_code'] ?? '')),
+            ];
+        }
+
+        if (! empty($subdistricts)) {
+            Cache::put($cacheKey, $subdistricts, now()->addDays(30));
+
+            return response()->json([
+                'status' => true,
+                'data' => $subdistricts,
+            ]);
+        }
+
+        $errorMessage = is_array($raw) ? ($raw['meta']['message'] ?? $raw['message'] ?? null) : null;
 
         return response()->json([
-            'status' => ! empty($subdistricts),
-            'data' => $subdistricts,
+            'status' => false,
+            'message' => $errorMessage ?: 'Data kelurahan sementara belum tersedia dari layanan ekspedisi.',
+            'data' => [],
         ]);
     }
 
     /**
      * Retry callback up to $maxRetries if the result is empty.
      *
-     * @param  callable(): array  $callback
+     * @param  callable(): mixed  $callback
      */
-    protected function fetchWithRetry(callable $callback, int $maxRetries = 2, int $sleepUs = 300000): array
+    protected function fetchWithRetry(callable $callback, int $maxRetries = 2, int $sleepUs = 300000): mixed
     {
         $result = $callback();
-        if (! empty($result) && is_array($result)) {
+        if (is_array($result) && ! empty($result['data']) && is_array($result['data'])) {
             return $result;
         }
 
         for ($i = 0; $i < $maxRetries; $i++) {
             usleep($sleepUs);
             $result = $callback();
-            if (! empty($result) && is_array($result)) {
+            if (is_array($result) && ! empty($result['data']) && is_array($result['data'])) {
                 return $result;
             }
         }

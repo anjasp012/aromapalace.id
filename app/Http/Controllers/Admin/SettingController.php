@@ -43,21 +43,22 @@ class SettingController extends Controller
 
         $rajaOngkir = app(RajaOngkirShippingCostService::class);
         $fetchWithRetry = function (callable $callback): array {
-            $res = $callback();
-            $data = is_array($res) ? ($res['data'] ?? $res) : [];
-            if (! empty($data) && is_array($data)) {
-                return $data;
-            }
-            for ($i = 0; $i < 2; $i++) {
-                usleep(300000);
+            for ($i = 0; $i < 3; $i++) {
                 $res = $callback();
-                $data = is_array($res) ? ($res['data'] ?? $res) : [];
-                if (! empty($data) && is_array($data)) {
-                    return $data;
+                if (is_array($res)) {
+                    if (isset($res['data']) && is_array($res['data'])) {
+                        return array_values(array_filter($res['data'], fn ($item) => is_array($item) && isset($item['id'])));
+                    }
+                    if (array_is_list($res)) {
+                        return array_values(array_filter($res, fn ($item) => is_array($item) && isset($item['id'])));
+                    }
+                }
+                if ($i < 2) {
+                    usleep(300000);
                 }
             }
 
-            return is_array($data) ? $data : [];
+            return [];
         };
 
         $initialProvinces = $fetchWithRetry(fn () => $rajaOngkir->getProvinces());

@@ -36,9 +36,9 @@ return [
     ],
 
     'rajaongkir' => [
-        'shipping_key' => env('RAJAONGKIR_API_SPIPPING_KEY'),
-        'payment_key' => env('RAJAONGKIR_API_PAYMENT_KEY'),
-        'callback_url' => env('RAJAONGKIR_API_CALLBACK_URL'),
-        'callback_api_key' => env('RAJAONGKIR_API_CALLBACK_API_KEY'),
+        'shipping_key' => env('RAJAONGKIR_API_SPIPPING_KEY', env('RAJAONGKIR_API_SHIPPING_KEY', env('RAJAONGKIR_SHIPPING_KEY'))),
+        'payment_key' => env('RAJAONGKIR_API_PAYMENT_KEY', env('RAJAONGKIR_PAYMENT_KEY')),
+        'callback_url' => env('RAJAONGKIR_API_CALLBACK_URL', env('RAJAONGKIR_CALLBACK_URL')),
+        'callback_api_key' => env('RAJAONGKIR_API_CALLBACK_API_KEY', env('RAJAONGKIR_CALLBACK_API_KEY')),
     ],
 ];
