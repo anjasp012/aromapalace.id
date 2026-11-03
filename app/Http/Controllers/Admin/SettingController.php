@@ -3,6 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\CoverageCity;
+use App\Models\CoverageDistrict;
+use App\Models\CoverageProvince;
+use App\Models\CoverageSubdistrict;
 use App\Models\Setting;
 use App\Services\RajaOngkirShippingCostService;
 use Illuminate\Http\RedirectResponse;
@@ -42,35 +46,116 @@ class SettingController extends Controller
         $settings['app_appstore_url'] = $settings['app_appstore_url'] ?? 'https://apps.apple.com/app/aromapalace/id6740000000';
 
         $rajaOngkir = app(RajaOngkirShippingCostService::class);
-        $fetchWithRetry = function (callable $callback): array {
-            for ($i = 0; $i < 3; $i++) {
-                $res = $callback();
-                if (is_array($res)) {
-                    if (isset($res['data']) && is_array($res['data'])) {
-                        return array_values(array_filter($res['data'], fn ($item) => is_array($item) && isset($item['id'])));
-                    }
-                    if (array_is_list($res)) {
-                        return array_values(array_filter($res, fn ($item) => is_array($item) && isset($item['id'])));
+        $provinceId = (int) ($settings['shipping_province_id'] ?? 0);
+        $cityId = (int) ($settings['shipping_city_id'] ?? 0);
+        $districtId = (int) ($settings['shipping_district_id'] ?? 0);
+
+        // 1. Provinces: Load from Database first (0 API hits)
+        $initialProvinces = CoverageProvince::query()->orderBy('name')->get(['id', 'name'])->toArray();
+        if (empty($initialProvinces)) {
+            $raw = $rajaOngkir->getProvinces();
+            if (is_array($raw) && isset($raw['data']) && is_array($raw['data'])) {
+                $now = now();
+                $records = [];
+                foreach ($raw['data'] as $p) {
+                    if (is_array($p) && isset($p['id'])) {
+                        $records[] = [
+                            'id' => (int) $p['id'],
+                            'name' => (string) ($p['name'] ?? ''),
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ];
                     }
                 }
-                if ($i < 2) {
-                    usleep(300000);
+                if (! empty($records)) {
+                    CoverageProvince::upsert($records, ['id'], ['name', 'updated_at']);
+                    $initialProvinces = array_map(fn ($r) => ['id' => $r['id'], 'name' => $r['name']], $records);
                 }
             }
+        }
 
-            return [];
-        };
+        // 2. Cities: Load from Database first (0 API hits)
+        $initialCities = $provinceId > 0
+            ? CoverageCity::query()->where('province_id', $provinceId)->orderBy('name')->get(['id', 'name', 'type'])->toArray()
+            : [];
+        if ($provinceId > 0 && empty($initialCities)) {
+            $raw = $rajaOngkir->getCities($provinceId);
+            if (is_array($raw) && isset($raw['data']) && is_array($raw['data'])) {
+                $now = now();
+                $records = [];
+                foreach ($raw['data'] as $c) {
+                    if (is_array($c) && isset($c['id'])) {
+                        $records[] = [
+                            'id' => (int) $c['id'],
+                            'province_id' => $provinceId,
+                            'name' => (string) ($c['name'] ?? ''),
+                            'type' => (string) ($c['type'] ?? ''),
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ];
+                    }
+                }
+                if (! empty($records)) {
+                    CoverageCity::upsert($records, ['id'], ['province_id', 'name', 'type', 'updated_at']);
+                    $initialCities = array_map(fn ($r) => ['id' => $r['id'], 'name' => $r['name'], 'type' => $r['type']], $records);
+                }
+            }
+        }
 
-        $initialProvinces = $fetchWithRetry(fn () => $rajaOngkir->getProvinces());
+        // 3. Districts: Load from Database first (0 API hits)
+        $initialDistricts = $cityId > 0
+            ? CoverageDistrict::query()->where('city_id', $cityId)->orderBy('name')->get(['id', 'name'])->toArray()
+            : [];
+        if ($cityId > 0 && empty($initialDistricts)) {
+            $raw = $rajaOngkir->getDistricts($cityId);
+            if (is_array($raw) && isset($raw['data']) && is_array($raw['data'])) {
+                $now = now();
+                $records = [];
+                foreach ($raw['data'] as $d) {
+                    if (is_array($d) && isset($d['id'])) {
+                        $records[] = [
+                            'id' => (int) $d['id'],
+                            'city_id' => $cityId,
+                            'name' => (string) ($d['name'] ?? ''),
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ];
+                    }
+                }
+                if (! empty($records)) {
+                    CoverageDistrict::upsert($records, ['id'], ['city_id', 'name', 'updated_at']);
+                    $initialDistricts = array_map(fn ($r) => ['id' => $r['id'], 'name' => $r['name']], $records);
+                }
+            }
+        }
 
-        $provinceId = (int) ($settings['shipping_province_id'] ?? 0);
-        $initialCities = $provinceId > 0 ? $fetchWithRetry(fn () => $rajaOngkir->getCities($provinceId)) : [];
-
-        $cityId = (int) ($settings['shipping_city_id'] ?? 0);
-        $initialDistricts = $cityId > 0 ? $fetchWithRetry(fn () => $rajaOngkir->getDistricts($cityId)) : [];
-
-        $districtId = (int) ($settings['shipping_district_id'] ?? 0);
-        $initialSubdistricts = $districtId > 0 ? $fetchWithRetry(fn () => $rajaOngkir->getSubDistricts($districtId)) : [];
+        // 4. Subdistricts: Load from Database first (0 API hits)
+        $initialSubdistricts = $districtId > 0
+            ? CoverageSubdistrict::query()->where('district_id', $districtId)->orderBy('name')->get(['id', 'name', 'postal_code'])->toArray()
+            : [];
+        if ($districtId > 0 && empty($initialSubdistricts)) {
+            $raw = $rajaOngkir->getSubDistricts($districtId);
+            if (is_array($raw) && isset($raw['data']) && is_array($raw['data'])) {
+                $now = now();
+                $records = [];
+                foreach ($raw['data'] as $s) {
+                    if (is_array($s) && isset($s['id'])) {
+                        $records[] = [
+                            'id' => (int) $s['id'],
+                            'district_id' => $districtId,
+                            'name' => (string) ($s['name'] ?? ''),
+                            'postal_code' => (string) ($s['zip_code'] ?? ($s['postal_code'] ?? '')),
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ];
+                    }
+                }
+                if (! empty($records)) {
+                    CoverageSubdistrict::upsert($records, ['id'], ['district_id', 'name', 'postal_code', 'updated_at']);
+                    $initialSubdistricts = array_map(fn ($r) => ['id' => $r['id'], 'name' => $r['name'], 'postal_code' => $r['postal_code']], $records);
+                }
+            }
+        }
 
         return Inertia::render('admin/settings/index', [
             'settings' => $settings,

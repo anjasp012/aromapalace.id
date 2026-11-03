@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CoverageCity;
+use App\Models\CoverageDistrict;
+use App\Models\CoverageProvince;
+use App\Models\CoverageSubdistrict;
 use App\Services\RajaOngkirShippingCostService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -37,23 +41,33 @@ class CoverageAreaController extends Controller
     }
 
     /**
-     * Get list of provinces with automatic retry if empty.
+     * Get list of provinces (persisted in database to prevent repeated API calls).
      */
     public function provinces(): JsonResponse
     {
-        $cacheKey = 'coverage:provinces';
-        $cached = Cache::get($cacheKey);
-        if (is_array($cached) && ! empty($cached)) {
+        // 1. Check database first (0 API hits)
+        $dbProvinces = CoverageProvince::query()
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        if ($dbProvinces->isNotEmpty()) {
             return response()->json([
                 'status' => true,
-                'data' => $cached,
+                'data' => $dbProvinces->map(fn ($p) => [
+                    'id' => (int) $p->id,
+                    'name' => (string) $p->name,
+                ]),
             ]);
         }
 
-        $raw = $this->fetchWithRetry(fn () => $this->rajaOngkirShippingCostService->getProvinces());
+        // 2. Fetch once from RajaOngkir
+        $raw = $this->rajaOngkirShippingCostService->getProvinces();
         $list = $this->extractList($raw);
 
         $provinces = [];
+        $records = [];
+        $now = now();
+
         foreach ($list as $p) {
             if (! is_array($p)) {
                 continue;
@@ -62,14 +76,22 @@ class CoverageAreaController extends Controller
             if ($id === null) {
                 continue;
             }
+            $name = (string) ($p['name'] ?? $p['province'] ?? '');
             $provinces[] = [
                 'id' => (int) $id,
-                'name' => (string) ($p['name'] ?? $p['province'] ?? ''),
+                'name' => $name,
+            ];
+            $records[] = [
+                'id' => (int) $id,
+                'name' => $name,
+                'created_at' => $now,
+                'updated_at' => $now,
             ];
         }
 
-        if (! empty($provinces)) {
-            Cache::put($cacheKey, $provinces, now()->addDays(30));
+        // 3. Persist to database for future requests
+        if (! empty($records)) {
+            CoverageProvince::upsert($records, ['id'], ['name', 'updated_at']);
 
             return response()->json([
                 'status' => true,
@@ -87,7 +109,7 @@ class CoverageAreaController extends Controller
     }
 
     /**
-     * Get list of cities by province ID with automatic retry if empty.
+     * Get list of cities by province ID (persisted in database).
      */
     public function cities(Request $request): JsonResponse
     {
@@ -100,19 +122,31 @@ class CoverageAreaController extends Controller
             ], 422);
         }
 
-        $cacheKey = "coverage:cities:{$provinceId}";
-        $cached = Cache::get($cacheKey);
-        if (is_array($cached) && ! empty($cached)) {
+        // 1. Check database first (0 API hits)
+        $dbCities = CoverageCity::query()
+            ->where('province_id', $provinceId)
+            ->orderBy('name')
+            ->get(['id', 'name', 'type']);
+
+        if ($dbCities->isNotEmpty()) {
             return response()->json([
                 'status' => true,
-                'data' => $cached,
+                'data' => $dbCities->map(fn ($c) => [
+                    'id' => (int) $c->id,
+                    'name' => (string) $c->name,
+                    'type' => (string) ($c->type ?? ''),
+                ]),
             ]);
         }
 
-        $raw = $this->fetchWithRetry(fn () => $this->rajaOngkirShippingCostService->getCities($provinceId));
+        // 2. Fetch once from RajaOngkir
+        $raw = $this->rajaOngkirShippingCostService->getCities($provinceId);
         $list = $this->extractList($raw);
 
         $cities = [];
+        $records = [];
+        $now = now();
+
         foreach ($list as $c) {
             if (! is_array($c)) {
                 continue;
@@ -121,15 +155,26 @@ class CoverageAreaController extends Controller
             if ($id === null) {
                 continue;
             }
+            $name = (string) ($c['name'] ?? $c['city_name'] ?? '');
+            $type = (string) ($c['type'] ?? '');
             $cities[] = [
                 'id' => (int) $id,
-                'name' => (string) ($c['name'] ?? $c['city_name'] ?? ''),
-                'type' => (string) ($c['type'] ?? ''),
+                'name' => $name,
+                'type' => $type,
+            ];
+            $records[] = [
+                'id' => (int) $id,
+                'province_id' => $provinceId,
+                'name' => $name,
+                'type' => $type,
+                'created_at' => $now,
+                'updated_at' => $now,
             ];
         }
 
-        if (! empty($cities)) {
-            Cache::put($cacheKey, $cities, now()->addDays(30));
+        // 3. Persist to database
+        if (! empty($records)) {
+            CoverageCity::upsert($records, ['id'], ['province_id', 'name', 'type', 'updated_at']);
 
             return response()->json([
                 'status' => true,
@@ -147,7 +192,7 @@ class CoverageAreaController extends Controller
     }
 
     /**
-     * Get list of districts (kecamatan) by city ID with automatic retry if empty.
+     * Get list of districts (kecamatan) by city ID (persisted in database).
      */
     public function districts(Request $request): JsonResponse
     {
@@ -160,19 +205,30 @@ class CoverageAreaController extends Controller
             ], 422);
         }
 
-        $cacheKey = "coverage:districts:{$cityId}";
-        $cached = Cache::get($cacheKey);
-        if (is_array($cached) && ! empty($cached)) {
+        // 1. Check database first (0 API hits)
+        $dbDistricts = CoverageDistrict::query()
+            ->where('city_id', $cityId)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        if ($dbDistricts->isNotEmpty()) {
             return response()->json([
                 'status' => true,
-                'data' => $cached,
+                'data' => $dbDistricts->map(fn ($d) => [
+                    'id' => (int) $d->id,
+                    'name' => (string) $d->name,
+                ]),
             ]);
         }
 
-        $raw = $this->fetchWithRetry(fn () => $this->rajaOngkirShippingCostService->getDistricts($cityId));
+        // 2. Fetch once from RajaOngkir
+        $raw = $this->rajaOngkirShippingCostService->getDistricts($cityId);
         $list = $this->extractList($raw);
 
         $districts = [];
+        $records = [];
+        $now = now();
+
         foreach ($list as $d) {
             if (! is_array($d)) {
                 continue;
@@ -181,14 +237,23 @@ class CoverageAreaController extends Controller
             if ($id === null) {
                 continue;
             }
+            $name = (string) ($d['name'] ?? $d['district_name'] ?? '');
             $districts[] = [
                 'id' => (int) $id,
-                'name' => (string) ($d['name'] ?? $d['district_name'] ?? ''),
+                'name' => $name,
+            ];
+            $records[] = [
+                'id' => (int) $id,
+                'city_id' => $cityId,
+                'name' => $name,
+                'created_at' => $now,
+                'updated_at' => $now,
             ];
         }
 
-        if (! empty($districts)) {
-            Cache::put($cacheKey, $districts, now()->addDays(30));
+        // 3. Persist to database
+        if (! empty($records)) {
+            CoverageDistrict::upsert($records, ['id'], ['city_id', 'name', 'updated_at']);
 
             return response()->json([
                 'status' => true,
@@ -206,7 +271,7 @@ class CoverageAreaController extends Controller
     }
 
     /**
-     * Get list of subdistricts (kelurahan) by district ID with automatic retry if empty.
+     * Get list of subdistricts (kelurahan) by district ID (persisted in database).
      */
     public function subdistricts(Request $request): JsonResponse
     {
@@ -219,19 +284,31 @@ class CoverageAreaController extends Controller
             ], 422);
         }
 
-        $cacheKey = "coverage:subdistricts:{$districtId}";
-        $cached = Cache::get($cacheKey);
-        if (is_array($cached) && ! empty($cached)) {
+        // 1. Check database first (0 API hits)
+        $dbSubdistricts = CoverageSubdistrict::query()
+            ->where('district_id', $districtId)
+            ->orderBy('name')
+            ->get(['id', 'name', 'postal_code']);
+
+        if ($dbSubdistricts->isNotEmpty()) {
             return response()->json([
                 'status' => true,
-                'data' => $cached,
+                'data' => $dbSubdistricts->map(fn ($s) => [
+                    'id' => (int) $s->id,
+                    'name' => (string) $s->name,
+                    'postal_code' => (string) ($s->postal_code ?? ''),
+                ]),
             ]);
         }
 
-        $raw = $this->fetchWithRetry(fn () => $this->rajaOngkirShippingCostService->getSubDistricts($districtId));
+        // 2. Fetch once from RajaOngkir
+        $raw = $this->rajaOngkirShippingCostService->getSubDistricts($districtId);
         $list = $this->extractList($raw);
 
         $subdistricts = [];
+        $records = [];
+        $now = now();
+
         foreach ($list as $s) {
             if (! is_array($s)) {
                 continue;
@@ -240,15 +317,26 @@ class CoverageAreaController extends Controller
             if ($id === null) {
                 continue;
             }
+            $name = (string) ($s['name'] ?? $s['subdistrict_name'] ?? '');
+            $postalCode = (string) ($s['zip_code'] ?? ($s['postal_code'] ?? ''));
             $subdistricts[] = [
                 'id' => (int) $id,
-                'name' => (string) ($s['name'] ?? $s['subdistrict_name'] ?? ''),
-                'postal_code' => (string) ($s['zip_code'] ?? ($s['postal_code'] ?? '')),
+                'name' => $name,
+                'postal_code' => $postalCode,
+            ];
+            $records[] = [
+                'id' => (int) $id,
+                'district_id' => $districtId,
+                'name' => $name,
+                'postal_code' => $postalCode,
+                'created_at' => $now,
+                'updated_at' => $now,
             ];
         }
 
-        if (! empty($subdistricts)) {
-            Cache::put($cacheKey, $subdistricts, now()->addDays(30));
+        // 3. Persist to database
+        if (! empty($records)) {
+            CoverageSubdistrict::upsert($records, ['id'], ['district_id', 'name', 'postal_code', 'updated_at']);
 
             return response()->json([
                 'status' => true,
@@ -263,29 +351,6 @@ class CoverageAreaController extends Controller
             'message' => $errorMessage ?: 'Data kelurahan sementara belum tersedia dari layanan ekspedisi.',
             'data' => [],
         ]);
-    }
-
-    /**
-     * Retry callback up to $maxRetries if the result is empty.
-     *
-     * @param  callable(): mixed  $callback
-     */
-    protected function fetchWithRetry(callable $callback, int $maxRetries = 2, int $sleepUs = 300000): mixed
-    {
-        $result = $callback();
-        if (is_array($result) && ! empty($result['data']) && is_array($result['data'])) {
-            return $result;
-        }
-
-        for ($i = 0; $i < $maxRetries; $i++) {
-            usleep($sleepUs);
-            $result = $callback();
-            if (is_array($result) && ! empty($result['data']) && is_array($result['data'])) {
-                return $result;
-            }
-        }
-
-        return is_array($result) ? $result : [];
     }
 
     /**

@@ -108,11 +108,9 @@ export default function AddressModal({
         setLoadingProvinces(true);
         fetchCoverageUntilNotEmpty<ProvinceOption>(
             '/api/coverage/provinces',
-            (data) => {
-                setProvinces(data);
-                setLoadingProvinces(false);
-            },
-            controller.signal
+            (data) => setProvinces(data),
+            controller.signal,
+            () => setLoadingProvinces(false)
         );
 
         return () => {
@@ -158,11 +156,9 @@ export default function AddressModal({
                 setLoadingCities(true);
                 fetchCoverageUntilNotEmpty<CityOption>(
                     `/api/coverage/cities?province_id=${addressToEdit.province_id}`,
-                    (data) => {
-                        setCities(data);
-                        setLoadingCities(false);
-                    },
-                    controller.signal
+                    (data) => setCities(data),
+                    controller.signal,
+                    () => setLoadingCities(false)
                 );
             }
             if (addressToEdit.city_id) {
@@ -172,11 +168,9 @@ export default function AddressModal({
                 setLoadingDistricts(true);
                 fetchCoverageUntilNotEmpty<DistrictOption>(
                     `/api/coverage/districts?city_id=${addressToEdit.city_id}`,
-                    (data) => {
-                        setDistricts(data);
-                        setLoadingDistricts(false);
-                    },
-                    controller.signal
+                    (data) => setDistricts(data),
+                    controller.signal,
+                    () => setLoadingDistricts(false)
                 );
             }
             if (addressToEdit.district_id) {
@@ -186,11 +180,9 @@ export default function AddressModal({
                 setLoadingSubdistricts(true);
                 fetchCoverageUntilNotEmpty<SubdistrictOption>(
                     `/api/coverage/subdistricts?district_id=${addressToEdit.district_id}`,
-                    (data) => {
-                        setSubdistricts(data);
-                        setLoadingSubdistricts(false);
-                    },
-                    controller.signal
+                    (data) => setSubdistricts(data),
+                    controller.signal,
+                    () => setLoadingSubdistricts(false)
                 );
             }
         } else {
@@ -256,11 +248,9 @@ export default function AddressModal({
             setLoadingCities(true);
             fetchCoverageUntilNotEmpty<CityOption>(
                 `/api/coverage/cities?province_id=${val}`,
-                (data) => {
-                    setCities(data);
-                    setLoadingCities(false);
-                },
-                controller.signal
+                (data) => setCities(data),
+                controller.signal,
+                () => setLoadingCities(false)
             );
         }
     };
@@ -299,11 +289,9 @@ export default function AddressModal({
             setLoadingDistricts(true);
             fetchCoverageUntilNotEmpty<DistrictOption>(
                 `/api/coverage/districts?city_id=${val}`,
-                (data) => {
-                    setDistricts(data);
-                    setLoadingDistricts(false);
-                },
-                controller.signal
+                (data) => setDistricts(data),
+                controller.signal,
+                () => setLoadingDistricts(false)
             );
         }
     };
@@ -338,11 +326,9 @@ export default function AddressModal({
             setLoadingSubdistricts(true);
             fetchCoverageUntilNotEmpty<SubdistrictOption>(
                 `/api/coverage/subdistricts?district_id=${val}`,
-                (data) => {
-                    setSubdistricts(data);
-                    setLoadingSubdistricts(false);
-                },
-                controller.signal
+                (data) => setSubdistricts(data),
+                controller.signal,
+                () => setLoadingSubdistricts(false)
             );
         }
     };

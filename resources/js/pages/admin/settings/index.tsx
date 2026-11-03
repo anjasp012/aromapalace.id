@@ -149,11 +149,9 @@ export default function SettingsIndex({
             setLoadingProvinces(true);
             fetchCoverageUntilNotEmpty<SearchableOption>(
                 '/api/coverage/provinces',
-                (data) => {
-                    setProvinces(data);
-                    setLoadingProvinces(false);
-                },
-                controller.signal
+                (data) => setProvinces(data),
+                controller.signal,
+                () => setLoadingProvinces(false)
             );
         }
 
@@ -165,11 +163,9 @@ export default function SettingsIndex({
             setLoadingCities(true);
             fetchCoverageUntilNotEmpty<SearchableOption>(
                 `/api/coverage/cities?province_id=${data.shipping_province_id}`,
-                (data) => {
-                    setCities(data);
-                    setLoadingCities(false);
-                },
-                controller.signal
+                (data) => setCities(data),
+                controller.signal,
+                () => setLoadingCities(false)
             );
         }
 
@@ -181,11 +177,9 @@ export default function SettingsIndex({
             setLoadingDistricts(true);
             fetchCoverageUntilNotEmpty<SearchableOption>(
                 `/api/coverage/districts?city_id=${data.shipping_city_id}`,
-                (data) => {
-                    setDistricts(data);
-                    setLoadingDistricts(false);
-                },
-                controller.signal
+                (data) => setDistricts(data),
+                controller.signal,
+                () => setLoadingDistricts(false)
             );
         }
 
@@ -197,11 +191,9 @@ export default function SettingsIndex({
             setLoadingSubdistricts(true);
             fetchCoverageUntilNotEmpty<SearchableOption>(
                 `/api/coverage/subdistricts?district_id=${data.shipping_district_id}`,
-                (data) => {
-                    setSubdistricts(data);
-                    setLoadingSubdistricts(false);
-                },
-                controller.signal
+                (data) => setSubdistricts(data),
+                controller.signal,
+                () => setLoadingSubdistricts(false)
             );
         }
 
@@ -244,11 +236,9 @@ export default function SettingsIndex({
             setLoadingCities(true);
             fetchCoverageUntilNotEmpty<SearchableOption>(
                 `/api/coverage/cities?province_id=${idNum}`,
-                (data) => {
-                    setCities(data);
-                    setLoadingCities(false);
-                },
-                controller.signal
+                (data) => setCities(data),
+                controller.signal,
+                () => setLoadingCities(false)
             );
         }
     };
@@ -281,11 +271,9 @@ export default function SettingsIndex({
             setLoadingDistricts(true);
             fetchCoverageUntilNotEmpty<SearchableOption>(
                 `/api/coverage/districts?city_id=${idNum}`,
-                (data) => {
-                    setDistricts(data);
-                    setLoadingDistricts(false);
-                },
-                controller.signal
+                (data) => setDistricts(data),
+                controller.signal,
+                () => setLoadingDistricts(false)
             );
         }
     };
@@ -313,11 +301,9 @@ export default function SettingsIndex({
             setLoadingSubdistricts(true);
             fetchCoverageUntilNotEmpty<SearchableOption>(
                 `/api/coverage/subdistricts?district_id=${idNum}`,
-                (data) => {
-                    setSubdistricts(data);
-                    setLoadingSubdistricts(false);
-                },
-                controller.signal
+                (data) => setSubdistricts(data),
+                controller.signal,
+                () => setLoadingSubdistricts(false)
             );
         }
     };
