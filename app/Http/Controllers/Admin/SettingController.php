@@ -21,7 +21,7 @@ class SettingController extends Controller
 
         // Ensure defaults for RajaOngkir payment & shipping gateway integration
         $settings['rajaongkir_shipping_key'] = $settings['rajaongkir_shipping_key'] ?? '';
-        $settings['rajaongkir_shipping_origin'] = $settings['rajaongkir_shipping_origin'] ?? '291';
+        $settings['rajaongkir_shipping_origin'] = $settings['shipping_district_id'] ?? $settings['rajaongkir_shipping_origin'] ?? '2101';
         $settings['rajaongkir_payment_mode'] = $settings['rajaongkir_payment_mode'] ?? 'sandbox';
         $settings['rajaongkir_payment_key'] = $settings['rajaongkir_payment_key'] ?? '';
         $settings['rajaongkir_callback_url'] = $settings['rajaongkir_callback_url'] ?? '';
@@ -154,6 +154,10 @@ class SettingController extends Controller
 
         if ($request->has('app_force_update')) {
             $validated['app_force_update'] = $request->boolean('app_force_update') ? '1' : '0';
+        }
+
+        if (isset($validated['shipping_district_id'])) {
+            $validated['rajaongkir_shipping_origin'] = (int) $validated['shipping_district_id'];
         }
 
         $settingConfigs = [

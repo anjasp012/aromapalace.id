@@ -118,3 +118,21 @@ test('admin settings sanitizes and accepts shipping_sender_phone with dashes', f
     $response->assertSessionHasNoErrors();
     expect(Setting::get('shipping_sender_phone'))->toBe('081288889999');
 });
+
+test('admin settings automatically syncs rajaongkir_shipping_origin from shipping_district_id', function () {
+    $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
+    $admin = User::factory()->admin()->create();
+
+    $response = $this->actingAs($admin)
+        ->post("http://{$adminDomain}/pengaturan", [
+            'store_name' => 'Aroma Palace',
+            'shipping_sender_name' => 'Gudang Pusat',
+            'shipping_sender_phone' => '081288889999',
+            'shipping_address' => 'Jl. Senopati No. 88',
+            'shipping_district_id' => 317401, // specific district
+        ]);
+
+    $response->assertSessionHasNoErrors();
+    expect((int) Setting::get('shipping_district_id'))->toBe(317401);
+    expect((int) Setting::get('rajaongkir_shipping_origin'))->toBe(317401);
+});

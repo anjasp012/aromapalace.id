@@ -63,7 +63,7 @@ export default function SettingsIndex({
         rajaongkir_callback_api_key: settings.rajaongkir_callback_api_key || '',
         rajaongkir_callback_url: settings.rajaongkir_callback_url || '',
         rajaongkir_shipping_key: settings.rajaongkir_shipping_key || '',
-        rajaongkir_shipping_origin: settings.rajaongkir_shipping_origin || '291',
+        rajaongkir_shipping_origin: settings.shipping_district_id ? String(settings.shipping_district_id) : (settings.rajaongkir_shipping_origin || '2101'),
         // Alamat Origin Pengiriman Toko
         shipping_sender_name: settings.shipping_sender_name || '',
         shipping_sender_phone: settings.shipping_sender_phone || '',
@@ -296,6 +296,7 @@ export default function SettingsIndex({
             ...prev,
             shipping_district_id: idNum,
             shipping_district_name: option?.name || '',
+            rajaongkir_shipping_origin: idNum ? String(idNum) : '',
             shipping_subdistrict_id: '',
             shipping_subdistrict_name: '',
             shipping_postal_code: '',
@@ -630,7 +631,7 @@ export default function SettingsIndex({
                                     </div>
 
                                     {/* Shipping API Key */}
-                                    <div className="space-y-1.5 mb-3">
+                                    <div className="space-y-1.5">
                                         <div className="flex items-center justify-between">
                                             <label className="text-xs font-semibold text-foreground">API Key Shipping (Ongkir)</label>
                                             <button
@@ -652,24 +653,9 @@ export default function SettingsIndex({
                                         {errors.rajaongkir_shipping_key && (
                                             <p className="text-xs text-destructive">{errors.rajaongkir_shipping_key}</p>
                                         )}
-                                    </div>
-
-                                    {/* Shipping Origin ID */}
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-semibold text-foreground">Origin Sub-District ID (Kecamatan Asal)</label>
-                                        <Input
-                                            type="number"
-                                            value={data.rajaongkir_shipping_origin}
-                                            onChange={(e) => setData('rajaongkir_shipping_origin', e.target.value)}
-                                            placeholder="Contoh: 291"
-                                            className="text-xs"
-                                        />
                                         <p className="text-[11px] text-muted-foreground">
-                                            ID Kecamatan asal pengiriman untuk kalkulasi biaya domestic-cost di RajaOngkir (default: 291).
+                                            Origin pengiriman otomatis menggunakan Kecamatan asal yang dipilih pada bagian <strong>Alamat Asal &amp; Origin Pengiriman</strong>.
                                         </p>
-                                        {errors.rajaongkir_shipping_origin && (
-                                            <p className="text-xs text-destructive">{errors.rajaongkir_shipping_origin}</p>
-                                        )}
                                     </div>
                                 </div>
                             </CardContent>

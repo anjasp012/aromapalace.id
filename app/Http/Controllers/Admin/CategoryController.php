@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Support\CatalogCache;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -216,7 +217,7 @@ class CategoryController extends Controller
             Category::where('id', $item['id'])->update(['sort_order' => $item['sort_order']]);
         }
 
-        \App\Support\CatalogCache::flush();
+        CatalogCache::flush();
 
         return back()->with('success', 'Urutan kategori berhasil disimpan.');
     }

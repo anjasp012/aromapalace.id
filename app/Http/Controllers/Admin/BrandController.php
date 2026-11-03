@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Brand;
+use App\Support\CatalogCache;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -165,7 +166,7 @@ class BrandController extends Controller
             Brand::where('id', $item['id'])->update(['sort_order' => $item['sort_order']]);
         }
 
-        \App\Support\CatalogCache::flush();
+        CatalogCache::flush();
 
         return back()->with('success', 'Urutan brand berhasil disimpan.');
     }

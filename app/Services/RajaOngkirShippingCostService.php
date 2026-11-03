@@ -19,11 +19,17 @@ class RajaOngkirShippingCostService
     }
 
     /**
-     * Get the origin sub-district ID for cost calculation, preferring the DB setting over env.
+     * Get the origin district ID for cost calculation, prioritizing the
+     * origin configured in "Alamat Asal & Origin Pengiriman" (shipping_district_id).
      */
     protected function originSubdistrictId(): int
     {
-        return (int) Setting::get('rajaongkir_shipping_origin', 291);
+        $origin = Setting::get('shipping_district_id');
+        if (! empty($origin)) {
+            return (int) $origin;
+        }
+
+        return (int) Setting::get('rajaongkir_shipping_origin', 2101);
     }
 
     protected function request(): PendingRequest
