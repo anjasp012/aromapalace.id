@@ -29,7 +29,7 @@ export default function ForgotPassword({ status }: ForgotPasswordProps) {
     };
 
     return (
-        <div className="fixed inset-0 h-[100dvh] max-h-[100dvh] w-full bg-[#4A070B] text-slate-100 overflow-hidden flex flex-col justify-between selection:bg-[#E5A844] selection:text-[#4A070B] overscroll-none">
+        <div className="fixed inset-0 h-[100dvh] max-h-[100dvh] w-full bg-[#4A070B] text-slate-100 overflow-hidden flex flex-col justify-between selection:bg-[#E5A844] selection:text-[#4A070B] overscroll-none font-sans">
             <Head title={isEn ? 'Reset Password • Aroma Palace' : 'Atur Ulang Kata Sandi • Aroma Palace'} />
 
             {/* AMBIENT LUXURY DECORATIVE CIRCLES & BUBBLES */}
@@ -82,23 +82,23 @@ export default function ForgotPassword({ status }: ForgotPasswordProps) {
 
                     {/* RIGHT SIDE: FLOATING CARD */}
                     <div className="col-span-1 lg:col-span-6 xl:col-span-5 flex justify-center lg:justify-end w-full">
-                        <Card className="w-full max-w-md bg-white text-neutral-900 border-0 shadow-2xl rounded-2xl sm:rounded-3xl overflow-hidden">
-                            <CardContent className="p-6 sm:p-8 space-y-5">
+                        <Card className="w-full max-w-md bg-white text-neutral-900 border-0 shadow-2xl rounded-2xl sm:rounded-3xl overflow-hidden my-auto">
+                            <CardContent className="p-6 sm:p-7 space-y-4 sm:space-y-5">
                                 {/* CARD HEADER */}
-                                <div className="space-y-1.5 text-left">
-                                    <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-900 font-serif">
+                                <div className="space-y-1 text-left">
+                                    <h1 className="text-2xl sm:text-[26px] font-extrabold tracking-tight text-neutral-900 font-sans leading-tight">
                                         {isEn ? 'Reset Password' : 'Lupa Kata Sandi?'}
                                     </h1>
-                                    <p className="text-xs sm:text-sm text-neutral-500 leading-relaxed">
+                                    <p className="text-xs sm:text-sm text-neutral-600">
                                         {isEn
                                             ? 'Enter your registered email address and we will send you a link to reset your password.'
-                                            : 'Masukkan email yang terdaftar pada akun Aroma Palace Anda. Kami akan mengirimkan tautan untuk mengatur ulang kata sandi.'}
+                                            : 'Masukkan email terdaftar untuk menerima tautan atur ulang kata sandi.'}
                                     </p>
                                 </div>
 
                                 {/* STATUS ALERT */}
                                 {status && (
-                                    <div className="p-3.5 rounded-xl border border-emerald-500/30 bg-emerald-50 text-emerald-800 text-xs font-medium flex items-start gap-2.5">
+                                    <div className="p-3 rounded-xl border border-emerald-500/30 bg-emerald-50 text-emerald-800 text-xs font-medium flex items-start gap-2.5">
                                         <MailCheck className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600" />
                                         <span className="leading-relaxed">{status}</span>
                                     </div>
@@ -106,7 +106,7 @@ export default function ForgotPassword({ status }: ForgotPasswordProps) {
 
                                 {/* FORM */}
                                 <form onSubmit={handleSubmit} className="space-y-4">
-                                    <div className="space-y-1">
+                                    <div className="space-y-1.5">
                                         <label className="text-xs font-semibold text-neutral-800 block">
                                             {isEn ? 'Email Address' : 'Alamat Email'}
                                         </label>
@@ -118,7 +118,7 @@ export default function ForgotPassword({ status }: ForgotPasswordProps) {
                                             autoCapitalize="none"
                                             autoCorrect="off"
                                             spellCheck={false}
-                                            placeholder={isEn ? 'Enter your registered email' : 'Masukkan email terdaftar'}
+                                            placeholder={isEn ? 'Enter your registered email' : 'Masukkan email terdaftar Anda'}
                                             value={data.email}
                                             onChange={(e) => setData('email', e.target.value)}
                                             className="h-11 sm:h-12 px-4 text-sm rounded-xl bg-neutral-50 text-neutral-900 border-neutral-300 focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-[#4A070B] focus-visible:border-[#4A070B] transition-all"
@@ -133,11 +133,11 @@ export default function ForgotPassword({ status }: ForgotPasswordProps) {
                                     <Button
                                         type="submit"
                                         disabled={processing}
-                                        className="w-full h-11 sm:h-12 rounded-xl bg-[#4A070B] hover:bg-[#360407] text-[#E5A844] font-bold text-sm tracking-wide shadow-lg shadow-[#4A070B]/20 transition-all active:scale-[0.98] border border-[#E5A844]/40"
+                                        className="w-full h-11 sm:h-12 rounded-lg bg-[#4A070B] hover:bg-[#360407] active:scale-[0.98] text-white text-sm font-bold shadow-md transition-all cursor-pointer mt-2"
                                     >
                                         {processing ? (
                                             <span className="inline-flex items-center gap-2">
-                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                <Loader2 className="w-4 h-4 animate-spin text-[#E5A844]" />
                                                 <span>{isEn ? 'Sending link...' : 'Mengirim tautan...'}</span>
                                             </span>
                                         ) : (
@@ -151,7 +151,7 @@ export default function ForgotPassword({ status }: ForgotPasswordProps) {
                                     <div className="pt-2 text-center">
                                         <Link
                                             href="/login"
-                                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-600 hover:text-[#4A070B] transition-colors"
+                                            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#4A070B] hover:text-[#360407] hover:underline transition-colors"
                                         >
                                             <ArrowLeft className="w-3.5 h-3.5" />
                                             <span>{isEn ? 'Back to Sign In' : 'Kembali ke Halaman Masuk'}</span>

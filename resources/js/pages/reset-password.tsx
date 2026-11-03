@@ -12,7 +12,6 @@ import {
     Loader2,
     Globe,
     ArrowLeft,
-    KeyRound,
 } from 'lucide-react';
 
 interface ResetPasswordProps {
@@ -38,7 +37,7 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
     };
 
     return (
-        <div className="fixed inset-0 h-[100dvh] max-h-[100dvh] w-full bg-[#4A070B] text-slate-100 overflow-hidden flex flex-col justify-between selection:bg-[#E5A844] selection:text-[#4A070B] overscroll-none">
+        <div className="fixed inset-0 h-[100dvh] max-h-[100dvh] w-full bg-[#4A070B] text-slate-100 overflow-hidden flex flex-col justify-between selection:bg-[#E5A844] selection:text-[#4A070B] overscroll-none font-sans">
             <Head title={isEn ? 'Set New Password • Aroma Palace' : 'Atur Kata Sandi Baru • Aroma Palace'} />
 
             {/* AMBIENT LUXURY DECORATIVE CIRCLES & BUBBLES */}
@@ -91,21 +90,17 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
 
                     {/* RIGHT SIDE: FLOATING CARD */}
                     <div className="col-span-1 lg:col-span-6 xl:col-span-5 flex justify-center lg:justify-end w-full">
-                        <Card className="w-full max-w-md bg-white text-neutral-900 border-0 shadow-2xl rounded-2xl sm:rounded-3xl overflow-hidden">
-                            <CardContent className="p-6 sm:p-8 space-y-5">
+                        <Card className="w-full max-w-md bg-white text-neutral-900 border-0 shadow-2xl rounded-2xl sm:rounded-3xl overflow-hidden my-auto">
+                            <CardContent className="p-6 sm:p-7 space-y-4 sm:space-y-5">
                                 {/* CARD HEADER */}
-                                <div className="space-y-1.5 text-left">
-                                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#4A070B]/5 border border-[#4A070B]/10 text-[#4A070B] text-xs font-semibold mb-1">
-                                        <KeyRound className="w-3.5 h-3.5 text-[#E5A844]" />
-                                        <span>{isEn ? 'Secure Reset' : 'Atur Ulang Aman'}</span>
-                                    </div>
-                                    <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-900 font-serif">
+                                <div className="space-y-1 text-left">
+                                    <h1 className="text-2xl sm:text-[26px] font-extrabold tracking-tight text-neutral-900 font-sans leading-tight">
                                         {isEn ? 'Set New Password' : 'Atur Kata Sandi Baru'}
                                     </h1>
-                                    <p className="text-xs sm:text-sm text-neutral-500 leading-relaxed">
+                                    <p className="text-xs sm:text-sm text-neutral-600">
                                         {isEn
-                                            ? 'Create a new, strong password to safeguard your fragrance collection account.'
-                                            : 'Buat kata sandi baru yang kuat untuk melindungi akun wewangian mewah Anda.'}
+                                            ? 'Create a new, strong password to safeguard your account.'
+                                            : 'Buat kata sandi baru yang kuat untuk melindungi akun Anda.'}
                                     </p>
                                 </div>
 
@@ -205,11 +200,11 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
                                     <Button
                                         type="submit"
                                         disabled={processing}
-                                        className="w-full h-11 sm:h-12 rounded-xl bg-[#4A070B] hover:bg-[#360407] text-[#E5A844] font-bold text-sm tracking-wide shadow-lg shadow-[#4A070B]/20 transition-all active:scale-[0.98] border border-[#E5A844]/40 mt-2"
+                                        className="w-full h-11 sm:h-12 rounded-lg bg-[#4A070B] hover:bg-[#360407] active:scale-[0.98] text-white text-sm font-bold shadow-md transition-all cursor-pointer mt-2"
                                     >
                                         {processing ? (
                                             <span className="inline-flex items-center gap-2">
-                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                <Loader2 className="w-4 h-4 animate-spin text-[#E5A844]" />
                                                 <span>{isEn ? 'Updating...' : 'Menyimpan...'}</span>
                                             </span>
                                         ) : (
@@ -223,7 +218,7 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
                                     <div className="pt-2 text-center">
                                         <Link
                                             href="/login"
-                                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-600 hover:text-[#4A070B] transition-colors"
+                                            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#4A070B] hover:text-[#360407] hover:underline transition-colors"
                                         >
                                             <ArrowLeft className="w-3.5 h-3.5" />
                                             <span>{isEn ? 'Back to Sign In' : 'Kembali ke Halaman Masuk'}</span>
