@@ -239,12 +239,7 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
         }
         setAndroidApkModalOpen(false);
 
-        const link = document.createElement('a');
-        link.href = '/app-release.apk';
-        link.download = 'Aroma-Palace.apk';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        window.location.href = '/app-release.apk';
 
         if (window.showPromoToast) {
             window.showPromoToast(

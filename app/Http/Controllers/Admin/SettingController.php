@@ -44,6 +44,7 @@ class SettingController extends Controller
         $settings['app_update_message'] = $settings['app_update_message'] ?? 'Versi baru aplikasi Aroma Palace telah tersedia dengan peningkatan fitur dan stabilitas. Mohon perbarui aplikasi Anda untuk melanjutkan berbelanja.';
         $settings['app_playstore_url'] = $settings['app_playstore_url'] ?? 'https://play.google.com/store/apps/details?id=com.aromapalace.app';
         $settings['app_appstore_url'] = $settings['app_appstore_url'] ?? 'https://apps.apple.com/app/aromapalace/id6740000000';
+        $settings['app_apk_url'] = $settings['app_apk_url'] ?? '';
 
         $rajaOngkir = app(RajaOngkirShippingCostService::class);
         $provinceId = (int) ($settings['shipping_province_id'] ?? 0);
@@ -221,6 +222,7 @@ class SettingController extends Controller
             'app_update_message' => ['nullable', 'string', 'max:1000'],
             'app_playstore_url' => ['nullable', 'url', 'max:500'],
             'app_appstore_url' => ['nullable', 'url', 'max:500'],
+            'app_apk_url' => ['nullable', 'url', 'max:500'],
         ], [
             'shipping_sender_phone.regex' => 'Nomor telepon pengirim harus dimulai dengan 08, 628, +628, atau 02 dan hanya berisi angka.',
             'store_phone.regex' => 'Nomor telepon toko harus dimulai dengan 08, 628, +628, atau 02 dan hanya berisi angka.',
@@ -281,6 +283,7 @@ class SettingController extends Controller
             'app_update_message' => ['group' => 'app_update', 'type' => 'string'],
             'app_playstore_url' => ['group' => 'app_update', 'type' => 'string'],
             'app_appstore_url' => ['group' => 'app_update', 'type' => 'string'],
+            'app_apk_url' => ['group' => 'app_update', 'type' => 'string'],
         ];
 
         foreach ($settingConfigs as $key => $config) {

@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Services\RajaOngkirPaymentService;
 use App\Services\RajaOngkirShippingCostService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class RajaOngkirController extends Controller
 {
@@ -55,14 +57,41 @@ class RajaOngkirController extends Controller
         return response()->json($data);
     }
 
-    public function createPayment(Request $request)
+    public function createPayment(Request $request): JsonResponse
     {
-        $order_id = $request->order_id;
-        $payment_type = $request->payment_type;
-        $channel_code = $request->channel_code;
-        $amount = $request->amount;
+        $validator = Validator::make($request->all(), [
+            'order_id' => ['required', 'string'],
+            'payment_type' => ['required', 'string'],
+            'amount' => ['required', 'numeric'],
+            'channel_code' => ['nullable', 'string'],
+        ]);
 
-        $data = $this->rajaOngkirPaymentService->createPayment($order_id, $payment_type, $channel_code, $amount);
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => $validator->errors()->first(),
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $validated = $validator->validated();
+
+        $customerName = (string) $request->input('customer.name', $request->input('customer_name', ''));
+        $customerEmail = (string) $request->input('customer.email', $request->input('customer_email', ''));
+        $customerPhone = (string) $request->input('customer.phone', $request->input('customer_phone', ''));
+        $items = (array) $request->input('items', []);
+        $expiryDuration = (int) $request->input('expiry_duration', 3600);
+
+        $data = $this->rajaOngkirPaymentService->createPayment(
+            (string) $validated['order_id'],
+            (string) $validated['payment_type'],
+            $validated['channel_code'] ?? null,
+            (float) $validated['amount'],
+            $customerName,
+            $customerEmail,
+            $customerPhone,
+            $items,
+            $expiryDuration
+        );
 
         return response()->json($data);
     }

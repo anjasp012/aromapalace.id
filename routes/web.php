@@ -31,6 +31,8 @@ use Inertia\Inertia;
 Route::match(['get', 'post'], '/locale/{lang?}', [LocaleController::class, 'setLocale'])->name('locale.set');
 Route::get('/api/app-update', [AppUpdateController::class, 'check'])->name('app.update.check');
 Route::get('/api/app-version', [AppUpdateController::class, 'check'])->name('app.version.check');
+Route::get('/app-release.apk', [AppUpdateController::class, 'downloadApk'])->name('app.download.apk');
+Route::get('/download/apk', [AppUpdateController::class, 'downloadApk'])->name('app.download.apk.alias');
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');

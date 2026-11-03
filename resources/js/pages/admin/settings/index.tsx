@@ -92,6 +92,7 @@ export default function SettingsIndex({
         app_update_message: settings.app_update_message || 'Versi baru aplikasi Aroma Palace telah tersedia dengan peningkatan fitur dan stabilitas. Mohon perbarui aplikasi Anda untuk melanjutkan berbelanja.',
         app_playstore_url: settings.app_playstore_url || 'https://play.google.com/store/apps/details?id=com.aromapalace.app',
         app_appstore_url: settings.app_appstore_url || 'https://apps.apple.com/app/aromapalace/id6740000000',
+        app_apk_url: settings.app_apk_url || '',
     });
 
     const [showRajaOngkirPaymentKey, setShowRajaOngkirPaymentKey] = useState(false);
@@ -799,6 +800,25 @@ export default function SettingsIndex({
                                         />
                                         {errors.app_appstore_url && (
                                             <p className="text-xs text-destructive">{errors.app_appstore_url}</p>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-semibold text-foreground">
+                                            URL Langsung APK Android (Opsional)
+                                        </label>
+                                        <Input
+                                            type="url"
+                                            placeholder="https://storage.googleapis.com/.../Aroma-Palace.apk"
+                                            value={data.app_apk_url}
+                                            onChange={(e) => setData('app_apk_url', e.target.value)}
+                                            className="h-9 text-xs font-mono"
+                                        />
+                                        <p className="text-[11px] text-muted-foreground">
+                                            Bila dikosongkan, tombol unduh APK di website akan mengunduh file APK resmi langsung dari server butik (/app-release.apk).
+                                        </p>
+                                        {errors.app_apk_url && (
+                                            <p className="text-xs text-destructive">{errors.app_apk_url}</p>
                                         )}
                                     </div>
                                 </div>
