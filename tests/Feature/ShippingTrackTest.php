@@ -27,7 +27,7 @@ test('api can track shipment by awb from shipping table', function () {
         'order_id' => $order->id,
         'awb' => 'C2EJPUQM',
         'text' => 'Paketmu telah sampai di tujuan & diterima oleh Tugimin (YBS)',
-        'image' => ['https://cdn.kiriminaja.com/pod/lion_123.jpg'],
+        'image' => ['https://images.aromapalace.id/pod/lion_123.jpg'],
         'origin' => [
             'name' => 'oknatshop',
             'phone' => '08123456789',
@@ -58,7 +58,7 @@ test('api can track shipment by awb from shipping table', function () {
                 'time' => '2026-08-07 13:49',
                 'status' => 'finished_packages',
                 'note' => 'Paketmu telah sampai di tujuan & diterima oleh Tugimin (YBS)',
-                'image' => 'https://cdn.kiriminaja.com/pod/lion_123.jpg',
+                'image' => 'https://images.aromapalace.id/pod/lion_123.jpg',
             ],
         ],
     ]);
@@ -86,7 +86,7 @@ test('api can track shipment by awb from shipping table', function () {
     expect($data['histories'])->toHaveCount(4)
         // Ensure sorted descending (latest 13:49 on top)
         ->and($data['histories'][0]['note'])->toContain('Tugimin (YBS)')
-        ->and($data['images'])->toContain('https://cdn.kiriminaja.com/pod/lion_123.jpg');
+        ->and($data['images'])->toContain('https://images.aromapalace.id/pod/lion_123.jpg');
 });
 
 test('api returns 404 for non-existent awb', function () {

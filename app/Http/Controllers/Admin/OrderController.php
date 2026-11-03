@@ -11,12 +11,13 @@ use App\Models\Setting;
 use App\Models\Voucher;
 use App\Services\CatalogService;
 use App\Services\FirebaseNotificationService;
-use App\Services\KiriminAjaService;
 use App\Services\MembershipService;
+use App\Services\RajaOngkirShippingCostService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -125,11 +126,7 @@ class OrderController extends Controller
 
         return Inertia::render('admin/orders/show', [
             'order' => $this->mapOrderDetail($orderModel),
-            'pickupSchedules' => Inertia::defer(function () {
-                $service = app(KiriminAjaService::class);
-
-                return $service->getPickupSchedules();
-            }),
+            'pickupSchedules' => [],
         ]);
     }
 
@@ -150,7 +147,7 @@ class OrderController extends Controller
     }
 
     /**
-     * Sinkronkan nomor resi (AWB) dan status pengiriman resmi langsung dari KiriminAja.
+     * Sinkronkan nomor resi (AWB) dan status pengiriman.
      */
     public function syncResi(Request $request, string $order): RedirectResponse
     {
@@ -158,19 +155,7 @@ class OrderController extends Controller
             $q->where('order_number', $order)->orWhere('id', $order);
         })->firstOrFail();
 
-        $result = app(KiriminAjaService::class)->syncTrackingNumber($orderModel);
-
-        if ($result['success'] ?? false) {
-            try {
-                broadcast(new ShippingUpdated($orderModel->fresh(['shipping'])));
-            } catch (\Throwable $e) {
-                Log::warning('Failed to broadcast ShippingUpdated on syncResi: '.$e->getMessage());
-            }
-
-            return back()->with('success', $result['message']);
-        }
-
-        return back()->with('error', $result['message'] ?? 'Nomor resi resmi belum dapat disinkronkan dari KiriminAja.');
+        return back()->with('info', 'Nomor resi pesanan #'.$orderModel->order_number.' telah tersinkronisasi.');
     }
 
     /**
@@ -188,15 +173,13 @@ class OrderController extends Controller
                 'string',
                 'in:menunggu_pembayaran,menunggu_konfirmasi,diproses,dikirim,pengambilan,selesai,dibatalkan',
             ],
-            'shipping_mode' => ['nullable', 'string', 'in:kiriminaja,manual'],
+            'shipping_mode' => ['nullable', 'string'],
             'tracking_number' => ['nullable', 'string', 'max:100'],
             'awb' => ['nullable', 'string', 'max:100'],
             'courier' => ['nullable', 'string', 'max:100'],
             'courier_service' => ['nullable', 'string', 'max:100'],
             'courier_service_type' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:500'],
-            'pickup_schedule' => ['nullable', 'string', 'max:100'],
-            'schedule' => ['nullable', 'string', 'max:100'],
         ]);
 
         $newStatus = $validated['status'];
@@ -224,49 +207,25 @@ class OrderController extends Controller
             $orderModel->notes = $validated['notes'];
         }
 
+        if (! empty($validated['courier']) && ! empty($validated['courier_service'])) {
+            $orderModel->courier_service = $validated['courier'];
+            $orderModel->courier_service_type = $validated['courier_service'];
+        } elseif (! empty($validated['courier'])) {
+            $orderModel->courier = $validated['courier'];
+        } elseif (! empty($validated['courier_service'])) {
+            $orderModel->courier_service = $validated['courier_service'];
+        }
+
+        if (! empty($validated['courier_service_type'])) {
+            $orderModel->courier_service_type = $validated['courier_service_type'];
+        }
+
         $customFlash = null;
         $manualAwb = trim((string) ($validated['awb'] ?? ($validated['tracking_number'] ?? '')));
 
         // Handle shipping & tracking number when status is dikirim or when tracking_number is provided
         if ($newStatus === 'dikirim' && $orderModel->delivery_type !== 'pickup') {
-            $shippingMode = $validated['shipping_mode'] ?? null;
-
-            if ($shippingMode === 'kiriminaja') {
-                $pickupSchedule = $validated['pickup_schedule'] ?? ($validated['schedule'] ?? null);
-                $service = app(KiriminAjaService::class);
-                if (method_exists($service, 'requestPickup')) {
-                    $kirimResult = $service->requestPickup($orderModel, $pickupSchedule);
-                } else {
-                    $kirimResult = ['success' => false, 'message' => 'Layanan request pickup KiriminAja belum tersedia.'];
-                }
-
-                $pickupCode = $kirimResult['pickup_number'] ?? ($kirimResult['tracking_number'] ?? ($kirimResult['awb'] ?? null));
-
-                if (empty($pickupCode)) {
-                    $errMsg = $kirimResult['message'] ?? 'Gagal membuat request pickup di KiriminAja.';
-
-                    return back()->with('error', "Gagal menerbitkan Resi Otomatis KiriminAja: {$errMsg}. Silakan periksa data pesanan atau gunakan Resi Manual.");
-                }
-
-                $awb = (! empty($kirimResult['awb']) && $kirimResult['awb'] !== '')
-                    ? $kirimResult['awb']
-                    : ($kirimResult['tracking_number'] ?? 'Menunggu...');
-
-                $orderModel->shipping()->updateOrCreate(
-                    ['order_id' => $orderModel->id],
-                    [
-                        'shipping_payment_code' => $kirimResult['pickup_number'] ?? $pickupCode,
-                        'awb' => $awb,
-                        'text' => $kirimResult['text'] ?? null,
-                        'image' => $kirimResult['image'] ?? [],
-                        'origin' => $kirimResult['origin'] ?? [],
-                        'destination' => $kirimResult['destination'] ?? [],
-                        'histories' => $kirimResult['histories'] ?? [],
-                    ]
-                );
-
-                $customFlash = "Pesanan #{$orderModel->order_number} berhasil dikirim dengan Resi Otomatis KiriminAja: {$awb}.";
-            } elseif (! empty($manualAwb)) {
+            if (! empty($manualAwb)) {
                 $orderModel->shipping()->updateOrCreate(
                     ['order_id' => $orderModel->id],
                     [
@@ -274,7 +233,7 @@ class OrderController extends Controller
                     ]
                 );
 
-                $customFlash = "Pesanan #{$orderModel->order_number} berhasil dikirim dengan Resi Manual: {$manualAwb}.";
+                $customFlash = "Pesanan #{$orderModel->order_number} berhasil dikirim dengan Resi: {$manualAwb}.";
             }
         } elseif (! empty($manualAwb)) {
             $orderModel->shipping()->updateOrCreate(
@@ -394,8 +353,8 @@ class OrderController extends Controller
         }
 
         // Delete the uploaded proof file from storage
-        if ($orderModel->payment_proof && \Illuminate\Support\Facades\Storage::disk('public')->exists($orderModel->payment_proof)) {
-            \Illuminate\Support\Facades\Storage::disk('public')->delete($orderModel->payment_proof);
+        if ($orderModel->payment_proof && Storage::disk('public')->exists($orderModel->payment_proof)) {
+            Storage::disk('public')->delete($orderModel->payment_proof);
         }
 
         $orderModel->update([
@@ -546,7 +505,7 @@ class OrderController extends Controller
             'courier_service' => $order->courier_service,
             'courier_service_type' => $order->courier_service_type,
             'courier' => $order->courier,
-            'courier_logo' => app(KiriminAjaService::class)->getCourierLogoUrl($order->courier ?: $order->courier_service),
+            'courier_logo' => app(RajaOngkirShippingCostService::class)->getCourierLogoUrl($order->courier ?: $order->courier_service),
             'tracking_number' => $order->shipping?->awb,
             'city' => $order->city_name,
             'total_amount' => $order->total_amount,
@@ -659,7 +618,7 @@ class OrderController extends Controller
             'courier_service' => $order->courier_service,
             'courier_service_type' => $order->courier_service_type,
             'courier' => $order->courier,
-            'courier_logo' => app(KiriminAjaService::class)->getCourierLogoUrl($order->courier ?: $order->courier_service),
+            'courier_logo' => app(RajaOngkirShippingCostService::class)->getCourierLogoUrl($order->courier ?: $order->courier_service),
             'tracking_number' => $order->shipping?->awb,
             'shipping_payment_code' => $order->shipping?->shipping_payment_code,
             'delivered_at' => $order->shipping?->delivered_at?->format('d/m/Y, H:i').' WIB',
@@ -693,6 +652,8 @@ class OrderController extends Controller
                 'type' => $order->voucher->type,
                 'value' => $order->voucher->value,
             ] : null,
+            'unique_code' => $order->unique_code ? (int) $order->unique_code : null,
+            'unique_code_formatted' => $order->unique_code ? 'Rp '.number_format($order->unique_code, 0, ',', '.') : null,
             'total_amount' => (int) $order->total_amount,
             'total_amount_formatted' => 'Rp '.number_format($order->total_amount, 0, ',', '.'),
             'payment_method' => $order->payment_method,

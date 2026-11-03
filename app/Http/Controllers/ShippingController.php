@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\Shipping;
-use App\Services\KiriminAjaService;
+use App\Services\RajaOngkirShippingCostService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -94,7 +94,7 @@ class ShippingController extends Controller
                     'order_number' => $order?->order_number,
                     'courier' => $order?->courier ?: 'Kurir Pengiriman',
                     'courier_service' => $order?->courier_service ?: 'EXPRESS',
-                    'courier_logo' => app(KiriminAjaService::class)->getCourierLogoUrl($order?->courier ?: $order?->courier_service),
+                    'courier_logo' => app(RajaOngkirShippingCostService::class)->getCourierLogoUrl($order?->courier ?: $order?->courier_service),
                     'sender' => $sender,
                     'recipient' => $recipient,
                     'text' => $shipping->text ?: 'Status pengiriman aktif',
@@ -133,7 +133,7 @@ class ShippingController extends Controller
                     'order_number' => $order->order_number,
                     'courier' => $order->courier ?: 'Kurir Pengiriman',
                     'courier_service' => $order->courier_service ?: 'EXPRESS',
-                    'courier_logo' => app(KiriminAjaService::class)->getCourierLogoUrl($order->courier ?: $order->courier_service),
+                    'courier_logo' => app(RajaOngkirShippingCostService::class)->getCourierLogoUrl($order->courier ?: $order->courier_service),
                     'sender' => $sender,
                     'recipient' => $recipient,
                     'text' => 'Nomor resi telah diterbitkan.',

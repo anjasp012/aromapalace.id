@@ -30,6 +30,8 @@ interface PaymentProps {
         payment_proof_uploaded_at_formatted?: string | null;
         payment_sender_name?: string | null;
         payment_notes?: string | null;
+        unique_code?: number | null;
+        unique_code_formatted?: string | null;
         total_amount: number;
         total_amount_formatted: string;
     };
@@ -585,6 +587,27 @@ function PaymentContent({ order }: PaymentProps) {
                                             </button>
                                         </div>
                                     </div>
+
+                                    {order.unique_code ? (
+                                        <>
+                                            <div className="border-t border-border/60" />
+                                            <div className="flex items-center justify-between text-xs">
+                                                <span className="text-muted-foreground">{isEn ? 'Unique Verification Code' : 'Kode Unik Pembayaran'}</span>
+                                                <span className="font-bold text-amber-600 dark:text-amber-400 font-mono">+{order.unique_code_formatted || order.unique_code}</span>
+                                            </div>
+                                            <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-900 dark:text-amber-200 leading-relaxed space-y-1">
+                                                <p className="font-bold flex items-center gap-1">
+                                                    <span>⚠️</span>
+                                                    <span>{isEn ? 'IMPORTANT: Transfer Exact Amount' : 'PENTING: Transfer Tepat Hingga 3 Digit Terakhir'}</span>
+                                                </p>
+                                                <p>
+                                                    {isEn
+                                                        ? `Please transfer the exact amount of ${order.total_amount_formatted} (including unique code +${order.unique_code}) so our curation team can automatically verify your transaction.`
+                                                        : `Mohon transfer tepat sejumlah ${order.total_amount_formatted} (termasuk 3 digit kode unik +${order.unique_code}) agar sistem butik kami dapat langsung memverifikasi pembayaran Anda.`}
+                                                </p>
+                                            </div>
+                                        </>
+                                    ) : null}
                                 </div>
 
                             </div>

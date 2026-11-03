@@ -4,6 +4,7 @@ use App\Models\CartItem;
 use App\Models\Order;
 use App\Models\PaymentMethod;
 use App\Models\ProductVariant;
+use App\Models\Setting;
 use App\Models\User;
 
 test('guest cannot access admin payment method routes and is redirected to login', function () {
@@ -298,5 +299,55 @@ test('admin can filter payment methods by type in index', function () {
             ->where('filters.type', 'manual')
             ->has('metrics.automatic_methods')
             ->has('metrics.manual_methods')
+            ->has('manualUniqueCodeEnabled')
         );
+});
+
+test('admin can toggle global unique code setting for manual payments', function () {
+    $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
+    $admin = User::factory()->admin()->create();
+
+    $response = $this->actingAs($admin)
+        ->post("http://{$adminDomain}/manajemen-pembayaran/settings/unique-code", [
+            'enabled' => false,
+        ]);
+
+    $response->assertRedirect();
+    expect(Setting::get('manual_payment_unique_code'))->toBe('0');
+
+    $response2 = $this->actingAs($admin)
+        ->post("http://{$adminDomain}/manajemen-pembayaran/settings/unique-code", [
+            'enabled' => true,
+        ]);
+
+    $response2->assertRedirect();
+    expect(Setting::get('manual_payment_unique_code'))->toBe('1');
+});
+
+test('admin can toggle unique code on individual manual payment method', function () {
+    $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
+    $admin = User::factory()->admin()->create();
+
+    $pm = PaymentMethod::create([
+        'name' => 'BCA Manual Test',
+        'code' => 'manual_bca_test',
+        'type' => 'manual',
+        'account_number' => '12345678',
+        'account_name' => 'Test Account',
+        'is_active' => true,
+        'use_unique_code' => true,
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->patch("http://{$adminDomain}/manajemen-pembayaran/{$pm->id}/toggle-unique-code");
+
+    $response->assertRedirect();
+    $pm->refresh();
+    expect($pm->use_unique_code)->toBeFalse();
+
+    $this->actingAs($admin)
+        ->patch("http://{$adminDomain}/manajemen-pembayaran/{$pm->id}/toggle-unique-code");
+
+    $pm->refresh();
+    expect($pm->use_unique_code)->toBeTrue();
 });

@@ -1,7 +1,5 @@
 <?php
 
-use App\Models\Order;
-use App\Models\Shipping;
 use App\Models\User;
 use App\Models\UserAddress;
 
@@ -84,59 +82,6 @@ test('authenticated user can update address with new latitude and longitude', fu
     expect($address->latitude)->toBe(-6.875008)
         ->and($address->longitude)->toBe(107.615952)
         ->and($address->label)->toBe('Kantor Baru');
-});
-
-test('kiriminaja webhook populates shipping table', function () {
-    $user = User::factory()->create();
-    $order = Order::create([
-        'order_number' => 'ARPL-20261025-WH01',
-        'user_id' => $user->id,
-        'delivery_type' => 'delivery',
-        'recipient_name' => 'Andi',
-        'recipient_phone' => '081234567890',
-        'address' => 'Jl. Ir H Djuanda No. 123',
-        'courier' => 'JNE Express',
-        'shipping_cost' => 15000,
-        'payment_method' => 'qris',
-        'payment_status' => 'paid',
-        'status' => 'dikirim',
-        'subtotal' => 250000,
-        'total_amount' => 265000,
-    ]);
-
-    $callbackPayload = [
-        'order_id' => 'ARPL-20261025-WH01',
-        'awb' => 'AWB-KIRIMINAJA-998877',
-        'text' => 'Paket sedang diantar ke alamat penerima',
-        'image' => ['https://cdn.kiriminaja.com/pod/123.jpg'],
-        'origin' => [
-            'name' => 'Aroma Palace Store',
-            'phone' => '081288889999',
-            'address' => 'Jl. Kemang Raya No. 10',
-        ],
-        'destination' => [
-            'name' => 'Andi',
-            'phone' => '081234567890',
-            'address' => 'Jl. Ir H Djuanda No. 123',
-            'latitude' => -6.875,
-            'longitude' => 107.615,
-        ],
-        'histories' => [
-            ['time' => '2026-10-25 10:00:00', 'status' => 'Pick Up', 'note' => 'Paket telah di-pickup kurir'],
-            ['time' => '2026-10-25 11:00:00', 'status' => 'On Delivery', 'note' => 'Paket sedang diantar kurir'],
-        ],
-    ];
-
-    $response = $this->postJson('/webhook/kiriminaja', $callbackPayload);
-    $response->assertOk()
-        ->assertJson(['status' => true]);
-
-    $shipping = Shipping::where('order_id', $order->id)->first();
-    expect($shipping)->not->toBeNull()
-        ->and($shipping->awb)->toBe('AWB-KIRIMINAJA-998877')
-        ->and($shipping->text)->toBe('Paket sedang diantar ke alamat penerima')
-        ->and($shipping->destination['latitude'])->toBe(-6.875)
-        ->and($shipping->histories)->toHaveCount(2);
 });
 
 test('user address rejects phone number not starting with 08, 628, +628, or 02', function () {

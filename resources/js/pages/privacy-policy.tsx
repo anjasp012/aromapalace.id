@@ -45,7 +45,7 @@ export default function PrivacyPolicyPage({
                             <strong className="text-foreground">Account Credentials:</strong> Hashed passwords, Royale Club membership tier status, collected reward points, and consultation preferences.
                         </li>
                         <li>
-                            <strong className="text-foreground">Payment &amp; Transaction Details:</strong> Order items, invoice numbers, chosen payment channel (QRIS, Virtual Account, or Bank Transfer). We do not store raw card credentials; all financial processing is secured via certified national gateways (Pakasir / Bank switches).
+                            <strong className="text-foreground">Payment &amp; Transaction Details:</strong> Order items, invoice numbers, chosen payment channel (QRIS, Virtual Account, or Bank Transfer). We do not store raw card credentials; all financial processing is secured via certified national gateways (RajaOngkir / Bank switches).
                         </li>
                         <li>
                             <strong className="text-foreground">Technical &amp; Push Data:</strong> Device model, operating system (iOS/Android), IP address, language settings, and Firebase Cloud Messaging (FCM) device push tokens to deliver real-time order status updates.
@@ -65,7 +65,7 @@ export default function PrivacyPolicyPage({
                             <strong className="text-foreground">Data Akun &amp; Keanggotaan:</strong> Kata sandi terenkripsi (hash), tier keanggotaan Royale Club, saldo poin wewangian, dan riwayat konsultasi olfaktori.
                         </li>
                         <li>
-                            <strong className="text-foreground">Transaksi &amp; Pembayaran:</strong> Rincian produk pesanan, nomor faktur, dan metode pembayaran yang dipilih (QRIS, VA Bank). Kami tidak pernah menyimpan nomor kartu kredit/debit secara langsung; pembayaran diproses melalui gerbang pembayaran terlisensi Bank Indonesia (Pakasir).
+                            <strong className="text-foreground">Transaksi &amp; Pembayaran:</strong> Rincian produk pesanan, nomor faktur, dan metode pembayaran yang dipilih (QRIS, VA Bank). Kami tidak pernah menyimpan nomor kartu kredit/debit secara langsung; pembayaran diproses melalui gerbang pembayaran terlisensi Bank Indonesia (RajaOngkir).
                         </li>
                         <li>
                             <strong className="text-foreground">Informasi Perangkat &amp; Token Notifikasi:</strong> Model perangkat, versi sistem operasi (iOS/Android), alamat IP, preferensi bahasa, serta token Firebase Cloud Messaging (FCM) untuk pengiriman notifikasi status pesanan secara langsung.
@@ -155,7 +155,7 @@ export default function PrivacyPolicyPage({
                             <strong className="text-foreground">Logistics &amp; Couriers:</strong> Delivery couriers (JNE, SiCepat, Anteraja, and Boutique private couriers) receive only your recipient name, destination address, and phone number necessary for package handover.
                         </li>
                         <li>
-                            <strong className="text-foreground">Payment Gateways:</strong> Pakasir, bank payment gateways, and QRIS processors for settlement verification.
+                            <strong className="text-foreground">Payment Gateways:</strong> RajaOngkir, bank payment gateways, and QRIS processors for settlement verification.
                         </li>
                         <li>
                             <strong className="text-foreground">Push Infrastructure:</strong> Google Firebase Cloud Messaging for delivering real-time notification tokens.
@@ -175,7 +175,7 @@ export default function PrivacyPolicyPage({
                             <strong className="text-foreground">Mitra Logistik &amp; Kurir:</strong> Layanan ekspedisi (JNE, SiCepat, Anteraja, dan Kurir Privat Butik) hanya menerima nama, alamat pengantaran, dan nomor telepon penerima yang esensial demi kelancaran serah terima paket.
                         </li>
                         <li>
-                            <strong className="text-foreground">Mitra Pembayaran Resmi:</strong> Gateway Pakasir dan penyelenggara QRIS terdaftar Bank Indonesia untuk verifikasi pelunasan tagihan.
+                            <strong className="text-foreground">Mitra Pembayaran Resmi:</strong> Gateway RajaOngkir dan penyelenggara QRIS terdaftar Bank Indonesia untuk verifikasi pelunasan tagihan.
                         </li>
                         <li>
                             <strong className="text-foreground">Infrastruktur Notifikasi:</strong> Google Firebase Cloud Messaging untuk menyalurkan sinyal notifikasi ke ponsel Anda.

@@ -4,7 +4,6 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Store;
 use App\Models\User;
-use App\Services\KiriminAjaService;
 
 test('guest cannot access admin routes and is redirected to login', function () {
     $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
@@ -228,20 +227,21 @@ test('admin can update status to dikirim with manual tracking number and selesai
     expect($order->status)->toBe('selesai');
 });
 
-test('admin can ship order with kiriminaja automatic tracking number', function () {
+test('admin can update order courier and tracking number', function () {
     $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
     $admin = User::factory()->admin()->create();
     $customer = User::factory()->create();
 
     $order = Order::create([
-        'order_number' => 'ARPL-KIRIMIN-'.uniqid(),
+        'order_number' => 'ARPL-SHIP-'.uniqid(),
         'user_id' => $customer->id,
         'delivery_type' => 'delivery',
         'recipient_name' => 'Citra Kirana',
         'recipient_phone' => '081234567897',
         'address' => 'Jl. Senopati No. 20',
         'city' => 'Jakarta Selatan',
-        'courier' => 'JNE Express Reguler',
+        'courier' => 'JNE',
+        'courier_service' => 'REG',
         'shipping_cost' => 18000,
         'payment_method' => 'qris',
         'payment_status' => 'paid',
@@ -251,79 +251,21 @@ test('admin can ship order with kiriminaja automatic tracking number', function 
         'total_amount' => 368000,
     ]);
 
-    // Mock KiriminAjaService
-    $mockService = Mockery::mock(KiriminAjaService::class);
-    $mockService->shouldReceive('requestPickup')
-        ->once()
-        ->with(Mockery::on(fn ($o) => $o->id === $order->id), Mockery::any())
-        ->andReturn([
-            'success' => true,
-            'tracking_number' => 'XID-9998887776',
-            'courier' => 'JNE Express Reguler',
-            'source' => 'kiriminaja_live',
-            'message' => 'Resi otomatis KiriminAja berhasil diterbitkan (XID-9998887776).',
-        ]);
-    $this->app->instance(KiriminAjaService::class, $mockService);
-
     $response = $this->actingAs($admin)
         ->patch("http://{$adminDomain}/manajemen-pesanan/{$order->order_number}/status", [
             'status' => 'dikirim',
-            'shipping_mode' => 'kiriminaja',
+            'awb' => 'XID-9998887776',
+            'courier' => 'JNT',
+            'courier_service' => 'EZ',
         ]);
 
     $response->assertRedirect();
     $order->refresh();
     expect($order->status)->toBe('dikirim')
+        ->and($order->courier)->toBe('JNT EZ')
+        ->and($order->courier_service)->toBe('JNT')
+        ->and($order->courier_service_type)->toBe('EZ')
         ->and($order->shipping?->awb)->toBe('XID-9998887776');
-});
-
-test('admin receives flash error when kiriminaja request pickup fails', function () {
-    $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
-    $admin = User::factory()->admin()->create();
-    $customer = User::factory()->create();
-
-    $order = Order::create([
-        'order_number' => 'ARPL-FAIL-'.uniqid(),
-        'user_id' => $customer->id,
-        'delivery_type' => 'delivery',
-        'recipient_name' => 'Citra Kirana',
-        'recipient_phone' => '081234567897',
-        'address' => 'Jl. Senopati No. 20',
-        'city' => 'Jakarta Selatan',
-        'courier' => 'JNE Express Reguler',
-        'shipping_cost' => 18000,
-        'payment_method' => 'qris',
-        'payment_status' => 'paid',
-        'status' => 'diproses',
-        'subtotal' => 350000,
-        'discount_amount' => 0,
-        'total_amount' => 368000,
-    ]);
-
-    // Mock failure
-    $mockService = Mockery::mock(KiriminAjaService::class);
-    $mockService->shouldReceive('requestPickup')
-        ->once()
-        ->andReturn([
-            'success' => false,
-            'tracking_number' => '',
-            'courier' => 'JNE Express Reguler',
-            'source' => 'kiriminaja_error',
-            'message' => 'Saldo KiriminAja tidak mencukupi untuk biaya pengiriman.',
-        ]);
-    $this->app->instance(KiriminAjaService::class, $mockService);
-
-    $response = $this->actingAs($admin)
-        ->patch("http://{$adminDomain}/manajemen-pesanan/{$order->order_number}/status", [
-            'status' => 'dikirim',
-            'shipping_mode' => 'kiriminaja',
-        ]);
-
-    $response->assertSessionHas('error');
-    $order->refresh();
-    // Status must remain diproses, not changed to dikirim!
-    expect($order->status)->toBe('diproses')
-        ->and($order->shipping)->toBeNull();
 });
 
 test('admin cannot delete an active or completed order', function () {

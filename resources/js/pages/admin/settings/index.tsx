@@ -23,6 +23,7 @@ import {
     Smartphone,
     ArrowUpCircle,
     ShieldAlert,
+    CreditCard,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -56,12 +57,14 @@ export default function SettingsIndex({
         store_whatsapp: settings.store_whatsapp || '',
         store_description: settings.store_description || '',
 
-        // Integrasi KiriminAja (Kredensial & Logistik)
-        kiriminaja_mode: settings.kiriminaja_mode || 'staging',
-        kiriminaja_api_key: settings.kiriminaja_api_key || '',
-        kiriminaja_prefix: settings.kiriminaja_prefix || 'ARPL',
-        kiriminaja_pin: settings.kiriminaja_pin || '123456',
-        // Alamat Origin Pengiriman & KiriminAja
+        // Integrasi RajaOngkir (Payment Gateway & Ongkir)
+        rajaongkir_payment_mode: settings.rajaongkir_payment_mode || 'sandbox',
+        rajaongkir_payment_key: settings.rajaongkir_payment_key || '',
+        rajaongkir_callback_api_key: settings.rajaongkir_callback_api_key || '',
+        rajaongkir_callback_url: settings.rajaongkir_callback_url || '',
+        rajaongkir_shipping_key: settings.rajaongkir_shipping_key || '',
+        rajaongkir_shipping_origin: settings.rajaongkir_shipping_origin || '291',
+        // Alamat Origin Pengiriman Toko
         shipping_sender_name: settings.shipping_sender_name || '',
         shipping_sender_phone: settings.shipping_sender_phone || '',
         shipping_address: settings.shipping_address || '',
@@ -91,7 +94,9 @@ export default function SettingsIndex({
         app_appstore_url: settings.app_appstore_url || 'https://apps.apple.com/app/aromapalace/id6740000000',
     });
 
-    const [showApiKey, setShowApiKey] = useState(false);
+    const [showRajaOngkirPaymentKey, setShowRajaOngkirPaymentKey] = useState(false);
+    const [showRajaOngkirCallbackKey, setShowRajaOngkirCallbackKey] = useState(false);
+    const [showRajaOngkirShippingKey, setShowRajaOngkirShippingKey] = useState(false);
 
     // Coverage hierarchy lists initialized with server-side preloaded data or database values
     const [provinces, setProvinces] = useState<SearchableOption[]>(() => {
@@ -336,7 +341,7 @@ export default function SettingsIndex({
     return (
         <AdminLayout
             title="Pengaturan Toko & Pengiriman"
-            subtitle="Kelola profil kontak official toko dan alamat asal (origin) ekspedisi KiriminAja"
+            subtitle="Kelola profil kontak official toko dan alamat asal (origin) pengiriman RajaOngkir"
         >
             <Head title="Pengaturan Toko & Pengiriman - Admin Aroma Palace" />
 
@@ -349,11 +354,11 @@ export default function SettingsIndex({
                                 <Store className="size-5" />
                             </span>
                             <h1 className="text-xl font-bold tracking-tight text-foreground">
-                                Pengaturan Toko &amp; Origin KiriminAja
+                                Pengaturan Toko &amp; Origin Pengiriman
                             </h1>
                         </div>
                         <p className="text-xs sm:text-sm text-muted-foreground">
-                            Data kontak akan ditampilkan pada invoice dan CS pelanggan. Alamat asal digunakan oleh mesin ongkir KiriminAja untuk kalkulasi tarif dan pickup otomatis kurir.
+                            Data kontak akan ditampilkan pada invoice dan CS pelanggan. Alamat asal digunakan oleh mesin ongkir RajaOngkir untuk kalkulasi tarif ekspedisi kurir.
                         </p>
                     </div>
 
@@ -488,164 +493,185 @@ export default function SettingsIndex({
                             </CardContent>
                         </Card>
 
-                        {/* BAGIAN 1B: INTEGRASI KIRIMINAJA (MODE & API KEY) */}
+                        {/* BAGIAN 1B: INTEGRASI RAJAONGKIR (PAYMENT GATEWAY & ONGKIR) */}
                         <Card className="shadow-xs border-border/80">
                             <CardHeader className="pb-4">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2 text-[#4A070B] dark:text-red-400">
-                                        <Key className="size-4.5" />
-                                        <CardTitle className="text-base font-bold">Integrasi KiriminAja</CardTitle>
+                                        <CreditCard className="size-4.5" />
+                                        <CardTitle className="text-base font-bold">Integrasi RajaOngkir</CardTitle>
                                     </div>
                                     <Badge
                                         variant="outline"
                                         className={
-                                            data.kiriminaja_mode === 'production'
+                                            data.rajaongkir_payment_mode === 'production'
                                                 ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-300 font-semibold text-[11px]'
                                                 : 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-300 font-semibold text-[11px]'
                                         }
                                     >
-                                        {data.kiriminaja_mode === 'production' ? 'Production (Live)' : 'Staging (Sandbox)'}
+                                        {data.rajaongkir_payment_mode === 'production' ? 'Production (Live)' : 'Sandbox (Uji Coba)'}
                                     </Badge>
                                 </div>
                                 <CardDescription className="text-xs">
-                                    Kredensial API KiriminAja resmi untuk cek ongkir otomatis dan penerbitan Resi Otomatis (Request Pickup kurir).
+                                    Konfigurasi kredensial Payment Gateway &amp; kalkulasi ongkos kirim RajaOngkir (Komerce Collaborator).
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                {/* Mode Selection */}
+                                {/* Mode Lingkungan Payment */}
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-semibold text-foreground flex items-center justify-between">
-                                        <span>Mode Lingkungan API</span>
+                                        <span>Mode Lingkungan Pembayaran</span>
                                         <span className="text-destructive">*</span>
                                     </label>
                                     <div className="grid grid-cols-2 gap-2">
                                         <button
                                             type="button"
-                                            onClick={() => setData('kiriminaja_mode', 'staging')}
+                                            onClick={() => setData('rajaongkir_payment_mode', 'sandbox')}
                                             className={`p-2.5 rounded-xl border text-left transition-all ${
-                                                data.kiriminaja_mode === 'staging'
+                                                data.rajaongkir_payment_mode === 'sandbox'
                                                     ? 'border-amber-500 bg-amber-500/10 text-amber-950 dark:text-amber-200 ring-1 ring-amber-500'
                                                     : 'border-border/80 hover:bg-muted/40 text-muted-foreground'
                                             }`}
                                         >
-                                            <div className="font-bold text-xs">Staging (Sandbox)</div>
-                                            <div className="text-[10px] opacity-80 mt-0.5">tdev.kiriminaja.com (Uji coba)</div>
+                                            <div className="font-bold text-xs">Sandbox (Uji Coba)</div>
+                                            <div className="text-[10px] opacity-80 mt-0.5">api-sandbox.collaborator.komerce.id</div>
                                         </button>
 
                                         <button
                                             type="button"
-                                            onClick={() => setData('kiriminaja_mode', 'production')}
+                                            onClick={() => setData('rajaongkir_payment_mode', 'production')}
                                             className={`p-2.5 rounded-xl border text-left transition-all ${
-                                                data.kiriminaja_mode === 'production'
+                                                data.rajaongkir_payment_mode === 'production'
                                                     ? 'border-[#4A070B] bg-[#4A070B]/10 text-[#4A070B] dark:text-red-300 ring-1 ring-[#4A070B]'
                                                     : 'border-border/80 hover:bg-muted/40 text-muted-foreground'
                                             }`}
                                         >
                                             <div className="font-bold text-xs">Production (Live)</div>
-                                            <div className="text-[10px] opacity-80 mt-0.5">client.kiriminaja.com (Nyata)</div>
+                                            <div className="text-[10px] opacity-80 mt-0.5">api.collaborator.komerce.id</div>
                                         </button>
                                     </div>
-                                    {errors.kiriminaja_mode && (
-                                        <p className="text-xs text-destructive">{errors.kiriminaja_mode}</p>
+                                    {errors.rajaongkir_payment_mode && (
+                                        <p className="text-xs text-destructive">{errors.rajaongkir_payment_mode}</p>
                                     )}
                                 </div>
 
-                                {/* API Key Input */}
+                                {/* Payment API Key */}
                                 <div className="space-y-1.5">
                                     <div className="flex items-center justify-between">
-                                        <label className="text-xs font-semibold text-foreground">
-                                            API Key / Token KiriminAja
-                                        </label>
+                                        <label className="text-xs font-semibold text-foreground">API Key Pembayaran (x-api-key)</label>
                                         <button
                                             type="button"
-                                            onClick={() => setShowApiKey(!showApiKey)}
-                                            className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1 font-medium"
+                                            onClick={() => setShowRajaOngkirPaymentKey(!showRajaOngkirPaymentKey)}
+                                            className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1"
                                         >
-                                            {showApiKey ? (
-                                                <>
-                                                    <EyeOff className="size-3" />
-                                                    <span>Sembunyikan</span>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Eye className="size-3" />
-                                                    <span>Lihat Token</span>
-                                                </>
-                                            )}
+                                            {showRajaOngkirPaymentKey ? <EyeOff className="size-3" /> : <Eye className="size-3" />}
+                                            {showRajaOngkirPaymentKey ? 'Sembunyikan' : 'Lihat'}
                                         </button>
                                     </div>
-                                    <div className="relative">
-                                        <Input
-                                            type={showApiKey ? 'text' : 'password'}
-                                            placeholder="v4.local... atau token production dari KiriminAja"
-                                            value={data.kiriminaja_api_key}
-                                            onChange={(e) => setData('kiriminaja_api_key', e.target.value)}
-                                            className="h-10 text-xs font-mono pr-9"
-                                        />
-                                        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
-                                            <Key className="size-3.5" />
-                                        </div>
-                                    </div>
-                                    {errors.kiriminaja_api_key && (
-                                        <p className="text-xs text-destructive">{errors.kiriminaja_api_key}</p>
-                                    )}
-
-                                    {/* Warning banner for Staging Token in Production Mode */}
-                                    {data.kiriminaja_mode === 'production' && data.kiriminaja_api_key?.startsWith('v4.local.') && (
-                                        <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs flex items-start gap-2">
-                                            <AlertCircle className="size-4 shrink-0 mt-0.5 text-amber-600" />
-                                            <div className="leading-relaxed">
-                                                <strong>Perhatian:</strong> Token saat ini berawalan <code>v4.local...</code> (token Staging/Sandbox). Server KiriminAja Production akan menolak token ini dengan status <code>Unauthorized.</code>. Masukkan API Key Production dari dashboard KiriminAja Anda, atau ubah mode ke <strong>Staging</strong>.
-                                            </div>
-                                        </div>
+                                    <Input
+                                        type={showRajaOngkirPaymentKey ? 'text' : 'password'}
+                                        value={data.rajaongkir_payment_key}
+                                        onChange={(e) => setData('rajaongkir_payment_key', e.target.value)}
+                                        placeholder="Masukkan API Key Pembayaran RajaOngkir..."
+                                        className="text-xs font-mono"
+                                    />
+                                    {errors.rajaongkir_payment_key && (
+                                        <p className="text-xs text-destructive">{errors.rajaongkir_payment_key}</p>
                                     )}
                                 </div>
 
-                                {/* Prefix Order ID */}
+                                {/* Callback API Key (Signature Secret) */}
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-foreground flex items-center justify-between">
-                                        <span>Prefix Order ID KiriminAja</span>
-                                        <span className="text-[10px] text-muted-foreground font-mono">Maks. 10 karakter</span>
-                                    </label>
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-xs font-semibold text-foreground">Callback API Key (Webhook Secret HMAC)</label>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowRajaOngkirCallbackKey(!showRajaOngkirCallbackKey)}
+                                            className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1"
+                                        >
+                                            {showRajaOngkirCallbackKey ? <EyeOff className="size-3" /> : <Eye className="size-3" />}
+                                            {showRajaOngkirCallbackKey ? 'Sembunyikan' : 'Lihat'}
+                                        </button>
+                                    </div>
+                                    <Input
+                                        type={showRajaOngkirCallbackKey ? 'text' : 'password'}
+                                        value={data.rajaongkir_callback_api_key}
+                                        onChange={(e) => setData('rajaongkir_callback_api_key', e.target.value)}
+                                        placeholder="Masukkan Secret/Callback API Key untuk verifikasi X-Callback-Api-Key..."
+                                        className="text-xs font-mono"
+                                    />
+                                    {errors.rajaongkir_callback_api_key && (
+                                        <p className="text-xs text-destructive">{errors.rajaongkir_callback_api_key}</p>
+                                    )}
+                                </div>
+
+                                {/* Callback URL */}
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-foreground">URL Webhook / Callback Notifikasi</label>
                                     <Input
                                         type="text"
-                                        placeholder="ARPL"
-                                        value={data.kiriminaja_prefix}
-                                        onChange={(e) => setData('kiriminaja_prefix', e.target.value.toUpperCase())}
-                                        maxLength={10}
-                                        className="h-9 text-xs font-mono font-bold uppercase tracking-wider"
+                                        value={data.rajaongkir_callback_url}
+                                        onChange={(e) => setData('rajaongkir_callback_url', e.target.value)}
+                                        placeholder="https://aromapalace.id/rajaongkir/callbackpayment"
+                                        className="text-xs font-mono"
                                     />
                                     <p className="text-[11px] text-muted-foreground">
-                                        Prefix terdaftar di akun KiriminAja Anda (default: <code>ARPL</code>). Paket resi otomatis wajib diawali prefix ini.
+                                        Endpoint yang akan menerima webhook pembayaran sukses dari RajaOngkir.
                                     </p>
-                                    {errors.kiriminaja_prefix && (
-                                        <p className="text-xs text-destructive">{errors.kiriminaja_prefix}</p>
+                                    {errors.rajaongkir_callback_url && (
+                                        <p className="text-xs text-destructive">{errors.rajaongkir_callback_url}</p>
                                     )}
                                 </div>
 
-                                {/* PIN Transaksi KiriminAja */}
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-foreground flex items-center justify-between">
-                                        <span>PIN Transaksi KiriminAja</span>
-                                        <span className="text-[10px] text-muted-foreground font-mono">6 digit angka</span>
-                                    </label>
-                                    <Input
-                                        type="password"
-                                        inputMode="numeric"
-                                        placeholder="123456"
-                                        value={data.kiriminaja_pin}
-                                        onChange={(e) => setData('kiriminaja_pin', e.target.value.replace(/\D/g, '').slice(0, 6))}
-                                        maxLength={6}
-                                        className="h-9 text-xs font-mono tracking-widest"
-                                    />
-                                    <p className="text-[11px] text-muted-foreground">
-                                        PIN otorisasi akun KiriminAja (KA Credit) untuk pemotongan ongkir saat request pickup otomatis.
-                                    </p>
-                                    {errors.kiriminaja_pin && (
-                                        <p className="text-xs text-destructive">{errors.kiriminaja_pin}</p>
-                                    )}
-                                </div>
+                                <div className="pt-2 border-t border-border/60">
+                                    <div className="text-xs font-bold text-foreground mb-3 flex items-center gap-1.5">
+                                        <Truck className="size-3.5 text-[#4A070B] dark:text-red-400" />
+                                        <span>Pengaturan Ongkos Kirim RajaOngkir</span>
+                                    </div>
 
+                                    {/* Shipping API Key */}
+                                    <div className="space-y-1.5 mb-3">
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-xs font-semibold text-foreground">API Key Shipping (Ongkir)</label>
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowRajaOngkirShippingKey(!showRajaOngkirShippingKey)}
+                                                className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1"
+                                            >
+                                                {showRajaOngkirShippingKey ? <EyeOff className="size-3" /> : <Eye className="size-3" />}
+                                                {showRajaOngkirShippingKey ? 'Sembunyikan' : 'Lihat'}
+                                            </button>
+                                        </div>
+                                        <Input
+                                            type={showRajaOngkirShippingKey ? 'text' : 'password'}
+                                            value={data.rajaongkir_shipping_key}
+                                            onChange={(e) => setData('rajaongkir_shipping_key', e.target.value)}
+                                            placeholder="Masukkan API Key Ongkir RajaOngkir..."
+                                            className="text-xs font-mono"
+                                        />
+                                        {errors.rajaongkir_shipping_key && (
+                                            <p className="text-xs text-destructive">{errors.rajaongkir_shipping_key}</p>
+                                        )}
+                                    </div>
+
+                                    {/* Shipping Origin ID */}
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-semibold text-foreground">Origin Sub-District ID (Kecamatan Asal)</label>
+                                        <Input
+                                            type="number"
+                                            value={data.rajaongkir_shipping_origin}
+                                            onChange={(e) => setData('rajaongkir_shipping_origin', e.target.value)}
+                                            placeholder="Contoh: 291"
+                                            className="text-xs"
+                                        />
+                                        <p className="text-[11px] text-muted-foreground">
+                                            ID Kecamatan asal pengiriman untuk kalkulasi biaya domestic-cost di RajaOngkir (default: 291).
+                                        </p>
+                                        {errors.rajaongkir_shipping_origin && (
+                                            <p className="text-xs text-destructive">{errors.rajaongkir_shipping_origin}</p>
+                                        )}
+                                    </div>
+                                </div>
                             </CardContent>
                         </Card>
 
@@ -808,14 +834,14 @@ export default function SettingsIndex({
                         </Card>
                     </div>
 
-                    {/* BAGIAN 2: ALAMAT ASAL & ORIGIN KIRIMINAJA */}
+                    {/* BAGIAN 2: ALAMAT ASAL & ORIGIN PENGIRIMAN */}
                     <div className="lg:col-span-7 space-y-6">
                         <Card className="shadow-xs border-border/80">
                             <CardHeader className="pb-4">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2 text-[#4A070B] dark:text-red-400">
                                         <Truck className="size-4.5" />
-                                        <CardTitle className="text-base font-bold">Alamat Asal &amp; Origin KiriminAja</CardTitle>
+                                        <CardTitle className="text-base font-bold">Alamat Asal &amp; Origin Pengiriman</CardTitle>
                                     </div>
                                     {data.shipping_district_id ? (
                                         <Badge variant="outline" className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-300 gap-1.5 font-mono text-[11px]">
@@ -867,7 +893,7 @@ export default function SettingsIndex({
                                             required
                                         />
                                         <p className="text-[11px] text-muted-foreground">
-                                            Format KiriminAja: Harus dimulai dengan 08, 628, +628, atau 02.
+                                            Format: Harus dimulai dengan 08, 628, +628, atau 02.
                                         </p>
                                         {errors.shipping_sender_phone && (
                                             <p className="text-xs text-destructive">{errors.shipping_sender_phone}</p>
@@ -896,7 +922,7 @@ export default function SettingsIndex({
 
                                 <div className="border-t pt-4">
                                     <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
-                                        Wilayah Cakupan Resmi (Database KiriminAja)
+                                        Wilayah Cakupan Resmi (Database RajaOngkir)
                                     </h3>
 
                                     {/* Hierarchy: Provinsi & Kota/Kabupaten */}
@@ -951,9 +977,9 @@ export default function SettingsIndex({
                                         </div>
                                     </div>
 
-                                    {/* Hierarchy: Kecamatan (Origin ID) & Kelurahan */}
+                                    {/* Hierarchy: Kecamatan (Origin ID RajaOngkir) & Kelurahan */}
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-                                        {/* Kecamatan (Kunci Utama KiriminAja) */}
+                                        {/* Kecamatan (Kunci Utama Origin) */}
                                         <div className="space-y-1.5 p-3 rounded-xl bg-muted/40 border border-[#4A070B]/20">
                                             <div className="flex items-center justify-between">
                                                 <label className="text-xs font-bold text-[#4A070B] dark:text-red-400 flex items-center gap-1.5">

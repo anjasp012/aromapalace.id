@@ -21,11 +21,8 @@ import {
     MapPin,
     FileText,
     Check,
-    ChevronDown,
-    Sparkles,
     Copy,
     Edit2,
-    RefreshCw,
     Printer,
     FileCheck2,
     Eye,
@@ -123,6 +120,8 @@ interface OrderDetail {
         type: string;
         value: number;
     } | null;
+    unique_code?: number | null;
+    unique_code_formatted?: string | null;
     total_amount: number;
     total_amount_formatted: string;
     payment_method: string;
@@ -143,83 +142,18 @@ interface OrderDetail {
     is_cod?: boolean;
 }
 
-export interface PickupSchedule {
-    clock: string;
-    until: string;
-}
-
 interface OrderShowProps {
     order: OrderDetail;
-    pickupSchedules?: (PickupSchedule | null)[];
 }
 
-export default function AdminOrderShow({ order, pickupSchedules }: OrderShowProps) {
+export default function AdminOrderShow({ order }: OrderShowProps) {
     const isPickup = order.delivery_type === 'pickup';
     const isManualAwaitingConfirmation = order.is_manual && order.order_status === 'menunggu_konfirmasi';
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
     const [isProofDialogOpen, setIsProofDialogOpen] = useState(false);
     const [isManualModalOpen, setIsManualModalOpen] = useState(false);
-    const [isAutomaticModalOpen, setIsAutomaticModalOpen] = useState(false);
     const [isApprovingProof, setIsApprovingProof] = useState(false);
     const [isRejectingProof, setIsRejectingProof] = useState(false);
-
-    const isSchedulesLoaded = pickupSchedules !== undefined;
-    const validSchedules = React.useMemo(() => {
-        if (!Array.isArray(pickupSchedules)) return [];
-        return pickupSchedules.filter((s): s is PickupSchedule => Boolean(s && typeof s === 'object' && s.clock));
-    }, [pickupSchedules]);
-
-    const formatScheduleDate = (clockStr: string) => {
-        try {
-            const parts = clockStr.split(' ');
-            if (parts.length < 2) return clockStr;
-            const [datePart, timePart] = parts;
-            const [y, m, d] = datePart.split('-').map(Number);
-            const date = new Date(y, m - 1, d);
-            const dayName = new Intl.DateTimeFormat('id-ID', { weekday: 'long' }).format(date);
-            const monthName = new Intl.DateTimeFormat('id-ID', { month: 'short' }).format(date);
-            const timeFormatted = timePart.substring(0, 5);
-            return `${dayName}, ${d} ${monthName} ${y} • ${timeFormatted} WIB`;
-        } catch {
-            return clockStr;
-        }
-    };
-
-    const [selectedSchedule, setSelectedSchedule] = useState<string>('');
-    const [isRefreshingSchedules, setIsRefreshingSchedules] = useState(false);
-
-    React.useEffect(() => {
-        if (selectedSchedule && !validSchedules.some((s) => s.clock === selectedSchedule)) {
-            setSelectedSchedule('');
-        }
-    }, [validSchedules, selectedSchedule]);
-
-    // Otomatis pilih slot pertama begitu daftar jadwal tersedia
-    React.useEffect(() => {
-        if (!selectedSchedule && validSchedules.length > 0) {
-            setSelectedSchedule(validSchedules[0].clock);
-        }
-    }, [validSchedules, selectedSchedule]);
-
-    const handleRefreshSchedules = React.useCallback(() => {
-        if (isRefreshingSchedules) return;
-        setIsRefreshingSchedules(true);
-        router.reload({
-            only: ['pickupSchedules'],
-            preserveScroll: true,
-            preserveState: true,
-            onFinish: () => {
-                setIsRefreshingSchedules(false);
-            },
-        });
-    }, [isRefreshingSchedules]);
-
-    // Muat jadwal pickup hanya ketika modal dibuka jika belum ada jadwal
-    React.useEffect(() => {
-        if (isAutomaticModalOpen && !isSchedulesLoaded && !isRefreshingSchedules) {
-            handleRefreshSchedules();
-        }
-    }, [isAutomaticModalOpen, isSchedulesLoaded, isRefreshingSchedules, handleRefreshSchedules]);
 
     const [manualTrackingNumber, setManualTrackingNumber] = useState(order.tracking_number || '');
     const [manualCourier, setManualCourier] = useState(order.courier || '');
@@ -300,28 +234,6 @@ export default function AdminOrderShow({ order, pickupSchedules }: OrderShowProp
             },
             {
                 onFinish: () => setIsUpdatingStatus(false),
-            }
-        );
-    };
-
-    const handleShipAutomatic = (scheduleClock?: string) => {
-        const clockToUse = scheduleClock || selectedSchedule;
-        if (!clockToUse) return;
-
-        setIsUpdatingStatus(true);
-        router.patch(
-            `/manajemen-pesanan/${order.order_number}/status`,
-            {
-                status: 'dikirim',
-                shipping_mode: 'kiriminaja',
-                pickup_schedule: clockToUse,
-                schedule: clockToUse,
-            },
-            {
-                onFinish: () => {
-                    setIsUpdatingStatus(false);
-                    setIsAutomaticModalOpen(false);
-                },
             }
         );
     };
@@ -455,68 +367,20 @@ export default function AdminOrderShow({ order, pickupSchedules }: OrderShowProp
                                         <span>Siap Diambil di Butik</span>
                                     </Button>
                                 ) : (
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button
-                                                size="sm"
-                                                disabled={isUpdatingStatus}
-                                                className="bg-[#4A070B] hover:bg-[#360407] text-[#E8D0BA] dark:bg-[#E8D0BA] dark:text-[#4A070B] dark:hover:bg-[#dfc4ab] font-medium shadow-xs"
-                                            >
-                                                <Truck className="size-4 mr-1.5" />
-                                                <span>Kirim</span>
-                                                <ChevronDown className="size-3.5 ml-1.5 opacity-70" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" className="w-64 p-1.5">
-                                            <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground px-2 py-1.5">
-                                                Metode Penerbitan Resi
-                                            </DropdownMenuLabel>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem
-                                                onClick={() => {
-                                                    setSelectedSchedule('');
-                                                    setIsAutomaticModalOpen(true);
-                                                }}
-                                                disabled={isUpdatingStatus}
-                                                className="cursor-pointer py-2 px-2.5 rounded-md focus:bg-accent"
-                                            >
-                                                <div className="flex items-start gap-2.5">
-                                                    <div className="p-1.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">
-                                                        <Sparkles className="size-4" />
-                                                    </div>
-                                                    <div>
-                                                        <div className="text-xs font-semibold text-foreground">Resi Otomatis</div>
-                                                        <div className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
-                                                            Pilih jadwal pickup &amp; generate resi KiriminAja
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </DropdownMenuItem>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem
-                                                onClick={() => {
-                                                    setManualTrackingNumber(order.tracking_number || '');
-                                                    setManualCourier(order.courier || '');
-                                                    setManualError('');
-                                                    setIsManualModalOpen(true);
-                                                }}
-                                                disabled={isUpdatingStatus}
-                                                className="cursor-pointer py-2 px-2.5 rounded-md focus:bg-accent"
-                                            >
-                                                <div className="flex items-start gap-2.5">
-                                                    <div className="p-1.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5">
-                                                        <FileText className="size-4" />
-                                                    </div>
-                                                    <div>
-                                                        <div className="text-xs font-semibold text-foreground">Resi Manual</div>
-                                                        <div className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
-                                                            Input nomor resi & kurir sendiri
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
+                                    <Button
+                                        size="sm"
+                                        onClick={() => {
+                                            setManualTrackingNumber(order.tracking_number || '');
+                                            setManualCourier(order.courier || '');
+                                            setManualError('');
+                                            setIsManualModalOpen(true);
+                                        }}
+                                        disabled={isUpdatingStatus}
+                                        className="bg-[#4A070B] hover:bg-[#360407] text-[#E8D0BA] dark:bg-[#E8D0BA] dark:text-[#4A070B] dark:hover:bg-[#dfc4ab] font-medium shadow-xs"
+                                    >
+                                        <Truck className="size-4 mr-1.5" />
+                                        <span>Kirim Pesanan</span>
+                                    </Button>
                                 )
                             )}
 
@@ -842,6 +706,12 @@ export default function AdminOrderShow({ order, pickupSchedules }: OrderShowProp
                                         <span>-{order.discount_amount_formatted}</span>
                                     </div>
                                 )}
+                                {order.unique_code ? (
+                                    <div className="flex justify-between text-xs text-amber-600 dark:text-amber-400 font-medium">
+                                        <span>Kode Unik Pembayaran</span>
+                                        <span>+{order.unique_code_formatted || order.unique_code}</span>
+                                    </div>
+                                ) : null}
                                 <Separator />
                                 <div className="flex justify-between font-semibold">
                                     <span>Total Tagihan</span>
@@ -1121,230 +991,6 @@ export default function AdminOrderShow({ order, pickupSchedules }: OrderShowProp
                             </Button>
                         </DialogFooter>
                     </form>
-                </DialogContent>
-            </Dialog>
-            {/* Modal Dialog Pilih Jadwal Pickup (Resi Otomatis KiriminAja) */}
-            <Dialog
-                open={isAutomaticModalOpen}
-                onOpenChange={(open) => {
-                    setIsAutomaticModalOpen(open);
-                    if (!open) {
-                        setSelectedSchedule('');
-                    }
-                }}
-            >
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                            <Sparkles className="size-5 text-amber-600 dark:text-amber-400" />
-                            <span>Pilih Jadwal Pickup (Resi Otomatis)</span>
-                        </DialogTitle>
-                        <DialogDescription>
-                            Tentukan waktu penjemputan paket oleh kurir untuk pesanan #{order.order_number}.
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <div className="space-y-4 py-2">
-                        {/* Ringkasan Pengiriman */}
-                        <div className="bg-muted/40 border border-border/70 rounded-lg p-3 text-xs space-y-1.5">
-                            <div className="flex items-center justify-between text-muted-foreground">
-                                <span>Kurir Ekspedisi:</span>
-                                <div className="flex items-center gap-2 font-semibold text-foreground">
-                                    {order.courier_logo && (
-                                        <div className="h-6 w-14 px-1 py-0.5 rounded bg-white border border-border/70 shadow-2xs flex items-center justify-center shrink-0">
-                                            <img
-                                                src={order.courier_logo}
-                                                alt={order.courier || 'Kurir'}
-                                                className="h-full w-full object-contain"
-                                            />
-                                        </div>
-                                    )}
-                                    <span>{order.courier || 'KiriminAja Express'}</span>
-                                </div>
-                            </div>
-                            <div className="flex items-center justify-between text-muted-foreground">
-                                <span>Penerima:</span>
-                                <span className="font-semibold text-foreground truncate max-w-[200px]">
-                                    {order.recipient_name} ({order.recipient_phone})
-                                </span>
-                            </div>
-                            <div className="flex items-center justify-between text-muted-foreground">
-                                <span>Tujuan:</span>
-                                <span className="font-medium text-foreground truncate max-w-[200px]">
-                                    {[order.district_name, order.city_name || order.city].filter(Boolean).join(', ') || order.address}
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Pilihan Jadwal Pickup */}
-                        <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                                <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                                    <span>Pilihan Jadwal Pickup Tersedia</span>
-                                    <span className="text-[11px] text-muted-foreground font-normal">
-                                        ({validSchedules.length} slot waktu)
-                                    </span>
-                                </label>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleRefreshSchedules()}
-                                    disabled={isRefreshingSchedules || isUpdatingStatus}
-                                    className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground border-border/80 flex items-center gap-1.5 transition-colors"
-                                    title="Perbarui daftar jadwal pickup dari KiriminAja"
-                                >
-                                    <RefreshCw className={`size-3 ${isRefreshingSchedules ? 'animate-spin text-[#4A070B] dark:text-[#E8D0BA]' : ''}`} />
-                                    <span>{isRefreshingSchedules ? 'Memperbarui...' : 'Refresh Jadwal'}</span>
-                                </Button>
-                            </div>
-
-                            {(!isSchedulesLoaded || isRefreshingSchedules) && validSchedules.length === 0 ? (
-                                <div className="py-8 text-center text-xs text-muted-foreground border border-dashed border-border/80 rounded-lg flex flex-col items-center justify-center gap-2.5 bg-muted/20">
-                                    <RefreshCw className="size-4 animate-spin text-[#4A070B] dark:text-[#E8D0BA]" />
-                                    <div className="space-y-0.5">
-                                        <p className="font-medium text-foreground">Memeriksa ketersediaan jadwal pickup...</p>
-                                        <p className="text-[11px] text-muted-foreground">Menghubungkan ke sistem ekspedisi KiriminAja</p>
-                                    </div>
-                                </div>
-                            ) : validSchedules.length === 0 ? (
-                                <div className="py-5 px-4 text-center text-xs border border-dashed border-amber-500/40 rounded-lg bg-amber-500/5 dark:bg-amber-500/10 space-y-3">
-                                    <div className="space-y-1">
-                                        <p className="font-semibold text-foreground">Tidak ada jadwal pickup tersedia saat ini</p>
-                                        <p className="text-[11px] text-muted-foreground max-w-sm mx-auto leading-relaxed">
-                                            Ekspedisi belum membuka slot penjemputan atau sedang di luar jam operasional pickup. Anda dapat mencoba refresh kembali atau beralih ke Resi Manual jika paket diantar langsung ke counter kurir.
-                                        </p>
-                                    </div>
-                                    <div className="flex items-center justify-center gap-2 pt-1">
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => handleRefreshSchedules()}
-                                            disabled={isRefreshingSchedules || isUpdatingStatus}
-                                            className="h-7 text-xs flex items-center gap-1.5"
-                                        >
-                                            <RefreshCw className={`size-3 ${isRefreshingSchedules ? 'animate-spin' : ''}`} />
-                                            <span>{isRefreshingSchedules ? 'Memeriksa...' : 'Coba Refresh Jadwal'}</span>
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant="secondary"
-                                            size="sm"
-                                            onClick={() => {
-                                                setIsAutomaticModalOpen(false);
-                                                setManualTrackingNumber(order.tracking_number || '');
-                                                setManualCourier(order.courier || '');
-                                                setManualError('');
-                                                setIsManualModalOpen(true);
-                                            }}
-                                            className="h-7 text-xs flex items-center gap-1.5"
-                                        >
-                                            <FileText className="size-3" />
-                                            <span>Gunakan Resi Manual</span>
-                                        </Button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="space-y-2 max-h-64 overflow-y-auto pr-0.5">
-                                    {validSchedules.map((schedule, idx) => {
-                                        const isSelected = selectedSchedule === schedule.clock;
-                                        return (
-                                            <div
-                                                key={idx}
-                                                onClick={() => setSelectedSchedule(schedule.clock)}
-                                                className={`p-3 rounded-lg border text-left cursor-pointer transition select-none flex items-center justify-between gap-3 ${isSelected
-                                                    ? 'border-[#4A070B] dark:border-[#E8D0BA] bg-[#4A070B]/5 dark:bg-[#E8D0BA]/5 ring-1 ring-[#4A070B] dark:ring-[#E8D0BA]'
-                                                    : 'border-border/80 hover:border-border bg-background/50 hover:bg-muted/40'
-                                                    }`}
-                                            >
-                                                <div className="flex items-center gap-3 min-w-0">
-                                                    <div
-                                                        className={`w-9 h-9 rounded-md flex items-center justify-center shrink-0 transition-colors ${isSelected
-                                                            ? 'bg-[#4A070B] text-white dark:bg-[#E8D0BA] dark:text-[#4A070B]'
-                                                            : 'bg-muted text-muted-foreground'
-                                                            }`}
-                                                    >
-                                                        <Clock className="size-4" />
-                                                    </div>
-                                                    <div className="min-w-0">
-                                                        <div className="text-xs font-bold text-foreground">
-                                                            <span>{formatScheduleDate(schedule.clock)}</span>
-                                                        </div>
-                                                        <div className="text-[11px] text-muted-foreground flex items-center gap-2 mt-0.5">
-                                                            <span className="font-mono text-[10.5px]">{schedule.clock}</span>
-                                                            {schedule.until && (
-                                                                <span>• Batas: {schedule.until}</span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Radio indicator */}
-                                                <div
-                                                    className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 border transition ${isSelected
-                                                        ? 'border-[#4A070B] dark:border-[#E8D0BA] bg-background'
-                                                        : 'border-border/80'
-                                                        }`}
-                                                >
-                                                    {isSelected && (
-                                                        <div className="w-2.5 h-2.5 rounded-full bg-[#4A070B] dark:bg-[#E8D0BA]" />
-                                                    )}
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-
-                            {!selectedSchedule && validSchedules.length > 0 && (
-                                <p className="text-[11px] text-amber-700 dark:text-amber-400 font-medium pt-1">
-                                    * Silakan pilih salah satu slot jadwal pickup di atas untuk mengaktifkan tombol terbitkan resi.
-                                </p>
-                            )}
-                        </div>
-
-                        <DialogFooter className="pt-3 gap-2 flex-row items-center justify-between">
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                    setIsAutomaticModalOpen(false);
-                                    setManualTrackingNumber(order.tracking_number || '');
-                                    setManualCourier(order.courier || '');
-                                    setManualError('');
-                                    setIsManualModalOpen(true);
-                                }}
-                                disabled={isUpdatingStatus}
-                                className="text-xs text-muted-foreground hover:text-foreground h-8 px-2 flex items-center gap-1.5"
-                            >
-                                <FileText className="size-3.5" />
-                                <span className="hidden sm:inline">Ganti ke</span> Resi Manual
-                            </Button>
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setIsAutomaticModalOpen(false)}
-                                    disabled={isUpdatingStatus}
-                                    className="h-8 text-xs"
-                                >
-                                    Batal
-                                </Button>
-                                <Button
-                                    type="button"
-                                    size="sm"
-                                    onClick={() => handleShipAutomatic()}
-                                    disabled={isUpdatingStatus || isRefreshingSchedules || !selectedSchedule}
-                                    className="h-8 text-xs bg-[#4A070B] hover:bg-[#360407] text-[#E8D0BA] dark:bg-[#E8D0BA] dark:text-[#4A070B] dark:hover:bg-[#dfc4ab] disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {isUpdatingStatus ? 'Memproses Resi...' : 'Terbitkan Resi Otomatis'}
-                                </Button>
-                            </div>
-                        </DialogFooter>
-                    </div>
                 </DialogContent>
             </Dialog>
 

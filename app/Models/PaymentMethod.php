@@ -18,6 +18,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $account_number
  * @property string|null $account_name
  * @property bool $is_active
+ * @property bool $use_unique_code
  * @property-read bool $is_manual
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -30,6 +31,7 @@ use Illuminate\Support\Carbon;
     'account_number',
     'account_name',
     'is_active',
+    'use_unique_code',
 ])]
 class PaymentMethod extends Model
 {
@@ -53,6 +55,7 @@ class PaymentMethod extends Model
     {
         return [
             'is_active' => 'boolean',
+            'use_unique_code' => 'boolean',
         ];
     }
 

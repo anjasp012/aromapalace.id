@@ -302,6 +302,12 @@
                                 </td>
                             </tr>
                         @endif
+                        @if (!empty($order['unique_code']))
+                            <tr>
+                                <td class="totals-label">Kode Unik Pembayaran</td>
+                                <td class="totals-val">+ {{ $order['unique_code_formatted'] ?? ('Rp ' . number_format($order['unique_code'], 0, ',', '.')) }}</td>
+                            </tr>
+                        @endif
                         <tr>
                             <td class="totals-label">Biaya Layanan & Pajak</td>
                             <td class="totals-val">Rp 0</td>

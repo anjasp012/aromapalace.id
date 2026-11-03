@@ -45,6 +45,8 @@ interface InvoiceProps {
         discount_amount: number;
         discount_amount_formatted: string;
         voucher_code?: string | null;
+        unique_code?: number | null;
+        unique_code_formatted?: string | null;
         total_amount: number;
         total_amount_formatted: string;
         items_count: number;
@@ -341,6 +343,13 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
                                     <span>Biaya Layanan</span>
                                     <span className="font-medium text-gray-900">Rp 0</span>
                                 </div>
+
+                                {order.unique_code ? (
+                                    <div className="flex items-center justify-between text-amber-700 font-medium">
+                                        <span>Kode Unik Pembayaran</span>
+                                        <span>+ {order.unique_code_formatted || `Rp ${order.unique_code}`}</span>
+                                    </div>
+                                ) : null}
 
                                 <div className="border-t border-gray-200 pt-1.5 flex items-center justify-between">
                                     <span className="font-bold text-gray-900 text-xs sm:text-sm">Total Tagihan</span>

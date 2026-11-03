@@ -944,25 +944,17 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
 
                     {/* Header with write review button */}
-                    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-                        <div className="space-y-1">
-                            <span className="text-xs font-bold uppercase tracking-wider text-[#4A070B] dark:text-[#E8D0BA]">
-                                {isEn ? 'Voices of Fragrance Collectors' : 'Suara Kolektor Wewangian'}
-                            </span>
-                            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-                                {isEn ? 'Verified Customer Reviews' : 'Ulasan Pelanggan Terverifikasi'}
-                            </h2>
-                            <p className="text-xs text-muted-foreground">
-                                {isEn
-                                    ? 'Authentic experiences from fragrance connoisseurs who have collected this creation.'
-                                    : 'Pengalaman jujur dari para pecinta aroma yang telah mengoleksi botol wewangian ini.'}
-                            </p>
-                        </div>
+                    <div className="flex items-center justify-between gap-4">
+                        <h2 className="text-xl sm:text-2xl tracking-tight text-foreground">
+                            <span className="font-normal">{isEn ? 'Customer' : 'Ulasan'}</span>{' '}
+                            <span className="font-bold">{isEn ? 'Reviews' : 'Pelanggan'}</span>
+                        </h2>
 
                         <Button
                             onClick={() => setWriteReviewOpen(true)}
                             variant="outline"
-                            className="w-full sm:w-auto shrink-0 rounded-md border-[#4A070B]/40 text-[#4A070B] dark:text-[#E8D0BA] hover:bg-[#4A070B]/10 text-xs shadow-none cursor-pointer"
+                            size="sm"
+                            className="w-auto shrink-0 rounded-md border-[#4A070B]/40 text-[#4A070B] dark:text-[#E8D0BA] hover:bg-[#4A070B]/10 text-xs shadow-none cursor-pointer"
                         >
                             <svg className="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />

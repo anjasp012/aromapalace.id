@@ -9,13 +9,14 @@ use App\Models\Order;
 use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\Setting;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Voucher;
 use App\Services\CatalogService;
 use App\Services\FirebaseNotificationService;
-use App\Services\KiriminAjaService;
-use App\Services\PakasirService;
+use App\Services\RajaOngkirPaymentService;
+use App\Services\RajaOngkirShippingCostService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,9 +31,9 @@ use Inertia\Response;
 class CheckoutController extends Controller
 {
     public function __construct(
-        protected PakasirService $pakasirService,
+        protected RajaOngkirPaymentService $rajaOngkirPaymentService,
         protected FirebaseNotificationService $notificationService,
-        protected KiriminAjaService $kiriminAjaService,
+        protected RajaOngkirShippingCostService $rajaOngkirShippingCostService,
     ) {}
 
     /**
@@ -290,7 +291,7 @@ class CheckoutController extends Controller
         $totalWeight = max(1000, $totalWeight);
 
         $initialShippingRates = ($primaryAddress && $primaryAddress->district_id)
-            ? $this->kiriminAjaService->getShippingPrices((int) $primaryAddress->district_id, $totalWeight)
+            ? $this->rajaOngkirShippingCostService->getShippingRates((int) $primaryAddress->district_id, $totalWeight)
             : [];
 
         $initialShippingCost = (! empty($initialShippingRates) && isset($initialShippingRates[0]['price']))
@@ -327,7 +328,7 @@ class CheckoutController extends Controller
     }
 
     /**
-     * Return live shipping rates from KiriminAja for a given destination subdistrict or district.
+     * Return live shipping rates from RajaOngkir for a given destination subdistrict or district.
      * Called via AJAX from the checkout page when the user selects an address.
      */
     public function shippingRates(Request $request): JsonResponse
@@ -367,7 +368,7 @@ class CheckoutController extends Controller
         $weight = max(100, (int) ($validated['weight'] ?? 1000));
 
         $rates = $destinationId > 0
-            ? $this->kiriminAjaService->getShippingPrices($destinationId, $weight)
+            ? $this->rajaOngkirShippingCostService->getShippingRates($destinationId, $weight)
             : [];
 
         return response()->json([
@@ -542,7 +543,9 @@ class CheckoutController extends Controller
             $deliveryType = $validated['delivery_type'] ?? 'delivery';
             $shippingCost = $deliveryType === 'delivery' ? max(0, (int) ($validated['shipping_cost'] ?? 0)) : 0;
             $insuranceCost = $request->boolean('insurance') ? 9000 : 0;
-            $totalAmount = max(0, $subtotal - $discountAmount + $shippingCost + $insuranceCost);
+            $baseTotal = max(0, $subtotal - $discountAmount + $shippingCost + $insuranceCost);
+            $totalAmount = $baseTotal;
+            $uniqueCode = null;
 
             $paymentMethod = $validated['payment_method'];
             $pm = PaymentMethod::where('code', $paymentMethod)->where('is_active', true)->first();
@@ -559,19 +562,48 @@ class CheckoutController extends Controller
             } elseif ($isManualPayment) {
                 $paymentChannel = $pm ? $pm->name : 'Transfer Manual';
                 $paymentCode = ($pm && $pm->account_number) ? $pm->account_number : 'MANUAL-'.strtoupper(Str::random(6));
+
+                // Check if unique code is enabled globally and for this method
+                $globalUnique = Setting::get('manual_payment_unique_code', '1') !== '0';
+                $methodUnique = $pm ? (bool) $pm->use_unique_code : true;
+
+                if ($globalUnique && $methodUnique && $baseTotal > 0) {
+                    $uniqueCode = rand(100, 999);
+                    $totalAmount = $baseTotal + $uniqueCode;
+                }
             } else {
                 $paymentChannel = match ($paymentMethod) {
-                    'qris' => 'QRIS Instant (Pakasir)',
-                    'payment_link' => 'Payment Link (Pakasir)',
-                    default => "{$channelName} Virtual Account (Pakasir)",
+                    'qris' => 'QRIS Instant (RajaOngkir)',
+                    'payment_link' => 'Payment Link (RajaOngkir)',
+                    default => "{$channelName} Virtual Account (RajaOngkir)",
                 };
 
-                // Call Pakasir API to create real payment transaction
-                $pakasirRes = $this->pakasirService->createTransaction($orderNumber, $totalAmount, $paymentMethod);
+                $resolvedType = 'bank_transfer';
+                $resolvedChannel = null;
 
-                if (! $pakasirRes['success'] || empty($pakasirRes['data'])) {
-                    $errorMsg = $pakasirRes['error'] ?? 'Layanan pembayaran sedang mengalami kendala teknis.';
-                    Log::error('Pakasir checkout error: Transaction creation failed', [
+                if ($paymentMethod === 'qris') {
+                    $resolvedType = 'qris';
+                    $resolvedChannel = null;
+                } elseif (str_ends_with($paymentMethod, '_va')) {
+                    $resolvedType = 'bank_transfer';
+                    $resolvedChannel = strtoupper(str_replace(['_va', 'va_'], '', $paymentMethod));
+                }
+
+                // Call RajaOngkir API to create real payment transaction
+                $rajaOngkirRes = $this->rajaOngkirPaymentService->createPayment(
+                    orderNumber: $orderNumber,
+                    paymentType: $resolvedType,
+                    channelCode: $resolvedChannel,
+                    amount: $totalAmount,
+                    customerName: $user->name,
+                    customerEmail: $user->email ?? 'customer@aromapalace.id',
+                    customerPhone: $user->phone ?? '08000000000',
+                );
+
+                $success = isset($rajaOngkirRes['data']) && ! empty($rajaOngkirRes['data']);
+                if (! $success) {
+                    $errorMsg = $rajaOngkirRes['message'] ?? $rajaOngkirRes['error'] ?? 'Layanan pembayaran sedang mengalami kendala teknis.';
+                    Log::error('RajaOngkir checkout error: Transaction creation failed', [
                         'order' => $orderNumber,
                         'error' => $errorMsg,
                         'user_id' => $user->id,
@@ -579,19 +611,19 @@ class CheckoutController extends Controller
 
                     return redirect()->route('checkout.index')
                         ->withInput()
-                        ->with('error', "Gagal memproses pembayaran melalui Pakasir: {$errorMsg}. Silakan coba beberapa saat lagi atau pilih metode pembayaran lain.");
+                        ->with('error', "Gagal memproses pembayaran melalui RajaOngkir: {$errorMsg}. Silakan coba beberapa saat lagi atau pilih metode pembayaran lain.");
                 }
 
-                $pData = $pakasirRes['data'];
+                $pData = $rajaOngkirRes['data'];
                 $paymentCode = ($pData['va_number'] ?? null)
                     ?: (($pData['qr_string'] ?? null)
                     ?: (($pData['payment_link'] ?? null)
-                    ?: ($pData['txn_id'] ?? null)));
+                    ?: ($pData['payment_id'] ?? ($pData['id'] ?? null))));
 
                 if (! $paymentCode) {
                     return redirect()->route('checkout.index')
                         ->withInput()
-                        ->with('error', 'Gerbang pembayaran Pakasir tidak mengembalikan kode pembayaran yang valid. Silakan coba kembali.');
+                        ->with('error', 'Gerbang pembayaran RajaOngkir tidak mengembalikan kode pembayaran yang valid. Silakan coba kembali.');
                 }
             }
 
@@ -671,6 +703,7 @@ class CheckoutController extends Controller
                 $courierService,
                 $courierServiceType,
                 $shippingCost,
+                $uniqueCode,
                 $paymentMethod,
                 $paymentChannel,
                 $paymentCode,
@@ -758,6 +791,7 @@ class CheckoutController extends Controller
                     'courier_service' => $courierService,
                     'courier_service_type' => $courierServiceType,
                     'shipping_cost' => $shippingCost,
+                    'unique_code' => $uniqueCode,
                     'payment_method' => $paymentMethod,
                     'payment_channel' => $paymentChannel,
                     'payment_code' => $paymentCode,

@@ -326,7 +326,7 @@ export default function CheckoutPage({
     // Default store
     const defaultStoreId = stores.length > 0 ? stores[0].id : null;
 
-    // User Addresses & KiriminAja Coverage Integration
+    // User Addresses & RajaOngkir Coverage Integration
     const [localAddresses, setLocalAddresses] = useState<UserAddress[]>(addresses || []);
 
     useEffect(() => {
@@ -342,13 +342,13 @@ export default function CheckoutPage({
     const [addressSelectorOpen, setAddressSelectorOpen] = useState(false);
     const [editingAddress, setEditingAddress] = useState<UserAddress | null>(null);
 
-    // Shipping rates fetched from KiriminAja API (initialized with live server rates if available)
+    // Shipping rates fetched from RajaOngkir API (initialized with live server rates if available)
     const [shippingRates, setShippingRates] = useState<ShippingRate[]>(initial_shipping_rates || []);
     const [loadingRates, setLoadingRates] = useState(false);
     const initialAddressIdRef = useRef<number | null>(initialSelectedAddress?.id || null);
     const hasInitialRatesRef = useRef<boolean>((initial_shipping_rates && initial_shipping_rates.length > 0) ? true : false);
 
-    // Build courier options strictly from real KiriminAja live rates (no dummy/fallback couriers)
+    // Build courier options strictly from real RajaOngkir live rates (no dummy/fallback couriers)
     const courierOptions = useMemo<ParsedCourierOption[]>(() => {
         if (shippingRates.length > 0) {
             return shippingRates.map((r, idx) => parseShippingRate(r, idx));
@@ -389,7 +389,7 @@ export default function CheckoutPage({
     const [showCourierModal, setShowCourierModal] = useState(false);
     const [showStoreModal, setShowStoreModal] = useState(false);
 
-    // Calculate package weight (minimum 1000g / 1kg standard for KiriminAja)
+    // Calculate package weight (minimum 1000g / 1kg standard for RajaOngkir)
     const totalWeight = useMemo(() => {
         let w = 0;
         items.forEach((item) => {
@@ -400,7 +400,7 @@ export default function CheckoutPage({
         return Math.max(1000, w);
     }, [items]);
 
-    // Fetch live shipping rates from KiriminAja via SDK fullShippingPrice whenever selected address changes
+    // Fetch live shipping rates from RajaOngkir API whenever selected address changes
     useEffect(() => {
         const districtId = selectedAddress?.district_id ?? (selectedAddress as any)?.kecamatan_id ?? null;
         const subdistrictId = selectedAddress?.subdistrict_id ?? null;
@@ -1054,7 +1054,7 @@ export default function CheckoutPage({
                                                             {isEn ? 'No delivery address saved yet' : 'Belum ada alamat pengiriman tersimpan'}
                                                         </p>
                                                         <p className="text-[11px] text-amber-700/80 dark:text-amber-300/80">
-                                                            {isEn ? 'Add your address to calculate accurate shipping and proceed with checkout' : 'Tambahkan alamat pengiriman dengan cakupan wilayah KiriminAja agar pesanan dapat dikirim'}
+                                                            {isEn ? 'Add your address to calculate accurate shipping and proceed with checkout' : 'Tambahkan alamat pengiriman resmi agar pesanan dapat dikirim'}
                                                         </p>
                                                     </div>
                                                 </div>

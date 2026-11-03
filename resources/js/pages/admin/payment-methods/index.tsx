@@ -11,6 +11,8 @@ import {
     CheckCircle2,
     XCircle,
     Loader2,
+    AlertCircle,
+    Sparkles,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -36,6 +38,7 @@ interface PaymentMethodItem {
     account_name?: string | null;
     instructions?: string | null;
     is_active: boolean;
+    use_unique_code?: boolean;
     created_at?: string;
 }
 
@@ -65,12 +68,32 @@ interface PaymentMethodsIndexProps {
         automatic_methods?: number;
         manual_methods?: number;
     };
+    manualUniqueCodeEnabled?: boolean;
+}
+
+interface SyncPreviewMethod {
+    code: string;
+    name: string;
+    payment_type: string;
+    bank_code?: string;
+    logo_url?: string | null;
+    exists: boolean;
+}
+
+interface SyncPreviewData {
+    success: boolean;
+    total: number;
+    existing_count: number;
+    new_count: number;
+    methods: SyncPreviewMethod[];
+    message?: string;
 }
 
 export default function AdminPaymentMethodsIndex({
     paymentMethods,
     filters,
     metrics,
+    manualUniqueCodeEnabled = true,
 }: PaymentMethodsIndexProps) {
     const [search, setSearch] = useState(filters.search || '');
     const [statusFilter, setStatusFilter] = useState(filters.status || '');
@@ -78,6 +101,15 @@ export default function AdminPaymentMethodsIndex({
     const [deleteTarget, setDeleteTarget] = useState<PaymentMethodItem | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [togglingId, setTogglingId] = useState<number | null>(null);
+    const [togglingUniqueCodeId, setTogglingUniqueCodeId] = useState<number | null>(null);
+    const [isTogglingUniqueCodeSetting, setIsTogglingUniqueCodeSetting] = useState(false);
+
+    const [isCheckingSync, setIsCheckingSync] = useState(false);
+    const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
+    const [syncPreview, setSyncPreview] = useState<SyncPreviewData | null>(null);
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [isDeletingAutomatic, setIsDeletingAutomatic] = useState(false);
+    const [isDeleteAutomaticModalOpen, setIsDeleteAutomaticModalOpen] = useState(false);
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -121,6 +153,24 @@ export default function AdminPaymentMethodsIndex({
         });
     };
 
+    const handleToggleMethodUniqueCode = (pm: PaymentMethodItem) => {
+        setTogglingUniqueCodeId(pm.id);
+        router.patch(`/manajemen-pembayaran/${pm.id}/toggle-unique-code`, {}, {
+            preserveScroll: true,
+            onFinish: () => setTogglingUniqueCodeId(null),
+        });
+    };
+
+    const handleToggleUniqueCodeSetting = (checked: boolean) => {
+        setIsTogglingUniqueCodeSetting(true);
+        router.post('/manajemen-pembayaran/settings/unique-code', {
+            enabled: checked,
+        }, {
+            preserveScroll: true,
+            onFinish: () => setIsTogglingUniqueCodeSetting(false),
+        });
+    };
+
     const handleDeleteSubmit = () => {
         if (!deleteTarget) return;
         setIsDeleting(true);
@@ -128,6 +178,58 @@ export default function AdminPaymentMethodsIndex({
             onFinish: () => {
                 setIsDeleting(false);
                 setDeleteTarget(null);
+            },
+        });
+    };
+
+    const handleStartSync = async () => {
+        setIsCheckingSync(true);
+        try {
+            const res = await fetch('/manajemen-pembayaran/sync/preview', {
+                headers: {
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                alert(data.message || 'Gagal memeriksa metode pembayaran dari RajaOngkir.');
+                return;
+            }
+            setSyncPreview(data);
+            setIsSyncModalOpen(true);
+        } catch {
+            alert('Terjadi kesalahan saat menghubungi server gateway RajaOngkir.');
+        } finally {
+            setIsCheckingSync(false);
+        }
+    };
+
+    const handleExecuteSync = (updateExisting: boolean) => {
+        setIsSyncing(true);
+        router.post(
+            '/manajemen-pembayaran/sync',
+            {
+                update_existing: updateExisting,
+            },
+            {
+                preserveScroll: true,
+                onFinish: () => {
+                    setIsSyncing(false);
+                    setIsSyncModalOpen(false);
+                    setSyncPreview(null);
+                },
+            }
+        );
+    };
+
+    const handleDeleteAllAutomatic = () => {
+        setIsDeletingAutomatic(true);
+        router.delete('/manajemen-pembayaran/delete-automatic', {
+            preserveScroll: true,
+            onFinish: () => {
+                setIsDeletingAutomatic(false);
+                setIsDeleteAutomaticModalOpen(false);
             },
         });
     };
@@ -201,7 +303,7 @@ export default function AdminPaymentMethodsIndex({
                                     <CreditCard className="size-4 text-sky-500" />
                                 </div>
                                 <div className="text-2xl font-bold mt-2 text-sky-600 dark:text-sky-400">{metrics.automatic_methods ?? 0}</div>
-                                <p className="text-xs text-muted-foreground mt-1">Verifikasi via Pakasir</p>
+                                <p className="text-xs text-muted-foreground mt-1">Verifikasi via RajaOngkir</p>
                             </CardContent>
                         </Card>
                         <Card className="py-4">
@@ -216,6 +318,49 @@ export default function AdminPaymentMethodsIndex({
                         </Card>
                     </div>
                 )}
+
+                {/* Pengaturan Kode Unik Transfer Manual Card */}
+                <Card className="border-amber-300/70 dark:border-amber-800/70 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent shadow-xs">
+                    <CardContent className="p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                        <div className="flex items-start gap-3.5">
+                            <div className="p-2.5 rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5">
+                                <Sparkles className="size-5" />
+                            </div>
+                            <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                    <span className="font-bold text-sm text-foreground">Kode Unik Pembayaran Manual</span>
+                                    <Badge
+                                        variant={manualUniqueCodeEnabled ? 'default' : 'secondary'}
+                                        className={
+                                            manualUniqueCodeEnabled
+                                                ? 'bg-amber-600 hover:bg-amber-600 text-white text-[10px]'
+                                                : 'text-[10px]'
+                                        }
+                                    >
+                                        {manualUniqueCodeEnabled ? 'Fitur Aktif' : 'Fitur Nonaktif'}
+                                    </Badge>
+                                </div>
+                                <p className="text-xs text-muted-foreground leading-relaxed max-w-2xl">
+                                    Tambahkan 3 digit angka unik acak (100–999) pada total tagihan transfer manual pesanan secara otomatis. Mempermudah Anda mencocokkan mutasi rekening bank saat pelanggan melakukan konfirmasi pembayaran.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 shrink-0 self-end md:self-center">
+                            <div className="flex items-center gap-2.5 bg-background/90 px-3.5 py-2 rounded-lg border border-border shadow-2xs">
+                                <span className="text-xs font-semibold text-foreground">
+                                    {manualUniqueCodeEnabled ? 'Aktifkan Kode Unik' : 'Nonaktifkan'}
+                                </span>
+                                <Switch
+                                    checked={manualUniqueCodeEnabled}
+                                    disabled={isTogglingUniqueCodeSetting}
+                                    onCheckedChange={handleToggleUniqueCodeSetting}
+                                    title="Aktifkan atau nonaktifkan fitur kode unik pembayaran transfer manual secara global"
+                                />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
 
                 {/* Status & Type Filter Navigation */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -292,7 +437,7 @@ export default function AdminPaymentMethodsIndex({
                             </Button>
                         </form>
 
-                        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
                             {(search !== '' || statusFilter !== '' || typeFilter !== '') && (
                                 <Button
                                     type="button"
@@ -307,7 +452,33 @@ export default function AdminPaymentMethodsIndex({
                                 </Button>
                             )}
 
-                            <Button size="sm" asChild className="h-9 cursor-pointer">
+                            {(metrics?.automatic_methods ?? 0) > 0 && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setIsDeleteAutomaticModalOpen(true)}
+                                    className="h-9 cursor-pointer text-destructive border-destructive/30 hover:bg-destructive/10"
+                                    title="Hapus semua metode pembayaran otomatis yang ada"
+                                >
+                                    <Trash2 className="size-3.5 mr-1.5" />
+                                    <span>Hapus Semua Otomatis</span>
+                                </Button>
+                            )}
+
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={handleStartSync}
+                                disabled={isCheckingSync || isSyncing}
+                                className="h-9 cursor-pointer border-[#4A070B]/40 text-[#4A070B] dark:text-[#E8D0BA] dark:border-[#E8D0BA]/40 hover:bg-[#4A070B]/5 font-medium shadow-2xs"
+                            >
+                                <RefreshCw className={`size-3.5 mr-1.5 ${isCheckingSync ? 'animate-spin' : ''}`} />
+                                <span>{isCheckingSync ? 'Memeriksa Gateway...' : 'Sync Payment Gateway'}</span>
+                            </Button>
+
+                            <Button size="sm" asChild className="h-9 cursor-pointer bg-[#4A070B] hover:bg-[#380508] text-white">
                                 <Link href="/manajemen-pembayaran/create">
                                     <Plus className="size-4 mr-1.5" />
                                     <span>Tambah Metode</span>
@@ -382,9 +553,27 @@ export default function AdminPaymentMethodsIndex({
                                             {/* Type */}
                                             <td className="p-4 align-middle">
                                                 {pm.type === 'manual' ? (
-                                                    <Badge variant="outline" className="text-[11px] bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800 font-medium">
-                                                        Transfer Manual
-                                                    </Badge>
+                                                    <div className="space-y-1.5">
+                                                        <Badge variant="outline" className="text-[11px] bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800 font-medium">
+                                                            Transfer Manual
+                                                        </Badge>
+                                                        <div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleToggleMethodUniqueCode(pm)}
+                                                                disabled={togglingUniqueCodeId === pm.id}
+                                                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold cursor-pointer transition border ${
+                                                                    pm.use_unique_code
+                                                                        ? 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950/60 dark:text-amber-200 dark:border-amber-700 hover:bg-amber-200'
+                                                                        : 'bg-muted text-muted-foreground border-border hover:bg-muted/80'
+                                                                }`}
+                                                                title="Klik untuk mengubah pengaturan kode unik untuk metode pembayaran ini"
+                                                            >
+                                                                <Sparkles className="size-2.5 text-amber-600 dark:text-amber-400" />
+                                                                <span>Kode Unik: {pm.use_unique_code ? 'Aktif' : 'Nonaktif'}</span>
+                                                            </button>
+                                                        </div>
+                                                    </div>
                                                 ) : (
                                                     <Badge variant="outline" className="text-[11px] bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800 font-medium">
                                                         Otomatis (Gateway)
@@ -518,6 +707,182 @@ export default function AdminPaymentMethodsIndex({
                             className="cursor-pointer"
                         >
                             {isDeleting ? 'Menghapus...' : 'Ya, Hapus Metode'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Sync Payment Gateway Modal Dialog */}
+            <Dialog open={isSyncModalOpen} onOpenChange={(open) => !isSyncing && setIsSyncModalOpen(open)}>
+                <DialogContent className="sm:max-w-xl">
+                    <DialogHeader>
+                        <div className="flex items-center gap-2 text-[#4A070B] dark:text-[#E8D0BA] mb-1">
+                            <RefreshCw className="size-5" />
+                            <DialogTitle className="text-lg font-bold">Sinkronisasi Gateway RajaOngkir</DialogTitle>
+                        </div>
+                        <DialogDescription className="text-xs">
+                            Mengambil daftar kanal metode pembayaran resmi langsung dari RajaOngkir Payment API.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {syncPreview && (
+                        <div className="space-y-4 py-2">
+                            {/* Summary alert banner */}
+                            {syncPreview.existing_count > 0 ? (
+                                <div className="p-3.5 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-200 text-xs space-y-1.5">
+                                    <div className="flex items-center gap-2 font-bold text-amber-800 dark:text-amber-300">
+                                        <AlertCircle className="size-4 shrink-0" />
+                                        <span>Ditemukan Data yang Sudah Ada di Database</span>
+                                    </div>
+                                    <p className="leading-relaxed">
+                                        Dari <strong>{syncPreview.total}</strong> metode yang diterima dari RajaOngkir, terdapat{' '}
+                                        <strong className="text-amber-700 dark:text-amber-300">{syncPreview.existing_count} metode sudah ada</strong> di database ({syncPreview.new_count} baru).
+                                    </p>
+                                    <p className="text-[11px] text-muted-foreground pt-0.5">
+                                        Apakah Anda ingin <strong>memperbarui (update)</strong> data metode yang sudah ada, atau <strong>hanya menambahkan</strong> metode baru yang belum terdaftar?
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="p-3.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-900 dark:text-emerald-200 text-xs space-y-1">
+                                    <div className="flex items-center gap-2 font-bold text-emerald-800 dark:text-emerald-300">
+                                        <CheckCircle2 className="size-4 shrink-0" />
+                                        <span>{syncPreview.total} Metode Siap Ditambahkan</span>
+                                    </div>
+                                    <p className="text-[11px] leading-relaxed">
+                                        Semua metode pembayaran dari gateway RajaOngkir belum ada di database. Klik tombol di bawah untuk menyimpannya.
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* List of methods preview */}
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                                    <span>Daftar Kanal Metode ({syncPreview.methods.length})</span>
+                                    <span className="text-[11px] text-muted-foreground font-normal">
+                                        {syncPreview.existing_count} sudah ada • {syncPreview.new_count} baru
+                                    </span>
+                                </label>
+                                <div className="max-h-60 overflow-y-auto space-y-2 pr-1 rounded-xl border p-2 bg-muted/20">
+                                    {syncPreview.methods.map((method, idx) => (
+                                        <div
+                                            key={idx}
+                                            className="flex items-center justify-between p-2 rounded-lg bg-card border text-xs gap-3"
+                                        >
+                                            <div className="flex items-center gap-2.5 min-w-0">
+                                                {method.logo_url ? (
+                                                    <div className="size-8 rounded bg-white p-1 border shrink-0 flex items-center justify-center">
+                                                        <img
+                                                            src={method.logo_url}
+                                                            alt={method.name}
+                                                            className="size-full object-contain"
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <div className="size-8 rounded bg-muted flex items-center justify-center font-bold text-[10px]">
+                                                        {method.bank_code || 'PAY'}
+                                                    </div>
+                                                )}
+                                                <div className="min-w-0">
+                                                    <p className="font-semibold truncate">{method.name}</p>
+                                                    <p className="text-[10px] text-muted-foreground font-mono">
+                                                        {method.code} • {method.payment_type.toUpperCase()}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                {method.exists ? (
+                                                    <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30">
+                                                        Sudah Ada
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30">
+                                                        Metode Baru
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <DialogFooter className="mt-4 gap-2 sm:gap-2 flex-col sm:flex-row">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setIsSyncModalOpen(false)}
+                            disabled={isSyncing}
+                            className="cursor-pointer text-xs"
+                        >
+                            Batal
+                        </Button>
+
+                        {syncPreview && syncPreview.existing_count > 0 ? (
+                            <>
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() => handleExecuteSync(false)}
+                                    disabled={isSyncing || syncPreview.new_count === 0}
+                                    className="cursor-pointer text-xs"
+                                    title="Hanya tambahkan metode baru, lewati metode yang sudah ada"
+                                >
+                                    {isSyncing ? 'Memproses...' : `Lewati yang Ada (${syncPreview.new_count} Baru)`}
+                                </Button>
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    onClick={() => handleExecuteSync(true)}
+                                    disabled={isSyncing}
+                                    className="cursor-pointer text-xs bg-[#4A070B] hover:bg-[#380508] text-white"
+                                >
+                                    {isSyncing ? 'Menyinkronkan...' : 'Perbarui Semua yang Ada'}
+                                </Button>
+                            </>
+                        ) : (
+                            <Button
+                                type="button"
+                                size="sm"
+                                onClick={() => handleExecuteSync(false)}
+                                disabled={isSyncing}
+                                className="cursor-pointer text-xs bg-[#4A070B] hover:bg-[#380508] text-white"
+                            >
+                                {isSyncing ? 'Menyimpan...' : 'Simpan Semua ke Database'}
+                            </Button>
+                        )}
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete All Automatic Methods Dialog */}
+            <Dialog open={isDeleteAutomaticModalOpen} onOpenChange={setIsDeleteAutomaticModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Hapus Semua Metode Gateway Otomatis?</DialogTitle>
+                        <DialogDescription>
+                            Tindakan ini akan menghapus semua metode pembayaran otomatis dari database. Metode transfer manual tidak akan terpengaruh.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="mt-4 gap-2 sm:gap-0">
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsDeleteAutomaticModalOpen(false)}
+                            disabled={isDeletingAutomatic}
+                            className="cursor-pointer"
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={handleDeleteAllAutomatic}
+                            disabled={isDeletingAutomatic}
+                            className="cursor-pointer"
+                        >
+                            {isDeletingAutomatic ? 'Menghapus...' : 'Ya, Hapus Semua Otomatis'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

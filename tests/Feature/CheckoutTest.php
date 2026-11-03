@@ -2,10 +2,55 @@
 
 use App\Models\CartItem;
 use App\Models\Order;
+use App\Models\PaymentMethod;
 use App\Models\ProductVariant;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Voucher;
+use Illuminate\Support\Facades\Http;
+
+beforeEach(function () {
+    PaymentMethod::firstOrCreate(
+        ['code' => 'bri_va'],
+        [
+            'name' => 'BRI Virtual Account',
+            'type' => 'automatic',
+            'is_active' => true,
+        ]
+    );
+    PaymentMethod::firstOrCreate(
+        ['code' => 'bca_va'],
+        [
+            'name' => 'BCA Virtual Account',
+            'type' => 'automatic',
+            'is_active' => true,
+        ]
+    );
+
+    Http::fake([
+        'https://rajaongkir.komerce.id/*' => Http::response([
+            'meta' => ['code' => 200, 'status' => 'success', 'message' => 'Success'],
+            'data' => [
+                [
+                    'code' => 'jne',
+                    'name' => 'JNE',
+                    'service' => 'REG',
+                    'description' => 'Layanan Reguler',
+                    'cost' => 18000,
+                    'etd' => '1-2',
+                ],
+            ],
+        ], 200),
+        '*' => Http::response([
+            'meta' => ['code' => 200, 'status' => 'success', 'message' => 'Success'],
+            'data' => [
+                'payment_number' => '8808112345678',
+                'va_number' => '8808112345678',
+                'payment_code' => '8808112345678',
+            ],
+        ], 200),
+    ]);
+});
 
 test('guests are redirected from checkout page to login', function () {
     $response = $this->get(route('checkout.index'));
@@ -527,7 +572,7 @@ test('authenticated user can view invoice page of their order', function () {
         'courier' => 'JNE REG',
         'shipping_cost' => 0,
         'payment_method' => 'bri_va',
-        'payment_channel' => 'BRI Virtual Account (Pakasir)',
+        'payment_channel' => 'BRI Virtual Account (RajaOngkir)',
         'payment_code' => '1280012345678',
         'payment_status' => 'pending',
         'status' => 'menunggu_pembayaran',
@@ -642,4 +687,47 @@ test('checkout stores custom shipping cost into order total and database', funct
     expect($order->shipping_cost)->toBe($shippingCost);
     expect($order->courier)->toBe('J&T EZ');
     expect($order->total_amount)->toBe((int) $variant->price + $shippingCost);
+});
+
+test('checkout with manual payment method adds unique code to total amount when enabled', function () {
+    $user = User::factory()->create();
+    $variant = ProductVariant::where('product_id', 1)->firstOrFail();
+
+    PaymentMethod::updateOrCreate(
+        ['code' => 'manual_bca'],
+        [
+            'name' => 'BCA (Transfer Manual)',
+            'type' => 'manual',
+            'account_number' => '1234567890',
+            'account_name' => 'PT Aroma Palace',
+            'is_active' => true,
+            'use_unique_code' => true,
+        ]
+    );
+
+    CartItem::create([
+        'user_id' => $user->id,
+        'product_id' => 1,
+        'variant_id' => $variant->id,
+        'quantity' => 1,
+    ]);
+
+    $shippingCost = 15000;
+    $response = $this->actingAs($user)->post(route('checkout.store'), [
+        'delivery_type' => 'delivery',
+        'recipient_name' => 'Budi Pratama',
+        'recipient_phone' => '081234567890',
+        'address' => 'Jl. Kebon Jeruk No. 12',
+        'city' => 'Jakarta Barat',
+        'courier' => 'J&T EZ',
+        'shipping_cost' => $shippingCost,
+        'payment_method' => 'manual_bca',
+    ]);
+
+    $order = Order::where('user_id', $user->id)->first();
+    expect($order)->not->toBeNull();
+    expect($order->unique_code)->not->toBeNull();
+    expect($order->unique_code)->toBeGreaterThanOrEqual(100);
+    expect($order->unique_code)->toBeLessThanOrEqual(999);
+    expect($order->total_amount)->toBe((int) $variant->price + $shippingCost + $order->unique_code);
 });

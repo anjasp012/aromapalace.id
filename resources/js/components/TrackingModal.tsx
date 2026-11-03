@@ -65,7 +65,7 @@ const MONTHS_ID = [
 function formatDateIndo(dateStr?: string | null): string {
     if (!dateStr) return '';
     try {
-        // Support both ISO strings ("2026-10-25T11:30:00Z") and KiriminAja timestamps ("2026-08-07 13:49")
+        // Support both ISO strings ("2026-10-25T11:30:00Z") and standard timestamps ("2026-08-07 13:49")
         const hasOffset = dateStr.includes('Z') || /[+-]\d{2}:\d{2}$/.test(dateStr);
         const parsedDate = new Date(hasOffset ? dateStr : (dateStr.includes('T') ? `${dateStr}+07:00` : `${dateStr.replace(' ', 'T')}+07:00`));
         const d = isNaN(parsedDate.getTime()) ? new Date(dateStr.replace(' ', 'T')) : parsedDate;

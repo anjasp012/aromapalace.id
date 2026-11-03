@@ -34,6 +34,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $courier_service_type
  * @property string|null $courier
  * @property int $shipping_cost
+ * @property int|null $unique_code
  * @property string $payment_method
  * @property string|null $payment_channel
  * @property string|null $payment_code
@@ -78,6 +79,7 @@ use Illuminate\Support\Carbon;
     'courier_service',
     'courier_service_type',
     'shipping_cost',
+    'unique_code',
     'payment_method',
     'payment_channel',
     'payment_code',
@@ -157,7 +159,7 @@ class Order extends Model
     }
 
     /**
-     * Relation to Shipping table (populated from KiriminAja callback/response).
+     * Relation to Shipping table.
      *
      * @return HasOne<Shipping, $this>
      */

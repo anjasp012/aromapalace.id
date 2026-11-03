@@ -67,7 +67,7 @@ export default function AddressModal({
             .catch(() => {});
     };
 
-    // KiriminAja Coverage Data
+    // RajaOngkir Coverage Data
     const [provinces, setProvinces] = useState<ProvinceOption[]>([]);
     const [cities, setCities] = useState<CityOption[]>([]);
     const [districts, setDistricts] = useState<DistrictOption[]>([]);
@@ -471,8 +471,8 @@ export default function AddressModal({
                     </div>
                     <DialogDescription className="text-xs text-muted-foreground">
                         {isEn
-                            ? 'Complete your recipient details and pick destination verified with KiriminAja coverage.'
-                            : 'Lengkapi rincian penerima dan pilih wilayah terverifikasi sistem ekspedisi KiriminAja.'}
+                            ? 'Complete your recipient details and pick destination verified with official shipping coverage.'
+                            : 'Lengkapi rincian penerima dan pilih wilayah tujuan pengiriman resmi.'}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -561,7 +561,7 @@ export default function AddressModal({
                         </div>
                     </div>
 
-                    {/* COVERAGE HIERARCHY (KiriminAja): PROVINSI & KOTA/KABUPATEN */}
+                    {/* COVERAGE HIERARCHY (RajaOngkir): PROVINSI & KOTA/KABUPATEN */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {/* PROVINSI */}
                         <div className="space-y-1">

@@ -163,6 +163,12 @@ export default function Login({ status, notice }: LoginProps) {
                                             <label className="text-xs font-semibold text-neutral-800 block">
                                                 {isEn ? 'Password' : 'Kata Sandi'}
                                             </label>
+                                            <Link
+                                                href="/forgot-password"
+                                                className="text-xs font-medium text-[#4A070B] hover:text-[#7A1C24] hover:underline transition-colors"
+                                            >
+                                                {isEn ? 'Forgot password?' : 'Lupa kata sandi?'}
+                                            </Link>
                                         </div>
                                         <div className="relative">
                                             <Input

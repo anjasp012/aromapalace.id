@@ -43,7 +43,7 @@ export default function ShippingLabelModal({
                                 Cetak Label Pengiriman
                             </DialogTitle>
                             <p className="text-xs text-muted-foreground">
-                                Format Thermal 100 x 150 mm (KiriminAja Standard)
+                                Format Thermal 100 x 150 mm (Thermal Standard)
                             </p>
                         </div>
                     </div>

@@ -367,6 +367,12 @@ class FirebaseNotificationService
                     'body_id' => $bodyId,
                 ]
             );
+
+            try {
+                app(CustomerEmailService::class)->sendOrderPlacedEmail($order);
+            } catch (\Throwable $e) {
+                Log::warning('Failed to trigger order placed email: '.$e->getMessage());
+            }
         }
     }
 
@@ -417,6 +423,12 @@ class FirebaseNotificationService
                     'body_id' => $bodyId,
                 ]
             );
+
+            try {
+                app(CustomerEmailService::class)->sendOrderPaidEmail($order);
+            } catch (\Throwable $e) {
+                Log::warning('Failed to trigger order paid email: '.$e->getMessage());
+            }
         }
 
         // Ke Admin
@@ -468,6 +480,12 @@ class FirebaseNotificationService
                 'body_id' => $bodyId,
             ]
         );
+
+        try {
+            app(CustomerEmailService::class)->sendOrderShippedEmail($order);
+        } catch (\Throwable $e) {
+            Log::warning('Failed to trigger order shipped email: '.$e->getMessage());
+        }
     }
 
     /**

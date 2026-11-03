@@ -2,97 +2,142 @@
 
 namespace App\Services;
 
+use App\Events\OrderPaid;
+use App\Models\Order;
+use App\Models\Setting;
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class RajaOngkirPaymentService
 {
-    protected string $baseUrl = 'https://api-sandbox.collaborator.komerce.id/user/api/v1/user';
+    /** Base URL for sandbox environment */
+    protected const BASE_URL_SANDBOX = 'https://api-sandbox.collaborator.komerce.id/user/api/v1/user';
 
-    protected string $callbackUrl;
+    /** Base URL for production environment */
+    protected const BASE_URL_PRODUCTION = 'https://api.collaborator.komerce.id/user/api/v1/user';
 
-    protected string $secretKey;
-
-    public function __construct()
+    /**
+     * Get the active base URL based on the mode setting.
+     */
+    protected function baseUrl(): string
     {
-        $this->callbackUrl = config('services.rajaongkir.callback_url');
-        $this->secretKey = config('services.rajaongkir.callback_api_key');
+        $mode = (string) Setting::get('rajaongkir_payment_mode', config('services.rajaongkir.mode', 'sandbox'));
+
+        return $mode === 'production' ? self::BASE_URL_PRODUCTION : self::BASE_URL_SANDBOX;
     }
 
-    protected function request()
+    /**
+     * Get the payment API key, preferring the DB setting over env.
+     */
+    protected function paymentKey(): string
+    {
+        return (string) Setting::get('rajaongkir_payment_key', config('services.rajaongkir.payment_key', ''));
+    }
+
+    /**
+     * Get the callback URL, preferring the DB setting over env.
+     */
+    protected function callbackUrl(): string
+    {
+        return (string) Setting::get('rajaongkir_callback_url', config('services.rajaongkir.callback_url', ''));
+    }
+
+    /**
+     * Get the callback API key (webhook secret), preferring the DB setting over env.
+     */
+    protected function callbackApiKey(): string
+    {
+        return (string) Setting::get('rajaongkir_callback_api_key', config('services.rajaongkir.callback_api_key', ''));
+    }
+
+    protected function request(): PendingRequest
     {
         return Http::acceptJson()
             ->withHeaders([
-                'x-api-key' => config('services.rajaongkir.payment_key'),
+                'x-api-key' => $this->paymentKey(),
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json',
             ]);
     }
 
-    public function getPaymentMethods()
+    public function getPaymentMethods(): mixed
     {
         return $this->request()
-            ->get($this->baseUrl.'/methods')
+            ->get($this->baseUrl().'/methods')
             ->json();
     }
 
-    public function createPayment($order_number, $payment_type, $channel_code, $amount)
-    {
+    public function createPayment(
+        string $orderNumber,
+        string $paymentType,
+        ?string $channelCode,
+        float|int $amount,
+        string $customerName = '',
+        string $customerEmail = '',
+        string $customerPhone = '',
+        array $items = [],
+        int $expiryDuration = 3600,
+    ): mixed {
+        $payload = [
+            'order_id' => $orderNumber,
+            'payment_type' => $paymentType,
+            'amount' => (float) $amount,
+            'customer' => [
+                'name' => $customerName ?: 'Customer',
+                'email' => $customerEmail ?: 'customer@aromapalace.id',
+                'phone' => $customerPhone ?: '08000000000',
+            ],
+            'items' => $items ?: [
+                ['name' => 'Pesanan', 'quantity' => 1, 'price' => (float) $amount],
+            ],
+            'expiry_duration' => $expiryDuration,
+            'callback_url' => $this->callbackUrl(),
+            'callback_API_KEY' => $this->callbackApiKey(),
+        ];
+
+        if ($channelCode) {
+            $payload['channel_code'] = $channelCode;
+        }
+
         return $this->request()
-            ->post($this->baseUrl.'/payment/create', [
-                ...($order_number ? ['order_id' => $order_number] : []),
-                'payment_type' => $payment_type,
-                ...($channel_code ? ['channel_code' => $channel_code] : []),
-                'amount' => (float) $amount,
-                'customer' => [
-                    'name' => 'anjas',
-                    'email' => 'anjas@gmail.com',
-                    'phone' => '089529591732',
-                ],
-                'items' => [
-                    [
-                        'name' => 'Product A',
-                        'quantity' => 2,
-                        'price' => 50000,
-                    ],
-                ],
-                'expiry_duration' => 3600,
-                'callback_url' => $this->callbackUrl,
-                'callback_API_KEY' => $this->secretKey,
-            ])
+            ->post($this->baseUrl().'/payment/create', $payload)
             ->json();
     }
 
-    public function getPaymentStatus($order_number)
+    public function getPaymentStatus(string $orderNumber): mixed
     {
         return $this->request()
-            ->get($this->baseUrl.'/payment/status/'.$order_number)
+            ->get($this->baseUrl().'/payment/status/'.$orderNumber)
             ->json();
     }
 
-    public function cancelPayment($order_number)
+    public function cancelPayment(string $orderNumber): mixed
     {
         return $this->request()
-            ->post($this->baseUrl.'/payment/cancel', [
-                'payment_id' => $order_number,
+            ->post($this->baseUrl().'/payment/cancel', [
+                'payment_id' => $orderNumber,
                 'reason' => 'Customer canceled the order',
             ])
             ->json();
     }
 
-    public function callbackPayment($rawBody, $signature)
+    /**
+     * Verify and process an incoming payment callback from RajaOngkir.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array{success: bool, message: string}
+     */
+    public function callbackPayment(string $rawBody, ?string $signature): array
     {
-        $secretKey = $this->secretKey;
+        $secretKey = $this->callbackApiKey();
 
         if (! $signature || ! $secretKey) {
             throw new \Exception('Unauthorized', 401);
         }
 
-        $expectedSignature = hash_hmac(
-            'sha256',
-            $rawBody,
-            $secretKey
-        );
+        $expectedSignature = hash_hmac('sha256', $rawBody, $secretKey);
 
         if (! hash_equals($expectedSignature, $signature)) {
             throw new \Exception('Invalid signature', 401);
@@ -104,7 +149,43 @@ class RajaOngkirPaymentService
             throw new \Exception('Invalid payload', 400);
         }
 
-        Log::info('Payment Callback Received', $data);
+        Log::info('RajaOngkir Payment Callback Received', $data);
+
+        $orderNumber = (string) ($data['order_id'] ?? '');
+        $status = strtolower((string) ($data['status'] ?? ''));
+
+        if ($orderNumber && $status) {
+            DB::transaction(function () use ($orderNumber, $status) {
+                $order = Order::where('order_number', $orderNumber)->lockForUpdate()->first();
+
+                if (! $order) {
+                    Log::warning('RajaOngkir callback: order not found', ['order_id' => $orderNumber]);
+
+                    return;
+                }
+
+                if (in_array($status, ['completed', 'paid', 'success'], true)) {
+                    if ($order->payment_status !== 'paid') {
+                        $order->update([
+                            'payment_status' => 'paid',
+                            'status' => 'diproses',
+                        ]);
+
+                        try {
+                            event(new OrderPaid($order));
+                        } catch (\Throwable $e) {
+                            Log::warning('Broadcast OrderPaid failed: '.$e->getMessage());
+                        }
+
+                        app(FirebaseNotificationService::class)->notifyPaymentSuccess($order);
+                    }
+                } elseif (in_array($status, ['canceled', 'expired', 'failed'], true)) {
+                    if ($order->payment_status !== 'canceled') {
+                        app(OrderService::class)->cancelOrder($order, 'Dibatalkan oleh gateway RajaOngkir: '.$status);
+                    }
+                }
+            });
+        }
 
         return [
             'success' => true,

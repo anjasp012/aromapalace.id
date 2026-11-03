@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\KiriminAjaService;
+use App\Services\RajaOngkirShippingCostService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Http;
 class CoverageAreaController extends Controller
 {
     public function __construct(
-        protected KiriminAjaService $kiriminAjaService
+        protected RajaOngkirShippingCostService $rajaOngkirShippingCostService
     ) {}
 
     /**
@@ -19,7 +19,12 @@ class CoverageAreaController extends Controller
      */
     public function provinces(): JsonResponse
     {
-        $provinces = $this->fetchWithRetry(fn () => $this->kiriminAjaService->getProvinces());
+        $raw = $this->fetchWithRetry(fn () => $this->rajaOngkirShippingCostService->getProvinces());
+        $list = $raw['data'] ?? $raw;
+        $provinces = array_values(array_map(fn ($p) => [
+            'id' => (int) $p['id'],
+            'name' => (string) ($p['name'] ?? ''),
+        ], is_array($list) ? $list : []));
 
         return response()->json([
             'status' => ! empty($provinces),
@@ -41,7 +46,13 @@ class CoverageAreaController extends Controller
             ], 422);
         }
 
-        $cities = $this->fetchWithRetry(fn () => $this->kiriminAjaService->getCities($provinceId));
+        $raw = $this->fetchWithRetry(fn () => $this->rajaOngkirShippingCostService->getCities($provinceId));
+        $list = $raw['data'] ?? $raw;
+        $cities = array_values(array_map(fn ($c) => [
+            'id' => (int) $c['id'],
+            'name' => (string) ($c['name'] ?? ''),
+            'type' => (string) ($c['type'] ?? ''),
+        ], is_array($list) ? $list : []));
 
         return response()->json([
             'status' => ! empty($cities),
@@ -63,7 +74,12 @@ class CoverageAreaController extends Controller
             ], 422);
         }
 
-        $districts = $this->fetchWithRetry(fn () => $this->kiriminAjaService->getDistricts($cityId));
+        $raw = $this->fetchWithRetry(fn () => $this->rajaOngkirShippingCostService->getDistricts($cityId));
+        $list = $raw['data'] ?? $raw;
+        $districts = array_values(array_map(fn ($d) => [
+            'id' => (int) $d['id'],
+            'name' => (string) ($d['name'] ?? ''),
+        ], is_array($list) ? $list : []));
 
         return response()->json([
             'status' => ! empty($districts),
@@ -85,7 +101,13 @@ class CoverageAreaController extends Controller
             ], 422);
         }
 
-        $subdistricts = $this->fetchWithRetry(fn () => $this->kiriminAjaService->getSubdistricts($districtId));
+        $raw = $this->fetchWithRetry(fn () => $this->rajaOngkirShippingCostService->getSubDistricts($districtId));
+        $list = $raw['data'] ?? $raw;
+        $subdistricts = array_values(array_map(fn ($s) => [
+            'id' => (int) $s['id'],
+            'name' => (string) ($s['name'] ?? ''),
+            'postal_code' => (string) ($s['zip_code'] ?? ($s['postal_code'] ?? '')),
+        ], is_array($list) ? $list : []));
 
         return response()->json([
             'status' => ! empty($subdistricts),

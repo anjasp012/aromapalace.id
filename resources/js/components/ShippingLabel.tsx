@@ -62,15 +62,19 @@ interface ShippingLabelProps {
     className?: string;
 }
 
-// KiriminAja Brand Logo (Official logo)
-function KiriminAjaLogo() {
+// Store Brand Logo
+function StoreLogo() {
     return (
-        <div className="flex items-center select-none">
+        <div className="flex items-center gap-2 select-none">
             <img
-                src="/images/kiriminajalogo.png"
-                alt="KiriminAja"
-                className="h-7 sm:h-8 max-h-8 w-auto max-w-[130px] object-contain"
+                src="/images/logo.png"
+                alt="Aroma Palace"
+                className="h-7 sm:h-8 max-h-8 w-auto max-w-[120px] object-contain"
+                onError={(e) => {
+                    (e.currentTarget as HTMLElement).style.display = 'none';
+                }}
             />
+            <span className="font-bold text-xs tracking-wider uppercase text-black">Aroma Palace</span>
         </div>
     );
 }
@@ -214,9 +218,9 @@ export default function ShippingLabel({ order, className = '' }: ShippingLabelPr
         >
             {/* OUTER SOLID BLACK BORDER (100mm x 150mm standard thermal proportion) */}
             <div className="border-2 border-black rounded-xs overflow-hidden bg-white text-black">
-                {/* 1. TOP HEADER: KiriminAja Logo (Left) & Logistic Logo (Right) */}
+                {/* 1. TOP HEADER: Store Logo (Left) & Logistic Logo (Right) */}
                 <div className="flex items-center justify-between px-3 py-2 border-b-2 border-black bg-white">
-                    <KiriminAjaLogo />
+                    <StoreLogo />
                     <LogisticLogo courier={courierName} logo={order.courier_logo || ''} />
                 </div>
 

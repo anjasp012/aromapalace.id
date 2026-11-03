@@ -11,6 +11,7 @@ import {
     CheckCircle2,
     Landmark,
     Zap,
+    Sparkles,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,7 @@ interface PaymentMethodData {
     account_number?: string | null;
     account_name?: string | null;
     is_active?: boolean;
+    use_unique_code?: boolean;
 }
 
 interface AdminPaymentMethodEditProps {
@@ -46,6 +48,7 @@ export default function AdminPaymentMethodEdit({ paymentMethod }: AdminPaymentMe
         icon: File | null;
         remove_icon: boolean;
         is_active: boolean;
+        use_unique_code: boolean;
     }>({
         name: paymentMethod.name || '',
         code: paymentMethod.code || '',
@@ -55,6 +58,7 @@ export default function AdminPaymentMethodEdit({ paymentMethod }: AdminPaymentMe
         icon: null,
         remove_icon: false,
         is_active: paymentMethod.is_active ?? true,
+        use_unique_code: paymentMethod.use_unique_code ?? true,
     });
 
     const slugifyCode = (text: string) => {
@@ -283,7 +287,7 @@ export default function AdminPaymentMethodEdit({ paymentMethod }: AdminPaymentMe
                                         <div className="p-2 rounded-lg bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300">
                                             <Zap className="size-4" />
                                         </div>
-                                        <span className="font-semibold text-sm text-foreground">Gateway Otomatis (Pakasir)</span>
+                                        <span className="font-semibold text-sm text-foreground">Gateway Otomatis (RajaOngkir)</span>
                                     </div>
                                     {data.type === 'automatic' && (
                                         <CheckCircle2 className="size-4 text-primary" />
@@ -428,6 +432,27 @@ export default function AdminPaymentMethodEdit({ paymentMethod }: AdminPaymentMe
                                     {errors.account_name && (
                                         <p className="text-xs text-destructive font-medium">{errors.account_name}</p>
                                     )}
+                                </div>
+                            </div>
+
+                            <div className="border-t border-amber-200/80 dark:border-amber-900/40 pt-4">
+                                <div className="flex items-center justify-between p-3.5 rounded-xl border border-amber-300/80 dark:border-amber-900/60 bg-amber-100/40 dark:bg-amber-950/40">
+                                    <div className="space-y-1">
+                                        <div className="text-xs font-bold text-foreground flex items-center gap-2">
+                                            <Sparkles className="size-3.5 text-amber-600 dark:text-amber-400" />
+                                            <span>Aktifkan Kode Unik Pembayaran</span>
+                                            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${data.use_unique_code ? 'bg-amber-200 text-amber-900 dark:bg-amber-900/70 dark:text-amber-200' : 'bg-muted text-muted-foreground'}`}>
+                                                {data.use_unique_code ? 'Kode Unik Aktif' : 'Kode Unik Nonaktif'}
+                                            </span>
+                                        </div>
+                                        <p className="text-[11px] text-muted-foreground leading-relaxed max-w-xl">
+                                            Menambahkan 3 digit angka unik acak (100–999) pada total tagihan transfer manual pesanan untuk memudahkan identifikasi dan verifikasi bukti transfer.
+                                        </p>
+                                    </div>
+                                    <Switch
+                                        checked={data.use_unique_code}
+                                        onCheckedChange={(checked) => setData('use_unique_code', checked)}
+                                    />
                                 </div>
                             </div>
                         </CardContent>

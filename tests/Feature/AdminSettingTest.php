@@ -33,7 +33,7 @@ test('admin can access settings page with initial settings', function () {
         );
 });
 
-test('admin can update store contact and kiriminaja origin settings', function () {
+test('admin can update store contact, origin, and rajaongkir settings', function () {
     $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
     $admin = User::factory()->admin()->create();
 
@@ -58,10 +58,12 @@ test('admin can update store contact and kiriminaja origin settings', function (
             'shipping_postal_code' => '12190',
             'shipping_latitude' => -6.223845,
             'shipping_longitude' => 106.805523,
-            'kiriminaja_mode' => 'staging',
-            'kiriminaja_api_key' => 'v4.local.test_key_sample',
-            'kiriminaja_prefix' => 'ARPL',
-            'kiriminaja_pin' => '123456',
+            'rajaongkir_shipping_key' => 'ro_ship_key_sample_123',
+            'rajaongkir_shipping_origin' => 4715,
+            'rajaongkir_payment_mode' => 'sandbox',
+            'rajaongkir_payment_key' => 'ro_pay_key_sample_123',
+            'rajaongkir_callback_url' => 'https://aromapalace.id/rajaongkir/callbackpayment',
+            'rajaongkir_callback_api_key' => 'ro_cb_secret_sample',
         ]);
 
     $response->assertRedirect();
@@ -75,27 +77,12 @@ test('admin can update store contact and kiriminaja origin settings', function (
     expect((float) Setting::get('shipping_latitude'))->toBe(-6.223845);
     expect((float) Setting::get('shipping_longitude'))->toBe(106.805523);
     expect((float) Setting::get('latitude'))->toBe(-6.223845);
-    expect(Setting::get('kiriminaja_mode'))->toBe('staging');
-    expect(Setting::get('kiriminaja_api_key'))->toBe('v4.local.test_key_sample');
-    expect(Setting::get('kiriminaja_prefix'))->toBe('ARPL');
-    expect(Setting::get('kiriminaja_pin'))->toBe('123456');
-});
-
-test('admin can test kiriminaja connection via endpoint', function () {
-    $adminDomain = config('app.admin_domain', env('ADMIN_DOMAIN', 'admin.aromapalace.id'));
-    $admin = User::factory()->admin()->create();
-
-    $response = $this->actingAs($admin)
-        ->postJson("http://{$adminDomain}/pengaturan/test-kiriminaja", [
-            'mode' => 'staging',
-            'api_key' => '',
-        ]);
-
-    $response->assertOk()
-        ->assertJson([
-            'success' => false,
-            'mode' => 'staging',
-        ]);
+    expect(Setting::get('rajaongkir_shipping_key'))->toBe('ro_ship_key_sample_123');
+    expect((int) Setting::get('rajaongkir_shipping_origin'))->toBe(4715);
+    expect(Setting::get('rajaongkir_payment_mode'))->toBe('sandbox');
+    expect(Setting::get('rajaongkir_payment_key'))->toBe('ro_pay_key_sample_123');
+    expect(Setting::get('rajaongkir_callback_url'))->toBe('https://aromapalace.id/rajaongkir/callbackpayment');
+    expect(Setting::get('rajaongkir_callback_api_key'))->toBe('ro_cb_secret_sample');
 });
 
 test('admin settings rejects shipping_sender_phone with invalid prefix', function () {

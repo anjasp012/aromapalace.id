@@ -12,12 +12,11 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\CoverageAreaController;
 use App\Http\Controllers\DeviceTokenController;
 use App\Http\Controllers\HomeController;
-use App\Http\Controllers\KiriminAjaWebhookController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PageController;
-use App\Http\Controllers\PakasirWebhookController;
+use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SearchController;
@@ -69,9 +68,6 @@ Route::get('/api/coverage/subdistricts', [CoverageAreaController::class, 'subdis
 Route::get('/api/coverage/geocode', [CoverageAreaController::class, 'geocode'])->name('coverage.geocode');
 Route::get('/api/shipping/track/{awb}', [ShippingController::class, 'track'])->name('shipping.track');
 
-Route::post('/webhook/pakasir', [PakasirWebhookController::class, 'handle'])->name('webhook.pakasir');
-Route::post('/webhook/kiriminaja', [KiriminAjaWebhookController::class, 'handle'])->name('webhook.kiriminaja');
-
 Route::post('/api/device-tokens', [DeviceTokenController::class, 'store'])->name('device-tokens.store');
 Route::delete('/api/device-tokens', [DeviceTokenController::class, 'destroy'])->name('device-tokens.destroy');
 
@@ -82,6 +78,13 @@ Route::post('/register', [AuthController::class, 'register'])->name('register.po
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::get('/account/login', fn () => redirect()->route('login'));
 Route::get('/account/register', fn () => redirect()->route('register'));
+
+Route::middleware('guest')->group(function () {
+    Route::get('/forgot-password', [PasswordResetController::class, 'create'])->name('password.request');
+    Route::post('/forgot-password', [PasswordResetController::class, 'store'])->name('password.email');
+    Route::get('/reset-password/{token}', [PasswordResetController::class, 'edit'])->name('password.reset');
+    Route::post('/reset-password', [PasswordResetController::class, 'update'])->name('password.update');
+});
 
 Route::middleware('auth')->group(function () {
     Route::middleware('customer')->group(function () {

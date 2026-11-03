@@ -4,8 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
-use App\Services\KiriminAjaService;
-use Illuminate\Http\JsonResponse;
+use App\Services\RajaOngkirShippingCostService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -20,11 +19,14 @@ class SettingController extends Controller
     {
         $settings = Setting::getAll();
 
-        // Ensure defaults for KiriminAja integration
-        $settings['kiriminaja_mode'] = $settings['kiriminaja_mode'] ?? 'staging';
-        $settings['kiriminaja_api_key'] = $settings['kiriminaja_api_key'] ?? '';
-        $settings['kiriminaja_prefix'] = $settings['kiriminaja_prefix'] ?? 'ARPL';
-        $settings['kiriminaja_pin'] = $settings['kiriminaja_pin'] ?? '123456';
+        // Ensure defaults for RajaOngkir payment & shipping gateway integration
+        $settings['rajaongkir_shipping_key'] = $settings['rajaongkir_shipping_key'] ?? '';
+        $settings['rajaongkir_shipping_origin'] = $settings['rajaongkir_shipping_origin'] ?? '291';
+        $settings['rajaongkir_payment_mode'] = $settings['rajaongkir_payment_mode'] ?? 'sandbox';
+        $settings['rajaongkir_payment_key'] = $settings['rajaongkir_payment_key'] ?? '';
+        $settings['rajaongkir_callback_url'] = $settings['rajaongkir_callback_url'] ?? '';
+        $settings['rajaongkir_callback_api_key'] = $settings['rajaongkir_callback_api_key'] ?? '';
+
         $settings['shipping_latitude'] = $settings['shipping_latitude'] ?? $settings['latitude'] ?? '';
         $settings['shipping_longitude'] = $settings['shipping_longitude'] ?? $settings['longitude'] ?? '';
         $settings['latitude'] = $settings['shipping_latitude'];
@@ -39,33 +41,35 @@ class SettingController extends Controller
         $settings['app_playstore_url'] = $settings['app_playstore_url'] ?? 'https://play.google.com/store/apps/details?id=com.aromapalace.app';
         $settings['app_appstore_url'] = $settings['app_appstore_url'] ?? 'https://apps.apple.com/app/aromapalace/id6740000000';
 
-        $kiriminAja = app(KiriminAjaService::class);
+        $rajaOngkir = app(RajaOngkirShippingCostService::class);
         $fetchWithRetry = function (callable $callback): array {
             $res = $callback();
-            if (! empty($res) && is_array($res)) {
-                return $res;
+            $data = is_array($res) ? ($res['data'] ?? $res) : [];
+            if (! empty($data) && is_array($data)) {
+                return $data;
             }
             for ($i = 0; $i < 2; $i++) {
                 usleep(300000);
                 $res = $callback();
-                if (! empty($res) && is_array($res)) {
-                    return $res;
+                $data = is_array($res) ? ($res['data'] ?? $res) : [];
+                if (! empty($data) && is_array($data)) {
+                    return $data;
                 }
             }
 
-            return is_array($res) ? $res : [];
+            return is_array($data) ? $data : [];
         };
 
-        $initialProvinces = $fetchWithRetry(fn () => $kiriminAja->getProvinces());
+        $initialProvinces = $fetchWithRetry(fn () => $rajaOngkir->getProvinces());
 
         $provinceId = (int) ($settings['shipping_province_id'] ?? 0);
-        $initialCities = $provinceId > 0 ? $fetchWithRetry(fn () => $kiriminAja->getCities($provinceId)) : [];
+        $initialCities = $provinceId > 0 ? $fetchWithRetry(fn () => $rajaOngkir->getCities($provinceId)) : [];
 
         $cityId = (int) ($settings['shipping_city_id'] ?? 0);
-        $initialDistricts = $cityId > 0 ? $fetchWithRetry(fn () => $kiriminAja->getDistricts($cityId)) : [];
+        $initialDistricts = $cityId > 0 ? $fetchWithRetry(fn () => $rajaOngkir->getDistricts($cityId)) : [];
 
         $districtId = (int) ($settings['shipping_district_id'] ?? 0);
-        $initialSubdistricts = $districtId > 0 ? $fetchWithRetry(fn () => $kiriminAja->getSubdistricts($districtId)) : [];
+        $initialSubdistricts = $districtId > 0 ? $fetchWithRetry(fn () => $rajaOngkir->getSubDistricts($districtId)) : [];
 
         return Inertia::render('admin/settings/index', [
             'settings' => $settings,
@@ -97,7 +101,7 @@ class SettingController extends Controller
             'store_whatsapp' => ['nullable', 'string', 'max:25', 'regex:/^(\+628|628|08|02)[0-9]{6,13}$/'],
             'store_description' => ['nullable', 'string', 'max:1000'],
 
-            // Shipping & KiriminAja Origin
+            // Shipping Origin
             'shipping_sender_name' => ['required', 'string', 'max:255'],
             'shipping_sender_phone' => ['required', 'string', 'max:25', 'regex:/^(\+628|628|08|02)[0-9]{6,13}$/'],
             'shipping_address' => ['required', 'string', 'max:1000'],
@@ -115,11 +119,13 @@ class SettingController extends Controller
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
 
-            // KiriminAja API Integration
-            'kiriminaja_mode' => ['nullable', 'string', 'in:staging,production'],
-            'kiriminaja_api_key' => ['nullable', 'string', 'max:500'],
-            'kiriminaja_prefix' => ['nullable', 'string', 'max:20'],
-            'kiriminaja_pin' => ['nullable', 'string', 'max:10'],
+            // RajaOngkir API Integration
+            'rajaongkir_shipping_key' => ['nullable', 'string', 'max:500'],
+            'rajaongkir_shipping_origin' => ['nullable', 'integer'],
+            'rajaongkir_payment_mode' => ['nullable', 'string', 'in:sandbox,production'],
+            'rajaongkir_payment_key' => ['nullable', 'string', 'max:500'],
+            'rajaongkir_callback_url' => ['nullable', 'string', 'max:500'],
+            'rajaongkir_callback_api_key' => ['nullable', 'string', 'max:500'],
 
             // Mobile App & Update Settings
             'app_min_version' => ['nullable', 'string', 'max:25'],
@@ -144,16 +150,6 @@ class SettingController extends Controller
             $validated['shipping_longitude'] = $validated['longitude'];
         } elseif (isset($validated['shipping_longitude']) && ! isset($validated['longitude'])) {
             $validated['longitude'] = $validated['shipping_longitude'];
-        }
-
-        if (isset($validated['kiriminaja_api_key'])) {
-            $validated['kiriminaja_api_key'] = trim((string) $validated['kiriminaja_api_key']);
-        }
-        if (isset($validated['kiriminaja_prefix'])) {
-            $validated['kiriminaja_prefix'] = strtoupper(trim((string) $validated['kiriminaja_prefix']));
-        }
-        if (isset($validated['kiriminaja_pin'])) {
-            $validated['kiriminaja_pin'] = trim((string) $validated['kiriminaja_pin']);
         }
 
         if ($request->has('app_force_update')) {
@@ -182,10 +178,12 @@ class SettingController extends Controller
             'shipping_longitude' => ['group' => 'shipping', 'type' => 'string'],
             'latitude' => ['group' => 'shipping', 'type' => 'string'],
             'longitude' => ['group' => 'shipping', 'type' => 'string'],
-            'kiriminaja_mode' => ['group' => 'shipping', 'type' => 'string'],
-            'kiriminaja_api_key' => ['group' => 'shipping', 'type' => 'string'],
-            'kiriminaja_prefix' => ['group' => 'shipping', 'type' => 'string'],
-            'kiriminaja_pin' => ['group' => 'shipping', 'type' => 'string'],
+            'rajaongkir_shipping_key' => ['group' => 'payment_gateway', 'type' => 'string'],
+            'rajaongkir_shipping_origin' => ['group' => 'payment_gateway', 'type' => 'integer'],
+            'rajaongkir_payment_mode' => ['group' => 'payment_gateway', 'type' => 'string'],
+            'rajaongkir_payment_key' => ['group' => 'payment_gateway', 'type' => 'string'],
+            'rajaongkir_callback_url' => ['group' => 'payment_gateway', 'type' => 'string'],
+            'rajaongkir_callback_api_key' => ['group' => 'payment_gateway', 'type' => 'string'],
             'app_min_version' => ['group' => 'app_update', 'type' => 'string'],
             'app_latest_version' => ['group' => 'app_update', 'type' => 'string'],
             'app_force_update' => ['group' => 'app_update', 'type' => 'boolean'],
@@ -208,36 +206,6 @@ class SettingController extends Controller
 
         Setting::clearCache();
 
-        return back()->with('success', 'Pengaturan toko, integrasi KiriminAja, dan alamat asal berhasil disimpan.');
-    }
-
-    /**
-     * Test KiriminAja API connection and authorization.
-     */
-    public function testKiriminAja(Request $request, KiriminAjaService $service): JsonResponse
-    {
-        $validated = $request->validate([
-            'mode' => ['nullable', 'string', 'in:staging,production'],
-            'api_key' => ['nullable', 'string', 'max:500'],
-            'base_url' => ['nullable', 'string', 'max:255'],
-        ]);
-
-        $apiKey = array_key_exists('api_key', $request->all())
-            ? (string) ($request->input('api_key') ?? '')
-            : null;
-
-        $result = method_exists($service, 'testConnection')
-            ? $service->testConnection(
-                $apiKey,
-                $validated['mode'] ?? null,
-                $validated['base_url'] ?? null
-            )
-            : [
-                'success' => ! empty($apiKey),
-                'mode' => $validated['mode'] ?? 'staging',
-                'message' => empty($apiKey) ? 'API key kosong.' : 'Terkoneksi.',
-            ];
-
-        return response()->json($result);
+        return back()->with('success', 'Pengaturan toko, integrasi RajaOngkir, dan alamat asal berhasil disimpan.');
     }
 }

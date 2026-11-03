@@ -7,7 +7,7 @@ use App\Models\Order;
 use App\Models\PaymentMethod;
 use App\Services\FirebaseNotificationService;
 use App\Services\OrderService;
-use App\Services\PakasirService;
+use App\Services\RajaOngkirPaymentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,7 +20,7 @@ use Inertia\Response;
 class PaymentController extends Controller
 {
     public function __construct(
-        protected PakasirService $pakasirService
+        protected RajaOngkirPaymentService $rajaOngkirPaymentService
     ) {}
 
     /**
@@ -86,6 +86,14 @@ class PaymentController extends Controller
                     'account_number' => $accountNumber,
                     'account_name' => $accountName,
                 ] : null,
+                'subtotal' => (int) $orderModel->subtotal,
+                'subtotal_formatted' => 'Rp '.number_format($orderModel->subtotal, 0, ',', '.'),
+                'shipping_cost' => (int) $orderModel->shipping_cost,
+                'shipping_cost_formatted' => $orderModel->shipping_cost > 0 ? 'Rp '.number_format($orderModel->shipping_cost, 0, ',', '.') : 'Rp 0',
+                'discount_amount' => (int) $orderModel->discount_amount,
+                'discount_amount_formatted' => 'Rp '.number_format($orderModel->discount_amount, 0, ',', '.'),
+                'unique_code' => $orderModel->unique_code ? (int) $orderModel->unique_code : null,
+                'unique_code_formatted' => $orderModel->unique_code ? 'Rp '.number_format($orderModel->unique_code, 0, ',', '.') : null,
                 'total_amount' => $orderModel->total_amount,
                 'total_amount_formatted' => 'Rp '.number_format($orderModel->total_amount, 0, ',', '.'),
             ],
@@ -150,33 +158,30 @@ class PaymentController extends Controller
                 app(OrderService::class)->cancelOrder($orderModel, 'Batas waktu pembayaran 24 jam telah berakhir.');
                 $orderModel->refresh();
             } else {
-                $txnRes = $this->pakasirService->createTransaction($orderModel->order_number, $orderModel->total_amount, $orderModel->payment_method);
-                if ($txnRes['success'] && ! empty($txnRes['data']['txn_id'])) {
-                    $statusRes = $this->pakasirService->checkTransactionStatus($txnRes['data']['txn_id']);
-                    if ($statusRes['success']) {
-                        $status = strtolower((string) ($statusRes['data']['status'] ?? ''));
-                        if ($status === 'completed') {
-                            DB::transaction(function () use ($orderModel) {
-                                $locked = Order::where('id', $orderModel->id)->lockForUpdate()->first();
-                                if ($locked && $locked->payment_status === 'pending') {
-                                    $locked->update([
-                                        'payment_status' => 'paid',
-                                        'status' => 'diproses',
-                                    ]);
-                                    try {
-                                        event(new OrderPaid($locked));
-                                    } catch (\Throwable $e) {
-                                        Log::warning('Broadcast OrderPaid failed: '.$e->getMessage());
-                                    }
-                                    app(FirebaseNotificationService::class)->notifyPaymentSuccess($locked);
-                                }
-                            });
-                            $orderModel->refresh();
-                        } elseif ($status === 'canceled') {
-                            app(OrderService::class)->cancelOrder($orderModel, 'Dibatalkan oleh gateway Pakasir.');
-                            $orderModel->refresh();
+                // Query status from RajaOngkir
+                $statusRes = $this->rajaOngkirPaymentService->getPaymentStatus($orderModel->order_number);
+                $status = strtolower((string) ($statusRes['data']['status'] ?? $statusRes['status'] ?? ''));
+
+                if (in_array($status, ['completed', 'paid', 'success'], true)) {
+                    DB::transaction(function () use ($orderModel) {
+                        $locked = Order::where('id', $orderModel->id)->lockForUpdate()->first();
+                        if ($locked && $locked->payment_status === 'pending') {
+                            $locked->update([
+                                'payment_status' => 'paid',
+                                'status' => 'diproses',
+                            ]);
+                            try {
+                                event(new OrderPaid($locked));
+                            } catch (\Throwable $e) {
+                                Log::warning('Broadcast OrderPaid failed: '.$e->getMessage());
+                            }
+                            app(FirebaseNotificationService::class)->notifyPaymentSuccess($locked);
                         }
-                    }
+                    });
+                    $orderModel->refresh();
+                } elseif (in_array($status, ['canceled', 'expired', 'failed'], true)) {
+                    app(OrderService::class)->cancelOrder($orderModel, 'Dibatalkan oleh gateway RajaOngkir.');
+                    $orderModel->refresh();
                 }
             }
         }

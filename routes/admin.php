@@ -119,8 +119,13 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/manajemen-pembayaran', [PaymentMethodController::class, 'index'])->name('payment-methods.index');
     Route::get('/manajemen-pembayaran/create', [PaymentMethodController::class, 'create'])->name('payment-methods.create');
     Route::post('/manajemen-pembayaran', [PaymentMethodController::class, 'store'])->name('payment-methods.store');
+    Route::post('/manajemen-pembayaran/settings/unique-code', [PaymentMethodController::class, 'toggleUniqueCodeSetting'])->name('payment-methods.settings.unique-code');
+    Route::get('/manajemen-pembayaran/sync/preview', [PaymentMethodController::class, 'syncPreview'])->name('payment-methods.sync-preview');
+    Route::post('/manajemen-pembayaran/sync', [PaymentMethodController::class, 'sync'])->name('payment-methods.sync');
+    Route::delete('/manajemen-pembayaran/delete-automatic', [PaymentMethodController::class, 'deleteAllAutomatic'])->name('payment-methods.delete-automatic');
     Route::get('/manajemen-pembayaran/{payment_method}/edit', [PaymentMethodController::class, 'edit'])->name('payment-methods.edit');
     Route::patch('/manajemen-pembayaran/{payment_method}/toggle', [PaymentMethodController::class, 'toggleStatus'])->name('payment-methods.toggle');
+    Route::patch('/manajemen-pembayaran/{payment_method}/toggle-unique-code', [PaymentMethodController::class, 'toggleUniqueCode'])->name('payment-methods.toggle-unique-code');
     Route::match(['put', 'patch', 'post'], '/manajemen-pembayaran/{payment_method}', [PaymentMethodController::class, 'update'])->name('payment-methods.update');
     Route::delete('/manajemen-pembayaran/{payment_method}', [PaymentMethodController::class, 'destroy'])->name('payment-methods.destroy');
 
@@ -149,7 +154,6 @@ Route::middleware(['auth', 'admin'])->group(function () {
     // Store & Origin Shipping Settings
     Route::get('/pengaturan', [SettingController::class, 'index'])->name('settings.index');
     Route::post('/pengaturan', [SettingController::class, 'update'])->name('settings.update');
-    Route::post('/pengaturan/test-kiriminaja', [SettingController::class, 'testKiriminAja'])->name('settings.test-kiriminaja');
 
     // Convenient Aliases
     Route::get('/admin', fn () => redirect()->route('admin.dashboard'));
