@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import { type FormEvent } from 'react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import {
     AccordionContent,
 } from '@/components/ui/accordion';
 import { useTranslation } from '@/lib/i18n';
+import { Gem, Crown, Handshake, Sparkles, ArrowRight, Store } from 'lucide-react';
 
 interface Pillar {
     title: string;
@@ -31,32 +32,32 @@ interface FAQ {
 
 const DEFAULT_PILLARS: Pillar[] = [
     {
-        title: 'Ekstraksi Berkelanjutan',
-        title_en: 'Ethical Extraction',
-        description: 'Ekstraksi botani panen liar dan esensi kayu dari budidaya berkelanjutan yang bersumber langsung dari perajin lokal berdedikasi.',
-        description_en: 'Wild-harvested botanical extractions and sustainably cultivated wood essences sourced straight from indigenous forest stewards.',
-        icon: 'leaf',
+        title: 'Keaslian Terjamin',
+        title_en: 'Authenticity',
+        description: 'Setiap wewangian adalah janji keaslian, dikurasi dengan cermat demi memastikan kualitas otentik dan rasa percaya diri dalam setiap pembelian.',
+        description_en: 'Every fragrance is a promise of originality, sourced with care to ensure genuine quality and confidence in every purchase.',
+        icon: 'gem',
     },
     {
-        title: 'Maserasi Sempurna',
-        title_en: 'Masterful Maceration',
-        description: 'Setiap racikan dimaserasi minimal 180 hari dalam ruang gelap bersuhu terjaga guna menyatukan harmonisasi akord aroma tingkat tinggi.',
-        description_en: 'Every batch is allowed to macerate for a minimum of 180 days in temperature-controlled darkness to harmonize intricate accord layers.',
-        icon: 'clock',
+        title: 'Kurasi Keunggulan',
+        title_en: 'Curated Excellence',
+        description: 'Kurasi pilihan istimewa dari merek parfum Timur Tengah dan internasional ternama, dipilih dengan penuh pertimbangan untuk setiap selera dan momen.',
+        description_en: 'An exceptional selection of renowned Middle Eastern and international perfume brands, thoughtfully chosen for every taste and occasion.',
+        icon: 'crown',
     },
     {
-        title: 'Konsentrasi Ekstrak Tinggi',
-        title_en: 'High Concentration',
-        description: 'Kami menolak parfum yang diencerkan berlebihan. Seluruh formula Aroma Palace memiliki 20% hingga 35% konsentrat minyak wangi murni.',
-        description_en: 'We reject diluted fragrances. All Aroma Palace formulas possess 20% to 35% pure aromatic concentrate for unparalleled sillage and longevity.',
+        title: 'Layanan Personal',
+        title_en: 'Personalized Service',
+        description: 'Pengalaman eksplorasi wewangian yang ramah dan menyenangkan, dipandu oleh layanan penuh perhatian untuk membantu setiap pelanggan menemukan aroma sempurna mereka.',
+        description_en: 'A welcoming fragrance discovery experience, guided by attentive service to help every customer find their perfect scent.',
+        icon: 'handshake',
+    },
+    {
+        title: 'Kemewahan Terjangkau',
+        title_en: 'Accessible Luxury',
+        description: 'Mendekatkan kekayaan dan kemewahan seni wewangian bermutu tinggi kepada para pecinta aroma di seluruh Indonesia.',
+        description_en: 'Bringing the richness and sophistication of fine perfumery closer to fragrance lovers across Indonesia.',
         icon: 'sparkles',
-    },
-    {
-        title: 'Atelier Privat Eksklusif',
-        title_en: 'Bespoke Atelier',
-        description: 'Konsultasi olfaktori personal yang dirancang khusus untuk memandu Anda menemukan wewangian signature yang mencerminkan aura sejati Anda.',
-        description_en: 'Private olfactory consultations tailored to compose a one-of-a-kind scent signature echoing your memories and personal aura.',
-        icon: 'fingerprint',
     },
 ];
 
@@ -90,9 +91,28 @@ export default function About({
     pillars = DEFAULT_PILLARS,
     faqs = DEFAULT_FAQS,
 }: AboutProps) {
-    const { t, pickText } = useTranslation();
+    const { t, pickText, isEn } = useTranslation();
     const activePillars = (pillars && Array.isArray(pillars) && pillars.length > 0) ? pillars : DEFAULT_PILLARS;
     const activeFaqs = (faqs && Array.isArray(faqs) && faqs.length > 0) ? faqs : DEFAULT_FAQS;
+
+    const renderPillarIcon = (iconName: string) => {
+        switch (iconName.toLowerCase()) {
+            case 'gem':
+            case 'diamond':
+            case 'authenticity':
+                return <Gem className="w-8 h-8 stroke-[1.6] text-[#4A070B] dark:text-[#E8D0BA]" />;
+            case 'crown':
+            case 'curated':
+                return <Crown className="w-8 h-8 stroke-[1.6] text-[#4A070B] dark:text-[#E8D0BA]" />;
+            case 'handshake':
+            case 'service':
+                return <Handshake className="w-8 h-8 stroke-[1.6] text-[#4A070B] dark:text-[#E8D0BA]" />;
+            case 'sparkles':
+            case 'luxury':
+            default:
+                return <Sparkles className="w-8 h-8 stroke-[1.6] text-[#4A070B] dark:text-[#E8D0BA]" />;
+        }
+    };
 
     const { data, setData, post, processing, errors, reset, wasSuccessful } = useForm({
         name: '',
@@ -113,45 +133,126 @@ export default function About({
             <Head title={`${t('about.meta_title')}`} />
 
             {/* HERO SECTION */}
-            <section className="py-14 sm:py-20 border-b border-border bg-background">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center space-y-4">
-                    <Badge variant="secondary" className="mx-auto w-fit">
-                        {t('about.philosophy_badge')}
+            <section className="py-14 sm:py-20 border-b border-border bg-gradient-to-b from-background via-card/30 to-background">
+                <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 text-center space-y-6">
+                    <Badge variant="secondary" className="mx-auto w-fit uppercase tracking-widest text-[11px] font-semibold px-3 py-1 bg-amber-500/10 border-amber-500/20 text-[#4A070B] dark:text-[#E8D0BA]">
+                        {isEn ? 'About Us' : 'Tentang Kami'}
                     </Badge>
-                    <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-foreground max-w-3xl mx-auto leading-tight">
-                        {t('about.hero_title')}
-                    </h1>
-                    <p className="max-w-2xl mx-auto text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                        {t('about.hero_subtitle')}
-                    </p>
+
+                    {/* Main Headline & Subtitle */}
+                    <div className="space-y-3 max-w-4xl mx-auto">
+                        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground font-serif uppercase">
+                            OUR STORY
+                        </h1>
+                        <p className="text-lg sm:text-2xl md:text-3xl font-serif text-[#4A070B] dark:text-[#E8D0BA] font-semibold tracking-normal">
+                            A Heritage of Scent, A World of Elegance
+                        </p>
+                    </div>
+
+                    {/* Welcome & Opening Story */}
+                    <div className="max-w-3xl mx-auto space-y-4 pt-1">
+                        <p className="text-base sm:text-lg font-medium text-foreground/95 leading-relaxed font-serif">
+                            Welcome to Aroma Palace, where the richness of Middle Eastern perfumery meets modern elegance.
+                        </p>
+                        <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+                            {isEn
+                                ? 'Inspired by the luxurious fragrance culture of the Middle East, Aroma Palace is a destination for those who appreciate the art of fine perfumery. We bring together an exceptional selection of fragrances from renowned international perfume houses, offering scents that celebrate individuality, sophistication, and timeless beauty.'
+                                : 'Terinspirasi oleh budaya wewangian mewah khas Timur Tengah, Aroma Palace adalah destinasi bagi para pencinta seni wewangian bermutu tinggi. Kami menghadirkan kurasi pilihan wewangian istimewa dari rumah parfum internasional ternama, menawarkan aroma yang merayakan keunikan individu, kemewahan, dan keindahan abadi.'}
+                        </p>
+                    </div>
                 </div>
             </section>
 
-            {/* PILLARS */}
-            <section className="py-12 sm:py-16 border-b border-border">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
-                    <div className="text-center max-w-xl mx-auto space-y-2">
-                        <Badge variant="outline">{t('about.quality_standard')}</Badge>
-                        <h2 className="text-2xl sm:text-3xl tracking-tight text-foreground">
-                            <span className="font-normal">{t('about.four_pillars_prefix')}</span>{' '}
-                            <span className="font-bold">Aroma Palace</span>
-                        </h2>
+            {/* BRAND ESSENCE & PHILOSOPHY (QUOTE CALLOUT) */}
+            <section className="py-12 sm:py-16 border-b border-border bg-background">
+                <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 space-y-12">
+                    {/* Core Belief Highlight */}
+                    <div className="relative p-8 sm:p-12 rounded-2xl bg-gradient-to-br from-[#4A070B]/5 via-amber-500/5 to-transparent border border-[#4A070B]/15 dark:border-[#E8D0BA]/15 text-center max-w-3xl mx-auto shadow-xs">
+                        <span className="text-4xl sm:text-5xl text-[#4A070B] dark:text-[#E8D0BA] font-serif leading-none block mb-3 opacity-60">“</span>
+                        <blockquote className="text-base sm:text-xl md:text-2xl font-medium text-foreground tracking-wide font-serif leading-relaxed italic max-w-2xl mx-auto">
+                            {isEn
+                                ? 'We believe a fragrance is more than just a scent. It is an expression of personality, a reflection of style, and a memory waiting to be created.'
+                                : 'Kami meyakini bahwa wewangian lebih dari sekadar aroma. Parfum adalah ekspresi kepribadian, cerminan gaya hidup, dan kenangan indah yang menanti untuk diciptakan.'}
+                        </blockquote>
+                        <div className="mt-5 flex items-center justify-center gap-2">
+                            <div className="h-px w-8 bg-[#4A070B]/30 dark:bg-[#E8D0BA]/30" />
+                            <span className="text-[11px] uppercase tracking-widest font-bold text-[#4A070B] dark:text-[#E8D0BA]">Aroma Palace</span>
+                            <div className="h-px w-8 bg-[#4A070B]/30 dark:bg-[#E8D0BA]/30" />
+                        </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {activePillars.map((pillar, idx) => (
-                            <Card key={pillar.title} className="p-6 space-y-3 shadow-none rounded-lg">
-                                <Badge variant="secondary" className="font-mono text-xs w-fit">
-                                    0{idx + 1}
-                                </Badge>
-                                <h3 className="text-base font-bold text-foreground">
-                                    {pickText(pillar.title, pillar.title_en)}
-                                </h3>
-                                <p className="text-xs text-muted-foreground leading-relaxed">
-                                    {pickText(pillar.description, pillar.description_en)}
-                                </p>
-                            </Card>
-                        ))}
+                    {/* Scent Spectrum Paragraph */}
+                    <div className="text-center max-w-3xl mx-auto space-y-3">
+                        <Badge variant="outline" className="text-xs font-semibold px-3 py-1">
+                            {isEn ? 'The Fragrance Spectrum' : 'Kekayaan Spektrum Wewangian'}
+                        </Badge>
+                        <p className="text-sm sm:text-base text-foreground/90 font-medium leading-relaxed">
+                            {isEn
+                                ? 'From the deep, captivating richness of oud and amber to fresh, floral, woody, and contemporary compositions, our carefully selected collection offers something for every mood, occasion, and personality.'
+                                : 'Dari kekayaan mendalam dan memikat oud serta amber, hingga komposisi segar, floral, woody, dan kontemporer, koleksi kurasi pilihan kami menawarkan wewangian untuk setiap suasana hati, momen istimewa, dan kepribadian.'}
+                        </p>
+                    </div>
+
+                    {/* FOUR PILLARS OF EXCELLENCE */}
+                    <div className="space-y-8 pt-4">
+                        <div className="text-center max-w-2xl mx-auto space-y-3">
+                            <Badge variant="secondary" className="uppercase tracking-widest text-[11px] font-semibold px-3 py-1 bg-amber-500/10 border-amber-500/20 text-[#4A070B] dark:text-[#E8D0BA]">
+                                {t('about.pillars_badge')}
+                            </Badge>
+                            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground font-serif">
+                                {t('about.pillars_title')}
+                            </h2>
+                            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                                {t('about.pillars_subtitle')}
+                            </p>
+                        </div>
+
+                        {/* 4 Pillars Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                            {activePillars.map((pillar) => (
+                                <Card
+                                    key={pillar.title_en || pillar.title}
+                                    className="p-6 sm:p-7 flex flex-col items-center text-center space-y-3.5 shadow-none rounded-2xl border border-border/80 bg-card/60 hover:border-[#4A070B]/30 dark:hover:border-[#E8D0BA]/30 hover:shadow-xs transition-all duration-200"
+                                >
+                                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-amber-500/10 dark:bg-amber-400/10 mb-1">
+                                        {renderPillarIcon(pillar.icon)}
+                                    </div>
+                                    <h3 className="text-base sm:text-lg font-bold text-foreground font-serif tracking-tight">
+                                        {pickText(pillar.title, pillar.title_en)}
+                                    </h3>
+                                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                                        {pickText(pillar.description, pillar.description_en)}
+                                    </p>
+                                </Card>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Invitation & Discovery Banner */}
+                    <div className="p-8 sm:p-10 rounded-2xl bg-gradient-to-r from-[#4A070B] via-[#5C0A0E] to-[#4A070B] text-white text-center space-y-4 shadow-sm">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-amber-200 text-xs font-semibold">
+                            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                            <span>{isEn ? 'Fragrance Discovery' : 'Petualangan Wewangian'}</span>
+                        </div>
+                        <p className="text-sm sm:text-base md:text-lg text-white/95 max-w-2xl mx-auto leading-relaxed font-medium">
+                            {isEn
+                                ? "Whether you're discovering your signature scent, exploring something new, or searching for the perfect gift, Aroma Palace invites you to experience the pleasure of fragrance discovery."
+                                : 'Baik saat Anda mencari signature scent sejati, menjelajahi aroma baru, maupun mencari hadiah yang sempurna, Aroma Palace mengundang Anda untuk merasakan kenikmatan petualangan wewangian ini.'}
+                        </p>
+                        <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+                            <Link href="/products">
+                                <Button className="h-10 px-5 rounded-md font-bold text-xs sm:text-sm bg-[#FFC400] hover:bg-[#E5B000] text-black shadow-none cursor-pointer flex items-center gap-1.5 transition">
+                                    <span>{isEn ? 'Explore Fragrance Collection' : 'Jelajahi Koleksi Parfum'}</span>
+                                    <ArrowRight className="w-3.5 h-3.5" />
+                                </Button>
+                            </Link>
+                            <Link href="/stores">
+                                <Button variant="outline" className="h-10 px-5 rounded-md font-bold text-xs sm:text-sm text-white border-white/30 hover:bg-white/10 hover:text-white cursor-pointer shadow-none flex items-center gap-1.5 transition">
+                                    <Store className="w-3.5 h-3.5" />
+                                    <span>{isEn ? 'Find Boutiques' : 'Temukan Butik Kami'}</span>
+                                </Button>
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -162,7 +263,7 @@ export default function About({
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                         {/* Consultation Form */}
                         <div className="lg:col-span-6">
-                            <Card className="p-6 sm:p-8 shadow-none rounded-lg">
+                            <Card className="p-6 sm:p-8 shadow-none rounded-xl border border-border/80 bg-card/60">
                                 <CardHeader className="p-0 pb-6 space-y-1.5">
                                     <Badge variant="secondary" className="w-fit">{t('about.consultation_badge')}</Badge>
                                     <CardTitle className="text-xl font-bold">{t('about.consultation_title')}</CardTitle>

@@ -16,32 +16,32 @@ class AboutController extends Controller
     {
         $pillars = [
             [
-                'title' => 'Ekstraksi Berkelanjutan',
-                'title_en' => 'Ethical Extraction',
-                'description' => 'Ekstraksi botani panen liar dan esensi kayu dari budidaya berkelanjutan yang bersumber langsung dari perajin lokal berdedikasi.',
-                'description_en' => 'Wild-harvested botanical extractions and sustainably cultivated wood essences sourced straight from indigenous forest stewards.',
-                'icon' => 'leaf',
+                'title' => 'Keaslian Terjamin',
+                'title_en' => 'Authenticity',
+                'description' => 'Setiap wewangian adalah janji keaslian, dikurasi dengan cermat demi memastikan kualitas otentik dan rasa percaya diri dalam setiap pembelian.',
+                'description_en' => 'Every fragrance is a promise of originality, sourced with care to ensure genuine quality and confidence in every purchase.',
+                'icon' => 'gem',
             ],
             [
-                'title' => 'Maserasi Sempurna',
-                'title_en' => 'Masterful Maceration',
-                'description' => 'Setiap racikan dimaserasi minimal 180 hari dalam ruang gelap bersuhu terjaga guna menyatukan harmonisasi akord aroma tingkat tinggi.',
-                'description_en' => 'Every batch is allowed to macerate for a minimum of 180 days in temperature-controlled darkness to harmonize intricate accord layers.',
-                'icon' => 'clock',
+                'title' => 'Kurasi Keunggulan',
+                'title_en' => 'Curated Excellence',
+                'description' => 'Kurasi pilihan istimewa dari merek parfum Timur Tengah dan internasional ternama, dipilih dengan penuh pertimbangan untuk setiap selera dan momen.',
+                'description_en' => 'An exceptional selection of renowned Middle Eastern and international perfume brands, thoughtfully chosen for every taste and occasion.',
+                'icon' => 'crown',
             ],
             [
-                'title' => 'Konsentrasi Ekstrak Tinggi',
-                'title_en' => 'High Concentration',
-                'description' => 'Kami menolak parfum yang diencerkan berlebihan. Seluruh formula Aroma Palace memiliki 20% hingga 35% konsentrat minyak wangi murni.',
-                'description_en' => 'We reject diluted fragrances. All Aroma Palace formulas possess 20% to 35% pure aromatic concentrate for unparalleled sillage and longevity.',
+                'title' => 'Layanan Personal',
+                'title_en' => 'Personalized Service',
+                'description' => 'Pengalaman eksplorasi wewangian yang ramah dan menyenangkan, dipandu oleh layanan penuh perhatian untuk membantu setiap pelanggan menemukan aroma sempurna mereka.',
+                'description_en' => 'A welcoming fragrance discovery experience, guided by attentive service to help every customer find their perfect scent.',
+                'icon' => 'handshake',
+            ],
+            [
+                'title' => 'Kemewahan Terjangkau',
+                'title_en' => 'Accessible Luxury',
+                'description' => 'Mendekatkan kekayaan dan kemewahan seni wewangian bermutu tinggi kepada para pecinta aroma di seluruh Indonesia.',
+                'description_en' => 'Bringing the richness and sophistication of fine perfumery closer to fragrance lovers across Indonesia.',
                 'icon' => 'sparkles',
-            ],
-            [
-                'title' => 'Atelier Privat Eksklusif',
-                'title_en' => 'Bespoke Atelier',
-                'description' => 'Konsultasi olfaktori personal yang dirancang khusus untuk memandu Anda menemukan wewangian signature yang mencerminkan aura sejati Anda.',
-                'description_en' => 'Private olfactory consultations tailored to compose a one-of-a-kind scent signature echoing your memories and personal aura.',
-                'icon' => 'fingerprint',
             ],
         ];
 
