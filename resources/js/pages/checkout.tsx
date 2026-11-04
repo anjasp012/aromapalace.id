@@ -1430,8 +1430,8 @@ export default function CheckoutPage({
                                 </div>
                             </div>
 
-                            {/* Back to Cart Link */}
-                            <div className="pt-4 pb-8 flex justify-center lg:justify-start">
+                            {/* Desktop only: Back to Cart Link */}
+                            <div className="hidden lg:flex pt-4 pb-8 justify-start">
                                 <Link
                                     href="/cart"
                                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#4A070B] dark:text-[#E8D0BA] hover:text-[#360407] transition-colors"
@@ -1733,6 +1733,16 @@ export default function CheckoutPage({
                                         <span>{processing ? (isEn ? 'Processing Order...' : 'Memproses Pesanan...') : (isEn ? `Buy (${totalItemsCount}) and Pay` : `Beli (${totalItemsCount}) dan Bayar`)}</span>
                                     </Button>
                                 </div>
+                            </div>
+
+                            {/* Mobile only: Back to Cart Link (placed at the very bottom, below ringkasan pembayaran) */}
+                            <div className="lg:hidden pt-2 pb-6 flex justify-center">
+                                <Link
+                                    href="/cart"
+                                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#4A070B] dark:text-[#E8D0BA] hover:text-[#360407] transition-colors"
+                                >
+                                    <span>←</span> {isEn ? 'Back to Cart' : 'Kembali ke Keranjang'}
+                                </Link>
                             </div>
                         </div>
                     </div>
