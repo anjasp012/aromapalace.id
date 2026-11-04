@@ -30,13 +30,19 @@ export default function BrandCard({ brand, className }: BrandCardProps) {
         >
             <Card className="p-2 sm:p-3.5 transition flex flex-col justify-between h-full py-2 sm:py-3 gap-0 shadow-none hover:border-foreground/30 rounded-lg w-full">
                 <div className="space-y-1.5 sm:space-y-2.5">
-                    <div className="aspect-square rounded-md overflow-hidden bg-muted">
+                    <div
+                        className="aspect-square rounded-md overflow-hidden flex items-center justify-center p-2.5 sm:p-3.5 relative"
+                        style={{
+                            background: 'radial-gradient(circle at 50% 30%, #5C0710 0%, #3D040A 55%, #250205 100%)',
+                        }}
+                    >
                         <img
                             src={brand.image}
                             alt={brand.name}
                             loading="lazy"
                             decoding="async"
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+                            style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.4))' }}
                         />
                     </div>
                     <div>
@@ -58,7 +64,12 @@ export function BrandCardSkeleton({ className }: { className?: string }) {
     return (
         <Card className={cn('p-2 sm:p-3.5 flex flex-col justify-between h-full py-2 sm:py-3 gap-0 shadow-none rounded-lg w-full', className)}>
             <div className="space-y-1.5 sm:space-y-2.5">
-                <Skeleton className="aspect-square w-full rounded-md" />
+                <div
+                    className="aspect-square w-full rounded-md animate-pulse opacity-85"
+                    style={{
+                        background: 'radial-gradient(circle at 50% 30%, #5C0710 0%, #3D040A 55%, #250205 100%)',
+                    }}
+                />
                 <div className="space-y-1">
                     <Skeleton className="h-3.5 w-3/4" />
                 </div>
