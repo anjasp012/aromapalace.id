@@ -132,10 +132,10 @@ export default function About({
         <Layout>
             <Head title={`${t('about.meta_title')}`} />
 
-            {/* HERO SECTION */}
-            <section className="py-14 sm:py-20 border-b border-border bg-gradient-to-b from-background via-card/30 to-background">
-                <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 text-center space-y-6">
-                    <Badge variant="secondary" className="mx-auto w-fit uppercase tracking-widest text-[11px] font-semibold px-3 py-1 bg-amber-500/10 border-amber-500/20 text-[#4A070B] dark:text-[#E8D0BA]">
+            {/* HERO TITLE SECTION */}
+            <section className="py-16 sm:py-24 border-b border-border bg-gradient-to-b from-background via-card/30 to-background">
+                <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 text-center space-y-4">
+                    <Badge variant="secondary" className="mx-auto w-fit uppercase tracking-widest text-[11px] font-semibold px-3.5 py-1 bg-amber-500/10 border-amber-500/20 text-[#4A070B] dark:text-[#E8D0BA]">
                         {isEn ? 'About Us' : 'Tentang Kami'}
                     </Badge>
 
@@ -148,25 +148,27 @@ export default function About({
                             A Heritage of Scent, A World of Elegance
                         </p>
                     </div>
+                </div>
+            </section>
 
-                    {/* Welcome & Opening Story */}
-                    <div className="max-w-3xl mx-auto space-y-4 pt-1">
-                        <p className="text-base sm:text-lg font-medium text-foreground/95 leading-relaxed font-serif">
-                            Welcome to Aroma Palace, where the richness of Middle Eastern perfumery meets modern elegance.
-                        </p>
-                        <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+            {/* BODY STORY CONTENT SECTION */}
+            <section className="py-14 sm:py-20 border-b border-border bg-background">
+                <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 space-y-12">
+                    {/* Welcome & Inspired by Story Narrative */}
+                    <div className="max-w-3xl mx-auto text-center space-y-4">
+                        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold font-serif text-foreground leading-snug sm:leading-relaxed">
+                            {isEn
+                                ? 'Welcome to Aroma Palace, where the richness of Middle Eastern perfumery meets modern elegance.'
+                                : 'Selamat datang di Aroma Palace, tempat kekayaan seni wewangian Timur Tengah berpadu dengan keanggunan modern.'}
+                        </h2>
+                        <p className="text-sm sm:text-base text-muted-foreground leading-relaxed font-normal">
                             {isEn
                                 ? 'Inspired by the luxurious fragrance culture of the Middle East, Aroma Palace is a destination for those who appreciate the art of fine perfumery. We bring together an exceptional selection of fragrances from renowned international perfume houses, offering scents that celebrate individuality, sophistication, and timeless beauty.'
                                 : 'Terinspirasi oleh budaya wewangian mewah khas Timur Tengah, Aroma Palace adalah destinasi bagi para pencinta seni wewangian bermutu tinggi. Kami menghadirkan kurasi pilihan wewangian istimewa dari rumah parfum internasional ternama, menawarkan aroma yang merayakan keunikan individu, kemewahan, dan keindahan abadi.'}
                         </p>
                     </div>
-                </div>
-            </section>
 
-            {/* BRAND ESSENCE & PHILOSOPHY (QUOTE CALLOUT) */}
-            <section className="py-12 sm:py-16 border-b border-border bg-background">
-                <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 space-y-12">
-                    {/* Core Belief Highlight */}
+                    {/* Core Belief Highlight (Quote Callout) */}
                     <div className="relative p-8 sm:p-12 rounded-2xl bg-gradient-to-br from-[#4A070B]/5 via-amber-500/5 to-transparent border border-[#4A070B]/15 dark:border-[#E8D0BA]/15 text-center max-w-3xl mx-auto shadow-xs">
                         <span className="text-4xl sm:text-5xl text-[#4A070B] dark:text-[#E8D0BA] font-serif leading-none block mb-3 opacity-60">“</span>
                         <blockquote className="text-base sm:text-xl md:text-2xl font-medium text-foreground tracking-wide font-serif leading-relaxed italic max-w-2xl mx-auto">
