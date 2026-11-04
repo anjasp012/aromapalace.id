@@ -92,6 +92,8 @@ class PaymentController extends Controller
                 'shipping_cost_formatted' => $orderModel->shipping_cost > 0 ? 'Rp '.number_format($orderModel->shipping_cost, 0, ',', '.') : 'Rp 0',
                 'discount_amount' => (int) $orderModel->discount_amount,
                 'discount_amount_formatted' => 'Rp '.number_format($orderModel->discount_amount, 0, ',', '.'),
+                'voucher_code' => $orderModel->voucher_code,
+                'is_shipping_voucher' => (bool) ($orderModel->voucher?->isShippingVoucher() ?? false),
                 'unique_code' => $orderModel->unique_code ? (int) $orderModel->unique_code : null,
                 'unique_code_formatted' => $orderModel->unique_code ? 'Rp '.number_format($orderModel->unique_code, 0, ',', '.') : null,
                 'total_amount' => $orderModel->total_amount,

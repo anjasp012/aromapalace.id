@@ -547,8 +547,15 @@ class FirebaseNotificationService
         }
 
         $isEn = app()->getLocale() === 'en';
-        $discountInfoId = $voucher->type === 'percentage' ? "Diskon {$voucher->value}%" : 'Potongan Rp '.number_format($voucher->value, 0, ',', '.');
-        $discountInfoEn = $voucher->type === 'percentage' ? "{$voucher->value}% Discount" : 'Rp '.number_format($voucher->value, 0, ',', '.').' Off';
+        if ($voucher->isShippingVoucher()) {
+            $discountInfoId = $voucher->getFormattedDiscount();
+            $discountInfoEn = $voucher->type === 'percentage'
+                ? ($voucher->value >= 100 ? '100% Free Shipping' : "{$voucher->value}% Off Shipping")
+                : 'Rp '.number_format($voucher->value, 0, ',', '.').' Off Shipping';
+        } else {
+            $discountInfoId = $voucher->type === 'percentage' ? "Diskon {$voucher->value}%" : 'Potongan Rp '.number_format($voucher->value, 0, ',', '.');
+            $discountInfoEn = $voucher->type === 'percentage' ? "{$voucher->value}% Discount" : 'Rp '.number_format($voucher->value, 0, ',', '.').' Off';
+        }
 
         $titleId = 'Voucher Spesial Baru: '.$voucher->code;
         $bodyId = "Gunakan kode {$voucher->code} untuk {$discountInfoId} di Aroma Palace. Jangan lewatkan!";

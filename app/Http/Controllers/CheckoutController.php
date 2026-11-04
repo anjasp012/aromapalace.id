@@ -163,7 +163,7 @@ class CheckoutController extends Controller
             })
             ->where(function ($q) use ($user, $userRedeemedCodes) {
                 $q->where(function ($sq) {
-                    $sq->where('voucher_type', 'biasa')
+                    $sq->whereIn('voucher_type', ['biasa', 'ongkir'])
                         ->where('code', 'not like', 'REW-%')
                         ->whereNull('user_id');
                 });
@@ -225,6 +225,8 @@ class CheckoutController extends Controller
                 $reasonIneligible = 'Kurang Rp '.number_format($shortageAmount, 0, ',', '.').' lagi';
             }
 
+            $isShipping = $v->isShippingVoucher();
+
             return [
                 'id' => $v->id,
                 'code' => $v->code,
@@ -232,15 +234,17 @@ class CheckoutController extends Controller
                 'description' => $v->description,
                 'terms' => $v->terms ?? [],
                 'type' => $v->type,
+                'discount_target' => $isShipping ? 'shipping' : 'subtotal',
+                'is_shipping' => $isShipping,
                 'value' => (int) $v->value,
                 'min_order_amount' => (int) $v->min_order_amount,
                 'min_order_amount_formatted' => $v->min_order_amount > 0 ? 'Rp '.number_format($v->min_order_amount, 0, ',', '.') : 'Tanpa Min. Belanja',
                 'max_discount_amount' => $v->max_discount_amount ? (int) $v->max_discount_amount : null,
-                'formatted_discount' => $v->type === 'percentage' ? $v->value.'%' : 'Rp '.number_format($v->value, 0, ',', '.'),
+                'formatted_discount' => $v->getFormattedDiscount(),
                 'expires_at' => $v->expires_at?->format('d M Y'),
-                'voucher_type' => $isReward ? 'reward' : 'biasa',
-                'category' => $isReward ? 'hanya_untuk_anda' : 'voucher_biasa',
-                'category_label' => $isReward ? 'Hanya Untuk Anda' : 'Voucher Biasa',
+                'voucher_type' => $isShipping ? 'ongkir' : ($isReward ? 'reward' : 'biasa'),
+                'category' => $isShipping ? 'voucher_ongkir' : ($isReward ? 'hanya_untuk_anda' : 'voucher_biasa'),
+                'category_label' => $isShipping ? 'Voucher Ongkir' : ($isReward ? 'Hanya Untuk Anda' : 'Voucher Biasa'),
                 'applicable_type' => $v->applicable_type ?? 'all',
                 'applicable_product_ids' => $applicableIds,
                 'applicable_product_names' => $applicableProductNames,
@@ -538,10 +542,12 @@ class CheckoutController extends Controller
                 }
             }
 
-            $discountAmount = $voucher ? $voucher->calculateDiscount($subtotal, $user->id, $orderItemsData) : $this->calculateDiscount($voucherCode, $subtotal, $user->id, $orderItemsData);
-            $voucherId = ($voucher && $discountAmount > 0) ? $voucher->id : null;
             $deliveryType = $validated['delivery_type'] ?? 'delivery';
             $shippingCost = $deliveryType === 'delivery' ? max(0, (int) ($validated['shipping_cost'] ?? 0)) : 0;
+            $discountAmount = $voucher
+                ? $voucher->calculateDiscount($subtotal, $user->id, $orderItemsData, $shippingCost)
+                : $this->calculateDiscount($voucherCode, $subtotal, $user->id, $orderItemsData, $shippingCost);
+            $voucherId = ($voucher && $discountAmount > 0) ? $voucher->id : null;
             $insuranceCost = $request->boolean('insurance') ? 9000 : 0;
             $baseTotal = max(0, $subtotal - $discountAmount + $shippingCost + $insuranceCost);
             $totalAmount = $baseTotal;
@@ -888,7 +894,7 @@ class CheckoutController extends Controller
     /**
      * Calculate discount amount from a promo code for a given user.
      */
-    private function calculateDiscount(string $code, int $subtotal, User|int|null $user = null, ?array $items = null): int
+    private function calculateDiscount(string $code, int $subtotal, User|int|null $user = null, ?array $items = null, int $shippingCost = 0): int
     {
         $code = strtoupper(trim($code));
         if ($code === '') {
@@ -897,7 +903,7 @@ class CheckoutController extends Controller
 
         $voucher = Voucher::where('code', $code)->where('is_active', true)->first();
         if ($voucher) {
-            return $voucher->calculateDiscount($subtotal, $user, $items);
+            return $voucher->calculateDiscount($subtotal, $user, $items, $shippingCost);
         }
 
         return 0;

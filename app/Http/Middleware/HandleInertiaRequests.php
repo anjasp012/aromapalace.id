@@ -115,7 +115,7 @@ class HandleInertiaRequests extends Middleware
                     ->where(function ($q) {
                         $q->whereNull('expires_at')->orWhere('expires_at', '>=', now());
                     })
-                    ->select(['id', 'code', 'name', 'name_en', 'description', 'description_en', 'terms', 'type', 'value', 'min_order_amount', 'max_discount_amount'])
+                    ->select(['id', 'code', 'name', 'name_en', 'description', 'description_en', 'terms', 'type', 'discount_target', 'voucher_type', 'value', 'min_order_amount', 'max_discount_amount'])
                     ->get();
             }),
             'auth' => [

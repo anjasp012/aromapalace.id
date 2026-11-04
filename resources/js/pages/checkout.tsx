@@ -180,6 +180,53 @@ const parseShippingRate = (r: ShippingRate | any, idx: number): ParsedCourierOpt
     };
 };
 
+export const isShippingVoucher = (v?: AvailableVoucher | null): boolean => {
+    if (!v) return false;
+    return Boolean(
+        v.is_shipping ||
+        v.discount_target === 'shipping' ||
+        v.voucher_type === 'ongkir' ||
+        v.name?.toLowerCase().includes('ongkir') ||
+        v.code?.toLowerCase().includes('ongkir')
+    );
+};
+
+export const calcVoucherDiscount = (
+    voucher: AvailableVoucher | null | undefined,
+    subtotalAmt: number,
+    shippingCostAmt: number,
+    cartItems: { product_id: number; total_price: number }[] = []
+): number => {
+    if (!voucher) return 0;
+
+    let applicableSubtotal = subtotalAmt;
+    if (voucher.applicable_type === 'specific' && voucher.applicable_product_ids && voucher.applicable_product_ids.length > 0) {
+        const matchingItems = cartItems.filter((it) => voucher.applicable_product_ids?.includes(it.product_id));
+        if (matchingItems.length === 0) return 0;
+        applicableSubtotal = matchingItems.reduce((acc, it) => acc + it.total_price, 0);
+    }
+
+    if (applicableSubtotal < voucher.min_order_amount) return 0;
+
+    const shipping = isShippingVoucher(voucher);
+    const baseAmt = shipping ? shippingCostAmt : applicableSubtotal;
+
+    if (baseAmt <= 0) return 0;
+
+    let disc = 0;
+    if (voucher.type === 'fixed') {
+        disc = Math.min(baseAmt, voucher.value);
+    } else {
+        disc = Math.round(baseAmt * (voucher.value / 100));
+        if (voucher.max_discount_amount && voucher.max_discount_amount > 0) {
+            disc = Math.min(disc, voucher.max_discount_amount);
+        }
+        disc = Math.min(disc, baseAmt);
+    }
+
+    return Math.max(0, disc);
+};
+
 
 interface CheckoutProps {
     items: CheckoutItem[];
@@ -472,81 +519,6 @@ export default function CheckoutPage({
     // Payment methods view toggle
     const [showAllPayments, setShowAllPayments] = useState(false);
 
-    // Voucher handling
-    const initialVoucherEffective = useMemo(() => {
-        return (
-            initial_voucher ||
-            (typeof window !== 'undefined' ? localStorage.getItem('aromapalace_applied_voucher') || '' : '')
-        ).toUpperCase().trim();
-    }, [initial_voucher]);
-
-    const [voucherCodeInput, setVoucherCodeInput] = useState(initialVoucherEffective);
-    const [appliedVoucher, setAppliedVoucher] = useState(initialVoucherEffective);
-    const [voucherError, setVoucherError] = useState<string | null>(null);
-    const [voucherSuccess, setVoucherSuccess] = useState<string | null>(null);
-    const [showVoucherModal, setShowVoucherModal] = useState(false);
-
-    const [voucherDiscount, setVoucherDiscount] = useState(() => {
-        const v = initialVoucherEffective;
-        const found = available_vouchers.find((item) => item.code.toUpperCase() === v);
-        if (found) {
-            let applicableSubtotal = subtotal;
-            if (found.applicable_type === 'specific' && found.applicable_product_ids && found.applicable_product_ids.length > 0) {
-                const matchingItems = (items || []).filter((it) => found.applicable_product_ids?.includes(it.product_id));
-                if (matchingItems.length === 0) return 0;
-                applicableSubtotal = matchingItems.reduce((acc, it) => acc + it.total_price, 0);
-            }
-
-            if (applicableSubtotal < found.min_order_amount) return 0;
-            if (found.type === 'fixed') return Math.min(applicableSubtotal, found.value);
-            let disc = Math.round(applicableSubtotal * (found.value / 100));
-            if (found.max_discount_amount && found.max_discount_amount > 0) {
-                disc = Math.min(disc, found.max_discount_amount);
-            }
-            return disc;
-        }
-        return 0;
-    });
-
-    // Automatically sync applied voucher from props or localStorage when mounted / updated
-    useEffect(() => {
-        const codeToApply = (
-            initial_voucher ||
-            (typeof window !== 'undefined' ? localStorage.getItem('aromapalace_applied_voucher') || '' : '')
-        ).toUpperCase().trim();
-
-        if (codeToApply && available_vouchers && available_vouchers.length > 0) {
-            const found = available_vouchers.find((v) => v.code.toUpperCase() === codeToApply);
-            if (found) {
-                let applicableSubtotal = subtotal;
-                if (found.applicable_type === 'specific' && found.applicable_product_ids && found.applicable_product_ids.length > 0) {
-                    const matchingItems = (items || []).filter((it) => found.applicable_product_ids?.includes(it.product_id));
-                    if (matchingItems.length === 0) return;
-                    applicableSubtotal = matchingItems.reduce((acc, it) => acc + it.total_price, 0);
-                }
-
-                if (applicableSubtotal >= found.min_order_amount) {
-                    let disc = 0;
-                    if (found.type === 'fixed') {
-                        disc = Math.min(applicableSubtotal, found.value);
-                    } else {
-                        disc = Math.round(applicableSubtotal * (found.value / 100));
-                        if (found.max_discount_amount && found.max_discount_amount > 0) {
-                            disc = Math.min(disc, found.max_discount_amount);
-                        }
-                    }
-                    setVoucherCodeInput(found.code);
-                    setAppliedVoucher(found.code);
-                    setVoucherDiscount(disc);
-                    setData('voucher_code', found.code);
-                    if (typeof window !== 'undefined') {
-                        localStorage.setItem('aromapalace_applied_voucher', found.code);
-                    }
-                }
-            }
-        }
-    }, [initial_voucher, available_vouchers, subtotal, items]);
-
     // Confirmation Modal
     const [showConfirmModal, setShowConfirmModal] = useState(false);
 
@@ -646,6 +618,77 @@ export default function CheckoutPage({
         return stores.find((s) => s.id === data.store_id) || stores[0] || null;
     }, [data.store_id, stores]);
 
+    // Voucher handling
+    const initialVoucherEffective = useMemo(() => {
+        return (
+            initial_voucher ||
+            (typeof window !== 'undefined' ? localStorage.getItem('aromapalace_applied_voucher') || '' : '')
+        ).toUpperCase().trim();
+    }, [initial_voucher]);
+
+    const [voucherCodeInput, setVoucherCodeInput] = useState(initialVoucherEffective);
+    const [appliedVoucher, setAppliedVoucher] = useState(initialVoucherEffective);
+    const [voucherError, setVoucherError] = useState<string | null>(null);
+    const [voucherSuccess, setVoucherSuccess] = useState<string | null>(null);
+    const [showVoucherModal, setShowVoucherModal] = useState(false);
+
+    const numSubtotal = Number(subtotal) || 0;
+    const currentShippingCost = deliveryType === 'pickup' ? 0 : (Number(selectedCourier?.price) || 0);
+
+    const appliedVoucherObj = useMemo(() => {
+        if (!appliedVoucher) return null;
+        return available_vouchers.find((v) => v.code.toUpperCase() === appliedVoucher.toUpperCase()) || null;
+    }, [appliedVoucher, available_vouchers]);
+
+    const isAppliedVoucherShipping = useMemo(() => {
+        return isShippingVoucher(appliedVoucherObj);
+    }, [appliedVoucherObj]);
+
+    const voucherDiscount = useMemo(() => {
+        return calcVoucherDiscount(appliedVoucherObj, numSubtotal, currentShippingCost, items);
+    }, [appliedVoucherObj, numSubtotal, currentShippingCost, items]);
+
+    const numVoucherDiscount = Number(voucherDiscount) || 0;
+    const finalTotal = Math.max(0, numSubtotal - numVoucherDiscount + currentShippingCost);
+    const finalTotalFormatted = 'Rp ' + finalTotal.toLocaleString('id-ID');
+
+    const appliedVoucherLabel = useMemo(() => {
+        if (!appliedVoucher) return '';
+        if (appliedVoucherObj) {
+            return `${appliedVoucher} • ${appliedVoucherObj.formatted_discount}`;
+        }
+        return appliedVoucher;
+    }, [appliedVoucher, appliedVoucherObj]);
+
+    // Automatically sync applied voucher from props or localStorage when mounted / updated
+    useEffect(() => {
+        const codeToApply = (
+            initial_voucher ||
+            (typeof window !== 'undefined' ? localStorage.getItem('aromapalace_applied_voucher') || '' : '')
+        ).toUpperCase().trim();
+
+        if (codeToApply && available_vouchers && available_vouchers.length > 0) {
+            const found = available_vouchers.find((v) => v.code.toUpperCase() === codeToApply);
+            if (found) {
+                let applicableSubtotal = subtotal;
+                if (found.applicable_type === 'specific' && found.applicable_product_ids && found.applicable_product_ids.length > 0) {
+                    const matchingItems = (items || []).filter((it) => found.applicable_product_ids?.includes(it.product_id));
+                    if (matchingItems.length === 0) return;
+                    applicableSubtotal = matchingItems.reduce((acc, it) => acc + it.total_price, 0);
+                }
+
+                if (applicableSubtotal >= found.min_order_amount) {
+                    setVoucherCodeInput(found.code);
+                    setAppliedVoucher(found.code);
+                    setData('voucher_code', found.code);
+                    if (typeof window !== 'undefined') {
+                        localStorage.setItem('aromapalace_applied_voucher', found.code);
+                    }
+                }
+            }
+        }
+    }, [initial_voucher, available_vouchers, subtotal, items]);
+
     const handleApplyVoucher = (e?: React.FormEvent | React.KeyboardEvent, explicitCode?: string) => {
         if (e) {
             e.preventDefault();
@@ -656,7 +699,6 @@ export default function CheckoutPage({
         const code = (explicitCode || voucherCodeInput).toUpperCase().trim();
         if (!code) {
             setAppliedVoucher('');
-            setVoucherDiscount(0);
             setData('voucher_code', '');
             setVoucherError(isEn ? 'Please enter a voucher code.' : 'Silakan masukkan kode voucher.');
             return;
@@ -669,7 +711,6 @@ export default function CheckoutPage({
                 const matchingItems = (items || []).filter((it) => found.applicable_product_ids?.includes(it.product_id));
                 if (matchingItems.length === 0) {
                     setAppliedVoucher('');
-                    setVoucherDiscount(0);
                     setData('voucher_code', '');
                     const errMsg = isEn
                         ? 'Voucher only applies to specific products that are not currently in your order.'
@@ -682,7 +723,6 @@ export default function CheckoutPage({
 
             if (applicableSubtotal < found.min_order_amount) {
                 setAppliedVoucher('');
-                setVoucherDiscount(0);
                 setData('voucher_code', '');
                 const errMsg = isEn
                     ? `Minimum spend for voucher ${found.code} is ${found.min_order_amount_formatted}.`
@@ -691,19 +731,8 @@ export default function CheckoutPage({
                 return;
             }
 
-            let disc = 0;
-            if (found.type === 'fixed') {
-                disc = Math.min(applicableSubtotal, found.value);
-            } else {
-                disc = Math.round(applicableSubtotal * (found.value / 100));
-                if (found.max_discount_amount && found.max_discount_amount > 0) {
-                    disc = Math.min(disc, found.max_discount_amount);
-                }
-            }
-
             setVoucherCodeInput(code);
             setAppliedVoucher(code);
-            setVoucherDiscount(disc);
             setData('voucher_code', code);
             if (typeof window !== 'undefined') {
                 localStorage.setItem('aromapalace_applied_voucher', code);
@@ -712,16 +741,31 @@ export default function CheckoutPage({
                 preserveScroll: true,
                 preserveState: true,
             });
-            const succMsg = isEn
-                ? `Voucher ${found.code} applied! You save Rp ${disc.toLocaleString('id-ID')}.`
-                : `Voucher ${found.code} berhasil dipasang! Anda hemat Rp ${disc.toLocaleString('id-ID')}.`;
+
+            const isShipping = isShippingVoucher(found);
+            const disc = calcVoucherDiscount(found, applicableSubtotal, currentShippingCost, items);
+            let succMsg = '';
+            if (isShipping) {
+                if (currentShippingCost > 0 && disc > 0) {
+                    succMsg = isEn
+                        ? `Shipping voucher ${found.code} applied! You save Rp ${disc.toLocaleString('id-ID')} on shipping.`
+                        : `Voucher ongkir ${found.code} berhasil dipasang! Potongan ongkir Rp ${disc.toLocaleString('id-ID')}.`;
+                } else {
+                    succMsg = isEn
+                        ? `Shipping voucher ${found.code} applied! Discount will be calculated once courier is selected.`
+                        : `Voucher ongkir ${found.code} berhasil dipasang! Potongan ongkir akan dihitung otomatis saat memilih kurir.`;
+                }
+            } else {
+                succMsg = isEn
+                    ? `Voucher ${found.code} applied! You save Rp ${disc.toLocaleString('id-ID')}.`
+                    : `Voucher ${found.code} berhasil dipasang! Anda hemat Rp ${disc.toLocaleString('id-ID')}.`;
+            }
             setVoucherSuccess(succMsg);
             return;
         }
 
         // Invalid code
         setAppliedVoucher('');
-        setVoucherDiscount(0);
         setData('voucher_code', '');
         if (typeof window !== 'undefined') {
             localStorage.removeItem('aromapalace_applied_voucher');
@@ -734,7 +778,6 @@ export default function CheckoutPage({
 
     const handleRemoveVoucher = () => {
         setAppliedVoucher('');
-        setVoucherDiscount(0);
         setVoucherCodeInput('');
         setData('voucher_code', '');
         setVoucherError(null);
@@ -762,25 +805,6 @@ export default function CheckoutPage({
         }
         setShowCourierModal(false);
     };
-
-    const numSubtotal = Number(subtotal) || 0;
-    const numVoucherDiscount = Number(voucherDiscount) || 0;
-    const currentShippingCost = deliveryType === 'pickup' ? 0 : (Number(selectedCourier?.price) || 0);
-    const finalTotal = Math.max(0, numSubtotal - numVoucherDiscount + currentShippingCost);
-    const finalTotalFormatted = 'Rp ' + finalTotal.toLocaleString('id-ID');
-
-    const appliedVoucherObj = useMemo(() => {
-        if (!appliedVoucher) return null;
-        return available_vouchers.find((v) => v.code.toUpperCase() === appliedVoucher.toUpperCase());
-    }, [appliedVoucher, available_vouchers]);
-
-    const appliedVoucherLabel = useMemo(() => {
-        if (!appliedVoucher) return '';
-        if (appliedVoucherObj) {
-            return `${appliedVoucher} • ${appliedVoucherObj.formatted_discount}`;
-        }
-        return appliedVoucher;
-    }, [appliedVoucher, appliedVoucherObj]);
 
     const handleOpenConfirm = (e: React.FormEvent) => {
         e.preventDefault();
@@ -1573,11 +1597,16 @@ export default function CheckoutPage({
                                         )}
                                     </div>
 
-                                    {appliedVoucher && voucherDiscount > 0 && (
-                                        <div className="hidden lg:flex items-center justify-between text-xs bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 rounded-md">
+                                    {appliedVoucher && (
+                                        <div className="flex items-center justify-between text-xs bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 rounded-md">
                                             <div className="flex items-center gap-2">
+                                                {isAppliedVoucherShipping ? (
+                                                    <Truck className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-300 shrink-0" />
+                                                ) : (
+                                                    <Ticket className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-300 shrink-0" />
+                                                )}
                                                 <span className="font-semibold text-emerald-800 dark:text-emerald-300">
-                                                    Diskon ({appliedVoucherLabel})
+                                                    {isAppliedVoucherShipping ? (isEn ? 'Shipping Discount' : 'Diskon Ongkir') : (isEn ? 'Order Discount' : 'Diskon Belanja')} ({appliedVoucherLabel})
                                                 </span>
                                                 <button
                                                     type="button"
@@ -1589,14 +1618,22 @@ export default function CheckoutPage({
                                                 </button>
                                             </div>
                                             <span className="font-bold text-emerald-800 dark:text-emerald-300">
-                                                - Rp {voucherDiscount.toLocaleString('id-ID')}
+                                                {voucherDiscount > 0 ? (
+                                                    `- Rp ${voucherDiscount.toLocaleString('id-ID')}`
+                                                ) : isAppliedVoucherShipping ? (
+                                                    <span className="text-[10.5px] font-medium text-emerald-700 dark:text-emerald-400">
+                                                        {currentShippingCost === 0 ? (isEn ? 'Select courier' : 'Pilih kurir') : 'Rp 0'}
+                                                    </span>
+                                                ) : (
+                                                    'Rp 0'
+                                                )}
                                             </span>
                                         </div>
                                     )}
                                 </div>
 
                                 {/* Desktop only: Voucher input form */}
-                                {(!appliedVoucher || voucherDiscount <= 0) && (
+                                {!appliedVoucher && (
                                     <div className="hidden lg:block pt-3 border-t border-border/70 space-y-1.5">
                                         <div className="flex gap-2">
                                             <div
@@ -1690,14 +1727,22 @@ export default function CheckoutPage({
                             <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border shadow-[0_-8px_30px_rgba(0,0,0,0.12)] pb-[max(env(safe-area-inset-bottom),0px)]">
                                 {/* Attached Voucher Bar (Identical to cart.tsx) */}
                                 <div className="px-4 py-2 border-b border-border/60 bg-muted/20">
-                                    {appliedVoucher && voucherDiscount > 0 ? (
+                                    {appliedVoucher ? (
                                         <div className="flex items-center justify-between text-xs">
                                             <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium truncate">
-                                                <svg className="w-3.5 h-3.5 shrink-0 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                                                </svg>
+                                                {isAppliedVoucherShipping ? (
+                                                    <Truck className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
+                                                ) : (
+                                                    <Ticket className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
+                                                )}
                                                 <span className="truncate">
-                                                    Voucher <strong className="font-bold">{appliedVoucher.toUpperCase()}</strong>: -Rp {voucherDiscount.toLocaleString('id-ID')}
+                                                    {isAppliedVoucherShipping ? 'Voucher Ongkir' : 'Voucher'}{' '}
+                                                    <strong className="font-bold">{appliedVoucher.toUpperCase()}</strong>:{' '}
+                                                    {voucherDiscount > 0
+                                                        ? `-Rp ${voucherDiscount.toLocaleString('id-ID')}`
+                                                        : isAppliedVoucherShipping
+                                                            ? (isEn ? 'Calculated on shipping' : 'Dihitung dari ongkir')
+                                                            : (isEn ? 'Active' : 'Aktif')}
                                                 </span>
                                             </div>
                                             <button
@@ -1878,6 +1923,36 @@ export default function CheckoutPage({
                                     {activePaymentMethods.find((p) => p.id === data.payment_method)?.name || data.payment_method}
                                 </span>
                             </div>
+
+                            {/* Payment Breakdown */}
+                            <div className="border-t border-border/60 pt-2 space-y-1.5">
+                                <div className="flex items-center justify-between text-muted-foreground text-[11px]">
+                                    <span>{isEn ? 'Products Subtotal' : 'Subtotal Produk'}</span>
+                                    <span>Rp {subtotal.toLocaleString('id-ID')}</span>
+                                </div>
+                                <div className="flex items-center justify-between text-muted-foreground text-[11px]">
+                                    <span>{isEn ? 'Shipping Fee' : 'Ongkos Kirim'}</span>
+                                    <span>{deliveryType === 'pickup' ? (isEn ? 'Free (Store Pickup)' : 'Gratis (Ambil di Butik)') : (selectedCourier ? selectedCourier.priceFormatted : '-')}</span>
+                                </div>
+                                {appliedVoucher && voucherDiscount > 0 && (
+                                    <div className="flex items-center justify-between text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded">
+                                        <span className="flex items-center gap-1 truncate">
+                                            {isAppliedVoucherShipping ? (
+                                                <Truck className="w-3 h-3 shrink-0" />
+                                            ) : (
+                                                <Ticket className="w-3 h-3 shrink-0" />
+                                            )}
+                                            <span className="truncate">
+                                                {isAppliedVoucherShipping ? (isEn ? 'Shipping Discount' : 'Potongan Ongkir') : (isEn ? 'Voucher Discount' : 'Potongan Voucher')} ({appliedVoucher.toUpperCase()})
+                                            </span>
+                                        </span>
+                                        <span className="shrink-0 font-bold">
+                                            - Rp {voucherDiscount.toLocaleString('id-ID')}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+
                             <div className="border-t border-border/70 pt-2 flex items-center justify-between">
                                 <span className="font-bold text-foreground">{isEn ? `Total Bill (${totalItemsCount} items)` : `Total Tagihan (${totalItemsCount} item)`}</span>
                                 <span className="font-extrabold text-sm text-[#4A070B] dark:text-[#E8D0BA]">

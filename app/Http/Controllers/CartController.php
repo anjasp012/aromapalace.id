@@ -145,7 +145,7 @@ class CartController extends Controller
             })
             ->where(function ($q) use ($user, $userRedeemedCodes) {
                 $q->where(function ($sq) {
-                    $sq->where('voucher_type', 'biasa')
+                    $sq->whereIn('voucher_type', ['biasa', 'ongkir'])
                         ->where('code', 'not like', 'REW-%')
                         ->whereNull('user_id');
                 });
@@ -207,6 +207,8 @@ class CartController extends Controller
                 $reasonIneligible = 'Kurang Rp '.number_format($shortageAmount, 0, ',', '.').' lagi';
             }
 
+            $isShipping = $v->isShippingVoucher();
+
             return [
                 'id' => $v->id,
                 'code' => $v->code,
@@ -214,15 +216,17 @@ class CartController extends Controller
                 'description' => $v->description,
                 'terms' => $v->terms ?? [],
                 'type' => $v->type,
+                'discount_target' => $isShipping ? 'shipping' : 'subtotal',
+                'is_shipping' => $isShipping,
                 'value' => (int) $v->value,
                 'min_order_amount' => (int) $v->min_order_amount,
                 'min_order_amount_formatted' => $v->min_order_amount > 0 ? 'Rp '.number_format($v->min_order_amount, 0, ',', '.') : 'Tanpa Min. Belanja',
                 'max_discount_amount' => $v->max_discount_amount ? (int) $v->max_discount_amount : null,
-                'formatted_discount' => $v->type === 'percentage' ? $v->value.'%' : 'Rp '.number_format($v->value, 0, ',', '.'),
+                'formatted_discount' => $v->getFormattedDiscount(),
                 'expires_at' => $v->expires_at?->format('d M Y'),
-                'voucher_type' => $isReward ? 'reward' : 'biasa',
-                'category' => $isReward ? 'hanya_untuk_anda' : 'voucher_biasa',
-                'category_label' => $isReward ? 'Hanya Untuk Anda' : 'Voucher Biasa',
+                'voucher_type' => $isShipping ? 'ongkir' : ($isReward ? 'reward' : 'biasa'),
+                'category' => $isShipping ? 'voucher_ongkir' : ($isReward ? 'hanya_untuk_anda' : 'voucher_biasa'),
+                'category_label' => $isShipping ? 'Voucher Ongkir' : ($isReward ? 'Hanya Untuk Anda' : 'Voucher Biasa'),
                 'applicable_type' => $v->applicable_type ?? 'all',
                 'applicable_product_ids' => $applicableIds,
                 'applicable_product_names' => $applicableProductNames,

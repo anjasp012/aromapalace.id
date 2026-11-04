@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
@@ -8,8 +8,19 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { cn, formatVolume } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
-import { Loader2, Ticket } from 'lucide-react';
+import { Loader2, Ticket, Truck } from 'lucide-react';
 import VoucherSelectorModal, { AvailableVoucher } from '@/components/VoucherSelectorModal';
+
+const isShippingVoucher = (v?: AvailableVoucher | null): boolean => {
+    if (!v) return false;
+    return Boolean(
+        v.is_shipping ||
+        v.discount_target === 'shipping' ||
+        v.voucher_type === 'ongkir' ||
+        v.name?.toLowerCase().includes('ongkir') ||
+        v.code?.toLowerCase().includes('ongkir')
+    );
+};
 
 interface FragranceProduct {
     id: number;
@@ -90,6 +101,15 @@ export default function CartPage({
     const [voucherSuccess, setVoucherSuccess] = useState<string | null>(null);
     const [showVoucherModal, setShowVoucherModal] = useState(false);
 
+    const cartAppliedVoucherObj = useMemo(() => {
+        if (!voucherCode) return null;
+        return available_vouchers?.find((v) => v.code.toUpperCase() === voucherCode.toUpperCase()) || null;
+    }, [voucherCode, available_vouchers]);
+
+    const isCartVoucherShipping = useMemo(() => {
+        return isShippingVoucher(cartAppliedVoucherObj);
+    }, [cartAppliedVoucherObj]);
+
     // Auto apply saved voucher on initial load or prop change
     useEffect(() => {
         const codeToApply = (
@@ -109,13 +129,16 @@ export default function CartPage({
                 }
 
                 if (applicableSubtotal >= found.min_order_amount) {
+                    const shipping = isShippingVoucher(found);
                     let disc = 0;
-                    if (found.type === 'fixed') {
-                        disc = Math.min(applicableSubtotal, found.value);
-                    } else {
-                        disc = Math.round(applicableSubtotal * (found.value / 100));
-                        if (found.max_discount_amount && found.max_discount_amount > 0) {
-                            disc = Math.min(disc, found.max_discount_amount);
+                    if (!shipping) {
+                        if (found.type === 'fixed') {
+                            disc = Math.min(applicableSubtotal, found.value);
+                        } else {
+                            disc = Math.round(applicableSubtotal * (found.value / 100));
+                            if (found.max_discount_amount && found.max_discount_amount > 0) {
+                                disc = Math.min(disc, found.max_discount_amount);
+                            }
                         }
                     }
                     setVoucherCode(found.code);
@@ -218,13 +241,16 @@ export default function CartPage({
         }
 
         // Calculate discount amount immediately
+        const isShipping = isShippingVoucher(found);
         let disc = 0;
-        if (found.type === 'fixed') {
-            disc = Math.min(applicableSubtotal, found.value);
-        } else {
-            disc = Math.round(applicableSubtotal * (found.value / 100));
-            if (found.max_discount_amount && found.max_discount_amount > 0) {
-                disc = Math.min(disc, found.max_discount_amount);
+        if (!isShipping) {
+            if (found.type === 'fixed') {
+                disc = Math.min(applicableSubtotal, found.value);
+            } else {
+                disc = Math.round(applicableSubtotal * (found.value / 100));
+                if (found.max_discount_amount && found.max_discount_amount > 0) {
+                    disc = Math.min(disc, found.max_discount_amount);
+                }
             }
         }
 
@@ -242,9 +268,13 @@ export default function CartPage({
             only: ['initial_voucher'],
         });
 
-        const successMsg = isEn
-            ? `Voucher ${found.code} applied! You save Rp ${disc.toLocaleString('id-ID')}.`
-            : `Voucher ${found.code} berhasil dipasang! Anda hemat Rp ${disc.toLocaleString('id-ID')}.`;
+        const successMsg = isShipping
+            ? (isEn
+                ? `Shipping voucher ${found.code} applied! Discount will be calculated during checkout when selecting courier.`
+                : `Voucher ongkir ${found.code} berhasil dipasang! Potongan ongkir akan dihitung otomatis saat memilih kurir di checkout.`)
+            : (isEn
+                ? `Voucher ${found.code} applied! You save Rp ${disc.toLocaleString('id-ID')}.`
+                : `Voucher ${found.code} berhasil dipasang! Anda hemat Rp ${disc.toLocaleString('id-ID')}.`);
         setVoucherSuccess(successMsg);
     };
 
@@ -564,10 +594,17 @@ export default function CartPage({
                                         <span className="font-bold text-foreground">{subtotal_formatted}</span>
                                     </div>
 
-                                    {voucherApplied && voucherDiscount > 0 && (
+                                    {voucherApplied && (
                                         <div className="flex items-center justify-between text-emerald-700 dark:text-emerald-400 font-semibold bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 rounded-md text-xs">
                                             <div className="flex items-center gap-2">
-                                                <span>{isEn ? 'Discount' : 'Diskon'} ({voucherCode.toUpperCase()})</span>
+                                                {isCartVoucherShipping ? (
+                                                    <Truck className="w-3.5 h-3.5 shrink-0" />
+                                                ) : (
+                                                    <Ticket className="w-3.5 h-3.5 shrink-0" />
+                                                )}
+                                                <span>
+                                                    {isCartVoucherShipping ? (isEn ? 'Shipping Voucher' : 'Voucher Ongkir') : (isEn ? 'Discount' : 'Diskon')} ({voucherCode.toUpperCase()})
+                                                </span>
                                                 <button
                                                     type="button"
                                                     onClick={handleRemoveVoucher}
@@ -577,13 +614,19 @@ export default function CartPage({
                                                     {isEn ? '(Remove)' : '(Hapus)'}
                                                 </button>
                                             </div>
-                                            <span className="font-bold">- Rp {voucherDiscount.toLocaleString('id-ID')}</span>
+                                            {isCartVoucherShipping ? (
+                                                <span className="font-semibold text-[11px] bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded">
+                                                    {isEn ? 'Calculated at checkout' : 'Dihitung di checkout'}
+                                                </span>
+                                            ) : (
+                                                <span className="font-bold">- Rp {voucherDiscount.toLocaleString('id-ID')}</span>
+                                            )}
                                         </div>
                                     )}
                                 </div>
 
                                 {/* Voucher input form (hanya muncul jika belum pasang voucher) */}
-                                {(!voucherApplied || voucherDiscount <= 0) && (
+                                {!voucherApplied && (
                                     <div className="pt-3 border-t border-border/70 space-y-1.5">
                                         <div className="flex gap-2">
                                             <div
@@ -692,14 +735,20 @@ export default function CartPage({
                         <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border shadow-[0_-8px_30px_rgba(0,0,0,0.12)] pb-[max(env(safe-area-inset-bottom),0px)]">
                             {/* Attached Voucher Bar */}
                             <div className="px-4 py-2 border-b border-border/60 bg-muted/20">
-                                {voucherApplied && voucherDiscount > 0 ? (
+                                {voucherApplied ? (
                                     <div className="flex items-center justify-between text-xs">
                                         <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium truncate">
-                                            <svg className="w-3.5 h-3.5 shrink-0 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                                            </svg>
+                                            {isCartVoucherShipping ? (
+                                                <Truck className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
+                                            ) : (
+                                                <Ticket className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
+                                            )}
                                             <span className="truncate">
-                                                Voucher <strong className="font-bold">{voucherCode.toUpperCase()}</strong>: -Rp {voucherDiscount.toLocaleString('id-ID')}
+                                                {isCartVoucherShipping ? 'Voucher Ongkir' : 'Voucher'}{' '}
+                                                <strong className="font-bold">{voucherCode.toUpperCase()}</strong>:{' '}
+                                                {isCartVoucherShipping
+                                                    ? (isEn ? 'Calculated at checkout' : 'Dihitung di checkout')
+                                                    : `-Rp ${voucherDiscount.toLocaleString('id-ID')}`}
                                             </span>
                                         </div>
                                         <button

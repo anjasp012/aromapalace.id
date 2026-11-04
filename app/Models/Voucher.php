@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Cache;
  * @property string|null $description_en
  * @property array<int, string>|null $terms
  * @property string $type
+ * @property string $discount_target
  * @property int $value
  * @property int $min_order_amount
  * @property int|null $max_discount_amount
@@ -48,6 +49,7 @@ use Illuminate\Support\Facades\Cache;
     'description_en',
     'terms',
     'type',
+    'discount_target',
     'value',
     'min_order_amount',
     'max_discount_amount',
@@ -207,14 +209,51 @@ class Voucher extends Model
     }
 
     /**
-     * Calculate discount amount for a given subtotal, optional user, and optional cart items.
+     * Check if this voucher is specifically for shipping discount / free shipping.
      */
-    public function calculateDiscount(int $subtotal, User|int|null $user = null, ?array $items = null): int
+    public function isShippingVoucher(): bool
+    {
+        $target = $this->attributes['discount_target'] ?? 'subtotal';
+        $vType = $this->attributes['voucher_type'] ?? 'biasa';
+
+        return $target === 'shipping'
+            || $vType === 'ongkir'
+            || str_contains(strtolower($this->code ?? ''), 'ongkir')
+            || str_contains(strtolower($this->name ?? ''), 'ongkir')
+            || str_contains(strtolower($this->name ?? ''), 'bebas ongkir')
+            || str_contains(strtolower($this->name ?? ''), 'gratis ongkir');
+    }
+
+    /**
+     * Calculate discount amount for a given subtotal, optional user, optional cart items, and optional shipping cost.
+     */
+    public function calculateDiscount(int $subtotal, User|int|null $user = null, ?array $items = null, int $shippingCost = 0): int
     {
         if (! $this->isValidFor($subtotal, $user, $items)) {
             return 0;
         }
 
+        // If this is a shipping voucher, calculate discount based on shipping cost
+        if ($this->isShippingVoucher()) {
+            if ($shippingCost <= 0) {
+                return 0;
+            }
+
+            if ($this->type === 'fixed') {
+                return min($shippingCost, (int) $this->value);
+            }
+
+            // Percentage of shipping cost (e.g. 100% for free shipping, 50% for half price)
+            $discount = (int) round($shippingCost * ($this->value / 100));
+
+            if ($this->max_discount_amount !== null && $this->max_discount_amount > 0) {
+                $discount = min($discount, (int) $this->max_discount_amount);
+            }
+
+            return min($shippingCost, $discount);
+        }
+
+        // Subtotal / product discount
         $applicableSubtotal = $subtotal;
         if ($this->applicable_type === 'specific' && ! empty($this->applicable_product_ids) && $items !== null) {
             $allowedIds = array_map('intval', $this->applicable_product_ids);
@@ -228,14 +267,14 @@ class Voucher extends Model
         }
 
         if ($this->type === 'fixed') {
-            return min($applicableSubtotal, $this->value);
+            return min($applicableSubtotal, (int) $this->value);
         }
 
         // Percentage discount
         $discount = (int) round($applicableSubtotal * ($this->value / 100));
 
         if ($this->max_discount_amount !== null && $this->max_discount_amount > 0) {
-            $discount = min($discount, $this->max_discount_amount);
+            $discount = min($discount, (int) $this->max_discount_amount);
         }
 
         return min($applicableSubtotal, $discount);
@@ -254,11 +293,34 @@ class Voucher extends Model
      */
     public function getFormattedDiscount(): string
     {
+        if ($this->isShippingVoucher()) {
+            if ($this->type === 'percentage') {
+                if ($this->value >= 100) {
+                    if ($this->max_discount_amount && $this->max_discount_amount > 0) {
+                        return 'Gratis Ongkir s/d Rp '.number_format($this->max_discount_amount, 0, ',', '.');
+                    }
+
+                    return 'Gratis Ongkir 100%';
+                }
+                if ($this->max_discount_amount && $this->max_discount_amount > 0) {
+                    return "Diskon Ongkir {$this->value}% (Maks. Rp ".number_format($this->max_discount_amount, 0, ',', '.').')';
+                }
+
+                return "Diskon Ongkir {$this->value}%";
+            }
+
+            return 'Potongan Ongkir Rp '.number_format($this->value, 0, ',', '.');
+        }
+
         if (str_contains(strtolower($this->name), 'bebas ongkir') || str_contains(strtolower($this->name), 'free shipping')) {
             return 'Bebas Ongkir';
         }
 
         if ($this->type === 'percentage') {
+            if ($this->max_discount_amount && $this->max_discount_amount > 0) {
+                return "Diskon {$this->value}% (Maks. Rp ".number_format($this->max_discount_amount, 0, ',', '.').')';
+            }
+
             return "Diskon {$this->value}%";
         }
 

@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
-import { Loader2, AlertCircle, Clock, CheckCircle2, Copy, Check, ArrowRight, Upload, HourglassIcon, Building2, CreditCard } from 'lucide-react';
+import { Loader2, AlertCircle, Clock, CheckCircle2, Copy, Check, ArrowRight, Upload, HourglassIcon, Building2, CreditCard, Receipt, Ticket, Truck } from 'lucide-react';
 import { useEcho } from '@laravel/echo-react';
 import { useTranslation } from '@/lib/i18n';
 
@@ -30,11 +30,90 @@ interface PaymentProps {
         payment_proof_uploaded_at_formatted?: string | null;
         payment_sender_name?: string | null;
         payment_notes?: string | null;
+        subtotal?: number;
+        subtotal_formatted?: string;
+        shipping_cost?: number;
+        shipping_cost_formatted?: string;
+        discount_amount?: number;
+        discount_amount_formatted?: string;
+        voucher_code?: string | null;
+        is_shipping_voucher?: boolean;
         unique_code?: number | null;
         unique_code_formatted?: string | null;
         total_amount: number;
         total_amount_formatted: string;
     };
+}
+
+function PaymentSummaryCard({ order, isEn }: { order: PaymentProps['order']; isEn: boolean }) {
+    return (
+        <div className="bg-card/70 backdrop-blur-xs border border-border/80 rounded-2xl p-5 sm:p-6 shadow-none space-y-3.5">
+            <div className="flex items-center justify-between pb-2.5 border-b border-border/60">
+                <div className="flex items-center gap-2">
+                    <Receipt className="w-4 h-4 text-muted-foreground" />
+                    <h2 className="text-sm font-bold text-foreground">
+                        {isEn ? 'Payment Summary' : 'Ringkasan Pembayaran'}
+                    </h2>
+                </div>
+                <span className="text-xs font-mono font-semibold text-muted-foreground">
+                    #{order.order_number}
+                </span>
+            </div>
+
+            <div className="space-y-2 text-xs">
+                {order.subtotal_formatted && (
+                    <div className="flex items-center justify-between text-muted-foreground">
+                        <span>{isEn ? 'Products Subtotal' : 'Subtotal Produk'}</span>
+                        <span className="font-semibold text-foreground">{order.subtotal_formatted}</span>
+                    </div>
+                )}
+
+                {order.shipping_cost_formatted && (
+                    <div className="flex items-center justify-between text-muted-foreground">
+                        <span>{isEn ? 'Shipping Fee' : 'Total Ongkos Kirim'}</span>
+                        <span className="font-semibold text-foreground">
+                            {order.shipping_cost && order.shipping_cost > 0 ? order.shipping_cost_formatted : (isEn ? 'Free' : 'Gratis')}
+                        </span>
+                    </div>
+                )}
+
+                {order.discount_amount && order.discount_amount > 0 ? (
+                    <div className="flex items-center justify-between text-emerald-700 dark:text-emerald-400 font-semibold bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 rounded-md">
+                        <span className="flex items-center gap-1.5 truncate">
+                            {order.is_shipping_voucher ? (
+                                <Truck className="w-3.5 h-3.5 shrink-0" />
+                            ) : (
+                                <Ticket className="w-3.5 h-3.5 shrink-0" />
+                            )}
+                            <span className="truncate">
+                                {order.is_shipping_voucher ? (isEn ? 'Shipping Discount' : 'Potongan Ongkir') : (isEn ? 'Voucher Discount' : 'Potongan Voucher')}
+                                {order.voucher_code ? ` (${order.voucher_code})` : ''}
+                            </span>
+                        </span>
+                        <span className="font-bold shrink-0">
+                            -{order.discount_amount_formatted}
+                        </span>
+                    </div>
+                ) : null}
+
+                {order.unique_code ? (
+                    <div className="flex items-center justify-between text-amber-700 dark:text-amber-400 font-semibold">
+                        <span>{isEn ? 'Unique Verification Code' : 'Kode Unik Pembayaran'}</span>
+                        <span className="font-mono">+{order.unique_code_formatted || order.unique_code}</span>
+                    </div>
+                ) : null}
+
+                <div className="border-t border-border/70 pt-2.5 flex items-baseline justify-between">
+                    <span className="font-bold text-sm text-foreground">
+                        {isEn ? 'Total Payment' : 'Total Pembayaran'}
+                    </span>
+                    <span className="font-black text-base text-[#4A070B] dark:text-[#E8D0BA]">
+                        {order.total_amount_formatted}
+                    </span>
+                </div>
+            </div>
+        </div>
+    );
 }
 
 function PaymentContent({ order }: PaymentProps) {
@@ -392,6 +471,18 @@ function PaymentContent({ order }: PaymentProps) {
                                 <span className="text-muted-foreground">{isEn ? 'Order Number:' : 'Nomor Pesanan:'}</span>
                                 <span className="font-bold text-foreground">{order.order_number}</span>
                             </div>
+                            {order.discount_amount && order.discount_amount > 0 ? (
+                                <div className="flex items-center justify-between text-emerald-700 dark:text-emerald-400 font-semibold bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1.5 rounded-md">
+                                    <span className="flex items-center gap-1.5">
+                                        {order.is_shipping_voucher ? <Truck className="w-3.5 h-3.5 shrink-0" /> : <Ticket className="w-3.5 h-3.5 shrink-0" />}
+                                        <span>
+                                            {order.is_shipping_voucher ? (isEn ? 'Shipping Discount:' : 'Potongan Ongkir:') : (isEn ? 'Voucher Discount:' : 'Potongan Voucher:')}
+                                            {order.voucher_code ? ` (${order.voucher_code})` : ''}
+                                        </span>
+                                    </span>
+                                    <span>-{order.discount_amount_formatted}</span>
+                                </div>
+                            ) : null}
                             <div className="flex items-center justify-between">
                                 <span className="text-muted-foreground">{isEn ? 'Total Payment:' : 'Total Pembayaran:'}</span>
                                 <span className="font-extrabold text-foreground">{order.total_amount_formatted}</span>
@@ -612,6 +703,9 @@ function PaymentContent({ order }: PaymentProps) {
 
                             </div>
                         )}
+
+                        {/* Ringkasan Pembayaran */}
+                        <PaymentSummaryCard order={order} isEn={isEn} />
 
                         {/* Cara Pembayaran Accordion */}
                         {order.bank_details && (
@@ -1014,6 +1108,9 @@ function PaymentContent({ order }: PaymentProps) {
                                 </a>
                             )}
                         </div>
+
+                        {/* 3. Ringkasan Pembayaran */}
+                        <PaymentSummaryCard order={order} isEn={isEn} />
 
                         {/* 4. Cara Pembayaran Accordion Card (Consistent with manual payment) */}
                         <div className="bg-card/70 backdrop-blur-xs border border-border/80 rounded-2xl p-5 sm:p-6 shadow-none">

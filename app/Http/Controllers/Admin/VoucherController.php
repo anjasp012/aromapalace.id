@@ -44,7 +44,13 @@ class VoucherController extends Controller
                     ->where('expires_at', '<', now());
             })
             ->when($voucherType && $voucherType !== 'all', function ($query) use ($voucherType) {
-                $query->where('voucher_type', $voucherType);
+                if ($voucherType === 'ongkir') {
+                    $query->where(fn ($q) => $q->where('voucher_type', 'ongkir')->orWhere('discount_target', 'shipping'));
+                } elseif ($voucherType === 'biasa') {
+                    $query->where('voucher_type', 'biasa')->where(fn ($q) => $q->whereNull('discount_target')->orWhere('discount_target', '!=', 'shipping'));
+                } else {
+                    $query->where('voucher_type', $voucherType);
+                }
             })
             ->when($applicableType && $applicableType !== 'all', function ($query) use ($applicableType) {
                 $query->where('applicable_type', $applicableType);
@@ -92,7 +98,8 @@ class VoucherController extends Controller
                 ->where('expires_at', '<', now())
                 ->count(),
             'total_used' => (int) Voucher::sum('used_count'),
-            'total_biasa' => Voucher::where('voucher_type', 'biasa')->count(),
+            'total_biasa' => Voucher::where('voucher_type', 'biasa')->where(fn ($q) => $q->whereNull('discount_target')->orWhere('discount_target', '!=', 'shipping'))->count(),
+            'total_ongkir' => Voucher::where(fn ($q) => $q->where('voucher_type', 'ongkir')->orWhere('discount_target', 'shipping'))->count(),
             'total_reward' => Voucher::where('voucher_type', 'reward')->count(),
             'total_specific' => Voucher::where('applicable_type', 'specific')->count(),
         ];
@@ -133,7 +140,8 @@ class VoucherController extends Controller
             'starts_at' => ['nullable', 'date'],
             'expires_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
             'is_active' => ['nullable', 'boolean'],
-            'voucher_type' => ['nullable', 'string', 'in:biasa,reward'],
+            'discount_target' => ['nullable', 'string', 'in:subtotal,shipping'],
+            'voucher_type' => ['nullable', 'string', 'in:biasa,reward,ongkir'],
             'points_required' => ['nullable', 'integer', 'min:1'],
             'user_id' => ['nullable', 'integer', 'exists:users,id'],
             'applicable_type' => ['nullable', 'string', 'in:all,specific'],
@@ -144,7 +152,15 @@ class VoucherController extends Controller
         $validated['code'] = Str::upper($validated['code']);
         $validated['min_order_amount'] = $validated['min_order_amount'] ?? 0;
         $validated['is_active'] = $request->boolean('is_active', true);
-        $validated['voucher_type'] = $validated['voucher_type'] ?? 'biasa';
+        $voucherType = $validated['voucher_type'] ?? 'biasa';
+        $discountTarget = $validated['discount_target'] ?? 'subtotal';
+        if ($voucherType === 'ongkir' || $discountTarget === 'shipping') {
+            $validated['discount_target'] = 'shipping';
+            $validated['voucher_type'] = $voucherType;
+        } else {
+            $validated['discount_target'] = 'subtotal';
+            $validated['voucher_type'] = $voucherType;
+        }
         $validated['points_required'] = ($validated['voucher_type'] === 'reward')
             ? (! empty($validated['points_required']) ? (int) $validated['points_required'] : 100)
             : null;
@@ -190,7 +206,8 @@ class VoucherController extends Controller
             'starts_at' => ['nullable', 'date'],
             'expires_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
             'is_active' => ['nullable', 'boolean'],
-            'voucher_type' => ['nullable', 'string', 'in:biasa,reward'],
+            'discount_target' => ['nullable', 'string', 'in:subtotal,shipping'],
+            'voucher_type' => ['nullable', 'string', 'in:biasa,reward,ongkir'],
             'points_required' => ['nullable', 'integer', 'min:1'],
             'user_id' => ['nullable', 'integer', 'exists:users,id'],
             'applicable_type' => ['nullable', 'string', 'in:all,specific'],
@@ -201,7 +218,15 @@ class VoucherController extends Controller
         $validated['code'] = Str::upper($validated['code']);
         $validated['min_order_amount'] = $validated['min_order_amount'] ?? 0;
         $validated['is_active'] = $request->boolean('is_active', true);
-        $validated['voucher_type'] = $validated['voucher_type'] ?? 'biasa';
+        $voucherType = $validated['voucher_type'] ?? 'biasa';
+        $discountTarget = $validated['discount_target'] ?? 'subtotal';
+        if ($voucherType === 'ongkir' || $discountTarget === 'shipping') {
+            $validated['discount_target'] = 'shipping';
+            $validated['voucher_type'] = $voucherType;
+        } else {
+            $validated['discount_target'] = 'subtotal';
+            $validated['voucher_type'] = $voucherType;
+        }
         $validated['points_required'] = ($validated['voucher_type'] === 'reward')
             ? (! empty($validated['points_required']) ? (int) $validated['points_required'] : 100)
             : null;

@@ -141,9 +141,7 @@ class HomeController extends Controller
             })
             ->get()
             ->map(function (Voucher $v) {
-                $badge = $v->type === 'percentage'
-                    ? "Diskon {$v->value}%"
-                    : 'Potongan Rp '.number_format($v->value, 0, ',', '.');
+                $badge = $v->getFormattedDiscount();
                 $expiry = $v->expires_at
                     ? $v->expires_at->format('d M Y')
                     : 'Berlaku Selamanya';

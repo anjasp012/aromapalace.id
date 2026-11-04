@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     Dialog,
     DialogContent,
@@ -9,7 +9,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Ticket, Tag } from 'lucide-react';
+import { Ticket, Tag, Truck } from 'lucide-react';
 import { Link } from '@inertiajs/react';
 
 export interface AvailableVoucher {
@@ -19,14 +19,16 @@ export interface AvailableVoucher {
     description?: string | null;
     terms?: string[];
     type: 'percentage' | 'fixed';
+    discount_target?: 'subtotal' | 'shipping';
+    is_shipping?: boolean;
     value: number;
     min_order_amount: number;
     min_order_amount_formatted: string;
     max_discount_amount?: number | null;
     formatted_discount?: string;
     expires_at?: string | null;
-    voucher_type?: 'biasa' | 'reward';
-    category?: 'voucher_biasa' | 'hanya_untuk_anda';
+    voucher_type?: 'biasa' | 'ongkir' | 'reward';
+    category?: 'voucher_biasa' | 'voucher_ongkir' | 'hanya_untuk_anda';
     category_label?: string;
     applicable_type?: 'all' | 'specific';
     applicable_product_ids?: number[] | null;
@@ -55,19 +57,27 @@ export default function VoucherSelectorModal({
     onApplyManualCode,
 }: VoucherSelectorModalProps) {
     const [manualCode, setManualCode] = useState('');
-    const [activeTab, setActiveTab] = useState<'biasa' | 'reward'>('biasa');
+    const [activeTab, setActiveTab] = useState<'all' | 'ongkir' | 'biasa' | 'reward'>('all');
 
     const normalizedApplied = (appliedVoucherCode || '').trim().toUpperCase();
 
-    // Separate into 2 categories
-    const biasaVouchers = vouchers.filter(
-        (v) => (v.voucher_type || v.category) !== 'reward' && v.category !== 'hanya_untuk_anda' && !v.code.startsWith('REW-')
-    );
-    const rewardVouchers = vouchers.filter(
-        (v) => (v.voucher_type || v.category) === 'reward' || v.category === 'hanya_untuk_anda' || v.code.startsWith('REW-')
-    );
+    const isOngkir = (v: AvailableVoucher) =>
+        Boolean(v.is_shipping || v.discount_target === 'shipping' || v.voucher_type === 'ongkir' || (v.name && /ongkir|free shipping/i.test(v.name)));
 
-    const displayedVouchers = activeTab === 'biasa' ? biasaVouchers : rewardVouchers;
+    const isReward = (v: AvailableVoucher) =>
+        Boolean((v.voucher_type || v.category) === 'reward' || v.category === 'hanya_untuk_anda' || v.code.startsWith('REW-'));
+
+    // Separate categories
+    const biasaVouchers = useMemo(() => vouchers.filter((v) => !isOngkir(v) && !isReward(v)), [vouchers]);
+    const ongkirVouchers = useMemo(() => vouchers.filter((v) => isOngkir(v) && !isReward(v)), [vouchers]);
+    const rewardVouchers = useMemo(() => vouchers.filter((v) => isReward(v)), [vouchers]);
+
+    const displayedVouchers = useMemo(() => {
+        if (activeTab === 'ongkir') return ongkirVouchers;
+        if (activeTab === 'biasa') return biasaVouchers;
+        if (activeTab === 'reward') return rewardVouchers;
+        return vouchers;
+    }, [activeTab, vouchers, ongkirVouchers, biasaVouchers, rewardVouchers]);
 
     const handleApplyManual = (e: React.FormEvent) => {
         e.preventDefault();
@@ -128,28 +138,51 @@ export default function VoucherSelectorModal({
                 </form>
 
                 {/* Tabs / Filter Pills */}
-                <div className="flex rounded-md border p-0.5 bg-muted/40">
+                <div className="flex rounded-md border p-0.5 bg-muted/40 gap-1 overflow-x-auto scrollbar-none">
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab('all')}
+                        className={`flex-1 py-1 px-2 text-xs font-semibold rounded transition text-center whitespace-nowrap cursor-pointer ${
+                            activeTab === 'all'
+                                ? 'bg-background text-foreground shadow-xs'
+                                : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                    >
+                        Semua ({vouchers.length})
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab('ongkir')}
+                        className={`flex-1 py-1 px-2 text-xs font-semibold rounded transition text-center whitespace-nowrap cursor-pointer flex items-center justify-center gap-1 ${
+                            activeTab === 'ongkir'
+                                ? 'bg-background text-foreground shadow-xs'
+                                : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                    >
+                        <Truck className="w-3 h-3 text-sky-500" />
+                        <span>Ongkir ({ongkirVouchers.length})</span>
+                    </button>
                     <button
                         type="button"
                         onClick={() => setActiveTab('biasa')}
-                        className={`flex-1 py-1.5 text-xs font-semibold rounded transition text-center cursor-pointer ${
+                        className={`flex-1 py-1 px-2 text-xs font-semibold rounded transition text-center whitespace-nowrap cursor-pointer ${
                             activeTab === 'biasa'
                                 ? 'bg-background text-foreground shadow-xs'
                                 : 'text-muted-foreground hover:text-foreground'
                         }`}
                     >
-                        Voucher Biasa
+                        Belanja ({biasaVouchers.length})
                     </button>
                     <button
                         type="button"
                         onClick={() => setActiveTab('reward')}
-                        className={`flex-1 py-1.5 text-xs font-semibold rounded transition text-center cursor-pointer ${
+                        className={`flex-1 py-1 px-2 text-xs font-semibold rounded transition text-center whitespace-nowrap cursor-pointer ${
                             activeTab === 'reward'
                                 ? 'bg-background text-foreground shadow-xs'
                                 : 'text-muted-foreground hover:text-foreground'
                         }`}
                     >
-                        Hanya Untuk Anda
+                        Royale ({rewardVouchers.length})
                     </button>
                 </div>
 
@@ -157,9 +190,11 @@ export default function VoucherSelectorModal({
                 <div className="space-y-2.5 pt-1">
                     {displayedVouchers.length === 0 ? (
                         <div className="p-6 text-center text-xs text-muted-foreground border border-dashed border-border/80 rounded-lg">
-                            {activeTab === 'biasa' ? (
-                                'Belum ada voucher promo toko yang tersedia saat ini.'
-                            ) : (
+                            {activeTab === 'ongkir' ? (
+                                'Belum ada voucher gratis atau potongan ongkir yang tersedia saat ini.'
+                            ) : activeTab === 'biasa' ? (
+                                'Belum ada voucher diskon belanja yang tersedia saat ini.'
+                            ) : activeTab === 'reward' ? (
                                 <div className="space-y-1.5">
                                     <p>Belum ada voucher penukaran reward Royale Club untuk akun Anda.</p>
                                     <Link
@@ -170,13 +205,16 @@ export default function VoucherSelectorModal({
                                         Tukar Poin di Royale Club &rarr;
                                     </Link>
                                 </div>
+                            ) : (
+                                'Belum ada voucher yang tersedia saat ini.'
                             )}
                         </div>
                     ) : (
                         displayedVouchers.map((v) => {
                             const isApplied = normalizedApplied === v.code.toUpperCase();
                             const isEligible = v.is_eligible !== false;
-                            const isReward = activeTab === 'reward' || (v.voucher_type || v.category) === 'reward' || v.code.startsWith('REW-');
+                            const isRewardCard = isReward(v);
+                            const isOngkirCard = isOngkir(v);
 
                             return (
                                 <div
@@ -196,22 +234,38 @@ export default function VoucherSelectorModal({
                                                 <span className="font-mono font-bold text-xs text-primary px-1.5 py-0.5 bg-muted rounded border border-border/60">
                                                     {v.code}
                                                 </span>
-                                                {isReward && (
+                                                {isOngkirCard && (
+                                                    <Badge variant="secondary" className="text-[10px] bg-sky-500/10 text-sky-700 dark:text-sky-400 border border-sky-500/30 py-0 h-4 font-semibold flex items-center gap-1">
+                                                        <Truck className="w-2.5 h-2.5" />
+                                                        Voucher Ongkir
+                                                    </Badge>
+                                                )}
+                                                {isRewardCard && (
                                                     <Badge variant="secondary" className="text-[10px] bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 py-0 h-4 font-semibold">
                                                         Hanya Untuk Anda
                                                     </Badge>
                                                 )}
-                                                {v.applicable_type === 'specific' ? (
-                                                    <Badge variant="outline" className="text-[10px] text-indigo-600 dark:text-indigo-400 border-indigo-200 py-0 h-4">
-                                                        Khusus Produk Tertentu
-                                                    </Badge>
-                                                ) : (
-                                                    <span className="text-[10px] text-muted-foreground">Semua Produk</span>
+                                                {!isOngkirCard && (
+                                                    v.applicable_type === 'specific' ? (
+                                                        <Badge variant="outline" className="text-[10px] text-indigo-600 dark:text-indigo-400 border-indigo-200 py-0 h-4">
+                                                            Khusus Produk Tertentu
+                                                        </Badge>
+                                                    ) : (
+                                                        <span className="text-[10px] text-muted-foreground">Semua Produk</span>
+                                                    )
                                                 )}
                                             </div>
 
                                             <div className="font-semibold text-xs sm:text-sm text-foreground pt-0.5">
-                                                {v.formatted_discount || (v.type === 'percentage' ? `Diskon ${v.value}%` : `Potongan Rp ${new Intl.NumberFormat('id-ID').format(v.value)}`)}
+                                                {v.formatted_discount || (
+                                                    isOngkirCard
+                                                        ? (v.type === 'percentage'
+                                                            ? (v.value >= 100 ? 'Gratis Ongkir 100%' : `Diskon Ongkir ${v.value}%`)
+                                                            : `Potongan Ongkir Rp ${new Intl.NumberFormat('id-ID').format(v.value)}`)
+                                                        : (v.type === 'percentage'
+                                                            ? `Diskon ${v.value}%`
+                                                            : `Potongan Rp ${new Intl.NumberFormat('id-ID').format(v.value)}`)
+                                                )}
                                                 {v.name && <span className="font-normal text-muted-foreground text-xs ml-1.5">({v.name})</span>}
                                             </div>
 

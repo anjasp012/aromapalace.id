@@ -9,6 +9,7 @@ import {
     Calendar,
     Percent,
     DollarSign,
+    Truck,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -37,6 +38,7 @@ export default function AdminVoucherCreate({ products = [], users = [] }: AdminV
         description: string;
         description_en: string;
         type: 'percentage' | 'fixed';
+        discount_target: 'subtotal' | 'shipping';
         value: number | string;
         min_order_amount: number | string;
         max_discount_amount: number | string;
@@ -44,7 +46,7 @@ export default function AdminVoucherCreate({ products = [], users = [] }: AdminV
         starts_at: string;
         expires_at: string;
         is_active: boolean;
-        voucher_type: 'biasa' | 'reward';
+        voucher_type: 'biasa' | 'ongkir' | 'reward';
         points_required: number | string;
         user_id: number | string;
         applicable_type: 'all' | 'specific';
@@ -56,6 +58,7 @@ export default function AdminVoucherCreate({ products = [], users = [] }: AdminV
         description: '',
         description_en: '',
         type: 'percentage',
+        discount_target: 'subtotal',
         value: '',
         min_order_amount: 0,
         max_discount_amount: '',
@@ -241,13 +244,15 @@ export default function AdminVoucherCreate({ products = [], users = [] }: AdminV
 
                             <div className="space-y-1.5">
                                 <label className="text-xs font-semibold text-foreground">
-                                    {data.type === 'percentage' ? 'Persen Diskon (%) *' : 'Nominal Diskon (Rp) *'}
+                                    {data.voucher_type === 'ongkir'
+                                        ? (data.type === 'percentage' ? 'Persen Potongan Ongkir (%) *' : 'Nominal Potongan Ongkir (Rp) *')
+                                        : (data.type === 'percentage' ? 'Persen Diskon Belanja (%) *' : 'Nominal Diskon Belanja (Rp) *')}
                                 </label>
                                 <Input
                                     type="number"
                                     min={1}
                                     max={data.type === 'percentage' ? 100 : undefined}
-                                    placeholder={data.type === 'percentage' ? '20' : '50000'}
+                                    placeholder={data.voucher_type === 'ongkir' ? (data.type === 'percentage' ? '100' : '20000') : (data.type === 'percentage' ? '20' : '50000')}
                                     value={data.value}
                                     onChange={(e) => setData('value', e.target.value)}
                                     className="h-9 text-xs"
@@ -259,14 +264,19 @@ export default function AdminVoucherCreate({ products = [], users = [] }: AdminV
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-border">
                             <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-foreground">Kategori Tipe Voucher *</label>
+                                <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                                    {data.voucher_type === 'ongkir' && <Truck className="size-3.5 text-sky-500" />}
+                                    <span>Kategori Tipe Voucher *</span>
+                                </label>
                                 <Select
                                     value={data.voucher_type}
-                                    onValueChange={(val: 'biasa' | 'reward') => {
+                                    onValueChange={(val: 'biasa' | 'ongkir' | 'reward') => {
                                         setData((prev) => ({
                                             ...prev,
                                             voucher_type: val,
+                                            discount_target: val === 'ongkir' ? 'shipping' : 'subtotal',
                                             user_id: val === 'reward' ? prev.user_id : '',
+                                            value: val === 'ongkir' && prev.type === 'percentage' && !prev.value ? 100 : prev.value,
                                         }));
                                     }}
                                 >
@@ -274,11 +284,18 @@ export default function AdminVoucherCreate({ products = [], users = [] }: AdminV
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="biasa">Voucher Biasa (Promo Toko Umum)</SelectItem>
+                                        <SelectItem value="biasa">Voucher Diskon Belanja (Promo Produk Umum)</SelectItem>
+                                        <SelectItem value="ongkir">Voucher Bebas / Diskon Ongkir (Potongan Ongkos Kirim)</SelectItem>
                                         <SelectItem value="reward">Voucher Reward (Penukaran Membership)</SelectItem>
                                     </SelectContent>
                                 </Select>
-                                <p className="text-[11px] text-muted-foreground">Voucher Biasa dapat digunakan semua pelanggan, sedangkan Voucher Reward khusus penukaran reward Royale Club.</p>
+                                <p className="text-[11px] text-muted-foreground">
+                                    {data.voucher_type === 'ongkir'
+                                        ? 'Voucher Ongkir akan memotong biaya ongkos kirim saat checkout (misal potongan 100% untuk Bebas Ongkir, atau potongan nominal seperti Rp 20.000).'
+                                        : data.voucher_type === 'reward'
+                                        ? 'Voucher Reward khusus untuk penukaran poin loyalty di Royale Club.'
+                                        : 'Voucher Biasa memotong subtotal produk dan dapat digunakan semua pelanggan.'}
+                                </p>
                                 {data.voucher_type === 'reward' && (
                                     <>
                                         <div className="pt-2 space-y-1.5">

@@ -13,6 +13,7 @@ import {
     RefreshCw,
     ToggleLeft,
     ToggleRight,
+    Truck,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -42,6 +43,7 @@ interface VoucherItem {
     description?: string | null;
     description_en?: string | null;
     type: 'percentage' | 'fixed';
+    discount_target?: 'subtotal' | 'shipping';
     value: number;
     min_order_amount: number;
     max_discount_amount?: number | null;
@@ -50,7 +52,7 @@ interface VoucherItem {
     starts_at?: string | null;
     expires_at?: string | null;
     is_active: boolean;
-    voucher_type?: 'biasa' | 'reward';
+    voucher_type?: 'biasa' | 'ongkir' | 'reward';
     points_required?: number | null;
     user_id?: number | null;
     user?: { id: number; name: string; email: string } | null;
@@ -73,6 +75,8 @@ interface VouchersIndexProps {
         current_page: number;
         last_page: number;
         total: number;
+        from?: number | null;
+        to?: number | null;
     };
     filters: {
         search: string;
@@ -86,6 +90,7 @@ interface VouchersIndexProps {
         expired_vouchers: number;
         total_used: number;
         total_biasa?: number;
+        total_ongkir?: number;
         total_reward?: number;
         total_specific?: number;
     };
@@ -296,7 +301,8 @@ export default function AdminVouchersIndex({
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">Semua Tipe</SelectItem>
-                                    <SelectItem value="biasa">Voucher Biasa ({metrics.total_biasa ?? 0})</SelectItem>
+                                    <SelectItem value="biasa">Voucher Belanja ({metrics.total_biasa ?? 0})</SelectItem>
+                                    <SelectItem value="ongkir">Voucher Ongkir ({metrics.total_ongkir ?? 0})</SelectItem>
                                     <SelectItem value="reward">Voucher Reward ({metrics.total_reward ?? 0})</SelectItem>
                                 </SelectContent>
                             </Select>
@@ -403,6 +409,11 @@ export default function AdminVouchersIndex({
                                                                 </div>
                                                             )}
                                                         </div>
+                                                    ) : (v.voucher_type === 'ongkir' || v.discount_target === 'shipping') ? (
+                                                        <Badge variant="secondary" className="bg-sky-500/10 text-sky-700 dark:text-sky-400 border border-sky-500/30 text-[10px] font-semibold flex items-center gap-1 w-fit">
+                                                            <Truck className="size-3" />
+                                                            <span>Voucher Ongkir</span>
+                                                        </Badge>
                                                     ) : (
                                                         <Badge variant="outline" className="text-[10px] text-muted-foreground">
                                                             Voucher Biasa
@@ -427,8 +438,17 @@ export default function AdminVouchersIndex({
                                                 </td>
                                                 <td className="p-4 align-middle">
                                                     <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                                                        {v.type === 'percentage' ? `${v.value}%` : formatCurrency(v.value)}
+                                                        {v.type === 'percentage'
+                                                            ? ((v.voucher_type === 'ongkir' || v.discount_target === 'shipping') && v.value >= 100
+                                                                ? 'Gratis Ongkir 100%'
+                                                                : `${v.value}%`)
+                                                            : formatCurrency(v.value)}
                                                     </span>
+                                                    {(v.voucher_type === 'ongkir' || v.discount_target === 'shipping') && (
+                                                        <div className="text-[10.5px] text-sky-600 dark:text-sky-400 font-medium">
+                                                            Potongan Ongkir
+                                                        </div>
+                                                    )}
                                                     {v.type === 'percentage' && v.max_discount_amount && (
                                                         <div className="text-[11px] text-muted-foreground">
                                                             Maks: {formatCurrency(v.max_discount_amount)}
