@@ -132,24 +132,18 @@ export default function About({
         <Layout>
             <Head title={`${t('about.meta_title')}`} />
 
-            {/* HERO TITLE SECTION */}
-            <section className="py-16 sm:py-24 border-b border-border bg-gradient-to-b from-background via-card/30 to-background">
-                <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 text-center space-y-4">
-                    <Badge variant="secondary" className="mx-auto w-fit uppercase tracking-widest text-[11px] font-semibold px-3.5 py-1 bg-amber-500/10 border-amber-500/20 text-[#4A070B] dark:text-[#E8D0BA]">
-                        {isEn ? 'About Us' : 'Tentang Kami'}
-                    </Badge>
-
-                    {/* Main Headline & Subtitle */}
-                    <div className="space-y-3 max-w-4xl mx-auto">
-                        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground font-serif uppercase">
-                            OUR STORY
-                        </h1>
-                        <p className="text-lg sm:text-2xl md:text-3xl font-serif text-[#4A070B] dark:text-[#E8D0BA] font-semibold tracking-normal">
-                            A Heritage of Scent, A World of Elegance
-                        </p>
-                    </div>
+            {/* PAGE HEADER BANNER (Matches cart.tsx style) */}
+            <div className="border-b border-border/70 bg-background py-10 sm:py-14">
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center space-y-3">
+                    <h1 className="text-3xl sm:text-4xl lg:text-5xl tracking-tight text-foreground">
+                        <span className="font-light">OUR</span>{' '}
+                        <span className="font-bold text-[#4A070B] dark:text-[#E8D0BA]">STORY</span>
+                    </h1>
+                    <p className="max-w-2xl mx-auto text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                        a heritage of scent, a world of elegance
+                    </p>
                 </div>
-            </section>
+            </div>
 
             {/* BODY STORY CONTENT SECTION */}
             <section className="py-14 sm:py-20 border-b border-border bg-background">
