@@ -41,7 +41,7 @@ export interface ProductItem {
     reviewsCount?: number;
     reviews_count?: number;
     image?: string;
-    volume?: string;
+    volume?: string | number;
     concentration?: string;
     longevity?: string;
     sillage?: string;

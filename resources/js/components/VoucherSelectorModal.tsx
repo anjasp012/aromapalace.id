@@ -57,7 +57,7 @@ export default function VoucherSelectorModal({
     onApplyManualCode,
 }: VoucherSelectorModalProps) {
     const [manualCode, setManualCode] = useState('');
-    const [activeTab, setActiveTab] = useState<'all' | 'ongkir' | 'biasa' | 'reward'>('all');
+    const [activeTab, setActiveTab] = useState<'all' | 'reward'>('all');
 
     const normalizedApplied = (appliedVoucherCode || '').trim().toUpperCase();
 
@@ -67,17 +67,13 @@ export default function VoucherSelectorModal({
     const isReward = (v: AvailableVoucher) =>
         Boolean((v.voucher_type || v.category) === 'reward' || v.category === 'hanya_untuk_anda' || v.code.startsWith('REW-'));
 
-    // Separate categories
-    const biasaVouchers = useMemo(() => vouchers.filter((v) => !isOngkir(v) && !isReward(v)), [vouchers]);
-    const ongkirVouchers = useMemo(() => vouchers.filter((v) => isOngkir(v) && !isReward(v)), [vouchers]);
+    // Separate Royale reward vouchers
     const rewardVouchers = useMemo(() => vouchers.filter((v) => isReward(v)), [vouchers]);
 
     const displayedVouchers = useMemo(() => {
-        if (activeTab === 'ongkir') return ongkirVouchers;
-        if (activeTab === 'biasa') return biasaVouchers;
         if (activeTab === 'reward') return rewardVouchers;
         return vouchers;
-    }, [activeTab, vouchers, ongkirVouchers, biasaVouchers, rewardVouchers]);
+    }, [activeTab, vouchers, rewardVouchers]);
 
     const handleApplyManual = (e: React.FormEvent) => {
         e.preventDefault();
@@ -137,52 +133,44 @@ export default function VoucherSelectorModal({
                     </Button>
                 </form>
 
-                {/* Tabs / Filter Pills */}
-                <div className="flex rounded-md border p-0.5 bg-muted/40 gap-1 overflow-x-auto scrollbar-none">
+                {/* Tabs: Hanya 'Semua' dan 'Royale' */}
+                <div className="grid grid-cols-2 rounded-lg border border-border/80 p-1 bg-muted/40 gap-1.5">
                     <button
                         type="button"
                         onClick={() => setActiveTab('all')}
-                        className={`flex-1 py-1 px-2 text-xs font-semibold rounded transition text-center whitespace-nowrap cursor-pointer ${
+                        className={`py-1.5 px-3 text-xs font-semibold rounded-md transition text-center whitespace-nowrap cursor-pointer flex items-center justify-center gap-1.5 ${
                             activeTab === 'all'
-                                ? 'bg-background text-foreground shadow-xs'
+                                ? 'bg-background text-foreground shadow-xs font-bold'
                                 : 'text-muted-foreground hover:text-foreground'
                         }`}
                     >
-                        Semua ({vouchers.length})
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab('ongkir')}
-                        className={`flex-1 py-1 px-2 text-xs font-semibold rounded transition text-center whitespace-nowrap cursor-pointer flex items-center justify-center gap-1 ${
-                            activeTab === 'ongkir'
-                                ? 'bg-background text-foreground shadow-xs'
-                                : 'text-muted-foreground hover:text-foreground'
-                        }`}
-                    >
-                        <Truck className="w-3 h-3 text-sky-500" />
-                        <span>Ongkir ({ongkirVouchers.length})</span>
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab('biasa')}
-                        className={`flex-1 py-1 px-2 text-xs font-semibold rounded transition text-center whitespace-nowrap cursor-pointer ${
-                            activeTab === 'biasa'
-                                ? 'bg-background text-foreground shadow-xs'
-                                : 'text-muted-foreground hover:text-foreground'
-                        }`}
-                    >
-                        Belanja ({biasaVouchers.length})
+                        <span>Semua</span>
+                        <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                            activeTab === 'all'
+                                ? 'bg-foreground/10 text-foreground'
+                                : 'bg-muted text-muted-foreground'
+                        }`}>
+                            {vouchers.length}
+                        </span>
                     </button>
                     <button
                         type="button"
                         onClick={() => setActiveTab('reward')}
-                        className={`flex-1 py-1 px-2 text-xs font-semibold rounded transition text-center whitespace-nowrap cursor-pointer ${
+                        className={`py-1.5 px-3 text-xs font-semibold rounded-md transition text-center whitespace-nowrap cursor-pointer flex items-center justify-center gap-1.5 ${
                             activeTab === 'reward'
-                                ? 'bg-background text-foreground shadow-xs'
+                                ? 'bg-background text-foreground shadow-xs font-bold'
                                 : 'text-muted-foreground hover:text-foreground'
                         }`}
                     >
-                        Royale ({rewardVouchers.length})
+                        <Crown className="w-3.5 h-3.5 text-amber-500" />
+                        <span>Royale</span>
+                        <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                            activeTab === 'reward'
+                                ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400'
+                                : 'bg-muted text-muted-foreground'
+                        }`}>
+                            {rewardVouchers.length}
+                        </span>
                     </button>
                 </div>
 
@@ -190,11 +178,7 @@ export default function VoucherSelectorModal({
                 <div className="space-y-2.5 pt-1">
                     {displayedVouchers.length === 0 ? (
                         <div className="p-6 text-center text-xs text-muted-foreground border border-dashed border-border/80 rounded-lg">
-                            {activeTab === 'ongkir' ? (
-                                'Belum ada voucher gratis atau potongan ongkir yang tersedia saat ini.'
-                            ) : activeTab === 'biasa' ? (
-                                'Belum ada voucher diskon belanja yang tersedia saat ini.'
-                            ) : activeTab === 'reward' ? (
+                            {activeTab === 'reward' ? (
                                 <div className="space-y-1.5">
                                     <p>Belum ada voucher penukaran reward Royale Club untuk akun Anda.</p>
                                     <Link
