@@ -798,7 +798,7 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
     return (
         <div className="bg-background text-foreground flex flex-col min-h-screen" suppressHydrationWarning>
             {/* Top Announcement Bar (Scrolls normally with page, NOT sticky on mobile) */}
-            <div className="bg-gradient-to-r from-[#4A070B] via-[#52090F] to-[#360407] text-white text-xs pt-[env(safe-area-inset-top,0px)]" suppressHydrationWarning>
+            <div className="bg-[#63030E] text-white text-xs pt-[env(safe-area-inset-top,0px)]" suppressHydrationWarning>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between py-1.5 sm:py-2 gap-2">
                     {activeHeaderVoucher ? (
                         <button
@@ -875,7 +875,7 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
                             <DropdownMenuContent
                                 align="end"
                                 sideOffset={6}
-                                className="w-52 p-1.5 rounded-xl bg-gradient-to-br from-[#4A070B] to-[#360407] border border-[#E5A844]/30 shadow-2xl text-white z-[60]"
+                                className="w-52 p-1.5 rounded-xl bg-[#63030E] border border-[#E5A844]/30 shadow-2xl text-white z-[60]"
                             >
                                 <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#E5A844] border-b border-white/10 mb-1 flex items-center justify-between">
                                     <span>{isEn ? 'Select Language' : 'Pilih Bahasa'}</span>
