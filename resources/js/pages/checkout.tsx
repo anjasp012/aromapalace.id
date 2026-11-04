@@ -1597,40 +1597,46 @@ export default function CheckoutPage({
                                         )}
                                     </div>
 
-                                    {appliedVoucher && (
+                                    {/* Diskon Voucher (ditaruh bareng Subtotal & Total Ongkos Kirim) */}
+                                    {appliedVoucher && voucherDiscount > 0 && (
+                                        <div className="flex items-center justify-between text-emerald-700 dark:text-emerald-400">
+                                            <span>
+                                                {isAppliedVoucherShipping
+                                                    ? (isEn ? 'Shipping Discount' : 'Diskon Ongkir')
+                                                    : (isEn ? 'Order Discount' : 'Diskon Belanja')}
+                                            </span>
+                                            <span className="font-bold">
+                                                - Rp {voucherDiscount.toLocaleString('id-ID')}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Applied Voucher Badge (harganya dihapus dari sini karena sudah ditaruh di rincian atas) */}
+                                {appliedVoucher && (
+                                    <div className="pt-1">
                                         <div className="flex items-center justify-between text-xs bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 rounded-md">
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-2 min-w-0">
                                                 {isAppliedVoucherShipping ? (
                                                     <Truck className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-300 shrink-0" />
                                                 ) : (
                                                     <Ticket className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-300 shrink-0" />
                                                 )}
-                                                <span className="font-semibold text-emerald-800 dark:text-emerald-300">
+                                                <span className="font-semibold text-emerald-800 dark:text-emerald-300 truncate">
                                                     {isAppliedVoucherShipping ? (isEn ? 'Shipping Discount' : 'Diskon Ongkir') : (isEn ? 'Order Discount' : 'Diskon Belanja')} ({appliedVoucherLabel})
                                                 </span>
-                                                <button
-                                                    type="button"
-                                                    onClick={handleRemoveVoucher}
-                                                    className="text-[11px] text-destructive hover:underline cursor-pointer font-medium"
-                                                    title={isEn ? 'Remove voucher' : 'Hapus voucher'}
-                                                >
-                                                    ({isEn ? 'Remove' : 'Hapus'})
-                                                </button>
                                             </div>
-                                            <span className="font-bold text-emerald-800 dark:text-emerald-300">
-                                                {voucherDiscount > 0 ? (
-                                                    `- Rp ${voucherDiscount.toLocaleString('id-ID')}`
-                                                ) : isAppliedVoucherShipping ? (
-                                                    <span className="text-[10.5px] font-medium text-emerald-700 dark:text-emerald-400">
-                                                        {currentShippingCost === 0 ? (isEn ? 'Select courier' : 'Pilih kurir') : 'Rp 0'}
-                                                    </span>
-                                                ) : (
-                                                    'Rp 0'
-                                                )}
-                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={handleRemoveVoucher}
+                                                className="text-[11px] text-destructive hover:underline cursor-pointer font-semibold shrink-0 ml-2"
+                                                title={isEn ? 'Remove voucher' : 'Hapus voucher'}
+                                            >
+                                                ({isEn ? 'Remove' : 'Hapus'})
+                                            </button>
                                         </div>
-                                    )}
-                                </div>
+                                    </div>
+                                )}
 
                                 {/* Desktop only: Voucher input form */}
                                 {!appliedVoucher && (
