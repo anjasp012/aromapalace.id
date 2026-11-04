@@ -7,7 +7,7 @@ import { useTranslation } from '@/lib/i18n';
 export interface BrandItem {
     name: string;
     slug: string;
-    description: string;
+    description?: string;
     description_en?: string;
     collectionsCount: number;
     image: string;
@@ -19,8 +19,7 @@ interface BrandCardProps {
 }
 
 export default function BrandCard({ brand, className }: BrandCardProps) {
-    const { pickText, isEn } = useTranslation();
-    const displayDesc = pickText(brand.description, brand.description_en);
+    const { isEn } = useTranslation();
 
     return (
         <Link
@@ -44,13 +43,10 @@ export default function BrandCard({ brand, className }: BrandCardProps) {
                         <h4 className="text-[10.5px] sm:text-sm font-bold text-foreground truncate group-hover:text-primary transition-colors">
                             {brand.name}
                         </h4>
-                        <p className="hidden sm:line-clamp-2 text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
-                            {displayDesc}
-                        </p>
                     </div>
                 </div>
                 <div className="pt-1.5 sm:pt-2.5 border-t border-border flex items-center justify-between text-[9.5px] sm:text-[11px] text-muted-foreground mt-1.5 sm:mt-2.5">
-                    <span className="truncate">{brand.collectionsCount} {isEn ? 'Collections' : 'Koleksi'}</span>
+                    <span className="truncate">{brand.collectionsCount} {isEn ? 'Perfumes' : 'Parfum'}</span>
                     <span className="group-hover:translate-x-0.5 transition-transform shrink-0">&rarr;</span>
                 </div>
             </Card>
@@ -65,7 +61,6 @@ export function BrandCardSkeleton({ className }: { className?: string }) {
                 <Skeleton className="aspect-square w-full rounded-md" />
                 <div className="space-y-1">
                     <Skeleton className="h-3.5 w-3/4" />
-                    <Skeleton className="hidden sm:block h-3 w-full" />
                 </div>
             </div>
             <div className="pt-1.5 sm:pt-2.5 border-t border-border flex items-center justify-between mt-1.5 sm:mt-2.5">

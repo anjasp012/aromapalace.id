@@ -186,7 +186,7 @@ export default function AdminBrandsIndex({
     return (
         <AdminLayout
             title="Kelola Brand"
-            subtitle="Manajemen rumah parfum (maison de parfum), logo, urutan tampilan di katalog, dan profil cerita dwibahasa."
+            subtitle="Manajemen rumah parfum (maison de parfum), logo, urutan tampilan di katalog, dan informasi brand."
         >
             <Head title="Kelola Brand - Admin Panel" />
 
@@ -378,7 +378,7 @@ export default function AdminBrandsIndex({
 
                                     {/* Description */}
                                     <p className="text-xs text-muted-foreground line-clamp-2 mt-2.5 min-h-[2rem]">
-                                        {b.description || 'Tidak ada profil cerita brand.'}
+                                        {b.description?.trim() ? b.description : '-'}
                                     </p>
 
                                     {/* Card Footer: Product Count & Actions */}

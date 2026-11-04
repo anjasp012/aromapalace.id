@@ -1629,7 +1629,7 @@ export default function CheckoutPage({
                                             <button
                                                 type="button"
                                                 onClick={handleRemoveVoucher}
-                                                className="text-[11px] text-destructive hover:underline cursor-pointer font-semibold shrink-0 ml-2"
+                                                className="hidden lg:inline text-[11px] text-destructive hover:underline cursor-pointer font-semibold shrink-0 ml-2"
                                                 title={isEn ? 'Remove voucher' : 'Hapus voucher'}
                                             >
                                                 ({isEn ? 'Remove' : 'Hapus'})

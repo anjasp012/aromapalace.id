@@ -570,10 +570,10 @@ export default function CartPage({
                             </div>
 
                             {/* Continue Shopping Link */}
-                            <div className="pt-4 pb-8">
+                            <div className="pt-4 pb-8 flex justify-center lg:justify-start">
                                 <Link
                                     href="/products"
-                                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#4A070B] dark:text-[#E8D0BA] hover:text-[#360407] hover:underline transition-colors"
+                                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#4A070B] dark:text-[#E8D0BA] hover:text-[#360407] transition-colors"
                                 >
                                     <span>←</span> {isEn ? 'Continue Shopping' : 'Lanjut Pilih Wewangian Lain'}
                                 </Link>
@@ -626,7 +626,7 @@ export default function CartPage({
                                             <button
                                                 type="button"
                                                 onClick={handleRemoveVoucher}
-                                                className="text-[11px] text-destructive hover:underline cursor-pointer font-semibold shrink-0 ml-2"
+                                                className="hidden lg:inline text-[11px] text-destructive hover:underline cursor-pointer font-semibold shrink-0 ml-2"
                                                 title={isEn ? 'Remove voucher' : 'Hapus voucher'}
                                             >
                                                 {isEn ? '(Remove)' : '(Hapus)'}

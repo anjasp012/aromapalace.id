@@ -1739,7 +1739,7 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
                                                 >
                                                     <span>{b.name}</span>
                                                     <span className="text-[10px] text-muted-foreground font-normal">
-                                                        ({b.products_count} {isEn ? 'Collections' : 'Koleksi'})
+                                                        ({b.products_count} {isEn ? 'Perfumes' : 'Parfum'})
                                                     </span>
                                                 </button>
                                             ))}
