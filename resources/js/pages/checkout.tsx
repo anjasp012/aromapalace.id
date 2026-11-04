@@ -600,6 +600,44 @@ export default function CheckoutPage({
         setEditingAddress(null);
     };
 
+    const handleDeleteAddress = (id: number) => {
+        if (!confirm(isEn ? 'Are you sure you want to delete this address?' : 'Apakah Anda yakin ingin menghapus alamat ini?')) {
+            return;
+        }
+
+        router.delete(`/account/addresses/${id}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setLocalAddresses((prev) => {
+                    const remaining = prev.filter((a) => a.id !== id);
+                    if (selectedAddress?.id === id) {
+                        const nextSelected = remaining.find((a) => a.is_primary) || remaining[0] || null;
+                        if (nextSelected) {
+                            handleSelectAddress(nextSelected);
+                        } else {
+                            setSelectedAddress(null);
+                        }
+                    }
+                    return remaining;
+                });
+            },
+        });
+    };
+
+    const handleSetPrimary = (id: number) => {
+        router.post(`/account/addresses/${id}/primary`, {}, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setLocalAddresses((prev) =>
+                    prev.map((a) => ({
+                        ...a,
+                        is_primary: a.id === id,
+                    }))
+                );
+            },
+        });
+    };
+
     const handleSwitchDeliveryType = (type: 'delivery' | 'pickup') => {
         setDeliveryType(type);
         setData((prev) => ({
@@ -2046,6 +2084,8 @@ export default function CheckoutPage({
                     setEditingAddress(addr);
                     setAddressModalOpen(true);
                 }}
+                onSetPrimary={handleSetPrimary}
+                onDeleteAddress={handleDeleteAddress}
             />
 
             {/* ADDRESS ADD / EDIT MODAL */}

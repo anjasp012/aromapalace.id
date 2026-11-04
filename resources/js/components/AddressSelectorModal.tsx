@@ -141,54 +141,49 @@ export default function AddressSelectorModal({
                                                     .join(', ')}
                                             </p>
 
-                                            {(onSetPrimary || onDeleteAddress) && (
-                                                <div className="pt-2 mt-1 border-t border-border/60 flex items-center justify-between gap-2 text-xs">
-                                                    <div>
-                                                        {!addr.is_primary && onSetPrimary && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    onSetPrimary(addr.id);
-                                                                }}
-                                                                className="text-[11px] font-semibold text-[#4A070B] dark:text-[#E8D0BA] hover:underline cursor-pointer"
-                                                            >
-                                                                {isEn ? 'Set as Primary' : 'Jadikan Alamat Utama'}
-                                                            </button>
-                                                        )}
-                                                    </div>
-
-                                                    <div className="flex items-center gap-2">
-                                                        {onDeleteAddress && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    onDeleteAddress(addr.id);
-                                                                }}
-                                                                className="text-[11px] font-medium text-destructive hover:bg-destructive/10 flex items-center gap-1 px-2 py-0.5 rounded transition cursor-pointer"
-                                                            >
-                                                                <Trash2 className="w-3 h-3" />
-                                                                <span>{isEn ? 'Delete' : 'Hapus'}</span>
-                                                            </button>
-                                                        )}
-                                                    </div>
+                                            {onSetPrimary && !addr.is_primary && (
+                                                <div className="pt-2 mt-1 border-t border-border/60 flex items-center justify-between text-xs">
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            onSetPrimary(addr.id);
+                                                        }}
+                                                        className="text-[11px] font-semibold text-[#4A070B] dark:text-[#E8D0BA] hover:underline cursor-pointer"
+                                                    >
+                                                        {isEn ? 'Set as Primary' : 'Jadikan Alamat Utama'}
+                                                    </button>
                                                 </div>
                                             )}
                                         </div>
 
-                                        <button
-                                            type="button"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                onOpenChange(false);
-                                                onEditAddress(addr);
-                                            }}
-                                            className="text-muted-foreground hover:text-[#4A070B] p-1.5 rounded-md hover:bg-muted transition cursor-pointer shrink-0"
-                                            title={isEn ? 'Edit address' : 'Ubah alamat'}
-                                        >
-                                            <Edit2 className="w-3.5 h-3.5" />
-                                        </button>
+                                        <div className="flex items-center gap-0.5 shrink-0">
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onOpenChange(false);
+                                                    onEditAddress(addr);
+                                                }}
+                                                className="text-muted-foreground hover:text-[#4A070B] dark:hover:text-[#E8D0BA] p-1.5 rounded-md hover:bg-muted transition cursor-pointer"
+                                                title={isEn ? 'Edit address' : 'Ubah alamat'}
+                                            >
+                                                <Edit2 className="w-3.5 h-3.5" />
+                                            </button>
+                                            {onDeleteAddress && (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onDeleteAddress(addr.id);
+                                                    }}
+                                                    className="text-muted-foreground hover:text-destructive p-1.5 rounded-md hover:bg-destructive/10 transition cursor-pointer"
+                                                    title={isEn ? 'Delete address' : 'Hapus alamat'}
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             );
