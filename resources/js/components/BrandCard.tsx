@@ -31,10 +31,7 @@ export default function BrandCard({ brand, className }: BrandCardProps) {
             <Card className="p-2 sm:p-3.5 transition flex flex-col justify-between h-full py-2 sm:py-3 gap-0 shadow-none hover:border-foreground/30 rounded-lg w-full">
                 <div className="space-y-1.5 sm:space-y-2.5">
                     <div
-                        className="aspect-square rounded-md overflow-hidden flex items-center justify-center p-2.5 sm:p-3.5 relative"
-                        style={{
-                            background: 'radial-gradient(circle at 50% 30%, #5C0710 0%, #3D040A 55%, #250205 100%)',
-                        }}
+                        className="aspect-square rounded-md overflow-hidden flex items-center justify-center p-2.5 sm:p-3.5 relative bg-gradient-to-br from-[#4A070B] via-[#52090F] to-[#360407]"
                     >
                         <img
                             src={brand.image}
@@ -65,10 +62,7 @@ export function BrandCardSkeleton({ className }: { className?: string }) {
         <Card className={cn('p-2 sm:p-3.5 flex flex-col justify-between h-full py-2 sm:py-3 gap-0 shadow-none rounded-lg w-full', className)}>
             <div className="space-y-1.5 sm:space-y-2.5">
                 <div
-                    className="aspect-square w-full rounded-md animate-pulse opacity-85"
-                    style={{
-                        background: 'radial-gradient(circle at 50% 30%, #5C0710 0%, #3D040A 55%, #250205 100%)',
-                    }}
+                    className="aspect-square w-full rounded-md animate-pulse opacity-85 bg-gradient-to-br from-[#4A070B] via-[#52090F] to-[#360407]"
                 />
                 <div className="space-y-1">
                     <Skeleton className="h-3.5 w-3/4" />
