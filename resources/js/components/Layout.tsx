@@ -141,6 +141,12 @@ interface SharedProps {
         success?: string | null;
         error?: string | null;
     };
+    contact?: {
+        email?: string;
+        phone?: string;
+        whatsapp?: string;
+        store_name?: string;
+    };
     [key: string]: unknown;
 }
 
@@ -1970,55 +1976,65 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
                         </DialogDescription>
                     </DialogHeader>
 
-                    <div className="space-y-2.5 my-3">
-                        <a
-                            href="https://wa.me/6281234567890?text=Halo%20Aroma%20Palace,%20saya%20ingin%20konsultasi%20parfum"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/40 hover:bg-muted transition text-left cursor-pointer group"
-                        >
-                            <div className="w-9 h-9 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
-                                <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                                    <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.23 8.23 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.42 0-2.82-.37-4.06-1.08l-.29-.17-3.12.82.83-3.04-.19-.3a8.16 8.16 0 0 1-1.25-4.46c0-4.54 3.69-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.24-.75-.67-1.25-1.49-1.4-1.74-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.43.13-.15.17-.25.25-.42.08-.17.04-.32-.02-.45s-.56-1.35-.77-1.85c-.2-.49-.41-.42-.56-.43h-.48c-.16 0-.43.06-.66.31-.23.25-.87.85-.87 2.07s.89 2.4 1.02 2.57c.13.17 1.75 2.67 4.24 3.74.59.26 1.05.41 1.41.53.59.19 1.13.16 1.56.1.47-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.06-.1-.22-.17-.47-.29" />
-                                </svg>
-                            </div>
-                            <div className="leading-tight flex-1">
-                                <span className="text-xs font-semibold text-foreground group-hover:text-primary transition block">WhatsApp VIP Concierge</span>
-                                <span className="text-[11px] text-muted-foreground">+62 812-3456-7890 ({isEn ? '24-Hour Service' : 'Layanan 24 Jam'})</span>
-                            </div>
-                        </a>
+                    {(() => {
+                        const rawWa = (props?.contact?.whatsapp || '6289529591732').replace(/\D/g, '').replace(/^0/, '62');
+                        const formattedWa = rawWa.startsWith('62')
+                            ? `+62 ${rawWa.slice(2, 5)}-${rawWa.slice(5, 9)}-${rawWa.slice(9)}`
+                            : `+${rawWa}`;
+                        const contactEmail = props?.contact?.email || 'support@aromapalace.id';
 
-                        <a
-                            href="mailto:concierge@aromapalace.id"
-                            className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/40 hover:bg-muted transition text-left cursor-pointer group"
-                        >
-                            <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                </svg>
-                            </div>
-                            <div className="leading-tight flex-1">
-                                <span className="text-xs font-semibold text-foreground group-hover:text-primary transition block">Email Customer Service</span>
-                                <span className="text-[11px] text-muted-foreground">concierge@aromapalace.id</span>
-                            </div>
-                        </a>
+                        return (
+                            <div className="space-y-2.5 my-3">
+                                <a
+                                    href={`https://wa.me/${rawWa}?text=Halo%20Aroma%20Palace,%20saya%20ingin%20konsultasi%20parfum`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/40 hover:bg-muted transition text-left cursor-pointer group"
+                                >
+                                    <div className="w-9 h-9 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
+                                        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                                            <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.23 8.23 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.42 0-2.82-.37-4.06-1.08l-.29-.17-3.12.82.83-3.04-.19-.3a8.16 8.16 0 0 1-1.25-4.46c0-4.54 3.69-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.24-.75-.67-1.25-1.49-1.4-1.74-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.43.13-.15.17-.25.25-.42.08-.17.04-.32-.02-.45s-.56-1.35-.77-1.85c-.2-.49-.41-.42-.56-.43h-.48c-.16 0-.43.06-.66.31-.23.25-.87.85-.87 2.07s.89 2.4 1.02 2.57c.13.17 1.75 2.67 4.24 3.74.59.26 1.05.41 1.41.53.59.19 1.13.16 1.56.1.47-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.06-.1-.22-.17-.47-.29" />
+                                        </svg>
+                                    </div>
+                                    <div className="leading-tight flex-1">
+                                        <span className="text-xs font-semibold text-foreground group-hover:text-primary transition block">WhatsApp VIP Concierge</span>
+                                        <span className="text-[11px] text-muted-foreground">{formattedWa} ({isEn ? '24-Hour Service' : 'Layanan 24 Jam'})</span>
+                                    </div>
+                                </a>
 
-                        <Link
-                            href="/about"
-                            onClick={() => setContactModalOpen(false)}
-                            className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/40 hover:bg-muted transition text-left cursor-pointer group"
-                        >
-                            <div className="w-9 h-9 rounded-full bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                                </svg>
+                                <a
+                                    href={`mailto:${contactEmail}`}
+                                    className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/40 hover:bg-muted transition text-left cursor-pointer group"
+                                >
+                                    <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        </svg>
+                                    </div>
+                                    <div className="leading-tight flex-1">
+                                        <span className="text-xs font-semibold text-foreground group-hover:text-primary transition block">Email Customer Service</span>
+                                        <span className="text-[11px] text-muted-foreground">{contactEmail}</span>
+                                    </div>
+                                </a>
+
+                                <Link
+                                    href="/about"
+                                    onClick={() => setContactModalOpen(false)}
+                                    className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/40 hover:bg-muted transition text-left cursor-pointer group"
+                                >
+                                    <div className="w-9 h-9 rounded-full bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                                        </svg>
+                                    </div>
+                                    <div className="leading-tight flex-1">
+                                        <span className="text-xs font-semibold text-foreground group-hover:text-primary transition block">{isEn ? 'Personal Scent Consultation' : 'Konsultasi Aroma Personal'}</span>
+                                        <span className="text-[11px] text-muted-foreground">{isEn ? 'Send your fragrance brief on our About Atelier page' : 'Kirim brief wewangian di halaman Tentang Atelier'}</span>
+                                    </div>
+                                </Link>
                             </div>
-                            <div className="leading-tight flex-1">
-                                <span className="text-xs font-semibold text-foreground group-hover:text-primary transition block">{isEn ? 'Personal Scent Consultation' : 'Konsultasi Aroma Personal'}</span>
-                                <span className="text-[11px] text-muted-foreground">{isEn ? 'Send your fragrance brief on our About Atelier page' : 'Kirim brief wewangian di halaman Tentang Atelier'}</span>
-                            </div>
-                        </Link>
-                    </div>
+                        );
+                    })()}
 
                     <div className="flex justify-end pt-1">
                         <Button variant="outline" size="sm" onClick={() => setContactModalOpen(false)}>

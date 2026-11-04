@@ -104,6 +104,12 @@ class HandleInertiaRequests extends Middleware
                 'playstore_url' => (string) Setting::get('app_playstore_url', 'https://play.google.com/store/apps/details?id=com.aromapalace.app'),
                 'appstore_url' => (string) Setting::get('app_appstore_url', 'https://apps.apple.com/app/aromapalace/id6740000000'),
             ],
+            'contact' => fn () => [
+                'email' => (string) Setting::get('store_email', 'support@aromapalace.id'),
+                'phone' => (string) Setting::get('store_phone', '081288889999'),
+                'whatsapp' => (string) Setting::get('store_whatsapp', '6289529591732'),
+                'store_name' => (string) Setting::get('store_name', 'Aroma Palace Official'),
+            ],
             'header_vouchers' => fn () => Cache::remember('active_header_vouchers', 600, function () {
                 return Voucher::query()
                     ->where('is_active', true)
