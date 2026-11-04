@@ -1622,9 +1622,9 @@ export default function CheckoutPage({
                                     )}
                                 </div>
 
-                                {/* Applied Voucher Badge (harganya dihapus dari sini karena sudah ditaruh di rincian atas) */}
+                                {/* Applied Voucher Badge (hanya tampil di desktop, di mode mobile voucher sudah ada di floating bar bawah) */}
                                 {appliedVoucher && (
-                                    <div className="pt-1">
+                                    <div className="hidden lg:block pt-1">
                                         <div className="flex items-center justify-between text-xs bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 rounded-md">
                                             <div className="flex items-center gap-2 min-w-0">
                                                 {isAppliedVoucherShipping ? (
@@ -1639,7 +1639,7 @@ export default function CheckoutPage({
                                             <button
                                                 type="button"
                                                 onClick={handleRemoveVoucher}
-                                                className="hidden lg:inline text-[11px] text-destructive hover:underline cursor-pointer font-semibold shrink-0 ml-2"
+                                                className="text-[11px] text-destructive hover:underline cursor-pointer font-semibold shrink-0 ml-2"
                                                 title={isEn ? 'Remove voucher' : 'Hapus voucher'}
                                             >
                                                 ({isEn ? 'Remove' : 'Hapus'})

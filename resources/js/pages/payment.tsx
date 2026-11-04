@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
-import { Loader2, AlertCircle, Clock, CheckCircle2, Copy, Check, ArrowRight, Upload, HourglassIcon, Building2, CreditCard, Receipt, Ticket, Truck } from 'lucide-react';
+import { Loader2, AlertCircle, Clock, CheckCircle2, Copy, Check, ArrowRight, Upload, HourglassIcon, Building2, CreditCard, Ticket, Truck } from 'lucide-react';
 import { useEcho } from '@laravel/echo-react';
 import { useTranslation } from '@/lib/i18n';
 
@@ -43,77 +43,6 @@ interface PaymentProps {
         total_amount: number;
         total_amount_formatted: string;
     };
-}
-
-function PaymentSummaryCard({ order, isEn }: { order: PaymentProps['order']; isEn: boolean }) {
-    return (
-        <div className="bg-card/70 backdrop-blur-xs border border-border/80 rounded-2xl p-5 sm:p-6 shadow-none space-y-3.5">
-            <div className="flex items-center justify-between pb-2.5 border-b border-border/60">
-                <div className="flex items-center gap-2">
-                    <Receipt className="w-4 h-4 text-muted-foreground" />
-                    <h2 className="text-sm font-bold text-foreground">
-                        {isEn ? 'Payment Summary' : 'Ringkasan Pembayaran'}
-                    </h2>
-                </div>
-                <span className="text-xs font-mono font-semibold text-muted-foreground">
-                    #{order.order_number}
-                </span>
-            </div>
-
-            <div className="space-y-2 text-xs">
-                {order.subtotal_formatted && (
-                    <div className="flex items-center justify-between text-muted-foreground">
-                        <span>{isEn ? 'Products Subtotal' : 'Subtotal Produk'}</span>
-                        <span className="font-semibold text-foreground">{order.subtotal_formatted}</span>
-                    </div>
-                )}
-
-                {order.shipping_cost_formatted && (
-                    <div className="flex items-center justify-between text-muted-foreground">
-                        <span>{isEn ? 'Shipping Fee' : 'Total Ongkos Kirim'}</span>
-                        <span className="font-semibold text-foreground">
-                            {order.shipping_cost && order.shipping_cost > 0 ? order.shipping_cost_formatted : (isEn ? 'Free' : 'Gratis')}
-                        </span>
-                    </div>
-                )}
-
-                {order.discount_amount && order.discount_amount > 0 ? (
-                    <div className="flex items-center justify-between text-emerald-700 dark:text-emerald-400 font-semibold bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 rounded-md">
-                        <span className="flex items-center gap-1.5 truncate">
-                            {order.is_shipping_voucher ? (
-                                <Truck className="w-3.5 h-3.5 shrink-0" />
-                            ) : (
-                                <Ticket className="w-3.5 h-3.5 shrink-0" />
-                            )}
-                            <span className="truncate">
-                                {order.is_shipping_voucher ? (isEn ? 'Shipping Discount' : 'Potongan Ongkir') : (isEn ? 'Voucher Discount' : 'Potongan Voucher')}
-                                {order.voucher_code ? ` (${order.voucher_code})` : ''}
-                            </span>
-                        </span>
-                        <span className="font-bold shrink-0">
-                            -{order.discount_amount_formatted}
-                        </span>
-                    </div>
-                ) : null}
-
-                {order.unique_code ? (
-                    <div className="flex items-center justify-between text-amber-700 dark:text-amber-400 font-semibold">
-                        <span>{isEn ? 'Unique Verification Code' : 'Kode Unik Pembayaran'}</span>
-                        <span className="font-mono">+{order.unique_code_formatted || order.unique_code}</span>
-                    </div>
-                ) : null}
-
-                <div className="border-t border-border/70 pt-2.5 flex items-baseline justify-between">
-                    <span className="font-bold text-sm text-foreground">
-                        {isEn ? 'Total Payment' : 'Total Pembayaran'}
-                    </span>
-                    <span className="font-black text-base text-[#4A070B] dark:text-[#E8D0BA]">
-                        {order.total_amount_formatted}
-                    </span>
-                </div>
-            </div>
-        </div>
-    );
 }
 
 function PaymentContent({ order }: PaymentProps) {
@@ -666,46 +595,42 @@ function PaymentContent({ order }: PaymentProps) {
                                     <div className="border-t border-border/60" />
                                     {/* Total Amount */}
                                     <div className="flex items-center justify-between">
-                                        <span className="text-xs text-muted-foreground">{isEn ? 'Transfer Amount' : 'Jumlah Transfer'}</span>
+                                        <div>
+                                            <span className="text-xs text-muted-foreground block">{isEn ? 'Transfer Amount' : 'Jumlah Transfer'}</span>
+                                            {order.unique_code ? (
+                                                <span className="text-[11px] text-amber-700 dark:text-amber-400 font-medium block mt-0.5">
+                                                    {isEn ? `(Includes unique code)` : `(Sudah termasuk 3 digit kode unik)`}
+                                                </span>
+                                            ) : null}
+                                        </div>
                                         <div className="flex items-center gap-2">
                                             <span className="font-extrabold text-base text-[#4A070B] dark:text-[#E8D0BA]">{order.total_amount_formatted}</span>
                                             <button
                                                 type="button"
                                                 onClick={() => handleCopy(String(order.total_amount), 'amount')}
-                                                className="rounded-md border border-border/80 hover:bg-muted/60 px-2 py-1 text-xs font-semibold text-foreground flex items-center gap-1 transition cursor-pointer select-none"
+                                                className="rounded-md border border-border/80 hover:bg-muted/60 px-2.5 py-1 text-xs font-semibold text-foreground flex items-center gap-1.5 transition cursor-pointer select-none"
+                                                title={isEn ? 'Copy transfer amount' : 'Salin jumlah transfer'}
                                             >
-                                                {copiedAmount ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3 text-muted-foreground" />}
+                                                {copiedAmount ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5 text-muted-foreground" />}
+                                                <span>{copiedAmount ? (isEn ? 'Copied' : 'Tersalin') : (isEn ? 'Copy' : 'Salin')}</span>
                                             </button>
                                         </div>
                                     </div>
 
                                     {order.unique_code ? (
-                                        <>
-                                            <div className="border-t border-border/60" />
-                                            <div className="flex items-center justify-between text-xs">
-                                                <span className="text-muted-foreground">{isEn ? 'Unique Verification Code' : 'Kode Unik Pembayaran'}</span>
-                                                <span className="font-bold text-amber-600 dark:text-amber-400 font-mono">+{order.unique_code_formatted || order.unique_code}</span>
-                                            </div>
-                                            <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-900 dark:text-amber-200 leading-relaxed space-y-1">
-                                                <p className="font-bold flex items-center gap-1">
-                                                    <span>⚠️</span>
-                                                    <span>{isEn ? 'IMPORTANT: Transfer Exact Amount' : 'PENTING: Transfer Tepat Hingga 3 Digit Terakhir'}</span>
-                                                </p>
-                                                <p>
-                                                    {isEn
-                                                        ? `Please transfer the exact amount of ${order.total_amount_formatted} (including unique code +${order.unique_code}) so our curation team can automatically verify your transaction.`
-                                                        : `Mohon transfer tepat sejumlah ${order.total_amount_formatted} (termasuk 3 digit kode unik +${order.unique_code}) agar sistem butik kami dapat langsung memverifikasi pembayaran Anda.`}
-                                                </p>
-                                            </div>
-                                        </>
+                                        <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/25 text-[11.5px] text-amber-900 dark:text-amber-200 leading-relaxed flex items-start gap-2">
+                                            <span className="shrink-0 text-sm">💡</span>
+                                            <p>
+                                                {isEn
+                                                    ? `Please transfer the exact amount of ${order.total_amount_formatted} (do not round off) so your payment can be verified automatically.`
+                                                    : `Mohon transfer tepat sejumlah ${order.total_amount_formatted} hingga digit terakhir (jangan dibulatkan) agar pembayaran Anda dapat langsung diverifikasi.`}
+                                            </p>
+                                        </div>
                                     ) : null}
                                 </div>
 
                             </div>
                         )}
-
-                        {/* Ringkasan Pembayaran */}
-                        <PaymentSummaryCard order={order} isEn={isEn} />
 
                         {/* Cara Pembayaran Accordion */}
                         {order.bank_details && (
@@ -1109,10 +1034,7 @@ function PaymentContent({ order }: PaymentProps) {
                             )}
                         </div>
 
-                        {/* 3. Ringkasan Pembayaran */}
-                        <PaymentSummaryCard order={order} isEn={isEn} />
-
-                        {/* 4. Cara Pembayaran Accordion Card (Consistent with manual payment) */}
+                        {/* Cara Pembayaran Accordion Card (Consistent with manual payment) */}
                         <div className="bg-card/70 backdrop-blur-xs border border-border/80 rounded-2xl p-5 sm:p-6 shadow-none">
                             <p className="text-xs font-bold text-foreground mb-3 uppercase tracking-wide">
                                 {isEn ? 'Payment Instructions' : 'Cara Pembayaran'}
