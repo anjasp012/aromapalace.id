@@ -147,6 +147,16 @@ return [
     'ulid' => ':Attribute harus berupa ULID yang valid.',
     'uuid' => ':Attribute harus berupa UUID yang valid.',
 
+    'custom' => [
+        'avatar' => [
+            'file' => 'Foto profil harus berupa berkas yang valid.',
+            'image' => 'Foto profil hanya boleh berupa file gambar atau foto.',
+            'mimes' => 'Format foto profil harus berupa JPG, JPEG, PNG, atau WEBP.',
+            'max' => 'Ukuran foto profil tidak boleh lebih dari 3MB.',
+            'uploaded' => 'Gagal mengunggah foto profil. Pastikan ukuran file tidak melebihi 3MB.',
+        ],
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Kustomisasi Nama Atribut Validasi
@@ -158,6 +168,7 @@ return [
         'email' => 'Alamat email',
         'password' => 'Kata sandi',
         'phone' => 'Nomor telepon',
+        'avatar' => 'Foto profil',
         'address' => 'Alamat',
         'city' => 'Kota',
         'postal_code' => 'Kode pos',

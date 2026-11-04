@@ -181,8 +181,12 @@ return [
     */
 
     'custom' => [
-        'attribute-name' => [
-            'rule-name' => 'custom-message',
+        'avatar' => [
+            'file' => 'The profile photo must be a valid file.',
+            'image' => 'The profile photo must be an image file.',
+            'mimes' => 'The profile photo must be a file of type: JPG, JPEG, PNG, or WEBP.',
+            'max' => 'The profile photo size must not exceed 3MB.',
+            'uploaded' => 'Failed to upload profile photo. Please ensure file size is under 3MB.',
         ],
     ],
 
@@ -197,6 +201,12 @@ return [
     |
     */
 
-    'attributes' => [],
+    'attributes' => [
+        'avatar' => 'profile photo',
+        'name' => 'full name',
+        'email' => 'email address',
+        'password' => 'password',
+        'phone' => 'phone number',
+    ],
 
 ];

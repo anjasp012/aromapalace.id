@@ -110,11 +110,31 @@ class AccountController extends Controller
     public function updateProfile(Request $request): RedirectResponse
     {
         $user = $request->user();
+        $isEn = app()->getLocale() === 'en';
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:25'],
-            'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:3072'],
+            'avatar' => ['nullable', 'file', 'image', 'mimes:jpeg,png,jpg,webp', 'max:3072'],
             'remove_avatar' => ['nullable', 'boolean'],
+        ], $isEn ? [
+            'name.required' => 'Full name is required.',
+            'name.max' => 'Full name may not be greater than 255 characters.',
+            'phone.max' => 'Phone number may not be greater than 25 characters.',
+            'avatar.file' => 'The uploaded file must be a valid file.',
+            'avatar.image' => 'Profile photo must be an image file (JPG, PNG, or WEBP).',
+            'avatar.mimes' => 'Profile photo format must be JPG, JPEG, PNG, or WEBP.',
+            'avatar.max' => 'Profile photo size may not be greater than 3MB.',
+            'avatar.uploaded' => 'Failed to upload photo. Please ensure file size is under 3MB.',
+        ] : [
+            'name.required' => 'Nama lengkap wajib diisi.',
+            'name.max' => 'Nama lengkap maksimal 255 karakter.',
+            'phone.max' => 'Nomor telepon maksimal 25 karakter.',
+            'avatar.file' => 'Foto profil harus berupa berkas yang valid.',
+            'avatar.image' => 'Foto profil hanya boleh berupa file gambar atau foto.',
+            'avatar.mimes' => 'Format foto profil harus berupa JPG, JPEG, PNG, atau WEBP.',
+            'avatar.max' => 'Ukuran foto profil tidak boleh lebih dari 3MB.',
+            'avatar.uploaded' => 'Gagal mengunggah foto profil. Pastikan ukuran file tidak melebihi 3MB.',
         ]);
 
         if ($request->boolean('remove_avatar')) {

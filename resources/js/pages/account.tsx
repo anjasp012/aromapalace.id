@@ -33,6 +33,7 @@ import {
     Edit2,
     Camera,
     Bell,
+    AlertCircle,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 import type { UserAddress } from '@/types/address';
@@ -200,6 +201,7 @@ export default function AccountPage({
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [avatarPreview, setAvatarPreview] = useState<string | null>(user.avatar || null);
     const [removeAvatar, setRemoveAvatar] = useState(false);
+    const [avatarError, setAvatarError] = useState<string | null>(null);
     const [editAddress, setEditAddress] = useState(user.address || '');
     const [editCity, setEditCity] = useState(user.city || '');
     const [editPostalCode, setEditPostalCode] = useState(user.postal_code || '');
@@ -213,9 +215,61 @@ export default function AccountPage({
             setAvatarFile(null);
             setAvatarPreview(user.avatar || null);
             setRemoveAvatar(false);
+            setAvatarError(null);
             setProfileError(null);
         }
     }, [editProfileOpen, user]);
+
+    // Handle avatar file selection & immediate client-side validation
+    const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Reset input element value so re-selecting the same file fires onChange
+        e.target.value = '';
+
+        setAvatarError(null);
+        setProfileError(null);
+
+        // 1. Strict validation: only photo/image files allowed
+        const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+        const fileName = (file.name || '').toLowerCase();
+        const hasValidExt = /\.(jpe?g|png|webp)$/i.test(fileName);
+        const hasValidMime = allowedMimeTypes.includes(file.type?.toLowerCase()) || (file.type?.startsWith('image/') && hasValidExt);
+
+        if (!hasValidMime || !hasValidExt) {
+            setAvatarError(
+                isEn
+                    ? 'Only image files (JPG, JPEG, PNG, or WEBP) are allowed.'
+                    : 'Format file tidak didukung. Harap pilih file foto JPG, JPEG, PNG, atau WEBP.'
+            );
+            return;
+        }
+
+        // 2. Strict validation: file size limit (max 3MB)
+        const MAX_AVATAR_SIZE = 3 * 1024 * 1024; // 3MB
+        if (file.size > MAX_AVATAR_SIZE) {
+            const sizeInMB = (file.size / (1024 * 1024)).toFixed(1);
+            setAvatarError(
+                isEn
+                    ? `Photo size (${sizeInMB}MB) exceeds the 3MB limit. Please choose a smaller photo.`
+                    : `Ukuran file foto (${sizeInMB}MB) melebihi batas 3MB. Silakan pilih foto dengan ukuran lebih kecil.`
+            );
+            return;
+        }
+
+        // 3. Valid photo file
+        setAvatarFile(file);
+        setAvatarPreview(URL.createObjectURL(file));
+        setRemoveAvatar(false);
+    };
+
+    const handleAvatarRemove = () => {
+        setAvatarFile(null);
+        setAvatarPreview(null);
+        setRemoveAvatar(true);
+        setAvatarError(null);
+    };
 
     // Password form state
     const [currentPassword, setCurrentPassword] = useState('');
@@ -255,6 +309,7 @@ export default function AccountPage({
     const handleUpdateProfile = (e: React.FormEvent) => {
         e.preventDefault();
         setProfileError(null);
+        setAvatarError(null);
 
         if (!editName.trim()) {
             setProfileError(isEn ? 'Name cannot be empty.' : 'Nama tidak boleh kosong.');
@@ -283,8 +338,12 @@ export default function AccountPage({
                     setEditProfileOpen(false);
                     setAvatarFile(null);
                     setRemoveAvatar(false);
+                    setAvatarError(null);
                 },
                 onError: (errors) => {
+                    if (errors.avatar) {
+                        setAvatarError(errors.avatar);
+                    }
                     setProfileError(Object.values(errors)[0] || (isEn ? 'Failed to update profile.' : 'Gagal memperbarui profil.'));
                 },
                 onFinish: () => setIsUpdatingProfile(false),
@@ -706,89 +765,88 @@ export default function AccountPage({
                         </DialogHeader>
 
                         {profileError && (
-                            <div className="p-3 rounded-xl bg-destructive/10 text-destructive text-xs font-medium my-2">
-                                {profileError}
+                            <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium my-2 flex items-start gap-2 animate-in fade-in duration-200">
+                                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-destructive" />
+                                <span className="leading-relaxed">{profileError}</span>
                             </div>
                         )}
 
                         <div className="space-y-4 my-4">
                             {/* Avatar Picker & Preview */}
-                            <div className="flex items-center gap-4 pb-3 border-b border-border/60">
-                                <div className="relative shrink-0">
-                                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#E5A844] via-[#F3CE7A] to-[#8C1D24] p-0.5 shadow-xs overflow-hidden">
-                                        {avatarPreview ? (
-                                            <img src={avatarPreview} alt="Preview" className="w-full h-full rounded-full object-cover" />
-                                        ) : (
-                                            <div className="w-full h-full rounded-full bg-[#4A070B] flex items-center justify-center text-white text-xl font-serif font-bold uppercase select-none">
-                                                {initial}
-                                            </div>
-                                        )}
+                            <div className="p-3.5 rounded-xl border border-border/70 bg-muted/20 space-y-3">
+                                <div className="flex items-center gap-4">
+                                    <div className="relative shrink-0">
+                                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#E5A844] via-[#F3CE7A] to-[#8C1D24] p-0.5 shadow-xs overflow-hidden">
+                                            {avatarPreview ? (
+                                                <img src={avatarPreview} alt="Preview" className="w-full h-full rounded-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full rounded-full bg-[#4A070B] flex items-center justify-center text-white text-xl font-serif font-bold uppercase select-none">
+                                                    {initial}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1.5 flex-1 min-w-0">
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-xs font-semibold text-foreground block">
+                                                {isEn ? 'Profile Photo' : 'Foto Profil'}
+                                            </label>
+                                            {avatarFile && (
+                                                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 px-1.5 py-0.5 rounded">
+                                                    {isEn ? 'New photo chosen' : 'Foto baru dipilih'}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            {/* File picker */}
+                                            <label className="cursor-pointer">
+                                                <input
+                                                    type="file"
+                                                    accept="image/jpeg,image/png,image/jpg,image/webp"
+                                                    className="hidden"
+                                                    onChange={handleAvatarSelect}
+                                                />
+                                                <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-border/80 bg-background hover:bg-muted text-foreground transition shadow-2xs">
+                                                    <Camera className="w-3.5 h-3.5 text-[#E5A844]" />
+                                                    {avatarPreview ? (isEn ? 'Change Photo' : 'Ganti Foto') : (isEn ? 'Upload Photo' : 'Pilih Foto')}
+                                                </span>
+                                            </label>
+                                            {/* Camera capture for mobile (front camera) */}
+                                            <label className="cursor-pointer">
+                                                <input
+                                                    type="file"
+                                                    accept="image/jpeg,image/png,image/jpg,image/webp"
+                                                    capture="user"
+                                                    className="hidden"
+                                                    onChange={handleAvatarSelect}
+                                                />
+                                                <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-border/80 bg-background hover:bg-muted text-foreground transition shadow-2xs">
+                                                    <Camera className="w-3.5 h-3.5 text-sky-500" />
+                                                    {isEn ? 'Camera' : 'Kamera'}
+                                                </span>
+                                            </label>
+                                            {avatarPreview && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleAvatarRemove}
+                                                    className="text-xs text-destructive hover:underline font-medium cursor-pointer"
+                                                >
+                                                    {isEn ? 'Remove' : 'Hapus Foto'}
+                                                </button>
+                                            )}
+                                        </div>
+                                        <p className="text-[10.5px] text-muted-foreground">
+                                            {isEn ? 'JPG, PNG, or WEBP only, max. 3MB.' : 'Hanya file foto JPG, PNG, atau WEBP, maks. 3MB.'}
+                                        </p>
                                     </div>
                                 </div>
-                                <div className="space-y-1.5 flex-1 min-w-0">
-                                    <label className="text-xs font-semibold text-foreground block">
-                                        {isEn ? 'Profile Photo' : 'Foto Profil'}
-                                    </label>
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        {/* File picker */}
-                                        <label className="cursor-pointer">
-                                            <input
-                                                type="file"
-                                                accept="image/jpeg,image/png,image/jpg,image/webp"
-                                                className="hidden"
-                                                onChange={(e) => {
-                                                    const file = e.target.files?.[0];
-                                                    if (file) {
-                                                        setAvatarFile(file);
-                                                        setAvatarPreview(URL.createObjectURL(file));
-                                                        setRemoveAvatar(false);
-                                                    }
-                                                }}
-                                            />
-                                            <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-border/80 bg-background hover:bg-muted text-foreground transition shadow-2xs">
-                                                <Camera className="w-3.5 h-3.5 text-[#E5A844]" />
-                                                {avatarPreview ? (isEn ? 'Change Photo' : 'Ganti Foto') : (isEn ? 'Upload Photo' : 'Pilih Foto')}
-                                            </span>
-                                        </label>
-                                        {/* Camera capture for mobile (front camera) */}
-                                        <label className="cursor-pointer">
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                capture="user"
-                                                className="hidden"
-                                                onChange={(e) => {
-                                                    const file = e.target.files?.[0];
-                                                    if (file) {
-                                                        setAvatarFile(file);
-                                                        setAvatarPreview(URL.createObjectURL(file));
-                                                        setRemoveAvatar(false);
-                                                    }
-                                                }}
-                                            />
-                                            <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-border/80 bg-background hover:bg-muted text-foreground transition shadow-2xs">
-                                                <Camera className="w-3.5 h-3.5 text-sky-500" />
-                                                {isEn ? 'Camera' : 'Kamera'}
-                                            </span>
-                                        </label>
-                                        {avatarPreview && (
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setAvatarFile(null);
-                                                    setAvatarPreview(null);
-                                                    setRemoveAvatar(true);
-                                                }}
-                                                className="text-xs text-destructive hover:underline font-medium cursor-pointer"
-                                            >
-                                                {isEn ? 'Remove' : 'Hapus Foto'}
-                                            </button>
-                                        )}
+
+                                {avatarError && (
+                                    <div className="text-[11.5px] font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-lg p-2.5 flex items-start gap-2 animate-in fade-in duration-200">
+                                        <AlertCircle className="w-4 h-4 shrink-0 text-destructive mt-0.5" />
+                                        <span>{avatarError}</span>
                                     </div>
-                                    <p className="text-[10.5px] text-muted-foreground">
-                                        {isEn ? 'JPG, PNG or WEBP, max 3MB.' : 'Format JPG, PNG atau WEBP, maks 3MB.'}
-                                    </p>
-                                </div>
+                                )}
                             </div>
                             <div className="space-y-1.5">
                                 <label className="text-xs font-semibold text-foreground">{t('auth.full_name')}</label>
