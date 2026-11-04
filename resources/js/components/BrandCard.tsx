@@ -49,7 +49,7 @@ export default function BrandCard({ brand, className }: BrandCardProps) {
                     </div>
                 </div>
                 <div className="pt-1.5 sm:pt-2.5 border-t border-border flex items-center justify-between text-[9.5px] sm:text-[11px] text-muted-foreground mt-1.5 sm:mt-2.5">
-                    <span className="truncate">{brand.collectionsCount} {isEn ? 'Perfumes' : 'Parfum'}</span>
+                    <span className="truncate">{brand.collectionsCount} {isEn ? 'Fragrances' : 'Parfum'}</span>
                     <span className="group-hover:translate-x-0.5 transition-transform shrink-0">&rarr;</span>
                 </div>
             </Card>
