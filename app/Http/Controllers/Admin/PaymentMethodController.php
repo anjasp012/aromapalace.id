@@ -50,8 +50,6 @@ class PaymentMethodController extends Controller
             'manual_methods' => PaymentMethod::where('type', 'manual')->count(),
         ];
 
-        $manualUniqueCodeEnabled = Setting::get('manual_payment_unique_code', '1') !== '0';
-
         return Inertia::render('admin/payment-methods/index', [
             'paymentMethods' => $paymentMethods,
             'filters' => [
@@ -60,7 +58,6 @@ class PaymentMethodController extends Controller
                 'type' => $type,
             ],
             'metrics' => $metrics,
-            'manualUniqueCodeEnabled' => $manualUniqueCodeEnabled,
         ]);
     }
 

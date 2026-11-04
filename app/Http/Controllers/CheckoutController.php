@@ -9,7 +9,6 @@ use App\Models\Order;
 use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\ProductVariant;
-use App\Models\Setting;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Voucher;
@@ -569,11 +568,10 @@ class CheckoutController extends Controller
                 $paymentChannel = $pm ? $pm->name : 'Transfer Manual';
                 $paymentCode = ($pm && $pm->account_number) ? $pm->account_number : 'MANUAL-'.strtoupper(Str::random(6));
 
-                // Check if unique code is enabled globally and for this method
-                $globalUnique = Setting::get('manual_payment_unique_code', '1') !== '0';
-                $methodUnique = $pm ? (bool) $pm->use_unique_code : true;
+                // Check if unique code is enabled for this specific payment method
+                $methodUnique = $pm ? (bool) $pm->use_unique_code : false;
 
-                if ($globalUnique && $methodUnique && $baseTotal > 0) {
+                if ($methodUnique && $baseTotal > 0) {
                     $uniqueCode = rand(100, 999);
                     $totalAmount = $baseTotal + $uniqueCode;
                 }

@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react';
+import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
@@ -18,7 +19,8 @@ interface BrandCardProps {
 }
 
 export default function BrandCard({ brand, className }: BrandCardProps) {
-    const { isEn } = useTranslation();
+    const { pickText, isEn } = useTranslation();
+    const displayDesc = pickText(brand.description, brand.description_en);
 
     return (
         <Link
@@ -27,103 +29,49 @@ export default function BrandCard({ brand, className }: BrandCardProps) {
             cacheFor={['30s', '1m']}
             className={cn('block h-full group', className)}
         >
-            <div
-                className="relative flex flex-col justify-between h-full rounded-xl overflow-hidden transition-all duration-300 group-hover:scale-[1.03]"
-                style={{
-                    background: 'radial-gradient(circle at 50% 30%, #5C0710 0%, #3D040A 55%, #250205 100%)',
-                    border: '2px solid #C5A059',
-                }}
-            >
-                {/* Subtle top-corner golden sheen */}
-                <div
-                    className="absolute inset-0 rounded-2xl pointer-events-none opacity-40 group-hover:opacity-70 transition-opacity"
-                    style={{
-                        background: 'linear-gradient(135deg, rgba(255,232,158,0.2) 0%, transparent 40%, rgba(197,160,89,0.1) 100%)',
-                    }}
-                />
-
-                {/* 1. Brand Logo (Direct on maroon background, no inner container) */}
-                <div className="flex-1 flex items-center justify-center p-3 sm:p-5 pt-4 sm:pt-6 pb-1">
-                    <div className="w-full aspect-square max-w-[130px] flex items-center justify-center">
+            <Card className="p-2 sm:p-3.5 transition flex flex-col justify-between h-full py-2 sm:py-3 gap-0 shadow-none hover:border-foreground/30 rounded-lg w-full">
+                <div className="space-y-1.5 sm:space-y-2.5">
+                    <div className="aspect-square rounded-md overflow-hidden bg-muted">
                         <img
                             src={brand.image}
                             alt={brand.name}
                             loading="lazy"
                             decoding="async"
-                            className="max-h-full max-w-full object-contain transition-transform duration-500 group-hover:scale-105"
-                            style={{
-                                filter: 'drop-shadow(0 3px 10px rgba(0,0,0,0.65))',
-                            }}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
                     </div>
+                    <div>
+                        <h4 className="text-[10.5px] sm:text-sm font-bold text-foreground truncate group-hover:text-primary transition-colors">
+                            {brand.name}
+                        </h4>
+                        <p className="hidden sm:line-clamp-2 text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                            {displayDesc}
+                        </p>
+                    </div>
                 </div>
-
-                {/* 2. Brand Name with Metallic Gold Effect */}
-                <div className="px-2.5 pb-2.5 sm:px-4 sm:pb-3 text-center">
-                    <h4
-                        className="font-serif text-[11px] sm:text-sm md:text-[15px] font-bold tracking-[0.14em] uppercase truncate"
-                        style={{
-                            background: 'linear-gradient(180deg, #FFF3BF 0%, #F0CE68 30%, #D4A937 65%, #9E7418 100%)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                            filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.9))',
-                            display: 'block',
-                        }}
-                    >
-                        {brand.name}
-                    </h4>
+                <div className="pt-1.5 sm:pt-2.5 border-t border-border flex items-center justify-between text-[9.5px] sm:text-[11px] text-muted-foreground mt-1.5 sm:mt-2.5">
+                    <span className="truncate">{brand.collectionsCount} {isEn ? 'Collections' : 'Koleksi'}</span>
+                    <span className="group-hover:translate-x-0.5 transition-transform shrink-0">&rarr;</span>
                 </div>
-
-                {/* 3. Footer Divider & Collections Count */}
-                <div
-                    className="mx-2.5 mb-2.5 sm:mx-4 sm:mb-3.5 pt-2 sm:pt-2.5 flex items-center justify-between text-[10px] sm:text-xs"
-                    style={{
-                        borderTop: '1px solid rgba(197, 160, 89, 0.4)',
-                    }}
-                >
-                    <span
-                        className="truncate font-serif tracking-wide"
-                        style={{ color: '#DFC48A' }}
-                    >
-                        {brand.collectionsCount} {isEn ? 'Koleksi' : 'Koleksi'}
-                    </span>
-                    <span
-                        className="group-hover:translate-x-1 transition-transform shrink-0 font-bold ml-1"
-                        style={{ color: '#DFC48A' }}
-                    >
-                        &rarr;
-                    </span>
-                </div>
-            </div>
+            </Card>
         </Link>
     );
 }
 
 export function BrandCardSkeleton({ className }: { className?: string }) {
     return (
-        <div
-            className={cn('flex flex-col justify-between h-full rounded-2xl overflow-hidden animate-pulse', className)}
-            style={{
-                background: 'radial-gradient(circle at 50% 30%, #5C0710 0%, #3D040A 55%, #250205 100%)',
-                border: '2px solid rgba(197, 160, 89, 0.5)',
-            }}
-        >
-            <div className="flex-1 flex items-center justify-center p-3 sm:p-5 pt-4 sm:pt-6">
-                <div
-                    className="w-full aspect-square max-w-[130px] rounded-lg"
-                    style={{ background: 'rgba(255,255,255,0.05)' }}
-                />
+        <Card className={cn('p-2 sm:p-3.5 flex flex-col justify-between h-full py-2 sm:py-3 gap-0 shadow-none rounded-lg w-full', className)}>
+            <div className="space-y-1.5 sm:space-y-2.5">
+                <Skeleton className="aspect-square w-full rounded-md" />
+                <div className="space-y-1">
+                    <Skeleton className="h-3.5 w-3/4" />
+                    <Skeleton className="hidden sm:block h-3 w-full" />
+                </div>
             </div>
-            <div className="px-2.5 pb-2.5 sm:px-4 sm:pb-3">
-                <Skeleton className="h-4 w-3/4 mx-auto bg-[#D4A937]/25" />
+            <div className="pt-1.5 sm:pt-2.5 border-t border-border flex items-center justify-between mt-1.5 sm:mt-2.5">
+                <Skeleton className="h-2.5 w-1/3" />
+                <Skeleton className="h-2.5 w-3" />
             </div>
-            <div
-                className="mx-2.5 mb-2.5 sm:mx-4 sm:mb-3.5 pt-2 sm:pt-2.5 flex items-center justify-between"
-                style={{ borderTop: '1px solid rgba(197, 160, 89, 0.3)' }}
-            >
-                <Skeleton className="h-3 w-1/3 bg-[#D4A937]/25" />
-                <Skeleton className="h-3 w-3 bg-[#D4A937]/25" />
-            </div>
-        </div>
+        </Card>
     );
 }

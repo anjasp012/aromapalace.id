@@ -68,7 +68,6 @@ interface PaymentMethodsIndexProps {
         automatic_methods?: number;
         manual_methods?: number;
     };
-    manualUniqueCodeEnabled?: boolean;
 }
 
 interface SyncPreviewMethod {
@@ -93,7 +92,6 @@ export default function AdminPaymentMethodsIndex({
     paymentMethods,
     filters,
     metrics,
-    manualUniqueCodeEnabled = true,
 }: PaymentMethodsIndexProps) {
     const [search, setSearch] = useState(filters.search || '');
     const [statusFilter, setStatusFilter] = useState(filters.status || '');
@@ -102,7 +100,6 @@ export default function AdminPaymentMethodsIndex({
     const [isDeleting, setIsDeleting] = useState(false);
     const [togglingId, setTogglingId] = useState<number | null>(null);
     const [togglingUniqueCodeId, setTogglingUniqueCodeId] = useState<number | null>(null);
-    const [isTogglingUniqueCodeSetting, setIsTogglingUniqueCodeSetting] = useState(false);
 
     const [isCheckingSync, setIsCheckingSync] = useState(false);
     const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
@@ -158,16 +155,6 @@ export default function AdminPaymentMethodsIndex({
         router.patch(`/manajemen-pembayaran/${pm.id}/toggle-unique-code`, {}, {
             preserveScroll: true,
             onFinish: () => setTogglingUniqueCodeId(null),
-        });
-    };
-
-    const handleToggleUniqueCodeSetting = (checked: boolean) => {
-        setIsTogglingUniqueCodeSetting(true);
-        router.post('/manajemen-pembayaran/settings/unique-code', {
-            enabled: checked,
-        }, {
-            preserveScroll: true,
-            onFinish: () => setIsTogglingUniqueCodeSetting(false),
         });
     };
 
@@ -318,49 +305,6 @@ export default function AdminPaymentMethodsIndex({
                         </Card>
                     </div>
                 )}
-
-                {/* Pengaturan Kode Unik Transfer Manual Card */}
-                <Card className="border-amber-300/70 dark:border-amber-800/70 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent shadow-xs">
-                    <CardContent className="p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                        <div className="flex items-start gap-3.5">
-                            <div className="p-2.5 rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5">
-                                <Sparkles className="size-5" />
-                            </div>
-                            <div className="space-y-1">
-                                <div className="flex items-center gap-2">
-                                    <span className="font-bold text-sm text-foreground">Kode Unik Pembayaran Manual</span>
-                                    <Badge
-                                        variant={manualUniqueCodeEnabled ? 'default' : 'secondary'}
-                                        className={
-                                            manualUniqueCodeEnabled
-                                                ? 'bg-amber-600 hover:bg-amber-600 text-white text-[10px]'
-                                                : 'text-[10px]'
-                                        }
-                                    >
-                                        {manualUniqueCodeEnabled ? 'Fitur Aktif' : 'Fitur Nonaktif'}
-                                    </Badge>
-                                </div>
-                                <p className="text-xs text-muted-foreground leading-relaxed max-w-2xl">
-                                    Tambahkan 3 digit angka unik acak (100–999) pada total tagihan transfer manual pesanan secara otomatis. Mempermudah Anda mencocokkan mutasi rekening bank saat pelanggan melakukan konfirmasi pembayaran.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-3 shrink-0 self-end md:self-center">
-                            <div className="flex items-center gap-2.5 bg-background/90 px-3.5 py-2 rounded-lg border border-border shadow-2xs">
-                                <span className="text-xs font-semibold text-foreground">
-                                    {manualUniqueCodeEnabled ? 'Aktifkan Kode Unik' : 'Nonaktifkan'}
-                                </span>
-                                <Switch
-                                    checked={manualUniqueCodeEnabled}
-                                    disabled={isTogglingUniqueCodeSetting}
-                                    onCheckedChange={handleToggleUniqueCodeSetting}
-                                    title="Aktifkan atau nonaktifkan fitur kode unik pembayaran transfer manual secara global"
-                                />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
 
                 {/* Status & Type Filter Navigation */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -550,7 +494,7 @@ export default function AdminPaymentMethodsIndex({
                                                 </Badge>
                                             </td>
 
-                                            {/* Type */}
+                                            {/* Type & Pengaturan Kode Unik */}
                                             <td className="p-4 align-middle">
                                                 {pm.type === 'manual' ? (
                                                     <div className="space-y-1.5">
@@ -562,15 +506,18 @@ export default function AdminPaymentMethodsIndex({
                                                                 type="button"
                                                                 onClick={() => handleToggleMethodUniqueCode(pm)}
                                                                 disabled={togglingUniqueCodeId === pm.id}
-                                                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold cursor-pointer transition border ${
+                                                                className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10.5px] font-semibold cursor-pointer transition border shadow-2xs ${
                                                                     pm.use_unique_code
-                                                                        ? 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950/60 dark:text-amber-200 dark:border-amber-700 hover:bg-amber-200'
-                                                                        : 'bg-muted text-muted-foreground border-border hover:bg-muted/80'
+                                                                        ? 'bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200 dark:bg-amber-950/60 dark:text-amber-200 dark:border-amber-700'
+                                                                        : 'bg-muted/70 text-muted-foreground border-border/80 hover:bg-muted'
                                                                 }`}
-                                                                title="Klik untuk mengubah pengaturan kode unik untuk metode pembayaran ini"
+                                                                title="Klik untuk aktifkan / nonaktifkan 3 digit kode unik acak (100–999) pada metode ini"
                                                             >
-                                                                <Sparkles className="size-2.5 text-amber-600 dark:text-amber-400" />
-                                                                <span>Kode Unik: {pm.use_unique_code ? 'Aktif' : 'Nonaktif'}</span>
+                                                                <Sparkles className={`size-3 shrink-0 ${pm.use_unique_code ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}`} />
+                                                                <span>Kode Unik:</span>
+                                                                <span className={pm.use_unique_code ? 'font-bold text-amber-900 dark:text-amber-100' : 'font-normal'}>
+                                                                    {pm.use_unique_code ? 'Aktif' : 'Nonaktif'}
+                                                                </span>
                                                             </button>
                                                         </div>
                                                     </div>
