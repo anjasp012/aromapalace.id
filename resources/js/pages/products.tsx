@@ -493,7 +493,7 @@ export default function Products({
         if (activeTag === 'new-arrivals' || activeTag === 'new_arrivals') {
             return {
                 headTitle: isEn ? 'New Arrivals' : 'Koleksi Terbaru',
-                titleClassName: 'font-black text-3xl sm:text-4xl lg:text-5xl tracking-[0.08em]',
+                titleClassName: 'font-black text-2xl sm:text-4xl lg:text-5xl tracking-normal sm:tracking-[0.08em]',
                 title: isEn ? (
                     <span>
                         <span className="text-[1.22em]">N</span>EW{' '}
@@ -508,12 +508,12 @@ export default function Products({
                 subtitle1: isEn ? 'DISCOVER OUR LATEST ARRIVALS' : 'JELAJAHI KOLEKSI TERBARU KAMI',
                 subtitle2: isEn ? (
                     <>
-                        EXCEPTIONAL FRAGRANCES CURATED<br />
+                        EXCEPTIONAL FRAGRANCES CURATED<br className="hidden sm:inline" />{' '}
                         FOR THE TRUE FRAGRANCE LOVERS
                     </>
                 ) : (
                     <>
-                        WEWANGIAN ISTIMEWA YANG DIKURASI<br />
+                        WEWANGIAN ISTIMEWA YANG DIKURASI<br className="hidden sm:inline" />{' '}
                         UNTUK PARA PECINTA PARFUM SEJATI
                     </>
                 ),
@@ -523,7 +523,7 @@ export default function Products({
         if (activeTag === 'best-sellers' || activeTag === 'best_sellers') {
             return {
                 headTitle: isEn ? 'Best Sellers' : 'Produk Terlaris',
-                titleClassName: 'font-black text-3xl sm:text-4xl lg:text-5xl tracking-[0.08em]',
+                titleClassName: 'font-black text-2xl sm:text-4xl lg:text-5xl tracking-normal sm:tracking-[0.08em]',
                 title: isEn ? (
                     <span>
                         <span className="text-[1.22em]">B</span>EST{' '}
@@ -538,12 +538,12 @@ export default function Products({
                 subtitle1: isEn ? 'DISCOVER OUR MOST LOVED FRAGRANCES' : 'TEMUKAN WEWANGIAN PALING DICINTAI',
                 subtitle2: isEn ? (
                     <>
-                        HANDPICKED FAVOURITES, CHOSEN BY<br />
+                        HANDPICKED FAVOURITES, CHOSEN BY<br className="hidden sm:inline" />{' '}
                         OUR CUSTOMERS, TIME AND TIME AGAIN.
                     </>
                 ) : (
                     <>
-                        PILIHAN FAVORIT TERBAIK, DIPILIH OLEH<br />
+                        PILIHAN FAVORIT TERBAIK, DIPILIH OLEH<br className="hidden sm:inline" />{' '}
                         PELANGGAN KAMI, DARI WAKTU KE WAKTU.
                     </>
                 ),
@@ -553,35 +553,35 @@ export default function Products({
         if (activeTag === 'special-offers' || activeTag === 'special_offers' || onlyDiscount) {
             return {
                 headTitle: isEn ? 'Special Offers' : 'Penawaran Spesial',
-                titleClassName: 'font-black text-3xl sm:text-4xl lg:text-5xl tracking-[0.06em]',
+                titleClassName: 'font-black text-2xl sm:text-4xl lg:text-5xl tracking-normal sm:tracking-[0.06em]',
                 title: isEn ? (
-                    <div className="flex flex-row items-center justify-center gap-2 sm:gap-3.5 leading-normal">
+                    <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 sm:gap-x-3.5 leading-tight sm:leading-normal">
                         <span className="inline-block">
-                            <span className="text-[1.24em]">S</span>PECIAL
+                            <span className="text-[1.2em] sm:text-[1.24em]">S</span>PECIAL
                         </span>
                         <span className="inline-block">
-                            <span className="text-[1.24em]">O</span>FFERS
+                            <span className="text-[1.2em] sm:text-[1.24em]">O</span>FFERS
                         </span>
                     </div>
                 ) : (
-                    <div className="flex flex-row items-center justify-center gap-2 sm:gap-3.5 leading-normal">
+                    <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 sm:gap-x-3.5 leading-tight sm:leading-normal">
                         <span className="inline-block">
-                            <span className="text-[1.24em]">P</span>ENAWARAN
+                            <span className="text-[1.2em] sm:text-[1.24em]">P</span>ENAWARAN
                         </span>
                         <span className="inline-block">
-                            <span className="text-[1.24em]">S</span>PESIAL
+                            <span className="text-[1.2em] sm:text-[1.24em]">S</span>PESIAL
                         </span>
                     </div>
                 ),
                 subtitle1: isEn ? 'EXCLUSIVE DEALS ON YOUR FAVOURITE FRAGRANCES.' : 'PENAWARAN EKSKLUSIF UNTUK WEWANGIAN FAVORIT ANDA.',
                 subtitle2: isEn ? (
                     <>
-                        LIMITED TIME ONLY,<br />
+                        LIMITED TIME ONLY,<br className="hidden sm:inline" />{' '}
                         DON'T MISS OUT.
                     </>
                 ) : (
                     <>
-                        HANYA UNTUK WAKTU TERBATAS,<br />
+                        HANYA UNTUK WAKTU TERBATAS,<br className="hidden sm:inline" />{' '}
                         JANGAN SAMPAI KETINGGALAN.
                     </>
                 ),
@@ -591,7 +591,7 @@ export default function Products({
         if (activeBrand && activeBrand !== 'All') {
             return {
                 headTitle: activeBrand,
-                titleClassName: 'font-black text-3xl sm:text-4xl lg:text-5xl tracking-[0.08em]',
+                titleClassName: 'font-black text-2xl sm:text-4xl lg:text-5xl tracking-normal sm:tracking-[0.08em]',
                 title: (
                     <span>
                         <span className="text-[1.22em]">{activeBrand.slice(0, 1)}</span>
@@ -601,12 +601,12 @@ export default function Products({
                 subtitle1: isEn ? `EXQUISITE CREATIONS BY ${activeBrand.toUpperCase()}` : `KOLEKSI EKSKLUSIF DARI ${activeBrand.toUpperCase()}`,
                 subtitle2: isEn ? (
                     <>
-                        SIGNATURE LUXURY SCENTS<br />
+                        SIGNATURE LUXURY SCENTS<br className="hidden sm:inline" />{' '}
                         CRAFTED FOR DISTINGUISHED TASTES
                     </>
                 ) : (
                     <>
-                        AROMA MEWAH BERKARAKTER TINGGI<br />
+                        AROMA MEWAH BERKARAKTER TINGGI<br className="hidden sm:inline" />{' '}
                         DIRANCANG DENGAN KESEMPURNAAN KUALITAS
                     </>
                 ),
@@ -615,35 +615,35 @@ export default function Products({
 
         return {
             headTitle: isEn ? 'Catalog of Exclusive Fragrances' : 'Katalog Wewangian Eksklusif',
-            titleClassName: 'font-black text-3xl sm:text-4xl lg:text-5xl tracking-[0.06em]',
+            titleClassName: 'font-black text-2xl sm:text-4xl lg:text-5xl tracking-normal sm:tracking-[0.06em]',
             title: isEn ? (
-                <div className="flex flex-row items-center justify-center gap-2 sm:gap-3.5 leading-normal">
+                <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 sm:gap-x-3.5 leading-tight sm:leading-normal">
                     <span className="inline-block">
-                        <span className="text-[1.24em]">O</span>UR
+                        <span className="text-[1.2em] sm:text-[1.24em]">O</span>UR
                     </span>
                     <span className="inline-block">
-                        <span className="text-[1.24em]">C</span>OLLECTION
+                        <span className="text-[1.2em] sm:text-[1.24em]">C</span>OLLECTION
                     </span>
                 </div>
             ) : (
-                <div className="flex flex-row items-center justify-center gap-2 sm:gap-3.5 leading-normal">
+                <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 sm:gap-x-3.5 leading-tight sm:leading-normal">
                     <span className="inline-block">
-                        <span className="text-[1.24em]">K</span>OLEKSI
+                        <span className="text-[1.2em] sm:text-[1.24em]">K</span>OLEKSI
                     </span>
                     <span className="inline-block">
-                        <span className="text-[1.24em]">K</span>AMI
+                        <span className="text-[1.2em] sm:text-[1.24em]">K</span>AMI
                     </span>
                 </div>
             ),
             subtitle1: isEn ? 'A WORLD OF EXTRAORDINARY FRAGRANCES.' : 'DUNIA WEWANGIAN LUAR BIASA.',
             subtitle2: isEn ? (
                 <>
-                    ICONIC BRANDS. UNIQUE SCENTS.<br />
-                    FOR EVERY OCCASION.
+                    BRAND IKONIK. AROMA UNIK.<br className="hidden sm:inline" />{' '}
+                    UNTUK SETIAP MOMEN.
                 </>
             ) : (
                 <>
-                    BRAND IKONIK. AROMA UNIK.<br />
+                    BRAND IKONIK. AROMA UNIK.<br className="hidden sm:inline" />{' '}
                     UNTUK SETIAP MOMEN.
                 </>
             ),
@@ -1358,7 +1358,7 @@ export default function Products({
             {/* LUXURY EDITORIAL JUMBOTRON HEADER */}
             <div className="border-b border-border/70 bg-background py-10 sm:py-14">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center space-y-3 sm:space-y-3.5">
-                    <h1 className={`font-serif text-[#4A070B] dark:text-[#E8D0BA] uppercase select-none ${jumbotronConfig.titleClassName || 'text-3xl sm:text-4xl lg:text-5xl tracking-[0.08em] font-black'}`}>
+                    <h1 className={`font-serif text-[#4A070B] dark:text-[#E8D0BA] uppercase select-none px-2 ${jumbotronConfig.titleClassName || 'text-2xl sm:text-4xl lg:text-5xl tracking-normal sm:tracking-[0.08em] font-black'}`}>
                         {jumbotronConfig.title}
                     </h1>
 
@@ -1380,12 +1380,12 @@ export default function Products({
                     </div>
 
                     {/* Subtitle 1 (Spaced All-Caps Gold Bronze) */}
-                    <p className="font-serif text-xs sm:text-[13px] tracking-[0.24em] font-semibold text-[#A3835B] dark:text-[#C5A059] uppercase">
+                    <p className="font-serif text-[10.5px] sm:text-[13px] tracking-[0.08em] sm:tracking-[0.24em] font-semibold text-[#A3835B] dark:text-[#C5A059] uppercase max-w-xl mx-auto px-2 break-words leading-relaxed">
                         {jumbotronConfig.subtitle1}
                     </p>
 
                     {/* Subtitle 2 (Curated Subtitle) */}
-                    <p className="font-serif text-[11px] sm:text-xs tracking-[0.2em] font-normal text-[#A3835B]/90 dark:text-[#C5A059]/80 uppercase leading-relaxed max-w-xl mx-auto">
+                    <p className="font-serif text-[10px] sm:text-xs tracking-[0.06em] sm:tracking-[0.2em] font-normal text-[#A3835B]/90 dark:text-[#C5A059]/80 uppercase leading-relaxed max-w-xl mx-auto px-2 break-words">
                         {jumbotronConfig.subtitle2}
                     </p>
                 </div>
@@ -1419,7 +1419,7 @@ export default function Products({
                                     {isEn ? (
                                         <>Showing <strong className="text-foreground font-bold">{filteredFragrances.length}</strong> fragrances</>
                                     ) : (
-                                        <>Menampilkan <strong className="text-foreground font-bold">{filteredFragrances.length}</strong> wewangian</>
+                                        <><span className="hidden xs:inline">Menampilkan </span><strong className="text-foreground font-bold">{filteredFragrances.length}</strong> wewangian</>
                                     )}
                                 </span>
                                 {isServerFiltering && (
@@ -1497,7 +1497,7 @@ export default function Products({
                                         value={sortBy}
                                         onValueChange={(val: string) => setSortBy(val as any)}
                                     >
-                                        <SelectTrigger className="w-[145px] sm:w-[180px] h-8 sm:h-8.5 text-[11px] sm:text-xs border-border/80 bg-background/80 hover:border-[#4A070B]/40 focus:border-[#4A070B] focus:ring-1 focus:ring-[#4A070B]/25 rounded-md shadow-none">
+                                        <SelectTrigger className="w-[130px] xs:w-[145px] sm:w-[180px] h-8 sm:h-8.5 text-[10.5px] xs:text-[11px] sm:text-xs border-border/80 bg-background/80 hover:border-[#4A070B]/40 focus:border-[#4A070B] focus:ring-1 focus:ring-[#4A070B]/25 rounded-md shadow-none px-2 xs:px-3">
                                             <SelectValue placeholder={isEn ? 'Select Sort' : 'Pilih Urutan'} />
                                         </SelectTrigger>
                                         <SelectContent align="end" className="rounded-md border-border/80 bg-background shadow-md">

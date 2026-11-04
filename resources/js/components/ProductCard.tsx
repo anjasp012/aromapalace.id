@@ -115,18 +115,18 @@ export default function ProductCard({
                         </Badge>
                     )}
                     {(product.is_new_arrivals || product.isNew) && (
-                        <Badge className="text-[10px] bg-[#176b62] hover:bg-[#176b62] text-white font-medium border-0 shadow-xs">
-                            New Arrival
+                        <Badge className="text-[9px] sm:text-[10px] bg-[#176b62] hover:bg-[#176b62] text-white font-medium border-0 shadow-xs px-1.5 sm:px-2 py-0 sm:py-0.5">
+                            {isEn ? 'New Arrival' : 'Terbaru'}
                         </Badge>
                     )}
                     {product.is_best_sellers && (
-                        <Badge className="text-[10px] bg-[#c29a4a] hover:bg-[#c29a4a] text-white font-medium border-0 shadow-xs">
-                            Best Seller
+                        <Badge className="text-[9px] sm:text-[10px] bg-[#c29a4a] hover:bg-[#c29a4a] text-white font-medium border-0 shadow-xs px-1.5 sm:px-2 py-0 sm:py-0.5">
+                            {isEn ? 'Best Seller' : 'Terlaris'}
                         </Badge>
                     )}
                     {product.is_special_offers && (
-                        <Badge className="text-[10px] bg-[#8c263e] hover:bg-[#8c263e] text-white font-medium border-0 shadow-xs">
-                            Special Offer
+                        <Badge className="text-[9px] sm:text-[10px] bg-[#8c263e] hover:bg-[#8c263e] text-white font-medium border-0 shadow-xs px-1.5 sm:px-2 py-0 sm:py-0.5">
+                            {isEn ? 'Special Offer' : 'Promo Spesial'}
                         </Badge>
                     )}
                 </div>
