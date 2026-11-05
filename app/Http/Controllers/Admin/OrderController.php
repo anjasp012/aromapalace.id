@@ -11,8 +11,8 @@ use App\Models\Setting;
 use App\Models\Voucher;
 use App\Services\CatalogService;
 use App\Services\FirebaseNotificationService;
+use App\Services\KurirAPIService;
 use App\Services\MembershipService;
-use App\Services\RajaOngkirShippingCostService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -505,7 +505,7 @@ class OrderController extends Controller
             'courier_service' => $order->courier_service,
             'courier_service_type' => $order->courier_service_type,
             'courier' => $order->courier,
-            'courier_logo' => app(RajaOngkirShippingCostService::class)->getCourierLogoUrl($order->courier ?: $order->courier_service),
+            'courier_logo' => app(KurirAPIService::class)->getCourierLogoUrl($order->courier ?: $order->courier_service),
             'tracking_number' => $order->shipping?->awb,
             'city' => $order->city_name,
             'total_amount' => $order->total_amount,
@@ -618,7 +618,7 @@ class OrderController extends Controller
             'courier_service' => $order->courier_service,
             'courier_service_type' => $order->courier_service_type,
             'courier' => $order->courier,
-            'courier_logo' => app(RajaOngkirShippingCostService::class)->getCourierLogoUrl($order->courier ?: $order->courier_service),
+            'courier_logo' => app(KurirAPIService::class)->getCourierLogoUrl($order->courier ?: $order->courier_service),
             'tracking_number' => $order->shipping?->awb,
             'shipping_payment_code' => $order->shipping?->shipping_payment_code,
             'delivered_at' => $order->shipping?->delivered_at?->format('d/m/Y, H:i').' WIB',

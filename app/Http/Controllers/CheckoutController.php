@@ -14,8 +14,8 @@ use App\Models\User;
 use App\Models\Voucher;
 use App\Services\CatalogService;
 use App\Services\FirebaseNotificationService;
+use App\Services\KurirAPIService;
 use App\Services\RajaOngkirPaymentService;
-use App\Services\RajaOngkirShippingCostService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -32,7 +32,7 @@ class CheckoutController extends Controller
     public function __construct(
         protected RajaOngkirPaymentService $rajaOngkirPaymentService,
         protected FirebaseNotificationService $notificationService,
-        protected RajaOngkirShippingCostService $rajaOngkirShippingCostService,
+        protected KurirAPIService $kurirAPIService,
     ) {}
 
     /**
@@ -294,7 +294,7 @@ class CheckoutController extends Controller
         $totalWeight = max(1000, $totalWeight);
 
         $initialShippingRates = ($primaryAddress && $primaryAddress->district_id)
-            ? $this->rajaOngkirShippingCostService->getShippingRates((int) $primaryAddress->district_id, $totalWeight)
+            ? $this->kurirAPIService->getShippingRates((string) $primaryAddress->district_id, $totalWeight)
             : [];
 
         $initialShippingCost = (! empty($initialShippingRates) && isset($initialShippingRates[0]['price']))
@@ -371,7 +371,7 @@ class CheckoutController extends Controller
         $weight = max(100, (int) ($validated['weight'] ?? 1000));
 
         $rates = $destinationId > 0
-            ? $this->rajaOngkirShippingCostService->getShippingRates($destinationId, $weight)
+            ? $this->kurirAPIService->getShippingRates((string) $destinationId, $weight)
             : [];
 
         return response()->json([

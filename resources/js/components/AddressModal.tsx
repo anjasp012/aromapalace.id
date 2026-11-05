@@ -381,7 +381,7 @@ export default function AddressModal({
             setErrorMessage(isEn ? 'Please select a District (Kecamatan).' : 'Silakan pilih Kecamatan.');
             return;
         }
-        if (!selectedSubdistrictName.trim()) {
+        if (subdistricts.length > 0 && !selectedSubdistrictName.trim()) {
             setErrorMessage(isEn ? 'Please select a Subdistrict (Kelurahan).' : 'Silakan pilih Kelurahan.');
             return;
         }
@@ -407,7 +407,7 @@ export default function AddressModal({
             district_id: selectedDistrictId ? Number(selectedDistrictId) : null,
             district_name: selectedDistrictName,
             subdistrict_id: selectedSubdistrictId ? Number(selectedSubdistrictId) : null,
-            subdistrict_name: selectedSubdistrictName,
+            subdistrict_name: selectedSubdistrictName.trim() || selectedDistrictName || '-',
             postal_code: postalCode.trim(),
             address: addressDetail.trim(),
             latitude: latitude !== null ? Number(latitude) : null,
@@ -613,22 +613,38 @@ export default function AddressModal({
                         {/* KELURAHAN */}
                         <div className="space-y-1">
                             <label className="text-xs font-semibold text-foreground">
-                                {isEn ? 'Subdistrict' : 'Kelurahan / Desa'} <span className="text-destructive">*</span>
+                                {isEn ? 'Subdistrict' : 'Kelurahan / Desa'}{' '}
+                                {subdistricts.length > 0 && <span className="text-destructive">*</span>}
                             </label>
-                            <SearchableSelect
-                                options={subdistricts}
-                                value={selectedSubdistrictId}
-                                onChange={handleSubdistrictChange}
-                                disabled={!selectedDistrictId || loadingSubdistricts}
-                                loading={loadingSubdistricts}
-                                placeholder={
-                                    !selectedDistrictId
-                                        ? (isEn ? 'Select District First' : 'Pilih Kecamatan Dahulu')
-                                        : (isEn ? 'Select Subdistrict' : 'Pilih Kelurahan')
-                                }
-                                searchPlaceholder={isEn ? 'Search subdistrict...' : 'Cari kelurahan/desa...'}
-                                emptyMessage={isEn ? 'No subdistrict found.' : 'Kelurahan tidak ditemukan.'}
-                            />
+                            {subdistricts.length > 0 ? (
+                                <SearchableSelect
+                                    options={subdistricts}
+                                    value={selectedSubdistrictId}
+                                    onChange={handleSubdistrictChange}
+                                    disabled={!selectedDistrictId || loadingSubdistricts}
+                                    loading={loadingSubdistricts}
+                                    placeholder={
+                                        !selectedDistrictId
+                                            ? (isEn ? 'Select District First' : 'Pilih Kecamatan Dahulu')
+                                            : (isEn ? 'Select Subdistrict' : 'Pilih Kelurahan')
+                                    }
+                                    searchPlaceholder={isEn ? 'Search subdistrict...' : 'Cari kelurahan/desa...'}
+                                    emptyMessage={isEn ? 'No subdistrict found.' : 'Kelurahan tidak ditemukan.'}
+                                />
+                            ) : (
+                                <Input
+                                    type="text"
+                                    placeholder={
+                                        !selectedDistrictId
+                                            ? (isEn ? 'Select District First' : 'Pilih Kecamatan Dahulu')
+                                            : (isEn ? 'Enter subdistrict / village (optional)' : 'Nama kelurahan/desa (opsional)')
+                                    }
+                                    value={selectedSubdistrictName}
+                                    onChange={(e) => setSelectedSubdistrictName(e.target.value)}
+                                    disabled={!selectedDistrictId}
+                                    className="h-10 text-xs rounded-xl px-3 bg-background border-border/80"
+                                />
+                            )}
                         </div>
                     </div>
 

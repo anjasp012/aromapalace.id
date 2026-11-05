@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PaymentMethodController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\ShippingServiceController;
 use App\Http\Controllers\Admin\SliderPromoController;
 use App\Http\Controllers\Admin\StoreController;
 use App\Http\Controllers\Admin\UserController;
@@ -151,11 +152,16 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::delete('/manajemen-pengguna/{id}/hapus-permanen', [UserController::class, 'forceDelete'])->name('users.force-delete');
     Route::delete('/manajemen-pengguna/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 
-    // Store & Origin Shipping Settings
+    // Courier & Shipping Services Management
+    Route::get('/layanan-pengiriman', [ShippingServiceController::class, 'index'])->name('shipping-services.index');
+    Route::post('/layanan-pengiriman', [ShippingServiceController::class, 'update'])->name('shipping-services.update');
+
+    // Store Settings
     Route::get('/pengaturan', [SettingController::class, 'index'])->name('settings.index');
     Route::post('/pengaturan', [SettingController::class, 'update'])->name('settings.update');
 
     // Convenient Aliases
+    Route::get('/manajemen-pengiriman', fn () => redirect()->route('admin.shipping-services.index'));
     Route::get('/admin', fn () => redirect()->route('admin.dashboard'));
     Route::get('/admin/dashboard', fn () => redirect()->route('admin.dashboard'));
     Route::get('/manajemen-pelanggan', fn () => redirect()->route('admin.users.index'));

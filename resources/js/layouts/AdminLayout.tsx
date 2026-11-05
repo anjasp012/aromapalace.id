@@ -227,6 +227,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
     const isSliderPromos = url.startsWith('/manajemen-slider-promo');
     const isStores = url.startsWith('/manajemen-butik');
     const isPaymentMethods = url.startsWith('/manajemen-pembayaran');
+    const isShippingServices = url.startsWith('/layanan-pengiriman') || url.startsWith('/manajemen-pengiriman');
     const isSettings = url.startsWith('/pengaturan') || url.startsWith('/admin/pengaturan');
     const isNotifications = url.startsWith('/manajemen-notifikasi');
 
@@ -496,6 +497,19 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                         >
                             <CreditCard className="size-4" />
                             <span>Metode Pembayaran</span>
+                        </Link>
+
+                        <Link
+                            href="/layanan-pengiriman"
+                            onClick={() => setSidebarOpen(false)}
+                            className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
+                                isShippingServices
+                                    ? 'bg-muted text-primary font-semibold'
+                                    : 'text-muted-foreground hover:text-primary hover:bg-muted'
+                            }`}
+                        >
+                            <Truck className="size-4" />
+                            <span>Layanan Pengiriman</span>
                         </Link>
 
                         <Link

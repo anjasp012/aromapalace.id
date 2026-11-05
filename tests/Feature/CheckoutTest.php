@@ -28,6 +28,27 @@ beforeEach(function () {
     );
 
     Http::fake([
+        'https://use.api.co.id/courier/v2/rates*' => Http::response([
+            'is_success' => true,
+            'message' => 'Success',
+            'data' => [
+                'rates' => [
+                    [
+                        'courier_code' => 'jne',
+                        'courier_name' => 'JNE Express',
+                        'service_code' => 'REG',
+                        'service_name' => 'Reguler',
+                        'price' => 15000,
+                        'etd' => '1-2 hari',
+                    ],
+                ],
+            ],
+        ], 200),
+        'https://use.api.co.id/*' => Http::response([
+            'is_success' => true,
+            'message' => 'Success',
+            'data' => [],
+        ], 200),
         'https://rajaongkir.komerce.id/*' => Http::response([
             'meta' => ['code' => 200, 'status' => 'success', 'message' => 'Success'],
             'data' => [
@@ -635,7 +656,7 @@ test('user can fetch shipping rates via api endpoint with real prices or fallbac
     $user = User::factory()->create();
 
     $response = $this->actingAs($user)->postJson(route('checkout.shipping-rates'), [
-        'destination_district_id' => 1201,
+        'destination_district_id' => 317407,
         'weight' => 500,
     ]);
 

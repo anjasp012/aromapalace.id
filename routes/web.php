@@ -182,16 +182,19 @@ Route::any('/admin/{path?}', function (Request $request, ?string $path = null) {
     return redirect($targetUrl);
 })->where('path', '.*');
 
+use App\Http\Controllers\KurirAPIController;
 use App\Http\Controllers\RajaOngkirController;
-
-Route::get('/rajaongkir/provinces', [RajaOngkirController::class, 'provinces']);
-Route::get('/rajaongkir/cities/{province_id}', [RajaOngkirController::class, 'cities']);
-Route::get('/rajaongkir/districts/{city_id}', [RajaOngkirController::class, 'districts']);
-Route::get('/rajaongkir/subdistricts/{district_id}', [RajaOngkirController::class, 'subdistricts']);
-Route::get('/rajaongkir/calculate/{destination}/{wight}/{price}', [RajaOngkirController::class, 'calculateCost']);
 
 Route::get('/rajaongkir/getpaymentmethods', [RajaOngkirController::class, 'getPaymentMethods']);
 Route::post('/rajaongkir/createpayment', [RajaOngkirController::class, 'createPayment']);
 Route::get('/rajaongkir/getpaymentstatus/{order_number}', [RajaOngkirController::class, 'getPaymentStatus'])->where('order_number', '.*');
 Route::post('/rajaongkir/cancelpayment/{order_number}', [RajaOngkirController::class, 'cancelPayment'])->where('order_number', '.*');
 Route::post('/rajaongkir/callbackpayment', [RajaOngkirController::class, 'callbackPayment']);
+
+Route::get('/kurirAPI/provinces', [KurirAPIController::class, 'provinces']);
+Route::get('/kurirAPI/cities/{province_id}', [KurirAPIController::class, 'cities']);
+Route::get('/kurirAPI/districts/{city_id}', [KurirAPIController::class, 'districts']);
+Route::get('/kurirAPI/subdistricts/{district_id}', [KurirAPIController::class, 'subDistricts']);
+Route::get('/kurirAPI/rates/{destination}/{weight?}', [KurirAPIController::class, 'rates']);
+Route::post('/kurirAPI/ordershipment', [KurirAPIController::class, 'orderShipment']);
+Route::get('/kurirAPI/track/{resi}', [KurirAPIController::class, 'orderTracking']);

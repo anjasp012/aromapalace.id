@@ -1,12 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Head, useForm } from '@inertiajs/react';
+import React, { useState } from 'react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import AdminLayout from '@/layouts/AdminLayout';
 import {
     Building2,
     Phone,
     Mail,
     MessageSquare,
-    MapPin,
     Truck,
     Save,
     AlertCircle,
@@ -19,35 +18,24 @@ import {
     Eye,
     EyeOff,
     ExternalLink,
-    Compass,
     Smartphone,
     ArrowUpCircle,
     ShieldAlert,
     CreditCard,
+    ArrowRight,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import SearchableSelect, { SearchableOption } from '@/components/ui/searchable-select';
-import AddressMapPicker from '@/components/AddressMapPicker';
-import { fetchCoverageUntilNotEmpty } from '@/lib/coverage-fetcher';
 
 interface SettingsIndexProps {
     settings: Record<string, any>;
-    initial_provinces?: SearchableOption[];
-    initial_cities?: SearchableOption[];
-    initial_districts?: SearchableOption[];
-    initial_subdistricts?: SearchableOption[];
 }
 
 export default function SettingsIndex({
     settings = {},
-    initial_provinces = [],
-    initial_cities = [],
-    initial_districts = [],
-    initial_subdistricts = [],
 }: SettingsIndexProps) {
     const { data, setData, post, processing, errors } = useForm({
         // Kontak & Profil Toko
@@ -64,6 +52,7 @@ export default function SettingsIndex({
         rajaongkir_callback_url: settings.rajaongkir_callback_url || '',
         rajaongkir_shipping_key: settings.rajaongkir_shipping_key || '',
         rajaongkir_shipping_origin: settings.shipping_district_id ? String(settings.shipping_district_id) : (settings.rajaongkir_shipping_origin || '2101'),
+
         // Alamat Origin Pengiriman Toko
         shipping_sender_name: settings.shipping_sender_name || '',
         shipping_sender_phone: settings.shipping_sender_phone || '',
@@ -98,226 +87,6 @@ export default function SettingsIndex({
     const [showRajaOngkirPaymentKey, setShowRajaOngkirPaymentKey] = useState(false);
     const [showRajaOngkirCallbackKey, setShowRajaOngkirCallbackKey] = useState(false);
     const [showRajaOngkirShippingKey, setShowRajaOngkirShippingKey] = useState(false);
-
-    // Coverage hierarchy lists initialized with server-side preloaded data or database values
-    const [provinces, setProvinces] = useState<SearchableOption[]>(() => {
-        if (initial_provinces && initial_provinces.length > 0) return initial_provinces;
-        if (settings.shipping_province_id && settings.shipping_province_name) {
-            return [{ id: Number(settings.shipping_province_id), name: settings.shipping_province_name }];
-        }
-        return [];
-    });
-    const [cities, setCities] = useState<SearchableOption[]>(() => {
-        if (initial_cities && initial_cities.length > 0) return initial_cities;
-        if (settings.shipping_city_id && settings.shipping_city_name) {
-            return [{ id: Number(settings.shipping_city_id), name: settings.shipping_city_name }];
-        }
-        return [];
-    });
-    const [districts, setDistricts] = useState<SearchableOption[]>(() => {
-        if (initial_districts && initial_districts.length > 0) return initial_districts;
-        if (settings.shipping_district_id && settings.shipping_district_name) {
-            return [{ id: Number(settings.shipping_district_id), name: settings.shipping_district_name }];
-        }
-        return [];
-    });
-    const [subdistricts, setSubdistricts] = useState<SearchableOption[]>(() => {
-        if (initial_subdistricts && initial_subdistricts.length > 0) return initial_subdistricts;
-        if (settings.shipping_subdistrict_id && settings.shipping_subdistrict_name) {
-            return [{ id: Number(settings.shipping_subdistrict_id), name: settings.shipping_subdistrict_name, postal_code: settings.shipping_postal_code || '' }];
-        }
-        return [];
-    });
-
-    // Loading indicators
-    const [loadingProvinces, setLoadingProvinces] = useState(false);
-    const [loadingCities, setLoadingCities] = useState(false);
-    const [loadingDistricts, setLoadingDistricts] = useState(false);
-    const [loadingSubdistricts, setLoadingSubdistricts] = useState(false);
-
-    // Abort controller refs for auto-retrying coverage requests
-    const provincesAbortRef = useRef<AbortController | null>(null);
-    const citiesAbortRef = useRef<AbortController | null>(null);
-    const districtsAbortRef = useRef<AbortController | null>(null);
-    const subdistrictsAbortRef = useRef<AbortController | null>(null);
-
-    // Initial load of provinces & dependent hierarchy if already configured
-    useEffect(() => {
-        if (provinces.length <= 1) {
-            provincesAbortRef.current?.abort();
-            const controller = new AbortController();
-            provincesAbortRef.current = controller;
-            setLoadingProvinces(true);
-            fetchCoverageUntilNotEmpty<SearchableOption>(
-                '/api/coverage/provinces',
-                (data) => setProvinces(data),
-                controller.signal,
-                () => setLoadingProvinces(false)
-            );
-        }
-
-        // Pre-fill cities if province exists and full list not yet loaded
-        if (data.shipping_province_id && cities.length <= 1) {
-            citiesAbortRef.current?.abort();
-            const controller = new AbortController();
-            citiesAbortRef.current = controller;
-            setLoadingCities(true);
-            fetchCoverageUntilNotEmpty<SearchableOption>(
-                `/api/coverage/cities?province_id=${data.shipping_province_id}`,
-                (data) => setCities(data),
-                controller.signal,
-                () => setLoadingCities(false)
-            );
-        }
-
-        // Pre-fill districts if city exists and full list not yet loaded
-        if (data.shipping_city_id && districts.length <= 1) {
-            districtsAbortRef.current?.abort();
-            const controller = new AbortController();
-            districtsAbortRef.current = controller;
-            setLoadingDistricts(true);
-            fetchCoverageUntilNotEmpty<SearchableOption>(
-                `/api/coverage/districts?city_id=${data.shipping_city_id}`,
-                (data) => setDistricts(data),
-                controller.signal,
-                () => setLoadingDistricts(false)
-            );
-        }
-
-        // Pre-fill subdistricts if district exists and full list not yet loaded
-        if (data.shipping_district_id && subdistricts.length <= 1) {
-            subdistrictsAbortRef.current?.abort();
-            const controller = new AbortController();
-            subdistrictsAbortRef.current = controller;
-            setLoadingSubdistricts(true);
-            fetchCoverageUntilNotEmpty<SearchableOption>(
-                `/api/coverage/subdistricts?district_id=${data.shipping_district_id}`,
-                (data) => setSubdistricts(data),
-                controller.signal,
-                () => setLoadingSubdistricts(false)
-            );
-        }
-
-        return () => {
-            provincesAbortRef.current?.abort();
-            citiesAbortRef.current?.abort();
-            districtsAbortRef.current?.abort();
-            subdistrictsAbortRef.current?.abort();
-        };
-    }, []);
-
-    // Handlers for cascaded regional selection
-    const handleProvinceChange = (provinceId: number | string, option?: SearchableOption) => {
-        const idNum = Number(provinceId);
-        setData((prev) => ({
-            ...prev,
-            shipping_province_id: idNum,
-            shipping_province_name: option?.name || '',
-            shipping_city_id: '',
-            shipping_city_name: '',
-            shipping_district_id: '',
-            shipping_district_name: '',
-            shipping_subdistrict_id: '',
-            shipping_subdistrict_name: '',
-            shipping_postal_code: '',
-        }));
-
-        citiesAbortRef.current?.abort();
-        districtsAbortRef.current?.abort();
-        subdistrictsAbortRef.current?.abort();
-
-        setCities([]);
-        setDistricts([]);
-        setSubdistricts([]);
-
-        if (idNum) {
-            citiesAbortRef.current?.abort();
-            const controller = new AbortController();
-            citiesAbortRef.current = controller;
-            setLoadingCities(true);
-            fetchCoverageUntilNotEmpty<SearchableOption>(
-                `/api/coverage/cities?province_id=${idNum}`,
-                (data) => setCities(data),
-                controller.signal,
-                () => setLoadingCities(false)
-            );
-        }
-    };
-
-    const handleCityChange = (cityId: number | string, option?: SearchableOption) => {
-        const idNum = Number(cityId);
-        const fullName = option?.type ? `${option.type} ${option.name}` : (option?.name || '');
-
-        setData((prev) => ({
-            ...prev,
-            shipping_city_id: idNum,
-            shipping_city_name: fullName,
-            shipping_district_id: '',
-            shipping_district_name: '',
-            shipping_subdistrict_id: '',
-            shipping_subdistrict_name: '',
-            shipping_postal_code: '',
-        }));
-
-        districtsAbortRef.current?.abort();
-        subdistrictsAbortRef.current?.abort();
-
-        setDistricts([]);
-        setSubdistricts([]);
-
-        if (idNum) {
-            districtsAbortRef.current?.abort();
-            const controller = new AbortController();
-            districtsAbortRef.current = controller;
-            setLoadingDistricts(true);
-            fetchCoverageUntilNotEmpty<SearchableOption>(
-                `/api/coverage/districts?city_id=${idNum}`,
-                (data) => setDistricts(data),
-                controller.signal,
-                () => setLoadingDistricts(false)
-            );
-        }
-    };
-
-    const handleDistrictChange = (districtId: number | string, option?: SearchableOption) => {
-        const idNum = Number(districtId);
-        setData((prev) => ({
-            ...prev,
-            shipping_district_id: idNum,
-            shipping_district_name: option?.name || '',
-            rajaongkir_shipping_origin: idNum ? String(idNum) : '',
-            shipping_subdistrict_id: '',
-            shipping_subdistrict_name: '',
-            shipping_postal_code: '',
-        }));
-
-        subdistrictsAbortRef.current?.abort();
-
-        setSubdistricts([]);
-
-        if (idNum) {
-            subdistrictsAbortRef.current?.abort();
-            const controller = new AbortController();
-            subdistrictsAbortRef.current = controller;
-            setLoadingSubdistricts(true);
-            fetchCoverageUntilNotEmpty<SearchableOption>(
-                `/api/coverage/subdistricts?district_id=${idNum}`,
-                (data) => setSubdistricts(data),
-                controller.signal,
-                () => setLoadingSubdistricts(false)
-            );
-        }
-    };
-
-    const handleSubdistrictChange = (subdistrictId: number | string, option?: SearchableOption) => {
-        const idNum = Number(subdistrictId);
-        setData((prev) => ({
-            ...prev,
-            shipping_subdistrict_id: idNum,
-            shipping_subdistrict_name: option?.name || '',
-            shipping_postal_code: option?.postal_code || prev.shipping_postal_code || '',
-        }));
-    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -610,41 +379,6 @@ export default function SettingsIndex({
                                         <p className="text-xs text-destructive">{errors.rajaongkir_callback_url}</p>
                                     )}
                                 </div>
-
-                                <div className="pt-2 border-t border-border/60">
-                                    <div className="text-xs font-bold text-foreground mb-3 flex items-center gap-1.5">
-                                        <Truck className="size-3.5 text-[#4A070B] dark:text-red-400" />
-                                        <span>Pengaturan Ongkos Kirim RajaOngkir</span>
-                                    </div>
-
-                                    {/* Shipping API Key */}
-                                    <div className="space-y-1.5">
-                                        <div className="flex items-center justify-between">
-                                            <label className="text-xs font-semibold text-foreground">API Key Shipping (Ongkir)</label>
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowRajaOngkirShippingKey(!showRajaOngkirShippingKey)}
-                                                className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1"
-                                            >
-                                                {showRajaOngkirShippingKey ? <EyeOff className="size-3" /> : <Eye className="size-3" />}
-                                                {showRajaOngkirShippingKey ? 'Sembunyikan' : 'Lihat'}
-                                            </button>
-                                        </div>
-                                        <Input
-                                            type={showRajaOngkirShippingKey ? 'text' : 'password'}
-                                            value={data.rajaongkir_shipping_key}
-                                            onChange={(e) => setData('rajaongkir_shipping_key', e.target.value)}
-                                            placeholder="Masukkan API Key Ongkir RajaOngkir..."
-                                            className="text-xs font-mono"
-                                        />
-                                        {errors.rajaongkir_shipping_key && (
-                                            <p className="text-xs text-destructive">{errors.rajaongkir_shipping_key}</p>
-                                        )}
-                                        <p className="text-[11px] text-muted-foreground">
-                                            Origin pengiriman otomatis menggunakan Kecamatan asal yang dipilih pada bagian <strong>Alamat Asal &amp; Origin Pengiriman</strong>.
-                                        </p>
-                                    </div>
-                                </div>
                             </CardContent>
                         </Card>
 
@@ -826,328 +560,53 @@ export default function SettingsIndex({
                         </Card>
                     </div>
 
-                    {/* BAGIAN 2: ALAMAT ASAL & ORIGIN PENGIRIMAN */}
+                    {/* BAGIAN 2: LAYANAN PENGIRIMAN & ORIGIN KURIR */}
                     <div className="lg:col-span-7 space-y-6">
-                        <Card className="shadow-xs border-border/80">
+                        <Card className="shadow-xs border-border/80 overflow-hidden">
+                            <div className="h-2 bg-gradient-to-r from-[#4A070B] via-[#6B1117] to-amber-500" />
                             <CardHeader className="pb-4">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2 text-[#4A070B] dark:text-red-400">
-                                        <Truck className="size-4.5" />
-                                        <CardTitle className="text-base font-bold">Alamat Asal &amp; Origin Pengiriman</CardTitle>
+                                        <Truck className="size-5" />
+                                        <CardTitle className="text-base font-bold">Layanan Pengiriman &amp; Saldo Kurir</CardTitle>
                                     </div>
-                                    {data.shipping_district_id ? (
-                                        <Badge variant="outline" className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-300 gap-1.5 font-mono text-[11px]">
-                                            <ShieldCheck className="size-3.5" />
-                                            Origin ID: #{data.shipping_district_id}
-                                        </Badge>
-                                    ) : (
-                                        <Badge variant="destructive" className="text-[11px]">
-                                            Origin Belum Diatur
-                                        </Badge>
-                                    )}
+                                    <Badge variant="outline" className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-300 font-bold text-[10px]">
+                                        Menu Terpisah
+                                    </Badge>
                                 </div>
                                 <CardDescription className="text-xs">
-                                    Lokasi fisik gudang atau butik pengiriman tempat kurir (JNE, SiCepat, J&amp;T, Ninja, Anteraja, dll.) menjemput (pickup) paket pesanan.
+                                    Pengaturan kurir ekspedisi, cek saldo operasional KurirAPI, dan titik alamat origin butik sekarang dikelola terpusat pada menu <strong>Layanan Pengiriman</strong>.
                                 </CardDescription>
                             </CardHeader>
-                            <CardContent className="space-y-4">
-                                {/* Nama Pengirim & HP Pengirim */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-semibold text-foreground flex items-center justify-between">
-                                            <span>Nama Pengirim / Gudang</span>
-                                            <span className="text-destructive">*</span>
-                                        </label>
-                                        <Input
-                                            type="text"
-                                            placeholder="Aroma Palace Official"
-                                            value={data.shipping_sender_name}
-                                            onChange={(e) => setData('shipping_sender_name', e.target.value)}
-                                            className="h-10 text-sm"
-                                            required
-                                        />
-                                        {errors.shipping_sender_name && (
-                                            <p className="text-xs text-destructive">{errors.shipping_sender_name}</p>
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-semibold text-foreground flex items-center justify-between">
-                                            <span>Nomor HP Kontak Pickup</span>
-                                            <span className="text-destructive">*</span>
-                                        </label>
-                                        <Input
-                                            type="tel"
-                                            placeholder="081288889999"
-                                            value={data.shipping_sender_phone}
-                                            onChange={(e) => setData('shipping_sender_phone', e.target.value)}
-                                            className="h-10 text-sm"
-                                            required
-                                        />
-                                        <p className="text-[11px] text-muted-foreground">
-                                            Format: Harus dimulai dengan 08, 628, +628, atau 02.
-                                        </p>
-                                        {errors.shipping_sender_phone && (
-                                            <p className="text-xs text-destructive">{errors.shipping_sender_phone}</p>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Alamat Lengkap / Jalan */}
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-foreground flex items-center justify-between">
-                                        <span>Alamat Jalan &amp; Rincian Gudang / Butik</span>
-                                        <span className="text-destructive">*</span>
-                                    </label>
-                                    <Textarea
-                                        placeholder="Contoh: Jl. Kemang Raya No. 10, RT 01 / RW 02, Bangka, Mampang Prapatan"
-                                        rows={2}
-                                        value={data.shipping_address}
-                                        onChange={(e) => setData('shipping_address', e.target.value)}
-                                        className="text-sm resize-none"
-                                        required
-                                    />
-                                    {errors.shipping_address && (
-                                        <p className="text-xs text-destructive">{errors.shipping_address}</p>
-                                    )}
-                                </div>
-
-                                <div className="border-t pt-4">
-                                    <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
-                                        Wilayah Cakupan Resmi (Database RajaOngkir)
-                                    </h3>
-
-                                    {/* Hierarchy: Provinsi & Kota/Kabupaten */}
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        {/* Provinsi */}
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-foreground">
-                                                Provinsi <span className="text-destructive">*</span>
-                                            </label>
-                                            <SearchableSelect
-                                                options={provinces}
-                                                value={data.shipping_province_id}
-                                                fallbackLabel={data.shipping_province_name}
-                                                onChange={handleProvinceChange}
-                                                placeholder="Pilih Provinsi"
-                                                searchPlaceholder="Cari provinsi..."
-                                                loading={loadingProvinces}
-                                                emptyMessage="Provinsi tidak ditemukan."
-                                            />
-                                            {data.shipping_province_name && (
-                                                <p className="text-[11px] text-muted-foreground font-medium">
-                                                    Terpilih: {data.shipping_province_name}
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        {/* Kota / Kabupaten */}
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-foreground">
-                                                Kabupaten / Kota <span className="text-destructive">*</span>
-                                            </label>
-                                            <SearchableSelect
-                                                options={cities}
-                                                value={data.shipping_city_id}
-                                                fallbackLabel={data.shipping_city_name}
-                                                onChange={handleCityChange}
-                                                disabled={!data.shipping_province_id || loadingCities}
-                                                loading={loadingCities}
-                                                placeholder={
-                                                    !data.shipping_province_id
-                                                        ? 'Pilih Provinsi Dahulu'
-                                                        : 'Pilih Kabupaten / Kota'
-                                                }
-                                                searchPlaceholder="Cari kabupaten atau kota..."
-                                                emptyMessage="Kota tidak ditemukan."
-                                            />
-                                            {data.shipping_city_name && (
-                                                <p className="text-[11px] text-muted-foreground font-medium">
-                                                    Terpilih: {data.shipping_city_name}
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Hierarchy: Kecamatan (Origin ID RajaOngkir) & Kelurahan */}
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-                                        {/* Kecamatan (Kunci Utama Origin) */}
-                                        <div className="space-y-1.5 p-3 rounded-xl bg-muted/40 border border-[#4A070B]/20">
-                                            <div className="flex items-center justify-between">
-                                                <label className="text-xs font-bold text-[#4A070B] dark:text-red-400 flex items-center gap-1.5">
-                                                    <MapPin className="size-3.5" />
-                                                    <span>Kecamatan (Origin ID)</span>
-                                                </label>
-                                                <span className="text-[10px] bg-[#4A070B] text-white px-2 py-0.5 rounded-full font-semibold">
-                                                    Wajib
-                                                </span>
-                                            </div>
-                                            <SearchableSelect
-                                                options={districts}
-                                                value={data.shipping_district_id}
-                                                fallbackLabel={data.shipping_district_name}
-                                                onChange={handleDistrictChange}
-                                                disabled={!data.shipping_city_id || loadingDistricts}
-                                                loading={loadingDistricts}
-                                                placeholder={
-                                                    !data.shipping_city_id
-                                                        ? 'Pilih Kota Dahulu'
-                                                        : 'Pilih Kecamatan'
-                                                }
-                                                searchPlaceholder="Cari kecamatan..."
-                                                emptyMessage="Kecamatan tidak ditemukan."
-                                            />
-                                            <div className="flex items-center justify-between text-[11px]">
-                                                <span className="text-muted-foreground">
-                                                    {data.shipping_district_name ? `Kec. ${data.shipping_district_name}` : 'Pilih kecamatan asal'}
-                                                </span>
-                                                {data.shipping_district_id && (
-                                                    <span className="font-mono font-bold text-[#4A070B] dark:text-red-400">
-                                                        ID: {data.shipping_district_id}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            {errors.shipping_district_id && (
-                                                <p className="text-xs text-destructive">{errors.shipping_district_id}</p>
-                                            )}
-                                        </div>
-
-                                        {/* Kelurahan & Kode Pos */}
-                                        <div className="space-y-4">
-                                            {/* Kelurahan */}
-                                            <div className="space-y-1.5">
-                                                <label className="text-xs font-semibold text-foreground">
-                                                    Kelurahan / Desa
-                                                </label>
-                                                <SearchableSelect
-                                                    options={subdistricts}
-                                                    value={data.shipping_subdistrict_id}
-                                                    fallbackLabel={data.shipping_subdistrict_name}
-                                                    onChange={handleSubdistrictChange}
-                                                    disabled={!data.shipping_district_id || loadingSubdistricts}
-                                                    loading={loadingSubdistricts}
-                                                    placeholder={
-                                                        !data.shipping_district_id
-                                                            ? 'Pilih Kecamatan Dahulu'
-                                                            : 'Pilih Kelurahan / Desa'
-                                                    }
-                                                    searchPlaceholder="Cari kelurahan..."
-                                                    emptyMessage="Kelurahan tidak ditemukan."
-                                                />
-                                                {data.shipping_subdistrict_name && (
-                                                    <p className="text-[11px] text-muted-foreground font-medium">
-                                                        Kel. {data.shipping_subdistrict_name}
-                                                    </p>
-                                                )}
-                                            </div>
-
-                                            {/* Kode Pos */}
-                                            <div className="space-y-1.5">
-                                                <label className="text-xs font-semibold text-foreground">
-                                                    Kode Pos
-                                                </label>
-                                                <Input
-                                                    type="text"
-                                                    placeholder="Contoh: 12730"
-                                                    value={data.shipping_postal_code}
-                                                    onChange={(e) => setData('shipping_postal_code', e.target.value)}
-                                                    className="h-9 text-sm"
-                                                    maxLength={10}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Koordinat GPS (Latitude & Longitude) */}
-                                <div className="border-t pt-4 space-y-3">
+                            <CardContent className="space-y-4 pt-0">
+                                <div className="p-4 rounded-xl bg-muted/30 border border-border/70 space-y-2">
                                     <div className="flex items-center justify-between">
-                                        <div>
-                                            <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5 uppercase tracking-wider">
-                                                <Compass className="size-3.5 text-[#4A070B] dark:text-red-400" />
-                                                <span>Titik Koordinat Asal / Pickup (Latitude &amp; Longitude)</span>
-                                            </h3>
-                                            <p className="text-[11px] text-muted-foreground mt-0.5">
-                                                Digunakan untuk akurasi penjemputan armada kurir (Instant/Same Day/Ekspedisi) dan penentuan rute penjemputan.
-                                            </p>
-                                        </div>
+                                        <span className="text-xs font-semibold text-foreground">Asal Pengiriman Saat Ini:</span>
+                                        {data.shipping_district_id && (
+                                            <span className="font-mono text-xs font-bold text-[#4A070B] dark:text-red-300">
+                                                Origin ID: #{data.shipping_district_id}
+                                            </span>
+                                        )}
                                     </div>
-
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        {/* Latitude */}
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-foreground flex items-center justify-between">
-                                                <span>Latitude</span>
-                                                <span className="text-[10px] text-muted-foreground font-mono">-90 s/d 90</span>
-                                            </label>
-                                            <Input
-                                                type="number"
-                                                step="any"
-                                                placeholder="Contoh: -6.260714"
-                                                value={data.shipping_latitude}
-                                                onChange={(e) => setData('shipping_latitude', e.target.value)}
-                                                className="h-9 text-xs font-mono"
-                                            />
-                                            {errors.shipping_latitude && (
-                                                <p className="text-xs text-destructive">{errors.shipping_latitude}</p>
-                                            )}
-                                        </div>
-
-                                        {/* Longitude */}
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-foreground flex items-center justify-between">
-                                                <span>Longitude</span>
-                                                <span className="text-[10px] text-muted-foreground font-mono">-180 s/d 180</span>
-                                            </label>
-                                            <Input
-                                                type="number"
-                                                step="any"
-                                                placeholder="Contoh: 106.816635"
-                                                value={data.shipping_longitude}
-                                                onChange={(e) => setData('shipping_longitude', e.target.value)}
-                                                className="h-9 text-xs font-mono"
-                                            />
-                                            {errors.shipping_longitude && (
-                                                <p className="text-xs text-destructive">{errors.shipping_longitude}</p>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Interactive Map Picker */}
-                                    <AddressMapPicker
-                                        latitude={data.shipping_latitude}
-                                        longitude={data.shipping_longitude}
-                                        onChange={(lat, lng) => {
-                                            setData((prev) => ({
-                                                ...prev,
-                                                shipping_latitude: lat,
-                                                shipping_longitude: lng,
-                                            }));
-                                        }}
-                                        height="220px"
-                                    />
-                                </div>
-
-                                {/* Active Summary Confirmation Box */}
-                                <div className="mt-4 p-4 rounded-xl bg-card border border-border/80 text-xs space-y-1.5">
-                                    <div className="font-semibold text-foreground flex items-center gap-1.5">
-                                        <CheckCircle2 className="size-3.5 text-emerald-600" />
-                                        <span>Ringkasan Alamat Asal Pengiriman Aktif:</span>
-                                    </div>
-                                    <p className="text-muted-foreground leading-relaxed">
-                                        {data.shipping_sender_name || 'Aroma Palace'} ({data.shipping_sender_phone || '-'}), {data.shipping_address || 'Belum diatur'}{' '}
-                                        {data.shipping_subdistrict_name && `, Kel. ${data.shipping_subdistrict_name}`}
+                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                        {data.shipping_sender_name} ({data.shipping_sender_phone}), {data.shipping_address}{' '}
                                         {data.shipping_district_name && `, Kec. ${data.shipping_district_name}`}
                                         {data.shipping_city_name && `, ${data.shipping_city_name}`}
-                                        {data.shipping_province_name && `, ${data.shipping_province_name}`}
-                                        {data.shipping_postal_code && ` ${data.shipping_postal_code}`}.
+                                        {data.shipping_province_name && `, ${data.shipping_province_name}`}.
                                     </p>
-                                    {data.shipping_latitude && data.shipping_longitude && (
-                                        <div className="pt-1 flex items-center gap-1.5 text-[11px] font-mono text-[#4A070B] dark:text-red-300">
-                                            <MapPin className="size-3 shrink-0" />
-                                            <span>Koordinat Asal: {data.shipping_latitude}, {data.shipping_longitude}</span>
-                                        </div>
-                                    )}
+                                </div>
+
+                                <div className="pt-2">
+                                    <Link href="/layanan-pengiriman" className="block">
+                                        <Button
+                                            type="button"
+                                            className="w-full h-11 rounded-xl bg-[#4A070B] hover:bg-[#380508] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs cursor-pointer"
+                                        >
+                                            <Truck className="size-4" />
+                                            <span>Buka Pengaturan Layanan Pengiriman &amp; Saldo</span>
+                                            <ArrowRight className="size-4" />
+                                        </Button>
+                                    </Link>
                                 </div>
                             </CardContent>
                         </Card>
