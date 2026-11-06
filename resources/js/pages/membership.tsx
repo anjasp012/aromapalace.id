@@ -197,7 +197,7 @@ export default function MembershipPage({
                                 <div>
                                     <div className="inline-flex items-center gap-1.5 text-[10.5px] font-bold text-amber-900 dark:text-amber-200 bg-amber-200/60 dark:bg-amber-900/40 px-2 py-0.5 rounded-full mb-1">
                                         <Sparkles className="w-3 h-3 text-[#E5A844]" />
-                                        <span>{isEn ? 'Welcome Bonus 100 Points' : 'Bonus Selamat Datang 100 Poin'}</span>
+                                        <span>{isEn ? 'Royale Club Member' : 'Program Loyalitas Member'}</span>
                                     </div>
                                     <h2 className="text-sm sm:text-base font-bold text-foreground">
                                         {isEn ? 'Activate Royale Points (Free)' : 'Aktifkan Royale Points (Gratis)'}

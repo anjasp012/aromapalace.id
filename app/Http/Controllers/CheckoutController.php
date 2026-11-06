@@ -599,7 +599,7 @@ class CheckoutController extends Controller
                 if ($cleanMethod === 'qris') {
                     $resolvedType = 'qris';
                     $resolvedChannel = null;
-                    $paymentChannel = 'QRIS Instant (RajaOngkir)';
+                    $paymentChannel = 'QRIS Instant';
                 } else {
                     $resolvedType = 'bank_transfer';
                     // Strip common VA prefixes/suffixes to get clean bank code
@@ -620,7 +620,7 @@ class CheckoutController extends Controller
                         default => strtoupper($rawBank),
                     };
 
-                    $paymentChannel = "{$resolvedChannel} Virtual Account (RajaOngkir)";
+                    $paymentChannel = "{$resolvedChannel} Virtual Account";
                 }
 
                 // RajaOngkir requires minimum amount of Rp 10.000 for automatic gateway payments
@@ -664,7 +664,7 @@ class CheckoutController extends Controller
 
                     return redirect()->route('checkout.index')
                         ->withInput()
-                        ->with('error', "Gagal memproses pembayaran melalui RajaOngkir: {$errorMsg}. Silakan coba beberapa saat lagi atau pilih metode pembayaran lain.");
+                        ->with('error', "Gagal memproses pembayaran: {$errorMsg}. Silakan coba beberapa saat lagi atau pilih metode pembayaran lain.");
                 }
 
                 $pData = $rajaOngkirRes['data'];
@@ -679,7 +679,7 @@ class CheckoutController extends Controller
                 if (! $paymentCode) {
                     return redirect()->route('checkout.index')
                         ->withInput()
-                        ->with('error', 'Gerbang pembayaran RajaOngkir tidak mengembalikan kode pembayaran yang valid. Silakan coba kembali.');
+                        ->with('error', 'Gerbang pembayaran tidak mengembalikan kode pembayaran yang valid. Silakan coba kembali.');
                 }
             }
 

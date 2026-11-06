@@ -1,28 +1,20 @@
 import React, { useState } from 'react';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import AdminLayout from '@/layouts/AdminLayout';
 import {
     Building2,
     Phone,
     Mail,
     MessageSquare,
-    Truck,
     Save,
-    AlertCircle,
-    CheckCircle2,
     Sparkles,
-    ShieldCheck,
     Store,
     Loader2,
-    Key,
     Eye,
     EyeOff,
-    ExternalLink,
     Smartphone,
     ArrowUpCircle,
-    ShieldAlert,
     CreditCard,
-    ArrowRight,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -45,33 +37,11 @@ export default function SettingsIndex({
         store_whatsapp: settings.store_whatsapp || '',
         store_description: settings.store_description || '',
 
-        // Integrasi RajaOngkir (Payment Gateway & Ongkir)
+        // Integrasi Payment Gateway (RajaOngkir / Komerce Collaborator)
         rajaongkir_payment_mode: settings.rajaongkir_payment_mode || 'sandbox',
         rajaongkir_payment_key: settings.rajaongkir_payment_key || '',
         rajaongkir_callback_api_key: settings.rajaongkir_callback_api_key || '',
         rajaongkir_callback_url: settings.rajaongkir_callback_url || '',
-        rajaongkir_shipping_key: settings.rajaongkir_shipping_key || '',
-        rajaongkir_shipping_origin: settings.shipping_district_id ? String(settings.shipping_district_id) : (settings.rajaongkir_shipping_origin || '2101'),
-
-        // Alamat Origin Pengiriman Toko
-        shipping_sender_name: settings.shipping_sender_name || '',
-        shipping_sender_phone: settings.shipping_sender_phone || '',
-        shipping_address: settings.shipping_address || '',
-        shipping_province_id: settings.shipping_province_id ? Number(settings.shipping_province_id) : '',
-        shipping_province_name: settings.shipping_province_name || '',
-        shipping_city_id: settings.shipping_city_id ? Number(settings.shipping_city_id) : '',
-        shipping_city_name: settings.shipping_city_name || '',
-        shipping_district_id: settings.shipping_district_id ? Number(settings.shipping_district_id) : '',
-        shipping_district_name: settings.shipping_district_name || '',
-        shipping_subdistrict_id: settings.shipping_subdistrict_id ? Number(settings.shipping_subdistrict_id) : '',
-        shipping_subdistrict_name: settings.shipping_subdistrict_name || '',
-        shipping_postal_code: settings.shipping_postal_code || '',
-        shipping_latitude: settings.shipping_latitude !== undefined && settings.shipping_latitude !== null && settings.shipping_latitude !== ''
-            ? settings.shipping_latitude
-            : (settings.latitude ?? ''),
-        shipping_longitude: settings.shipping_longitude !== undefined && settings.shipping_longitude !== null && settings.shipping_longitude !== ''
-            ? settings.shipping_longitude
-            : (settings.longitude ?? ''),
 
         // Mobile App Update (Capacitor)
         app_min_version: settings.app_min_version || '1.0.0',
@@ -84,9 +54,8 @@ export default function SettingsIndex({
         app_apk_url: settings.app_apk_url || '',
     });
 
-    const [showRajaOngkirPaymentKey, setShowRajaOngkirPaymentKey] = useState(false);
-    const [showRajaOngkirCallbackKey, setShowRajaOngkirCallbackKey] = useState(false);
-    const [showRajaOngkirShippingKey, setShowRajaOngkirShippingKey] = useState(false);
+    const [showPaymentKey, setShowPaymentKey] = useState(false);
+    const [showCallbackKey, setShowCallbackKey] = useState(false);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -97,10 +66,10 @@ export default function SettingsIndex({
 
     return (
         <AdminLayout
-            title="Pengaturan Toko & Pengiriman"
-            subtitle="Kelola profil kontak official toko dan alamat asal (origin) pengiriman RajaOngkir"
+            title="Pengaturan Toko & Sistem"
+            subtitle="Kelola profil kontak resmi butik, integrasi payment gateway, dan pembaruan aplikasi mobile."
         >
-            <Head title="Pengaturan Toko & Pengiriman - Admin Aroma Palace" />
+            <Head title="Pengaturan Toko & Payment Gateway - Admin Aroma Palace" />
 
             <form onSubmit={handleSubmit} className="w-full space-y-6 pb-12">
                 {/* Header Action Bar */}
@@ -111,11 +80,11 @@ export default function SettingsIndex({
                                 <Store className="size-5" />
                             </span>
                             <h1 className="text-xl font-bold tracking-tight text-foreground">
-                                Pengaturan Toko &amp; Origin Pengiriman
+                                Pengaturan Toko &amp; Payment Gateway
                             </h1>
                         </div>
                         <p className="text-xs sm:text-sm text-muted-foreground">
-                            Data kontak akan ditampilkan pada invoice dan CS pelanggan. Alamat asal digunakan oleh mesin ongkir RajaOngkir untuk kalkulasi tarif ekspedisi kurir.
+                            Data kontak resmi butik untuk invoice dan CS, kredensial gerbang pembayaran, serta kontrol pembaruan aplikasi mobile.
                         </p>
                     </div>
 
@@ -123,7 +92,7 @@ export default function SettingsIndex({
                         <Button
                             type="submit"
                             disabled={processing}
-                            className="bg-[#4A070B] hover:bg-[#380508] text-white shadow-sm gap-2 px-5 font-medium"
+                            className="bg-[#4A070B] hover:bg-[#380508] text-white shadow-xs gap-2 px-5 font-medium cursor-pointer"
                         >
                             {processing ? (
                                 <>
@@ -141,8 +110,9 @@ export default function SettingsIndex({
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    {/* BAGIAN 1: KONTAK & PROFIL TOKO */}
-                    <div className="lg:col-span-5 space-y-6">
+                    {/* KOLOM KIRI: PROFIL TOKO & PAYMENT GATEWAY (lg:col-span-6) */}
+                    <div className="lg:col-span-6 space-y-6">
+                        {/* BAGIAN 1: KONTAK & PROFIL TOKO */}
                         <Card className="shadow-xs border-border/80">
                             <CardHeader className="pb-4">
                                 <div className="flex items-center gap-2 text-[#4A070B] dark:text-red-400">
@@ -250,13 +220,13 @@ export default function SettingsIndex({
                             </CardContent>
                         </Card>
 
-                        {/* BAGIAN 1B: INTEGRASI RAJAONGKIR (PAYMENT GATEWAY & ONGKIR) */}
+                        {/* BAGIAN 2: INTEGRASI PAYMENT GATEWAY */}
                         <Card className="shadow-xs border-border/80">
                             <CardHeader className="pb-4">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2 text-[#4A070B] dark:text-red-400">
                                         <CreditCard className="size-4.5" />
-                                        <CardTitle className="text-base font-bold">Integrasi RajaOngkir</CardTitle>
+                                        <CardTitle className="text-base font-bold">Integrasi Payment Gateway</CardTitle>
                                     </div>
                                     <Badge
                                         variant="outline"
@@ -270,7 +240,7 @@ export default function SettingsIndex({
                                     </Badge>
                                 </div>
                                 <CardDescription className="text-xs">
-                                    Konfigurasi kredensial Payment Gateway &amp; kalkulasi ongkos kirim RajaOngkir (Komerce Collaborator).
+                                    Konfigurasi kredensial Payment Gateway otomatis untuk Virtual Account dan QRIS.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
@@ -284,7 +254,7 @@ export default function SettingsIndex({
                                         <button
                                             type="button"
                                             onClick={() => setData('rajaongkir_payment_mode', 'sandbox')}
-                                            className={`p-2.5 rounded-xl border text-left transition-all ${
+                                            className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
                                                 data.rajaongkir_payment_mode === 'sandbox'
                                                     ? 'border-amber-500 bg-amber-500/10 text-amber-950 dark:text-amber-200 ring-1 ring-amber-500'
                                                     : 'border-border/80 hover:bg-muted/40 text-muted-foreground'
@@ -297,7 +267,7 @@ export default function SettingsIndex({
                                         <button
                                             type="button"
                                             onClick={() => setData('rajaongkir_payment_mode', 'production')}
-                                            className={`p-2.5 rounded-xl border text-left transition-all ${
+                                            className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
                                                 data.rajaongkir_payment_mode === 'production'
                                                     ? 'border-[#4A070B] bg-[#4A070B]/10 text-[#4A070B] dark:text-red-300 ring-1 ring-[#4A070B]'
                                                     : 'border-border/80 hover:bg-muted/40 text-muted-foreground'
@@ -318,19 +288,19 @@ export default function SettingsIndex({
                                         <label className="text-xs font-semibold text-foreground">API Key Pembayaran (x-api-key)</label>
                                         <button
                                             type="button"
-                                            onClick={() => setShowRajaOngkirPaymentKey(!showRajaOngkirPaymentKey)}
-                                            className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1"
+                                            onClick={() => setShowPaymentKey(!showPaymentKey)}
+                                            className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1 cursor-pointer select-none"
                                         >
-                                            {showRajaOngkirPaymentKey ? <EyeOff className="size-3" /> : <Eye className="size-3" />}
-                                            {showRajaOngkirPaymentKey ? 'Sembunyikan' : 'Lihat'}
+                                            {showPaymentKey ? <EyeOff className="size-3" /> : <Eye className="size-3" />}
+                                            <span>{showPaymentKey ? 'Sembunyikan' : 'Lihat'}</span>
                                         </button>
                                     </div>
                                     <Input
-                                        type={showRajaOngkirPaymentKey ? 'text' : 'password'}
+                                        type={showPaymentKey ? 'text' : 'password'}
                                         value={data.rajaongkir_payment_key}
                                         onChange={(e) => setData('rajaongkir_payment_key', e.target.value)}
-                                        placeholder="Masukkan API Key Pembayaran RajaOngkir..."
-                                        className="text-xs font-mono"
+                                        placeholder="Masukkan API Key Pembayaran..."
+                                        className="h-10 text-xs font-mono"
                                     />
                                     {errors.rajaongkir_payment_key && (
                                         <p className="text-xs text-destructive">{errors.rajaongkir_payment_key}</p>
@@ -343,19 +313,19 @@ export default function SettingsIndex({
                                         <label className="text-xs font-semibold text-foreground">Callback API Key (Webhook Secret HMAC)</label>
                                         <button
                                             type="button"
-                                            onClick={() => setShowRajaOngkirCallbackKey(!showRajaOngkirCallbackKey)}
-                                            className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1"
+                                            onClick={() => setShowCallbackKey(!showCallbackKey)}
+                                            className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1 cursor-pointer select-none"
                                         >
-                                            {showRajaOngkirCallbackKey ? <EyeOff className="size-3" /> : <Eye className="size-3" />}
-                                            {showRajaOngkirCallbackKey ? 'Sembunyikan' : 'Lihat'}
+                                            {showCallbackKey ? <EyeOff className="size-3" /> : <Eye className="size-3" />}
+                                            <span>{showCallbackKey ? 'Sembunyikan' : 'Lihat'}</span>
                                         </button>
                                     </div>
                                     <Input
-                                        type={showRajaOngkirCallbackKey ? 'text' : 'password'}
+                                        type={showCallbackKey ? 'text' : 'password'}
                                         value={data.rajaongkir_callback_api_key}
                                         onChange={(e) => setData('rajaongkir_callback_api_key', e.target.value)}
-                                        placeholder="Masukkan Secret/Callback API Key untuk verifikasi X-Callback-Api-Key..."
-                                        className="text-xs font-mono"
+                                        placeholder="Secret key untuk verifikasi X-Callback-Api-Key..."
+                                        className="h-10 text-xs font-mono"
                                     />
                                     {errors.rajaongkir_callback_api_key && (
                                         <p className="text-xs text-destructive">{errors.rajaongkir_callback_api_key}</p>
@@ -370,10 +340,10 @@ export default function SettingsIndex({
                                         value={data.rajaongkir_callback_url}
                                         onChange={(e) => setData('rajaongkir_callback_url', e.target.value)}
                                         placeholder="https://aromapalace.id/rajaongkir/callbackpayment"
-                                        className="text-xs font-mono"
+                                        className="h-10 text-xs font-mono"
                                     />
                                     <p className="text-[11px] text-muted-foreground">
-                                        Endpoint yang akan menerima webhook pembayaran sukses dari RajaOngkir.
+                                        Endpoint yang akan menerima webhook pembayaran sukses dari gateway.
                                     </p>
                                     {errors.rajaongkir_callback_url && (
                                         <p className="text-xs text-destructive">{errors.rajaongkir_callback_url}</p>
@@ -381,8 +351,10 @@ export default function SettingsIndex({
                                 </div>
                             </CardContent>
                         </Card>
+                    </div>
 
-                        {/* BAGIAN TAMBAHAN: PEMBARUAN APLIKASI MOBILE (CAPACITOR) */}
+                    {/* KOLOM KANAN: PEMBARUAN APLIKASI MOBILE (lg:col-span-6) */}
+                    <div className="lg:col-span-6 space-y-6">
                         <Card className="shadow-xs border-border/80">
                             <CardHeader className="pb-4">
                                 <div className="flex items-center justify-between">
@@ -439,7 +411,7 @@ export default function SettingsIndex({
                                             placeholder="1.0.0"
                                             value={data.app_min_version}
                                             onChange={(e) => setData('app_min_version', e.target.value)}
-                                            className="h-9 text-xs font-mono"
+                                            className="h-10 text-xs font-mono"
                                         />
                                         <p className="text-[10px] text-muted-foreground">
                                             Versi di bawah ini otomatis dipaksa update (wajib).
@@ -459,7 +431,7 @@ export default function SettingsIndex({
                                             placeholder="1.1.0"
                                             value={data.app_latest_version}
                                             onChange={(e) => setData('app_latest_version', e.target.value)}
-                                            className="h-9 text-xs font-mono"
+                                            className="h-10 text-xs font-mono"
                                         />
                                         <p className="text-[10px] text-muted-foreground">
                                             Nomor versi rilis terbaru yang siap diunduh.
@@ -480,7 +452,7 @@ export default function SettingsIndex({
                                         placeholder="Pembaruan Aplikasi Tersedia"
                                         value={data.app_update_title}
                                         onChange={(e) => setData('app_update_title', e.target.value)}
-                                        className="h-9 text-xs"
+                                        className="h-10 text-sm"
                                     />
                                     {errors.app_update_title && (
                                         <p className="text-xs text-destructive">{errors.app_update_title}</p>
@@ -496,7 +468,7 @@ export default function SettingsIndex({
                                         placeholder="Tuliskan catatan rilis fitur baru atau perbaikan bug..."
                                         value={data.app_update_message}
                                         onChange={(e) => setData('app_update_message', e.target.value)}
-                                        className="text-xs resize-none"
+                                        className="text-sm resize-none"
                                     />
                                     {errors.app_update_message && (
                                         <p className="text-xs text-destructive">{errors.app_update_message}</p>
@@ -514,7 +486,7 @@ export default function SettingsIndex({
                                             placeholder="https://play.google.com/store/apps/details?id=com.aromapalace.app"
                                             value={data.app_playstore_url}
                                             onChange={(e) => setData('app_playstore_url', e.target.value)}
-                                            className="h-9 text-xs font-mono"
+                                            className="h-10 text-xs font-mono"
                                         />
                                         {errors.app_playstore_url && (
                                             <p className="text-xs text-destructive">{errors.app_playstore_url}</p>
@@ -530,7 +502,7 @@ export default function SettingsIndex({
                                             placeholder="https://apps.apple.com/app/aromapalace/id6740000000"
                                             value={data.app_appstore_url}
                                             onChange={(e) => setData('app_appstore_url', e.target.value)}
-                                            className="h-9 text-xs font-mono"
+                                            className="h-10 text-xs font-mono"
                                         />
                                         {errors.app_appstore_url && (
                                             <p className="text-xs text-destructive">{errors.app_appstore_url}</p>
@@ -546,7 +518,7 @@ export default function SettingsIndex({
                                             placeholder="https://storage.googleapis.com/.../Aroma-Palace.apk"
                                             value={data.app_apk_url}
                                             onChange={(e) => setData('app_apk_url', e.target.value)}
-                                            className="h-9 text-xs font-mono"
+                                            className="h-10 text-xs font-mono"
                                         />
                                         <p className="text-[11px] text-muted-foreground">
                                             Bila dikosongkan, tombol unduh APK di website akan mengunduh file APK resmi langsung dari server butik (/app-release.apk).
@@ -559,58 +531,6 @@ export default function SettingsIndex({
                             </CardContent>
                         </Card>
                     </div>
-
-                    {/* BAGIAN 2: LAYANAN PENGIRIMAN & ORIGIN KURIR */}
-                    <div className="lg:col-span-7 space-y-6">
-                        <Card className="shadow-xs border-border/80 overflow-hidden">
-                            <div className="h-2 bg-gradient-to-r from-[#4A070B] via-[#6B1117] to-amber-500" />
-                            <CardHeader className="pb-4">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2 text-[#4A070B] dark:text-red-400">
-                                        <Truck className="size-5" />
-                                        <CardTitle className="text-base font-bold">Layanan Pengiriman &amp; Saldo Kurir</CardTitle>
-                                    </div>
-                                    <Badge variant="outline" className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-300 font-bold text-[10px]">
-                                        Menu Terpisah
-                                    </Badge>
-                                </div>
-                                <CardDescription className="text-xs">
-                                    Pengaturan kurir ekspedisi, cek saldo operasional KurirAPI, dan titik alamat origin butik sekarang dikelola terpusat pada menu <strong>Layanan Pengiriman</strong>.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4 pt-0">
-                                <div className="p-4 rounded-xl bg-muted/30 border border-border/70 space-y-2">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-xs font-semibold text-foreground">Asal Pengiriman Saat Ini:</span>
-                                        {data.shipping_district_id && (
-                                            <span className="font-mono text-xs font-bold text-[#4A070B] dark:text-red-300">
-                                                Origin ID: #{data.shipping_district_id}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <p className="text-xs text-muted-foreground leading-relaxed">
-                                        {data.shipping_sender_name} ({data.shipping_sender_phone}), {data.shipping_address}{' '}
-                                        {data.shipping_district_name && `, Kec. ${data.shipping_district_name}`}
-                                        {data.shipping_city_name && `, ${data.shipping_city_name}`}
-                                        {data.shipping_province_name && `, ${data.shipping_province_name}`}.
-                                    </p>
-                                </div>
-
-                                <div className="pt-2">
-                                    <Link href="/layanan-pengiriman" className="block">
-                                        <Button
-                                            type="button"
-                                            className="w-full h-11 rounded-xl bg-[#4A070B] hover:bg-[#380508] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs cursor-pointer"
-                                        >
-                                            <Truck className="size-4" />
-                                            <span>Buka Pengaturan Layanan Pengiriman &amp; Saldo</span>
-                                            <ArrowRight className="size-4" />
-                                        </Button>
-                                    </Link>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
                 </div>
 
                 {/* Bottom Submit Action */}
@@ -619,7 +539,7 @@ export default function SettingsIndex({
                         type="submit"
                         disabled={processing}
                         size="lg"
-                        className="bg-[#4A070B] hover:bg-[#380508] text-white shadow-md gap-2 px-8 font-semibold rounded-xl"
+                        className="bg-[#4A070B] hover:bg-[#380508] text-white shadow-xs gap-2 px-8 font-semibold rounded-xl cursor-pointer"
                     >
                         {processing ? (
                             <>

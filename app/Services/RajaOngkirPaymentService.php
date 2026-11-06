@@ -246,7 +246,7 @@ class RajaOngkirPaymentService
                     }
                 } elseif (in_array($status, ['canceled', 'expired', 'failed'], true)) {
                     if ($order->payment_status !== 'canceled') {
-                        app(OrderService::class)->cancelOrder($order, 'Dibatalkan oleh gateway RajaOngkir: '.$status);
+                        app(OrderService::class)->cancelOrder($order, 'Dibatalkan otomatis oleh sistem pembayaran: '.$status);
                     }
                 }
             });

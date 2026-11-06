@@ -309,17 +309,26 @@ function PaymentContent({ order }: PaymentProps) {
 
         return (
             <div className="px-2 py-0.5 rounded bg-muted text-foreground font-bold text-xs">
-                {order.payment_channel || 'VA'}
+                {cleanPaymentChannel || 'VA'}
             </div>
         );
     };
+
+    const cleanPaymentChannel = (order.payment_channel || '')
+        .replace(/\s*\(?rajaongkir\)?/gi, '')
+        .trim();
+
+    const bankNameForInstructions = cleanPaymentChannel
+        .replace(/\s*virtual\s*account/gi, '')
+        .replace(/\s*va\b/gi, '')
+        .trim() || (order.payment_method?.replace(/(_va|va_)/gi, '').toUpperCase()) || 'Bank';
 
     // Method display title
     const methodDisplayName = isQris
         ? (isEn ? 'Realtime QRIS' : 'QRIS Realtime')
         : order.payment_method?.includes('va')
-        ? order.payment_channel || 'Virtual Account'
-        : order.payment_channel || (isEn ? 'Bank Transfer' : 'Transfer Bank');
+        ? cleanPaymentChannel || 'Virtual Account'
+        : cleanPaymentChannel || (isEn ? 'Bank Transfer' : 'Transfer Bank');
 
     return (
         <Layout>
@@ -418,7 +427,7 @@ function PaymentContent({ order }: PaymentProps) {
                             </div>
                             <div className="flex items-center justify-between">
                                 <span className="text-muted-foreground">{isEn ? 'Payment Method:' : 'Metode Pembayaran:'}</span>
-                                <span className="font-semibold text-foreground">{order.payment_channel}</span>
+                                <span className="font-semibold text-foreground">{cleanPaymentChannel || order.payment_channel}</span>
                             </div>
                         </div>
 
@@ -1131,7 +1140,7 @@ function PaymentContent({ order }: PaymentProps) {
                                                 onClick={() => setOpenAccordion(openAccordion === 'atm' ? null : 'atm')}
                                                 className="w-full py-3 flex items-center justify-between text-left font-semibold text-sm text-foreground hover:text-foreground/80 transition cursor-pointer"
                                             >
-                                                <span>ATM {order.payment_channel || (order.payment_method?.replace('_va', '').toUpperCase()) || 'Bank'}</span>
+                                                <span>ATM {bankNameForInstructions}</span>
                                                 <svg
                                                     className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${openAccordion === 'atm' ? 'rotate-180' : ''}`}
                                                     fill="none"
@@ -1171,7 +1180,7 @@ function PaymentContent({ order }: PaymentProps) {
                                                 onClick={() => setOpenAccordion(openAccordion === 'mbanking' ? null : 'mbanking')}
                                                 className="w-full py-3 flex items-center justify-between text-left font-semibold text-sm text-foreground hover:text-foreground/80 transition cursor-pointer"
                                             >
-                                                <span>Mobile Banking {order.payment_channel || (order.payment_method?.replace('_va', '').toUpperCase()) || ''}</span>
+                                                <span>Mobile Banking {bankNameForInstructions}</span>
                                                 <svg
                                                     className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${openAccordion === 'mbanking' ? 'rotate-180' : ''}`}
                                                     fill="none"

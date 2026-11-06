@@ -149,6 +149,7 @@ test('authenticated user can complete checkout and place order', function () {
     expect($order)->not->toBeNull();
     expect($order->recipient_name)->toBe('Dimas Pratama');
     expect($order->payment_method)->toBe('bri_va');
+    expect($order->payment_channel)->toBe('BRI Virtual Account');
     expect($order->voucher_code)->toBe('AROMA40');
     expect($order->discount_amount)->toBeGreaterThan(0);
     expect($order->items()->count())->toBe(1);
@@ -604,7 +605,7 @@ test('authenticated user can view invoice page of their order', function () {
         'courier' => 'JNE REG',
         'shipping_cost' => 0,
         'payment_method' => 'bri_va',
-        'payment_channel' => 'BRI Virtual Account (RajaOngkir)',
+        'payment_channel' => 'BRI Virtual Account',
         'payment_code' => '1280012345678',
         'payment_status' => 'pending',
         'status' => 'menunggu_pembayaran',
@@ -865,7 +866,16 @@ test('checkout with qris stores qr string and gateway payment id', function () {
     $order = Order::where('user_id', $user->id)->first();
     expect($order)->not->toBeNull();
     expect($order->payment_method)->toBe('qris');
+    expect($order->payment_channel)->toBe('QRIS Instant');
     expect($order->payment_code)->toBe('00020101021226580014ID.LINKAJA.WWW');
     expect($order->payment_notes)->toBe('KPAY-QRIS-999');
     $response->assertRedirect(route('payment.show', ['order' => $order->order_number]));
+});
+
+test('order payment channel sanitizes rajaongkir markers when retrieved', function () {
+    $order = new Order(['payment_channel' => 'BCA Virtual Account (RajaOngkir)']);
+    expect($order->payment_channel)->toBe('BCA Virtual Account');
+
+    $order2 = new Order(['payment_channel' => 'QRIS Instant (RajaOngkir)']);
+    expect($order2->payment_channel)->toBe('QRIS Instant');
 });

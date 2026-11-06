@@ -112,6 +112,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('/account', [AccountController::class, 'destroy'])->name('account.destroy');
         Route::get('/account/orders', [OrderController::class, 'index'])->name('account.orders');
         Route::post('/account/orders/{order}/complete', [OrderController::class, 'complete'])->name('account.orders.complete');
+        Route::post('/account/orders/{order}/cancel', [OrderController::class, 'cancel'])->name('account.orders.cancel');
         Route::post('/membership/join', [MembershipController::class, 'join'])->name('membership.join');
         Route::post('/membership/redeem/{reward}', [MembershipController::class, 'redeem'])->name('membership.redeem');
 

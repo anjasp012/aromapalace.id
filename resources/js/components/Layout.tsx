@@ -579,7 +579,7 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
             'Notifikasi dinonaktifkan.': 'Notifications disabled.',
             'Terima kasih! Pesanan Anda telah berhasil diselesaikan.': 'Thank you! Your order has been completed.',
             'Pesanan wewangian mewah Anda berhasil dibuat!': 'Your luxury fragrance order has been placed successfully!',
-            'Selamat! Anda resmi menjadi anggota Royale Club dan mendapatkan 100 Poin Sambutan.': 'Congratulations! You are officially a Royale Club member with 100 Welcome Points.',
+            'Selamat! Anda resmi menjadi anggota Royale Club.': 'Congratulations! You are officially a Royale Club member.',
             'Tautan filter berhasil disalin! Siap dibagikan.': 'Filter link copied! Ready to share.',
             'Gagal menyalin tautan.': 'Failed to copy link.',
             'Tautan wewangian berhasil disalin ke clipboard.': 'Fragrance link copied to clipboard.',
@@ -1040,8 +1040,8 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
                                                                         {props.auth.membership.points_formatted} {isEn ? 'Points' : 'Poin'}
                                                                     </span>
                                                                 ) : (
-                                                                    <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">
-                                                                        +100 {isEn ? 'Pts' : 'Poin'}
+                                                                    <span className="text-[10px] font-medium text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 rounded">
+                                                                        {isEn ? 'Club' : 'Member'}
                                                                     </span>
                                                                 )}
                                                             </Link>

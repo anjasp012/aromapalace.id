@@ -180,6 +180,6 @@ class SettingController extends Controller
 
         Setting::clearCache();
 
-        return back()->with('success', 'Pengaturan toko, integrasi RajaOngkir, dan alamat asal berhasil disimpan.');
+        return back()->with('success', 'Pengaturan toko, payment gateway, dan sistem berhasil disimpan.');
     }
 }

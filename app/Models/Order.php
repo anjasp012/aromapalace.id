@@ -129,6 +129,18 @@ class Order extends Model
     }
 
     /**
+     * Get clean payment channel without gateway internal markers.
+     */
+    public function getPaymentChannelAttribute(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        return trim((string) preg_replace('/\s*\(?RajaOngkir\)?/i', '', $value));
+    }
+
+    /**
      * Determine if order payment is manual confirmation.
      */
     public function getIsManualAttribute(): bool

@@ -28,7 +28,7 @@ class MembershipService
     }
 
     /**
-     * Join membership program and grant welcome points.
+     * Join membership program without granting initial points.
      */
     public function join(User $user): Membership
     {
@@ -40,26 +40,13 @@ class MembershipService
 
             $number = 'AP-ROYALE-'.str_pad((string) $user->id, 4, '0', STR_PAD_LEFT).'-'.strtoupper(Str::random(3));
 
-            $membership = Membership::create([
+            return Membership::create([
                 'user_id' => $user->id,
                 'membership_number' => $number,
-                'points' => 100,
-                'lifetime_points' => 100,
+                'points' => 0,
+                'lifetime_points' => 0,
                 'joined_at' => now(),
             ]);
-
-            LoyaltyPointHistory::create([
-                'user_id' => $user->id,
-                'membership_id' => $membership->id,
-                'type' => 'bonus',
-                'points' => 100,
-                'balance_after' => 100,
-                'description' => 'Bonus Selamat Datang Royale Club (+100 Poin)',
-                'reference_id' => 'WELCOME-BONUS',
-                'created_at' => now(),
-            ]);
-
-            return $membership;
         });
     }
 

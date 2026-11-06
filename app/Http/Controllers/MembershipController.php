@@ -155,7 +155,7 @@ class MembershipController extends Controller
 
         $this->membershipService->join($user);
 
-        return back()->with('success', $isEn ? 'Congratulations! You are officially a Royale Club member with 100 Welcome Points.' : 'Selamat! Anda resmi menjadi anggota Royale Club dan mendapatkan 100 Poin Sambutan.');
+        return back()->with('success', $isEn ? 'Congratulations! You are officially a Royale Club member.' : 'Selamat! Anda resmi menjadi anggota Royale Club.');
     }
 
     /**

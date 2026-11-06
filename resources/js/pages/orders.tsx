@@ -112,6 +112,7 @@ interface OrderData {
     auto_completes_at_formatted?: string | null;
     auto_completes_at_time?: string | null;
     shipping?: any;
+    can_cancel?: boolean;
 }
 
 interface TabCounts {
@@ -159,6 +160,7 @@ export default function OrdersPage({
     const { isEn } = useTranslation();
 
     const [completingOrderId, setCompletingOrderId] = useState<number | null>(null);
+    const [cancellingOrderId, setCancellingOrderId] = useState<number | null>(null);
 
     const handleOpenTracking = (order: OrderData) => {
         setTrackingOrder(order);
@@ -179,6 +181,23 @@ export default function OrdersPage({
                 preserveScroll: true,
                 onFinish: () => {
                     setCompletingOrderId(null);
+                    setSelectedOrder(null);
+                },
+            });
+        }
+    };
+
+    const handleCancelOrder = (orderId: number) => {
+        const confirmMsg = isEn
+            ? 'Are you sure you want to cancel this order? This action cannot be undone.'
+            : 'Apakah Anda yakin ingin membatalkan pesanan ini? Pesanan yang dibatalkan tidak dapat dikembalikan.';
+
+        if (confirm(confirmMsg)) {
+            setCancellingOrderId(orderId);
+            router.post(`/account/orders/${orderId}/cancel`, {}, {
+                preserveScroll: true,
+                onFinish: () => {
+                    setCancellingOrderId(null);
                     setSelectedOrder(null);
                 },
             });
@@ -821,6 +840,7 @@ export default function OrdersPage({
             {selectedOrder && (() => {
                 const effectiveStatus = selectedOrder.order_status || (selectedOrder.status === 'paid' ? 'selesai' : 'menunggu_pembayaran');
                 const isPendingPayment = effectiveStatus === 'menunggu_pembayaran' || selectedOrder.status === 'pending';
+                const canCancelOrder = selectedOrder.can_cancel ?? (isPendingPayment && selectedOrder.status !== 'menunggu_konfirmasi');
                 const payBeforeFormatted = selectedOrder.pay_before || (() => {
                     if (selectedOrder.created_at_raw) {
                         const d = new Date(new Date(selectedOrder.created_at_raw).getTime() + 24 * 3600 * 1000);
@@ -896,10 +916,10 @@ export default function OrdersPage({
                             </div>
 
                             {/* Modal Body */}
-                            <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-6 p-5 sm:p-6 overflow-hidden">
+                            <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-6 p-4 sm:p-6 overflow-y-auto lg:overflow-hidden">
                                 {/* LEFT COLUMN: Transaction Info, Shipping, Tracking Stepper, Products */}
-                                <div className="flex-1 min-w-0 w-full h-full rounded-lg border border-border/80 bg-card/60 backdrop-blur-xs overflow-hidden flex flex-col shadow-none">
-                                    <div className="p-5 sm:p-6 space-y-4 no-scrollbar h-full overflow-auto">
+                                <div className="flex-1 min-w-0 w-full rounded-lg border border-border/80 bg-card/60 backdrop-blur-xs overflow-hidden flex flex-col shadow-none shrink-0 lg:shrink lg:h-full">
+                                    <div className="p-4 sm:p-6 space-y-4 no-scrollbar lg:h-full overflow-auto">
                                         {/* Top Transaction Info */}
                                         <div className="space-y-2.5 text-xs">
                                             <div className="flex items-center justify-between gap-2">
@@ -1282,7 +1302,7 @@ export default function OrdersPage({
                                     {/* Selesaikan Pembayaran button only when pending; disappears if already paid */}
                                     {isPendingPayment && (
                                         <Button
-                                            disabled={navigatingOrderNumber === selectedOrder.order_number}
+                                            disabled={navigatingOrderNumber === selectedOrder.order_number || cancellingOrderId === selectedOrder.id}
                                             onClick={() => handlePayNow(selectedOrder.order_number)}
                                             className="w-full bg-[#4A070B] hover:bg-[#360407] text-white font-semibold rounded-md h-11 text-xs sm:text-sm shadow-none transition active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
                                         >
@@ -1293,6 +1313,29 @@ export default function OrdersPage({
                                                 </>
                                             ) : (
                                                 <span>{isEn ? 'Complete Payment' : 'Selesaikan Pembayaran'}</span>
+                                            )}
+                                        </Button>
+                                    )}
+
+                                    {/* Batalkan Pesanan button when unpaid */}
+                                    {canCancelOrder && (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            disabled={cancellingOrderId === selectedOrder.id || navigatingOrderNumber === selectedOrder.order_number}
+                                            onClick={() => handleCancelOrder(selectedOrder.id)}
+                                            className="w-full border-rose-300 dark:border-rose-900/60 text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 hover:border-rose-400 font-semibold rounded-md h-11 text-xs sm:text-sm shadow-none transition active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 bg-transparent"
+                                        >
+                                            {cancellingOrderId === selectedOrder.id ? (
+                                                <>
+                                                    <Loader2 className="w-4 h-4 animate-spin text-rose-600" />
+                                                    <span>{isEn ? 'Cancelling Order...' : 'Membatalkan Pesanan...'}</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <XCircle className="w-4 h-4" />
+                                                    <span>{isEn ? 'Cancel Order' : 'Batalkan Pesanan'}</span>
+                                                </>
                                             )}
                                         </Button>
                                     )}

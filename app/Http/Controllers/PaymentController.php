@@ -71,7 +71,7 @@ class PaymentController extends Controller
                 'recipient_name' => $orderModel->recipient_name,
                 'created_at' => $orderModel->created_at?->toIso8601String(),
                 'payment_method' => $orderModel->payment_method,
-                'payment_channel' => $orderModel->payment_channel,
+                'payment_channel' => $orderModel->payment_channel ? trim((string) preg_replace('/\s*\(?RajaOngkir\)?/i', '', (string) $orderModel->payment_channel)) : null,
                 'payment_code' => $orderModel->payment_code,
                 'payment_status' => $orderModel->payment_status,
                 'status' => $orderModel->status,

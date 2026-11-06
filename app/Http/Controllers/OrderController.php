@@ -7,9 +7,11 @@ use App\Models\OrderItem;
 use App\Services\CatalogService;
 use App\Services\KurirAPIService;
 use App\Services\OrderService;
+use App\Services\RajaOngkirPaymentService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
@@ -198,6 +200,9 @@ class OrderController extends Controller
                 'total_amount_formatted' => 'Rp '.number_format($order->total_amount, 0, ',', '.'),
                 'items_count' => $items->sum('quantity'),
                 'items' => $items,
+                'can_cancel' => $order->payment_status === 'pending'
+                    && in_array($orderStatus, ['menunggu_pembayaran', 'pending'], true)
+                    && $order->status !== 'menunggu_konfirmasi',
             ];
         });
 
@@ -456,5 +461,48 @@ class OrderController extends Controller
         );
 
         return back()->with('success', $isEn ? 'Thank you! Your order has been completed.' : 'Terima kasih! Pesanan Anda telah berhasil diselesaikan.');
+    }
+
+    /**
+     * Cancel unpaid order by customer manually.
+     */
+    public function cancel(Request $request, Order $order): RedirectResponse
+    {
+        $user = $request->user();
+        if (! $user || $order->user_id !== $user->id) {
+            abort(403);
+        }
+
+        $isEn = app()->getLocale() === 'en';
+
+        if ($order->status === 'dibatalkan' || $order->payment_status === 'canceled') {
+            return back()->with('info', $isEn ? 'This order is already cancelled.' : 'Pesanan ini sudah dibatalkan sebelumnya.');
+        }
+
+        if ($order->payment_status !== 'pending'
+            || $order->status === 'menunggu_konfirmasi'
+            || in_array($order->status, ['diproses', 'dikirim', 'selesai'], true)
+        ) {
+            return back()->with('error', $isEn ? 'Paid orders or orders being processed cannot be cancelled.' : 'Pesanan yang sudah dibayar atau sedang diproses tidak dapat dibatalkan.');
+        }
+
+        if (! empty($order->payment_notes) && ! $order->is_manual) {
+            try {
+                app(RajaOngkirPaymentService::class)->cancelPayment($order->payment_notes);
+            } catch (\Throwable $e) {
+                Log::warning("Failed to cancel payment gateway transaction for order #{$order->order_number}: ".$e->getMessage());
+            }
+        }
+
+        $cancelled = app(OrderService::class)->cancelOrder(
+            $order,
+            $isEn ? 'Cancelled by customer from order details.' : 'Dibatalkan oleh pelanggan melalui detail pesanan.'
+        );
+
+        if (! $cancelled) {
+            return back()->with('error', $isEn ? 'Failed to cancel order. The order status might have changed.' : 'Gagal membatalkan pesanan. Status pesanan mungkin telah diperbarui.');
+        }
+
+        return back()->with('success', $isEn ? 'Your order has been successfully cancelled.' : 'Pesanan Anda berhasil dibatalkan.');
     }
 }

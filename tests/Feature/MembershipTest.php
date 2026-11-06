@@ -19,7 +19,18 @@ test('guest can view membership page with catalog', function () {
         );
 });
 
-test('user can join royale membership and receive 100 bonus welcome points', function () {
+test('user registered does not receive any initial points', function () {
+    $response = $this->post(route('register.post'), [
+        'name' => 'Member Baru',
+        'email' => 'memberbaru@aromapalace.id',
+        'password' => 'password123',
+    ]);
+
+    $user = User::where('email', 'memberbaru@aromapalace.id')->firstOrFail();
+    expect($user->membership)->toBeNull();
+});
+
+test('user can join royale membership with 0 initial points', function () {
     $user = User::factory()->create([
         'name' => 'Sultan Hamengku',
         'email' => 'sultan@aromapalace.id',
@@ -33,16 +44,13 @@ test('user can join royale membership and receive 100 bonus welcome points', fun
 
     $membership = $user->fresh()->membership;
     expect($membership)->not->toBeNull();
-    expect($membership->points)->toBe(100);
-    expect($membership->lifetime_points)->toBe(100);
+    expect($membership->points)->toBe(0);
+    expect($membership->lifetime_points)->toBe(0);
     expect($membership->membership_number)->toStartWith('AP-ROYALE-');
 
-    // Check point history recorded
+    // Check no point history bonus recorded
     $history = LoyaltyPointHistory::where('membership_id', $membership->id)->first();
-    expect($history)->not->toBeNull();
-    expect($history->type)->toBe('bonus');
-    expect($history->points)->toBe(100);
-    expect($history->balance_after)->toBe(100);
+    expect($history)->toBeNull();
 });
 
 test('authenticated member can view their membership status, points, and history', function () {
@@ -56,8 +64,8 @@ test('authenticated member can view their membership status, points, and history
         ->assertInertia(fn (Assert $page) => $page
             ->component('membership')
             ->where('is_member', true)
-            ->where('membership.points', 100)
-            ->has('histories', 1)
+            ->where('membership.points', 0)
+            ->has('histories', 0)
             ->has('rewards')
         );
 });
@@ -67,8 +75,8 @@ test('completing an order awards loyalty points only when status is selesai (1 p
     $service = app(MembershipService::class);
     $membership = $service->join($user);
 
-    // Initial points: 100
-    expect($membership->points)->toBe(100);
+    // Initial points: 0
+    expect($membership->points)->toBe(0);
 
     // Create an order of Rp 500.000 with status diproses
     $order = Order::create([
@@ -91,7 +99,7 @@ test('completing an order awards loyalty points only when status is selesai (1 p
     expect($result)->toBeNull();
 
     $membership->refresh();
-    expect($membership->points)->toBe(100);
+    expect($membership->points)->toBe(0);
 
     // Now update status to selesai
     $order->update(['status' => 'selesai']);
@@ -100,8 +108,8 @@ test('completing an order awards loyalty points only when status is selesai (1 p
     $service->awardOrderPoints($order);
 
     $membership->refresh();
-    expect($membership->points)->toBe(150);
-    expect($membership->lifetime_points)->toBe(150);
+    expect($membership->points)->toBe(50);
+    expect($membership->lifetime_points)->toBe(50);
 
     // Verify history was created
     $orderHistory = LoyaltyPointHistory::where('membership_id', $membership->id)
@@ -110,7 +118,7 @@ test('completing an order awards loyalty points only when status is selesai (1 p
 
     expect($orderHistory)->not->toBeNull();
     expect($orderHistory->points)->toBe(50);
-    expect($orderHistory->balance_after)->toBe(150);
+    expect($orderHistory->balance_after)->toBe(50);
     expect($orderHistory->reference_id)->toBe('ARPL-ORDER-TEST-PTS');
 });
 
@@ -169,8 +177,8 @@ test('user cannot redeem reward if points are insufficient', function () {
     $service = app(MembershipService::class);
     $membership = $service->join($user);
 
-    // User only has 100 points
-    expect($membership->points)->toBe(100);
+    // User initially has 0 points
+    expect($membership->points)->toBe(0);
 
     $reward = Voucher::create([
         'code' => 'REW-TEST200K',
@@ -189,5 +197,5 @@ test('user cannot redeem reward if points are insufficient', function () {
 
     $response->assertSessionHas('error');
     $membership->refresh();
-    expect($membership->points)->toBe(100);
+    expect($membership->points)->toBe(0);
 });
