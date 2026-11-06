@@ -160,8 +160,12 @@ class PaymentController extends Controller
                 app(OrderService::class)->cancelOrder($orderModel, 'Batas waktu pembayaran 24 jam telah berakhir.');
                 $orderModel->refresh();
             } else {
-                // Query status from RajaOngkir
-                $statusRes = $this->rajaOngkirPaymentService->getPaymentStatus($orderModel->order_number);
+                // Query status from RajaOngkir (using gateway payment_id if available, falling back to order_number)
+                $paymentIdentifier = $orderModel->payment_notes ?: $orderModel->order_number;
+                $statusRes = $this->rajaOngkirPaymentService->getPaymentStatus($paymentIdentifier);
+                if (isset($statusRes['meta']['code']) && (int) $statusRes['meta']['code'] === 404 && $paymentIdentifier !== $orderModel->order_number) {
+                    $statusRes = $this->rajaOngkirPaymentService->getPaymentStatus($orderModel->order_number);
+                }
                 $status = strtolower((string) ($statusRes['data']['status'] ?? $statusRes['status'] ?? ''));
 
                 if (in_array($status, ['completed', 'paid', 'success'], true)) {

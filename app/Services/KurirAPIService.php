@@ -99,21 +99,36 @@ class KurirAPIService
     }
 
     /**
-     * Get formatted shipping rates for checkout calculations.
+     * Get formatted shipping rates with real KurirAPI response status & message.
      *
-     * @return array<int, array<string, mixed>>
+     * @return array{status: bool, message: string|null, rates: array<int, array<string, mixed>>}
      */
-    public function getShippingRates(int|string $destinationDistrictCode, int $weightInGrams = 1000): array
+    public function getRatesWithDetails(int|string $destinationDistrictCode, int $weightInGrams = 1000, ?string $origin = null): array
     {
         try {
-            $res = $this->getRates($destinationDistrictCode, $weightInGrams);
-            $rates = $res['data']['rates'] ?? [];
+            $res = $this->getRates($destinationDistrictCode, $weightInGrams, $origin);
 
-            if (! is_array($rates)) {
-                return [];
+            if (! is_array($res)) {
+                return [
+                    'status' => false,
+                    'message' => 'Gagal terhubung dengan layanan KurirAPI.',
+                    'rates' => [],
+                ];
             }
 
-            return array_values(array_map(function ($item) {
+            $isSuccess = (bool) ($res['is_success'] ?? false);
+            $apiMessage = (string) ($res['message'] ?? '');
+            $rates = $res['data']['rates'] ?? [];
+
+            if (! $isSuccess || ! is_array($rates) || empty($rates)) {
+                return [
+                    'status' => false,
+                    'message' => $apiMessage ?: 'Tidak ada opsi kurir yang melayani tujuan ini.',
+                    'rates' => [],
+                ];
+            }
+
+            $formattedRates = array_values(array_map(function ($item) {
                 $code = strtoupper((string) ($item['courier_code'] ?? ''));
                 $serviceCode = strtoupper((string) ($item['service_code'] ?? ''));
                 $courierName = (string) ($item['courier_name'] ?? $code);
@@ -135,11 +150,31 @@ class KurirAPIService
                     'courier_logo' => $image,
                 ];
             }, $rates));
-        } catch (\Throwable $e) {
-            Log::error('KurirAPIService getShippingRates error: '.$e->getMessage());
 
-            return [];
+            return [
+                'status' => true,
+                'message' => $apiMessage ?: 'Success',
+                'rates' => $formattedRates,
+            ];
+        } catch (\Throwable $e) {
+            Log::error('KurirAPIService getRatesWithDetails error: '.$e->getMessage());
+
+            return [
+                'status' => false,
+                'message' => $e->getMessage() ?: 'Terjadi kesalahan saat memuat kurir.',
+                'rates' => [],
+            ];
         }
+    }
+
+    /**
+     * Get formatted shipping rates for checkout calculations.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getShippingRates(int|string $destinationDistrictCode, int $weightInGrams = 1000): array
+    {
+        return $this->getRatesWithDetails($destinationDistrictCode, $weightInGrams)['rates'] ?? [];
     }
 
     public function createShippingOrder(

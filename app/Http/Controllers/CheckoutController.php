@@ -293,9 +293,18 @@ class CheckoutController extends Controller
         }
         $totalWeight = max(1000, $totalWeight);
 
-        $initialShippingRates = ($primaryAddress && $primaryAddress->district_id)
-            ? $this->kurirAPIService->getShippingRates((string) $primaryAddress->district_id, $totalWeight)
-            : [];
+        $initialShippingRates = [];
+        $initialShippingError = null;
+
+        if ($primaryAddress && $primaryAddress->district_id) {
+            $rateDetails = $this->kurirAPIService->getRatesWithDetails((string) $primaryAddress->district_id, $totalWeight);
+            $initialShippingRates = $rateDetails['rates'] ?? [];
+            if (empty($initialShippingRates)) {
+                $initialShippingError = $rateDetails['message'] ?? null;
+            }
+        } elseif ($primaryAddress && empty($primaryAddress->district_id)) {
+            $initialShippingError = 'Kecamatan tujuan (District Code) belum ditentukan pada alamat ini.';
+        }
 
         $initialShippingCost = (! empty($initialShippingRates) && isset($initialShippingRates[0]['price']))
             ? (int) $initialShippingRates[0]['price']
@@ -316,6 +325,7 @@ class CheckoutController extends Controller
             'stores' => $stores,
             'payment_methods' => $paymentMethods,
             'initial_shipping_rates' => $initialShippingRates,
+            'initial_shipping_error' => $initialShippingError,
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
@@ -370,13 +380,20 @@ class CheckoutController extends Controller
 
         $weight = max(100, (int) ($validated['weight'] ?? 1000));
 
-        $rates = $destinationId > 0
-            ? $this->kurirAPIService->getShippingRates((string) $destinationId, $weight)
-            : [];
+        if ($destinationId <= 0) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Kecamatan tujuan (District Code) belum ditentukan pada alamat ini.',
+                'rates' => [],
+            ]);
+        }
+
+        $rateDetails = $this->kurirAPIService->getRatesWithDetails((string) $destinationId, $weight);
 
         return response()->json([
-            'status' => true,
-            'rates' => $rates,
+            'status' => $rateDetails['status'] ?? false,
+            'message' => $rateDetails['message'] ?? null,
+            'rates' => $rateDetails['rates'] ?? [],
         ]);
     }
 
@@ -559,6 +576,7 @@ class CheckoutController extends Controller
             $channelName = $pm ? $pm->name : 'Virtual Account';
             $orderNumber = 'ARPL-'.date('Ymd').'-'.strtoupper(Str::random(5));
             $paymentStatus = 'pending';
+            $gatewayPaymentId = null;
 
             if ($totalAmount === 0) {
                 $paymentCode = 'FREE-VOUCHER';
@@ -576,22 +594,45 @@ class CheckoutController extends Controller
                     $totalAmount = $baseTotal + $uniqueCode;
                 }
             } else {
-                $paymentChannel = match ($paymentMethod) {
-                    'qris' => 'QRIS Instant (RajaOngkir)',
-                    'payment_link' => 'Payment Link (RajaOngkir)',
-                    default => "{$channelName} Virtual Account (RajaOngkir)",
-                };
+                $cleanMethod = strtolower(trim($paymentMethod));
 
-                $resolvedType = 'bank_transfer';
-                $resolvedChannel = null;
-
-                if ($paymentMethod === 'qris') {
+                if ($cleanMethod === 'qris') {
                     $resolvedType = 'qris';
                     $resolvedChannel = null;
-                } elseif (str_ends_with($paymentMethod, '_va')) {
+                    $paymentChannel = 'QRIS Instant (RajaOngkir)';
+                } else {
                     $resolvedType = 'bank_transfer';
-                    $resolvedChannel = strtoupper(str_replace(['_va', 'va_'], '', $paymentMethod));
+                    // Strip common VA prefixes/suffixes to get clean bank code
+                    $rawBank = str_replace(['_va', 'va_', '_virtual_account', 'virtual_account_'], '', $cleanMethod);
+
+                    $resolvedChannel = match ($rawBank) {
+                        'bca' => 'BCA',
+                        'bni' => 'BNI',
+                        'mandiri' => 'MANDIRI',
+                        'bri' => 'BRI',
+                        'permata' => 'PERMATA',
+                        'sahabat_sampoerna', 'sampoerna' => 'SAHABAT_SAMPOERNA',
+                        'cimb', 'cimb_niaga' => 'CIMB',
+                        'bsi', 'syariah' => 'BSI',
+                        'bjb' => 'BJB',
+                        'dbs', 'digibank' => 'DBS',
+                        'bnc', 'neo', 'neo_commerce' => 'BNC',
+                        default => strtoupper($rawBank),
+                    };
+
+                    $paymentChannel = "{$resolvedChannel} Virtual Account (RajaOngkir)";
                 }
+
+                // RajaOngkir requires minimum amount of Rp 10.000 for automatic gateway payments
+                if ($totalAmount < 10000) {
+                    return redirect()->route('checkout.index')
+                        ->withInput()
+                        ->with('error', 'Total belanja untuk pembayaran online gateway minimal Rp 10.000. Silakan pilih transfer manual atau sesuaikan pesanan Anda.');
+                }
+
+                $customerPhone = (string) ($validated['recipient_phone'] ?? ($user->phone ?? '08000000000'));
+                $customerName = (string) ($validated['recipient_name'] ?? ($user->name ?? 'Customer'));
+                $customerEmail = (string) ($user->email ?? 'customer@aromapalace.id');
 
                 // Call RajaOngkir API to create real payment transaction
                 $rajaOngkirRes = $this->rajaOngkirPaymentService->createPayment(
@@ -599,16 +640,24 @@ class CheckoutController extends Controller
                     paymentType: $resolvedType,
                     channelCode: $resolvedChannel,
                     amount: $totalAmount,
-                    customerName: $user->name,
-                    customerEmail: $user->email ?? 'customer@aromapalace.id',
-                    customerPhone: $user->phone ?? '08000000000',
+                    customerName: $customerName,
+                    customerEmail: $customerEmail,
+                    customerPhone: $customerPhone,
                 );
 
                 $success = isset($rajaOngkirRes['data']) && ! empty($rajaOngkirRes['data']);
                 if (! $success) {
-                    $errorMsg = $rajaOngkirRes['message'] ?? $rajaOngkirRes['error'] ?? 'Layanan pembayaran sedang mengalami kendala teknis.';
+                    $errorMsg = $rajaOngkirRes['meta']['message']
+                        ?? $rajaOngkirRes['message']
+                        ?? $rajaOngkirRes['error']
+                        ?? 'Layanan pembayaran sedang mengalami kendala teknis.';
+
                     Log::error('RajaOngkir checkout error: Transaction creation failed', [
                         'order' => $orderNumber,
+                        'resolved_type' => $resolvedType,
+                        'resolved_channel' => $resolvedChannel,
+                        'amount' => $totalAmount,
+                        'response' => $rajaOngkirRes,
                         'error' => $errorMsg,
                         'user_id' => $user->id,
                     ]);
@@ -622,7 +671,10 @@ class CheckoutController extends Controller
                 $paymentCode = ($pData['va_number'] ?? null)
                     ?: (($pData['qr_string'] ?? null)
                     ?: (($pData['payment_link'] ?? null)
-                    ?: ($pData['payment_id'] ?? ($pData['id'] ?? null))));
+                    ?: (($pData['payment_url'] ?? null)
+                    ?: ($pData['payment_id'] ?? ($pData['id'] ?? null)))));
+
+                $gatewayPaymentId = $pData['payment_id'] ?? null;
 
                 if (! $paymentCode) {
                     return redirect()->route('checkout.index')
@@ -717,7 +769,8 @@ class CheckoutController extends Controller
                 $voucherCode,
                 $voucherId,
                 $totalAmount,
-                $orderItemsData
+                $orderItemsData,
+                $gatewayPaymentId
             ) {
                 // 2. Race condition guard: Lock Cart Items and verify cart is still available
                 $lockedCartItems = $user->cartItems()->lockForUpdate()->get();
@@ -806,6 +859,7 @@ class CheckoutController extends Controller
                     'voucher_code' => $voucherCode ?: null,
                     'voucher_id' => $voucherId,
                     'total_amount' => $totalAmount,
+                    'payment_notes' => $gatewayPaymentId,
                     'notes' => $validated['notes'] ?? null,
                 ]);
 

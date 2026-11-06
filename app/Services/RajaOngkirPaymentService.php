@@ -80,17 +80,29 @@ class RajaOngkirPaymentService
         array $items = [],
         int $expiryDuration = 3600,
     ): mixed {
+        // Sanitize phone to digits only (RajaOngkir requires strictly numeric phone)
+        $cleanPhone = preg_replace('/[^0-9]/', '', (string) $customerPhone);
+        if (empty($cleanPhone)) {
+            $cleanPhone = '08000000000';
+        }
+
+        // Validate email format
+        $cleanEmail = filter_var($customerEmail, FILTER_VALIDATE_EMAIL) ? $customerEmail : 'customer@aromapalace.id';
+
+        // RajaOngkir requires integer amount
+        $intAmount = (int) round($amount);
+
         $payload = [
             'order_id' => $orderNumber,
             'payment_type' => $paymentType,
-            'amount' => (float) $amount,
+            'amount' => $intAmount,
             'customer' => [
                 'name' => $customerName ?: 'Customer',
-                'email' => $customerEmail ?: 'customer@aromapalace.id',
-                'phone' => $customerPhone ?: '08000000000',
+                'email' => $cleanEmail,
+                'phone' => $cleanPhone,
             ],
             'items' => $items ?: [
-                ['name' => 'Pesanan', 'quantity' => 1, 'price' => (float) $amount],
+                ['name' => 'Pesanan', 'quantity' => 1, 'price' => $intAmount],
             ],
             'expiry_duration' => $expiryDuration,
             'callback_url' => $this->callbackUrl(),
@@ -101,26 +113,79 @@ class RajaOngkirPaymentService
             $payload['channel_code'] = $channelCode;
         }
 
-        return $this->request()
-            ->post($this->baseUrl().'/payment/create', $payload)
-            ->json();
+        try {
+            $response = $this->request()
+                ->post($this->baseUrl().'/payment/create', $payload);
+
+            $json = $response->json();
+            if (is_array($json)) {
+                return $json;
+            }
+
+            return [
+                'meta' => [
+                    'code' => $response->status(),
+                    'status' => 'failed',
+                    'message' => 'Respon gerbang pembayaran tidak valid (HTTP '.$response->status().')',
+                ],
+                'data' => null,
+            ];
+        } catch (\Throwable $e) {
+            Log::error('RajaOngkirPaymentService createPayment error', [
+                'order' => $orderNumber,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'meta' => [
+                    'code' => 500,
+                    'status' => 'failed',
+                    'message' => 'Gagal menghubungi gerbang pembayaran: '.$e->getMessage(),
+                ],
+                'data' => null,
+            ];
+        }
     }
 
-    public function getPaymentStatus(string $orderNumber): mixed
+    public function getPaymentStatus(string $paymentIdentifier): mixed
     {
-        return $this->request()
-            ->get($this->baseUrl().'/payment/status/'.$orderNumber)
-            ->json();
+        try {
+            return $this->request()
+                ->get($this->baseUrl().'/payment/status/'.$paymentIdentifier)
+                ->json();
+        } catch (\Throwable $e) {
+            Log::error('RajaOngkirPaymentService getPaymentStatus error', [
+                'identifier' => $paymentIdentifier,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'meta' => ['code' => 500, 'status' => 'failed', 'message' => $e->getMessage()],
+                'data' => null,
+            ];
+        }
     }
 
-    public function cancelPayment(string $orderNumber): mixed
+    public function cancelPayment(string $paymentIdentifier): mixed
     {
-        return $this->request()
-            ->post($this->baseUrl().'/payment/cancel', [
-                'payment_id' => $orderNumber,
-                'reason' => 'Customer canceled the order',
-            ])
-            ->json();
+        try {
+            return $this->request()
+                ->post($this->baseUrl().'/payment/cancel', [
+                    'payment_id' => $paymentIdentifier,
+                    'reason' => 'Customer canceled the order',
+                ])
+                ->json();
+        } catch (\Throwable $e) {
+            Log::error('RajaOngkirPaymentService cancelPayment error', [
+                'identifier' => $paymentIdentifier,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'meta' => ['code' => 500, 'status' => 'failed', 'message' => $e->getMessage()],
+                'data' => null,
+            ];
+        }
     }
 
     /**

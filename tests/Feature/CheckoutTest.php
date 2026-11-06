@@ -7,6 +7,8 @@ use App\Models\ProductVariant;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Voucher;
+use Illuminate\Http\Client\Factory;
+use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 
 beforeEach(function () {
@@ -28,22 +30,31 @@ beforeEach(function () {
     );
 
     Http::fake([
-        'https://use.api.co.id/courier/v2/rates*' => Http::response([
-            'is_success' => true,
-            'message' => 'Success',
-            'data' => [
-                'rates' => [
-                    [
-                        'courier_code' => 'jne',
-                        'courier_name' => 'JNE Express',
-                        'service_code' => 'REG',
-                        'service_name' => 'Reguler',
-                        'price' => 15000,
-                        'etd' => '1-2 hari',
+        'https://use.api.co.id/courier/v2/rates*' => function (Request $request) {
+            if (str_contains($request->url(), '999999')) {
+                return Http::response([
+                    'is_success' => false,
+                    'message' => 'Tujuan tidak dilayani kurir.',
+                ], 200);
+            }
+
+            return Http::response([
+                'is_success' => true,
+                'message' => 'Success',
+                'data' => [
+                    'rates' => [
+                        [
+                            'courier_code' => 'jne',
+                            'courier_name' => 'JNE Express',
+                            'service_code' => 'REG',
+                            'service_name' => 'Reguler',
+                            'price' => 15000,
+                            'etd' => '1-2 hari',
+                        ],
                     ],
                 ],
-            ],
-        ], 200),
+            ], 200);
+        },
         'https://use.api.co.id/*' => Http::response([
             'is_success' => true,
             'message' => 'Success',
@@ -680,6 +691,22 @@ test('user can fetch shipping rates via api endpoint with real prices or fallbac
     expect($data['rates'][0]['price'])->toBeGreaterThan(0);
 });
 
+test('shipping rates endpoint returns real KurirAPI error message when destination is unserviceable', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->postJson(route('checkout.shipping-rates'), [
+        'destination_district_id' => 999999,
+        'weight' => 500,
+    ]);
+
+    $response->assertOk()
+        ->assertJson([
+            'status' => false,
+            'message' => 'Tujuan tidak dilayani kurir.',
+            'rates' => [],
+        ]);
+});
+
 test('checkout stores custom shipping cost into order total and database', function () {
     $user = User::factory()->create();
     $variant = ProductVariant::where('product_id', 1)->firstOrFail();
@@ -751,4 +778,94 @@ test('checkout with manual payment method adds unique code to total amount when 
     expect($order->unique_code)->toBeGreaterThanOrEqual(100);
     expect($order->unique_code)->toBeLessThanOrEqual(999);
     expect($order->total_amount)->toBe((int) $variant->price + $shippingCost + $order->unique_code);
+});
+
+test('checkout handles rajaongkir payment error and displays real meta message', function () {
+    Http::swap(new Factory);
+    Http::fake([
+        '*collaborator.komerce.id/*payment/create*' => Http::response([
+            'meta' => [
+                'code' => 422,
+                'status' => 'failed',
+                'message' => 'channel_code is not valid',
+            ],
+            'data' => null,
+        ], 200),
+        '*' => Http::response([], 200),
+    ]);
+
+    $user = User::factory()->create();
+    $variant = ProductVariant::where('product_id', 1)->firstOrFail();
+
+    CartItem::create([
+        'user_id' => $user->id,
+        'product_id' => 1,
+        'variant_id' => $variant->id,
+        'quantity' => 1,
+    ]);
+
+    $response = $this->actingAs($user)->post(route('checkout.store'), [
+        'delivery_type' => 'delivery',
+        'recipient_name' => 'Dimas Pratama',
+        'recipient_phone' => '081234567890',
+        'address' => 'Jl. Senopati No. 45',
+        'city' => 'Jakarta Selatan',
+        'courier' => 'JNE REG',
+        'shipping_cost' => 15000,
+        'payment_method' => 'bri_va',
+    ]);
+
+    $response->assertRedirect(route('checkout.index'));
+    $response->assertSessionHas('error', function (string $error) {
+        return str_contains($error, 'channel_code is not valid');
+    });
+
+    expect(Order::where('user_id', $user->id)->count())->toBe(0);
+});
+
+test('checkout with qris stores qr string and gateway payment id', function () {
+    Http::swap(new Factory);
+    Http::fake([
+        '*collaborator.komerce.id/*payment/create*' => Http::response([
+            'meta' => [
+                'code' => 200,
+                'status' => 'success',
+                'message' => 'success create payment',
+            ],
+            'data' => [
+                'payment_id' => 'KPAY-QRIS-999',
+                'va_number' => '',
+                'qr_string' => '00020101021226580014ID.LINKAJA.WWW',
+            ],
+        ], 200),
+        '*' => Http::response([], 200),
+    ]);
+
+    $user = User::factory()->create();
+    $variant = ProductVariant::where('product_id', 1)->firstOrFail();
+
+    CartItem::create([
+        'user_id' => $user->id,
+        'product_id' => 1,
+        'variant_id' => $variant->id,
+        'quantity' => 1,
+    ]);
+
+    $response = $this->actingAs($user)->post(route('checkout.store'), [
+        'delivery_type' => 'delivery',
+        'recipient_name' => 'Dimas Pratama',
+        'recipient_phone' => '081234567890',
+        'address' => 'Jl. Senopati No. 45',
+        'city' => 'Jakarta Selatan',
+        'courier' => 'JNE REG',
+        'shipping_cost' => 15000,
+        'payment_method' => 'qris',
+    ]);
+
+    $order = Order::where('user_id', $user->id)->first();
+    expect($order)->not->toBeNull();
+    expect($order->payment_method)->toBe('qris');
+    expect($order->payment_code)->toBe('00020101021226580014ID.LINKAJA.WWW');
+    expect($order->payment_notes)->toBe('KPAY-QRIS-999');
+    $response->assertRedirect(route('payment.show', ['order' => $order->order_number]));
 });

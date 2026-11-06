@@ -243,6 +243,7 @@ interface CheckoutProps {
     stores?: StoreOption[];
     payment_methods?: PaymentMethodItem[];
     initial_shipping_rates?: ShippingRate[];
+    initial_shipping_error?: string | null;
     user: {
         id?: number;
         name: string;
@@ -356,6 +357,7 @@ export default function CheckoutPage({
     stores = [],
     payment_methods = [],
     initial_shipping_rates = [],
+    initial_shipping_error = null,
     user,
     addresses = [],
     primary_address = null,
@@ -389,8 +391,9 @@ export default function CheckoutPage({
     const [addressSelectorOpen, setAddressSelectorOpen] = useState(false);
     const [editingAddress, setEditingAddress] = useState<UserAddress | null>(null);
 
-    // Shipping rates fetched from RajaOngkir API (initialized with live server rates if available)
+    // Shipping rates fetched from KurirAPI (initialized with live server rates if available)
     const [shippingRates, setShippingRates] = useState<ShippingRate[]>(initial_shipping_rates || []);
+    const [shippingError, setShippingError] = useState<string | null>(initial_shipping_error || null);
     const [loadingRates, setLoadingRates] = useState(false);
     const initialAddressIdRef = useRef<number | null>(initialSelectedAddress?.id || null);
     const hasInitialRatesRef = useRef<boolean>((initial_shipping_rates && initial_shipping_rates.length > 0) ? true : false);
@@ -447,12 +450,15 @@ export default function CheckoutPage({
         return Math.max(1000, w);
     }, [items]);
 
-    // Fetch live shipping rates from RajaOngkir API whenever selected address changes
+    // Fetch live shipping rates from KurirAPI whenever selected address changes
     useEffect(() => {
         const districtId = selectedAddress?.district_id ?? (selectedAddress as any)?.kecamatan_id ?? null;
         const subdistrictId = selectedAddress?.subdistrict_id ?? null;
         if ((!districtId && !subdistrictId) || deliveryType !== 'delivery') {
             setShippingRates([]);
+            if (deliveryType === 'delivery' && selectedAddress && !districtId) {
+                setShippingError(isEn ? 'Destination district is missing on this address.' : 'Kecamatan tujuan belum ditentukan pada alamat ini.');
+            }
             setLoadingRates(false);
             return;
         }
@@ -467,6 +473,7 @@ export default function CheckoutPage({
         let cancelled = false;
         setLoadingRates(true);
         setShippingRates([]);
+        setShippingError(null);
 
         const csrfMeta = document.querySelector('meta[name="csrf-token"]');
         const csrfToken = csrfMeta ? (csrfMeta as HTMLMetaElement).content : '';
@@ -490,6 +497,7 @@ export default function CheckoutPage({
             .then((json) => {
                 if (!cancelled && json?.status && Array.isArray(json.rates) && json.rates.length > 0) {
                     setShippingRates(json.rates);
+                    setShippingError(null);
                     setSelectedCourierIndex(0);
                     const firstCourier = parseShippingRate(json.rates[0], 0);
                     setData((prev) => ({
@@ -501,6 +509,8 @@ export default function CheckoutPage({
                     }));
                 } else if (!cancelled) {
                     setShippingRates([]);
+                    const realError = json?.message || (isEn ? 'No courier delivery available for this address' : 'Tidak ada kurir pengiriman yang tersedia untuk wilayah ini');
+                    setShippingError(realError);
                     setData((prev) => ({
                         ...prev,
                         courier: '',
@@ -510,7 +520,12 @@ export default function CheckoutPage({
                     }));
                 }
             })
-            .catch(() => { /* silently fallback */ })
+            .catch((err) => {
+                if (!cancelled) {
+                    setShippingRates([]);
+                    setShippingError(err?.message || (isEn ? 'Failed to connect to shipping service' : 'Gagal menghubungi layanan pengiriman kurir'));
+                }
+            })
             .finally(() => { if (!cancelled) setLoadingRates(false); });
 
         return () => { cancelled = true; };
@@ -561,6 +576,7 @@ export default function CheckoutPage({
     const handleSelectAddress = (addr: UserAddress) => {
         setSelectedAddress(addr);
         setSelectedCourierIndex(0);
+        setShippingError(null);
         setData((prev) => ({
             ...prev,
             address_id: addr.id,
@@ -857,6 +873,11 @@ export default function CheckoutPage({
                 alert(isEn
                     ? 'Please fill in your delivery address and phone number before placing your order.'
                     : 'Silahkan pilih atau isi alamat pengiriman terlebih dahulu sebelum melanjutkan pesanan.');
+                return;
+            }
+
+            if (courierOptions.length === 0) {
+                alert(shippingError || (isEn ? 'No courier delivery available for this address' : 'Tidak ada kurir pengiriman yang tersedia untuk wilayah ini'));
                 return;
             }
 
@@ -1191,7 +1212,7 @@ export default function CheckoutPage({
                                                     <div className="flex items-center gap-2 text-xs text-destructive">
                                                         <AlertCircle className="w-4 h-4 text-destructive shrink-0" />
                                                         <span className="font-semibold">
-                                                            {isEn ? 'No courier delivery available for this address' : 'Tidak ada kurir pengiriman yang tersedia untuk wilayah ini'}
+                                                            {shippingError || (isEn ? 'No courier delivery available for this address' : 'Tidak ada kurir pengiriman yang tersedia untuk wilayah ini')}
                                                         </span>
                                                     </div>
                                                 ) : (

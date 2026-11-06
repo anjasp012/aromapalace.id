@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Head, useForm, router } from '@inertiajs/react';
 import AdminLayout from '@/layouts/AdminLayout';
 import { Button } from '@/components/ui/button';
@@ -15,12 +15,14 @@ import {
     Eye,
     EyeOff,
     CheckCircle2,
-    AlertCircle,
     Save,
     Compass,
     ShieldCheck,
     Building2,
     Phone,
+    Loader2,
+    Package,
+    Sparkles,
 } from 'lucide-react';
 import SearchableSelect, { SearchableOption } from '@/components/ui/searchable-select';
 import AddressMapPicker from '@/components/AddressMapPicker';
@@ -118,7 +120,7 @@ export default function ShippingServicesIndex({
     const districtsAbortRef = useRef<AbortController | null>(null);
 
     // Initial load of provinces if not preloaded
-    React.useEffect(() => {
+    useEffect(() => {
         if (provinces.length === 0) {
             provincesAbortRef.current?.abort();
             const controller = new AbortController();
@@ -229,47 +231,73 @@ export default function ShippingServicesIndex({
     return (
         <AdminLayout
             title="Layanan Pengiriman"
-            subtitle="Kelola integrasi KurirAPI, saldo operasional, dan titik origin penjemputan paket butik."
+            subtitle="Kelola integrasi KurirAPI, saldo operasional resi, dan titik alamat origin butik."
         >
-            <Head title="Layanan Pengiriman & Saldo - Admin Butik" />
+            <Head title="Layanan Pengiriman & Saldo - Admin Panel" />
 
-            <div className="space-y-6 pb-16 max-w-6xl mx-auto">
-                {/* Header Action Banner */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-br from-[#4A070B] via-[#52090F] to-[#360407] text-white shadow-sm">
+            <form onSubmit={handleSubmit} className="w-full space-y-6 pb-12">
+                {/* Header Action Bar - Consistent with Admin Design System */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card p-4 sm:p-6 rounded-2xl border shadow-xs">
                     <div className="space-y-1">
-                        <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-white/10 text-white/90 text-xs font-semibold backdrop-blur-xs">
-                            <Truck className="size-3.5" />
-                            <span>Gateway Logistik &amp; Kurir Resmi</span>
+                        <div className="flex items-center gap-2">
+                            <span className="p-2 rounded-xl bg-[#4A070B]/10 text-[#4A070B] dark:bg-[#4A070B]/20 dark:text-red-400">
+                                <Truck className="size-5" />
+                            </span>
+                            <h1 className="text-xl font-bold tracking-tight text-foreground">
+                                Layanan Pengiriman &amp; Saldo Kurir
+                            </h1>
                         </div>
-                        <h1 className="text-xl sm:text-2xl font-black tracking-tight">
-                            Layanan Pengiriman &amp; Saldo Ekspedisi
-                        </h1>
-                        <p className="text-xs sm:text-sm text-white/80 max-w-xl">
-                            Semua perhitungan ongkos kirim dan pengiriman paket butik terintegrasi langsung dengan ekosistem KurirAPI (Anteraja, ID Express, JNE, J&amp;T).
+                        <p className="text-xs sm:text-sm text-muted-foreground">
+                            Perhitungan ongkos kirim real-time dan penerbitan resi terintegrasi langsung dengan ekosistem KurirAPI.
                         </p>
                     </div>
 
-                    <Button
-                        type="button"
-                        onClick={handleSubmit}
-                        disabled={processing}
-                        className="bg-amber-400 hover:bg-amber-500 text-black font-bold text-xs sm:text-sm h-11 px-6 rounded-xl shadow-xs transition active:scale-[0.98] shrink-0 flex items-center gap-2 cursor-pointer"
-                    >
-                        <Save className="size-4" />
-                        <span>{processing ? 'Menyimpan...' : 'Simpan Perubahan'}</span>
-                    </Button>
+                    <div className="flex items-center gap-2 shrink-0">
+                        <Button
+                            type="submit"
+                            disabled={processing}
+                            className="bg-[#4A070B] hover:bg-[#380508] text-white shadow-xs gap-2 px-5 font-medium cursor-pointer"
+                        >
+                            {processing ? (
+                                <>
+                                    <Loader2 className="size-4 animate-spin" />
+                                    <span>Menyimpan...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Save className="size-4" />
+                                    <span>Simpan Perubahan</span>
+                                </>
+                            )}
+                        </Button>
+                    </div>
                 </div>
 
-                {/* Grid: Saldo & Status Koneksi Gateway */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                    {/* Kartu 1: Saldo KurirAPI */}
-                    <Card className="rounded-2xl border border-border/80 shadow-none bg-card/60 backdrop-blur-xs md:col-span-1 flex flex-col justify-between">
-                        <CardHeader className="pb-3">
+                {/* 3 Summary Metrics Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {/* Saldo KurirAPI */}
+                    <Card className="py-4 shadow-xs border-border/80">
+                        <CardContent className="p-0 px-6">
                             <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                                    <Wallet className="size-3.5 text-emerald-600 dark:text-emerald-400" />
-                                    <span>Saldo KurirAPI</span>
-                                </span>
+                                <span className="text-xs font-medium text-muted-foreground">Saldo KurirAPI</span>
+                                <Wallet className="size-4 text-emerald-500" />
+                            </div>
+                            <div className="text-2xl font-bold mt-2 font-mono text-foreground flex items-center justify-between">
+                                <span>{balance.amount_formatted}</span>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={handleRefreshBalance}
+                                    disabled={isRefreshingBalance}
+                                    className="size-7 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
+                                    title="Segarkan Saldo"
+                                >
+                                    <RotateCw className={`size-3.5 ${isRefreshingBalance ? 'animate-spin' : ''}`} />
+                                </Button>
+                            </div>
+                            <div className="flex items-center justify-between mt-2 pt-2 border-t text-xs">
+                                <span className="text-muted-foreground">{balance.currency} &bull; Pembuatan Resi</span>
                                 {balance.is_connected ? (
                                     <Badge className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 text-[10px] font-bold">
                                         Online
@@ -280,103 +308,135 @@ export default function ShippingServicesIndex({
                                     </Badge>
                                 )}
                             </div>
-                            <CardTitle className="text-2xl sm:text-3xl font-black text-foreground font-mono tracking-tight pt-2">
-                                {balance.amount_formatted}
-                            </CardTitle>
-                            <CardDescription className="text-xs text-muted-foreground mt-1">
-                                Saldo akun KurirAPI aktif untuk pembuatan resi pengiriman.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="pt-0 border-t border-border/50 pt-3">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={handleRefreshBalance}
-                                disabled={isRefreshingBalance}
-                                className="w-full h-9 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border-border/70 hover:bg-muted/60 cursor-pointer"
-                            >
-                                <RotateCw className={`size-3.5 ${isRefreshingBalance ? 'animate-spin' : ''}`} />
-                                <span>{isRefreshingBalance ? 'Memperbarui...' : 'Segarkan Saldo'}</span>
-                            </Button>
                         </CardContent>
                     </Card>
 
-                    {/* Kartu 2: API Key Configuration */}
-                    <Card className="rounded-2xl border border-border/80 shadow-none bg-card/60 backdrop-blur-xs md:col-span-2">
-                        <CardHeader className="pb-3">
+                    {/* Gateway Logistik */}
+                    <Card className="py-4 shadow-xs border-border/80">
+                        <CardContent className="p-0 px-6">
                             <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                                    <KeyRound className="size-3.5 text-[#4A070B] dark:text-red-400" />
-                                    <span>Kunci Akses API (KurirAPI)</span>
+                                <span className="text-xs font-medium text-muted-foreground">Gateway Ekspedisi</span>
+                                <Truck className="size-4 text-primary" />
+                            </div>
+                            <div className="text-2xl font-bold mt-2 text-foreground">KurirAPI v2</div>
+                            <div className="flex items-center justify-between mt-2 pt-2 border-t text-xs">
+                                <span className="text-muted-foreground truncate">JNE, J&amp;T, SiCepat, Anteraja</span>
+                                <Badge variant="outline" className="text-[10px] text-muted-foreground shrink-0">
+                                    Multi-Kurir
+                                </Badge>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Origin Penjemputan Aktif */}
+                    <Card className="py-4 shadow-xs border-border/80">
+                        <CardContent className="p-0 px-6">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-muted-foreground">Origin Penjemputan</span>
+                                <MapPin className="size-4 text-amber-500" />
+                            </div>
+                            <div className="text-xl font-bold mt-2 text-foreground truncate">
+                                {data.shipping_district_name || 'Belum Ditentukan'}
+                            </div>
+                            <div className="flex items-center justify-between mt-2 pt-2 border-t text-xs">
+                                <span className="text-muted-foreground truncate">{data.shipping_city_name || '-'}</span>
+                                <span className="font-mono text-[10px] font-bold text-muted-foreground shrink-0">
+                                    ID: {data.shipping_district_id || '-'}
                                 </span>
-                                <span className="text-[11px] text-muted-foreground font-medium">Header: x-api-co-id</span>
                             </div>
-                            <CardTitle className="text-base font-bold text-foreground">
-                                Kredensial Integrasi Logistik
-                            </CardTitle>
-                            <CardDescription className="text-xs text-muted-foreground">
-                                Kunci autentikasi resmi dari penyedia layanan kurir (api.co.id).
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                            <div className="relative">
-                                <Input
-                                    type={showApiKey ? 'text' : 'password'}
-                                    value={data.kurirapi_key}
-                                    onChange={(e) => setData('kurirapi_key', e.target.value)}
-                                    placeholder="test_E1FHospZPSTE8w8eSaIZBK9fzLOgSnr8oiTI74h5FusWZ"
-                                    className="h-10 text-xs font-mono pr-24 rounded-xl"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowApiKey(!showApiKey)}
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted-foreground hover:text-foreground px-2 py-1 flex items-center gap-1 cursor-pointer select-none"
-                                >
-                                    {showApiKey ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
-                                    <span>{showApiKey ? 'Tutup' : 'Lihat'}</span>
-                                </button>
-                            </div>
-                            {errors.kurirapi_key && <p className="text-xs text-destructive">{errors.kurirapi_key}</p>}
-                            <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
-                                <ShieldCheck className="size-3.5 text-emerald-600 shrink-0" />
-                                <span>Kosongkan kolom ini jika ingin tetap menggunakan API Key bawaan dari sistem.</span>
-                            </p>
                         </CardContent>
                     </Card>
                 </div>
 
-                {/* Form Alamat Asal (Origin) Butik */}
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <Card className="rounded-2xl border border-border/80 shadow-none bg-card/60 backdrop-blur-xs">
-                        <CardHeader className="pb-4 border-b border-border/60">
-                            <div className="flex items-center gap-2">
-                                <Building2 className="size-5 text-[#4A070B] dark:text-red-400" />
-                                <div>
-                                    <CardTitle className="text-base font-bold text-foreground">
-                                        Alamat Asal &amp; Penjemputan Paket (Origin)
-                                    </CardTitle>
-                                    <CardDescription className="text-xs text-muted-foreground mt-0.5">
-                                        Alamat dan titik koordinat ini menjadi dasar perhitungan tarif ongkos kirim dan titik pickup kurir.
-                                    </CardDescription>
+                {/* Main 2-Column Form Layout - Consistent with Admin Settings */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    {/* Left Column: API & Kontak Pengirim (lg:col-span-5) */}
+                    <div className="lg:col-span-5 space-y-6">
+                        {/* Kredensial API */}
+                        <Card className="shadow-xs border-border/80">
+                            <CardHeader className="pb-4">
+                                <div className="flex items-center gap-2 text-[#4A070B] dark:text-red-400">
+                                    <KeyRound className="size-4.5" />
+                                    <CardTitle className="text-base font-bold">Kredensial API (KurirAPI)</CardTitle>
                                 </div>
-                            </div>
-                        </CardHeader>
-
-                        <CardContent className="pt-6 space-y-6">
-                            {/* Baris 1: Nama Pengirim & Telepon */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <CardDescription className="text-xs">
+                                    Kunci autentikasi resmi api.co.id untuk cek tarif &amp; pembuatan resi otomatis.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-foreground flex items-center gap-1">
+                                    <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                                        <span>API Key (Header: x-api-co-id)</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowApiKey(!showApiKey)}
+                                            className="text-[11px] font-medium text-muted-foreground hover:text-foreground inline-flex items-center gap-1 cursor-pointer select-none"
+                                        >
+                                            {showApiKey ? <EyeOff className="size-3" /> : <Eye className="size-3" />}
+                                            <span>{showApiKey ? 'Sembunyikan' : 'Tampilkan'}</span>
+                                        </button>
+                                    </label>
+                                    <Input
+                                        type={showApiKey ? 'text' : 'password'}
+                                        value={data.kurirapi_key}
+                                        onChange={(e) => setData('kurirapi_key', e.target.value)}
+                                        placeholder="test_E1FHospZPSTE8w8eSaIZBK9fzLOgSnr8oiTI74h5FusWZ"
+                                        className="h-10 text-xs font-mono"
+                                    />
+                                    {errors.kurirapi_key && (
+                                        <p className="text-xs text-destructive">{errors.kurirapi_key}</p>
+                                    )}
+                                </div>
+
+                                <div className="p-3 rounded-xl bg-muted/30 border border-border/70 flex items-start gap-2.5 text-xs text-muted-foreground">
+                                    <ShieldCheck className="size-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                                    <p className="leading-relaxed text-[11px]">
+                                        Biarkan kolom ini kosong jika ingin menggunakan API Key default dari environment file (.env).
+                                    </p>
+                                </div>
+
+                                <div className="space-y-2 pt-2 border-t">
+                                    <span className="text-[11px] font-semibold text-muted-foreground block">
+                                        Ekspedisi Mitra yang Didukung:
+                                    </span>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {['JNE', 'J&T Express', 'SiCepat', 'Anteraja', 'ID Express', 'Ninja Xpress', 'Lion Parcel'].map((courier) => (
+                                            <Badge
+                                                key={courier}
+                                                variant="secondary"
+                                                className="text-[10px] font-medium py-0.5 px-2 bg-muted/60"
+                                            >
+                                                {courier}
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Kontak Pengirim Butik */}
+                        <Card className="shadow-xs border-border/80">
+                            <CardHeader className="pb-4">
+                                <div className="flex items-center gap-2 text-[#4A070B] dark:text-red-400">
+                                    <Building2 className="size-4.5" />
+                                    <CardTitle className="text-base font-bold">Identitas Pengirim Butik</CardTitle>
+                                </div>
+                                <CardDescription className="text-xs">
+                                    Data pengirim resmi yang akan tercetak pada label resi dan manifes penjemputan paket.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-foreground flex items-center justify-between">
                                         <span>Nama Pengirim / Butik Resmi</span>
                                         <span className="text-destructive">*</span>
                                     </label>
                                     <Input
                                         type="text"
-                                        placeholder="mis. Aroma Palace Official"
+                                        placeholder="Aroma Palace Official"
                                         value={data.shipping_sender_name}
                                         onChange={(e) => setData('shipping_sender_name', e.target.value)}
-                                        className="h-10 text-xs rounded-xl"
+                                        className="h-10 text-sm"
                                         required
                                     />
                                     {errors.shipping_sender_name && (
@@ -385,9 +445,11 @@ export default function ShippingServicesIndex({
                                 </div>
 
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-foreground flex items-center gap-1">
-                                        <Phone className="size-3 text-muted-foreground" />
-                                        <span>No. Telepon / WhatsApp Pengirim</span>
+                                    <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                                        <span className="flex items-center gap-1.5">
+                                            <Phone className="size-3.5 text-muted-foreground" />
+                                            <span>No. Telepon / WhatsApp Pengirim</span>
+                                        </span>
                                         <span className="text-destructive">*</span>
                                     </label>
                                     <Input
@@ -395,25 +457,36 @@ export default function ShippingServicesIndex({
                                         placeholder="081288889999"
                                         value={data.shipping_sender_phone}
                                         onChange={(e) => setData('shipping_sender_phone', e.target.value)}
-                                        className="h-10 text-xs rounded-xl"
+                                        className="h-10 text-sm"
                                         required
                                     />
                                     {errors.shipping_sender_phone && (
                                         <p className="text-xs text-destructive">{errors.shipping_sender_phone}</p>
                                     )}
+                                    <p className="text-[11px] text-muted-foreground">
+                                        Format: Awali dengan 08, 628, atau +628 (contoh: 081288889999).
+                                    </p>
                                 </div>
-                            </div>
+                            </CardContent>
+                        </Card>
+                    </div>
 
-                            {/* Baris 2: Hirarki Wilayah KurirAPI */}
-                            <div className="border rounded-2xl p-4 sm:p-5 bg-muted/20 space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <h3 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
-                                        <MapPin className="size-3.5 text-[#4A070B] dark:text-red-400" />
-                                        <span>Wilayah Asal Resmi (Cakupan KurirAPI)</span>
-                                    </h3>
-                                    <span className="text-[11px] text-muted-foreground">Kecamatan = Acuan Cek Ongkir</span>
+                    {/* Right Column: Alamat Origin & Peta Interaktif (lg:col-span-7) */}
+                    <div className="lg:col-span-7 space-y-6">
+                        <Card className="shadow-xs border-border/80">
+                            <CardHeader className="pb-4">
+                                <div className="flex items-center gap-2 text-[#4A070B] dark:text-red-400">
+                                    <MapPin className="size-4.5" />
+                                    <CardTitle className="text-base font-bold">
+                                        Alamat Origin Penjemputan (Pickup)
+                                    </CardTitle>
                                 </div>
-
+                                <CardDescription className="text-xs">
+                                    Alamat dan titik koordinat asal penjemputan paket butik yang digunakan mesin kalkulasi ongkos kirim.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-5">
+                                {/* Provinsi & Kabupaten/Kota */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     {/* Provinsi */}
                                     <div className="space-y-1.5">
@@ -431,9 +504,12 @@ export default function ShippingServicesIndex({
                                             emptyMessage="Provinsi tidak ditemukan."
                                         />
                                         {data.shipping_province_name && (
-                                            <p className="text-[11px] text-muted-foreground font-medium">
+                                            <p className="text-[11px] text-muted-foreground">
                                                 Terpilih: {data.shipping_province_name}
                                             </p>
+                                        )}
+                                        {errors.shipping_province_id && (
+                                            <p className="text-xs text-destructive">{errors.shipping_province_id}</p>
                                         )}
                                     </div>
 
@@ -458,183 +534,198 @@ export default function ShippingServicesIndex({
                                             emptyMessage="Kota tidak ditemukan."
                                         />
                                         {data.shipping_city_name && (
-                                            <p className="text-[11px] text-muted-foreground font-medium">
+                                            <p className="text-[11px] text-muted-foreground">
                                                 Terpilih: {data.shipping_city_name}
                                             </p>
                                         )}
+                                        {errors.shipping_city_id && (
+                                            <p className="text-xs text-destructive">{errors.shipping_city_id}</p>
+                                        )}
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                                    {/* Kecamatan (Origin ID Kunci Utama) */}
-                                    <div className="space-y-1.5 p-3 rounded-xl bg-background border border-[#4A070B]/20">
-                                        <div className="flex items-center justify-between">
-                                            <label className="text-xs font-bold text-[#4A070B] dark:text-red-400 flex items-center gap-1.5">
-                                                <MapPin className="size-3.5" />
-                                                <span>Kecamatan (Origin ID)</span>
-                                            </label>
-                                            <Badge className="bg-[#4A070B] text-white text-[10px] font-bold">
-                                                Wajib
-                                            </Badge>
-                                        </div>
-                                        <SearchableSelect
-                                            options={districts}
-                                            value={data.shipping_district_id}
-                                            fallbackLabel={data.shipping_district_name}
-                                            onChange={handleDistrictChange}
-                                            disabled={!data.shipping_city_id || loadingDistricts}
-                                            loading={loadingDistricts}
-                                            placeholder={
-                                                !data.shipping_city_id
-                                                    ? 'Pilih Kota Dahulu'
-                                                    : 'Pilih Kecamatan'
-                                            }
-                                            searchPlaceholder="Cari kecamatan..."
-                                            emptyMessage="Kecamatan tidak ditemukan."
-                                        />
-                                        <div className="flex items-center justify-between text-[11px] pt-0.5">
-                                            <span className="text-muted-foreground">
-                                                {data.shipping_district_name ? `Kec. ${data.shipping_district_name}` : 'Pilih kecamatan asal'}
+                                {/* Kecamatan (Origin ID Kunci Utama) */}
+                                <div className="p-4 rounded-xl bg-muted/20 border border-[#4A070B]/20 dark:border-red-900/30 space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-xs font-bold text-[#4A070B] dark:text-red-400 flex items-center gap-1.5">
+                                            <MapPin className="size-3.5" />
+                                            <span>Kecamatan (Origin ID Mesin Ongkir)</span>
+                                        </label>
+                                        <Badge className="bg-[#4A070B] text-white text-[10px] font-bold">
+                                            Origin Utama
+                                        </Badge>
+                                    </div>
+                                    <SearchableSelect
+                                        options={districts}
+                                        value={data.shipping_district_id}
+                                        fallbackLabel={data.shipping_district_name}
+                                        onChange={handleDistrictChange}
+                                        disabled={!data.shipping_city_id || loadingDistricts}
+                                        loading={loadingDistricts}
+                                        placeholder={
+                                            !data.shipping_city_id
+                                                ? 'Pilih Kota Dahulu'
+                                                : 'Pilih Kecamatan'
+                                        }
+                                        searchPlaceholder="Cari kecamatan..."
+                                        emptyMessage="Kecamatan tidak ditemukan."
+                                    />
+                                    <div className="flex items-center justify-between text-[11px] pt-0.5">
+                                        <span className="text-muted-foreground">
+                                            {data.shipping_district_name ? `Kec. ${data.shipping_district_name}` : 'Pilih kecamatan asal butik'}
+                                        </span>
+                                        {data.shipping_district_id && (
+                                            <span className="font-mono font-bold text-[#4A070B] dark:text-red-400">
+                                                Kode: {data.shipping_district_id}
                                             </span>
-                                            {data.shipping_district_id && (
-                                                <span className="font-mono font-bold text-[#4A070B] dark:text-red-400">
-                                                    Kode: {data.shipping_district_id}
-                                                </span>
-                                            )}
-                                        </div>
-                                        {errors.shipping_district_id && (
-                                            <p className="text-xs text-destructive">{errors.shipping_district_id}</p>
+                                        )}
+                                    </div>
+                                    {errors.shipping_district_id && (
+                                        <p className="text-xs text-destructive font-medium">{errors.shipping_district_id}</p>
+                                    )}
+                                </div>
+
+                                {/* Kelurahan & Kode Pos */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-semibold text-foreground">
+                                            Kelurahan / Desa <span className="text-muted-foreground font-normal">(Opsional)</span>
+                                        </label>
+                                        <Input
+                                            type="text"
+                                            value={data.shipping_subdistrict_name}
+                                            onChange={(e) => setData('shipping_subdistrict_name', e.target.value)}
+                                            placeholder="mis. Kramat Pela"
+                                            className="h-10 text-sm"
+                                        />
+                                        {errors.shipping_subdistrict_name && (
+                                            <p className="text-xs text-destructive">{errors.shipping_subdistrict_name}</p>
                                         )}
                                     </div>
 
-                                    {/* Kelurahan & Kode Pos */}
-                                    <div className="space-y-3">
-                                        <div className="space-y-1">
-                                            <label className="text-xs font-semibold text-foreground">
-                                                Kelurahan / Desa <span className="text-muted-foreground font-normal">(Opsional)</span>
-                                            </label>
-                                            <Input
-                                                type="text"
-                                                value={data.shipping_subdistrict_name}
-                                                onChange={(e) => setData('shipping_subdistrict_name', e.target.value)}
-                                                placeholder="mis. Kramat Pela"
-                                                className="h-10 text-xs rounded-xl"
-                                            />
-                                        </div>
-
-                                        <div className="space-y-1">
-                                            <label className="text-xs font-semibold text-foreground">
-                                                Kode Pos
-                                            </label>
-                                            <Input
-                                                type="text"
-                                                placeholder="Contoh: 12130"
-                                                value={data.shipping_postal_code}
-                                                onChange={(e) => setData('shipping_postal_code', e.target.value)}
-                                                className="h-10 text-xs rounded-xl"
-                                                maxLength={10}
-                                            />
-                                        </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-semibold text-foreground">
+                                            Kode Pos <span className="text-muted-foreground font-normal">(Opsional)</span>
+                                        </label>
+                                        <Input
+                                            type="text"
+                                            placeholder="Contoh: 12130"
+                                            value={data.shipping_postal_code}
+                                            onChange={(e) => setData('shipping_postal_code', e.target.value)}
+                                            className="h-10 text-sm"
+                                            maxLength={10}
+                                        />
+                                        {errors.shipping_postal_code && (
+                                            <p className="text-xs text-destructive">{errors.shipping_postal_code}</p>
+                                        )}
                                     </div>
                                 </div>
-                            </div>
 
-                            {/* Baris 3: Alamat Lengkap Penjemputan */}
-                            <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-foreground flex items-center gap-1">
-                                    <span>Alamat Lengkap Lokasi Butik (Jalan, No. Bangunan, Patokan)</span>
-                                    <span className="text-destructive">*</span>
-                                </label>
-                                <Textarea
-                                    placeholder="Contoh: Jl. Kemang Raya No. 10, RT 01 / RW 02, Bangka, Mampang Prapatan"
-                                    rows={2}
-                                    value={data.shipping_address}
-                                    onChange={(e) => setData('shipping_address', e.target.value)}
-                                    className="text-xs rounded-xl resize-none"
-                                    required
-                                />
-                                {errors.shipping_address && (
-                                    <p className="text-xs text-destructive">{errors.shipping_address}</p>
-                                )}
-                            </div>
+                                {/* Alamat Lengkap */}
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                                        <span>Alamat Lengkap Lokasi Butik (Jalan, No. Gedung, Patokan)</span>
+                                        <span className="text-destructive">*</span>
+                                    </label>
+                                    <Textarea
+                                        placeholder="Contoh: Jl. Kemang Raya No. 10, RT 01 / RW 02, Bangka, Mampang Prapatan"
+                                        rows={3}
+                                        value={data.shipping_address}
+                                        onChange={(e) => setData('shipping_address', e.target.value)}
+                                        className="text-sm resize-none"
+                                        required
+                                    />
+                                    {errors.shipping_address && (
+                                        <p className="text-xs text-destructive">{errors.shipping_address}</p>
+                                    )}
+                                </div>
 
-                            {/* Baris 4: Titik Koordinat GPS & Peta Leaflet */}
-                            <div className="space-y-3 border-t pt-4">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5 uppercase tracking-wider">
+                                {/* Titik Koordinat GPS & Peta Leaflet */}
+                                <div className="space-y-3 pt-3 border-t">
+                                    <div className="space-y-0.5">
+                                        <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5">
                                             <Compass className="size-3.5 text-[#4A070B] dark:text-red-400" />
-                                            <span>Titik Koordinat Asal / Pickup (Peta Interaktif)</span>
+                                            <span>Titik Koordinat GPS &amp; Peta Penjemputan</span>
                                         </h3>
-                                        <p className="text-[11px] text-muted-foreground mt-0.5">
-                                            Geser pin marker pada peta untuk menentukan titik akurat penjemputan armada kurir.
+                                        <p className="text-[11px] text-muted-foreground">
+                                            Geser pin marker pada peta untuk menentukan titik presisi penjemputan armada kurir.
                                         </p>
                                     </div>
-                                </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-semibold text-foreground flex items-center justify-between">
-                                            <span>Latitude</span>
-                                            <span className="text-[10px] text-muted-foreground font-mono">-90 s/d 90</span>
-                                        </label>
-                                        <Input
-                                            type="number"
-                                            step="any"
-                                            placeholder="-6.2608"
-                                            value={data.shipping_latitude}
-                                            onChange={(e) => setData('shipping_latitude', e.target.value)}
-                                            className="h-9 text-xs font-mono rounded-xl"
-                                        />
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                                                <span>Latitude</span>
+                                                <span className="text-[10px] text-muted-foreground font-mono">-90 s/d 90</span>
+                                            </label>
+                                            <Input
+                                                type="number"
+                                                step="any"
+                                                placeholder="-6.2608"
+                                                value={data.shipping_latitude}
+                                                onChange={(e) => setData('shipping_latitude', e.target.value)}
+                                                className="h-9 text-xs font-mono"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                                                <span>Longitude</span>
+                                                <span className="text-[10px] text-muted-foreground font-mono">-180 s/d 180</span>
+                                            </label>
+                                            <Input
+                                                type="number"
+                                                step="any"
+                                                placeholder="106.8152"
+                                                value={data.shipping_longitude}
+                                                onChange={(e) => setData('shipping_longitude', e.target.value)}
+                                                className="h-9 text-xs font-mono"
+                                            />
+                                        </div>
                                     </div>
 
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-semibold text-foreground flex items-center justify-between">
-                                            <span>Longitude</span>
-                                            <span className="text-[10px] text-muted-foreground font-mono">-180 s/d 180</span>
-                                        </label>
-                                        <Input
-                                            type="number"
-                                            step="any"
-                                            placeholder="106.8152"
-                                            value={data.shipping_longitude}
-                                            onChange={(e) => setData('shipping_longitude', e.target.value)}
-                                            className="h-9 text-xs font-mono rounded-xl"
+                                    {/* Leaflet Map Picker */}
+                                    <div className="rounded-xl overflow-hidden border">
+                                        <AddressMapPicker
+                                            latitude={data.shipping_latitude ? Number(data.shipping_latitude) : null}
+                                            longitude={data.shipping_longitude ? Number(data.shipping_longitude) : null}
+                                            targetZoom={15}
+                                            onChange={(lat, lng) => {
+                                                setData((prev) => ({
+                                                    ...prev,
+                                                    shipping_latitude: String(lat),
+                                                    shipping_longitude: String(lng),
+                                                }));
+                                            }}
                                         />
                                     </div>
                                 </div>
-
-                                {/* Leaflet Map Picker */}
-                                <AddressMapPicker
-                                    latitude={data.shipping_latitude ? Number(data.shipping_latitude) : null}
-                                    longitude={data.shipping_longitude ? Number(data.shipping_longitude) : null}
-                                    targetZoom={15}
-                                    onChange={(lat, lng) => {
-                                        setData((prev) => ({
-                                            ...prev,
-                                            shipping_latitude: String(lat),
-                                            shipping_longitude: String(lng),
-                                        }));
-                                    }}
-                                />
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Bottom Save Action */}
-                    <div className="flex items-center justify-end gap-3 pt-2">
-                        <Button
-                            type="submit"
-                            disabled={processing}
-                            className="bg-[#4A070B] hover:bg-[#360407] text-white font-bold text-xs sm:text-sm h-11 px-8 rounded-xl shadow-xs transition active:scale-[0.98] cursor-pointer flex items-center gap-2"
-                        >
-                            <Save className="size-4" />
-                            <span>{processing ? 'Menyimpan Pengaturan...' : 'Simpan Pengaturan Pengiriman'}</span>
-                        </Button>
+                            </CardContent>
+                        </Card>
                     </div>
-                </form>
-            </div>
+                </div>
+
+                {/* Bottom Action Bar */}
+                <div className="flex items-center justify-end gap-3 pt-2">
+                    <Button
+                        type="submit"
+                        disabled={processing}
+                        className="bg-[#4A070B] hover:bg-[#380508] text-white shadow-xs gap-2 px-6 font-medium cursor-pointer"
+                    >
+                        {processing ? (
+                            <>
+                                <Loader2 className="size-4 animate-spin" />
+                                <span>Menyimpan Pengaturan...</span>
+                            </>
+                        ) : (
+                            <>
+                                <Save className="size-4" />
+                                <span>Simpan Pengaturan Pengiriman</span>
+                            </>
+                        )}
+                    </Button>
+                </div>
+            </form>
         </AdminLayout>
     );
 }
-
