@@ -166,18 +166,25 @@ class RajaOngkirPaymentService
         }
     }
 
-    public function cancelPayment(string $paymentIdentifier): mixed
+    public function cancelPayment(string $paymentIdentifier, ?string $orderNumber = null): mixed
     {
+        $payload = [
+            'payment_id' => $paymentIdentifier,
+            'reason' => 'Customer canceled the order',
+        ];
+
+        if ($orderNumber) {
+            $payload['order_id'] = $orderNumber;
+        }
+
         try {
             return $this->request()
-                ->post($this->baseUrl().'/payment/cancel', [
-                    'payment_id' => $paymentIdentifier,
-                    'reason' => 'Customer canceled the order',
-                ])
+                ->post($this->baseUrl().'/payment/cancel', $payload)
                 ->json();
         } catch (\Throwable $e) {
             Log::error('RajaOngkirPaymentService cancelPayment error', [
                 'identifier' => $paymentIdentifier,
+                'order_number' => $orderNumber,
                 'error' => $e->getMessage(),
             ]);
 

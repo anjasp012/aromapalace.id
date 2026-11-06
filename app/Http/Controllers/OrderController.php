@@ -486,11 +486,14 @@ class OrderController extends Controller
             return back()->with('error', $isEn ? 'Paid orders or orders being processed cannot be cancelled.' : 'Pesanan yang sudah dibayar atau sedang diproses tidak dapat dibatalkan.');
         }
 
-        if (! empty($order->payment_notes) && ! $order->is_manual) {
-            try {
-                app(RajaOngkirPaymentService::class)->cancelPayment($order->payment_notes);
-            } catch (\Throwable $e) {
-                Log::warning("Failed to cancel payment gateway transaction for order #{$order->order_number}: ".$e->getMessage());
+        if (! $order->is_manual) {
+            $identifier = $order->payment_notes ?: ($order->payment_code ?: $order->order_number);
+            if (! empty($identifier)) {
+                try {
+                    app(RajaOngkirPaymentService::class)->cancelPayment($identifier, $order->order_number);
+                } catch (\Throwable $e) {
+                    Log::warning("Failed to cancel payment gateway transaction for order #{$order->order_number}: ".$e->getMessage());
+                }
             }
         }
 

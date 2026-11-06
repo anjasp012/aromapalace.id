@@ -7,6 +7,7 @@ use App\Models\ProductVariant;
 use App\Models\User;
 use App\Models\Voucher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 
 uses(RefreshDatabase::class);
 
@@ -198,3 +199,54 @@ test('customer cannot cancel order owned by another user', function () {
     expect($order->status)->toBe('menunggu_pembayaran');
 });
 
+test('cancelling online gateway order invokes payment gateway cancel api', function () {
+    Http::fake([
+        '*collaborator.komerce.id/*payment/cancel*' => Http::response([
+            'meta' => ['code' => 200, 'status' => 'success', 'message' => 'payment cancelled'],
+            'data' => null,
+        ], 200),
+        '*' => Http::response([], 200),
+    ]);
+
+    $user = User::factory()->create();
+    $variant = ProductVariant::first();
+
+    $order = Order::create([
+        'order_number' => 'ARPL-CANCEL-GATEWAY-001',
+        'user_id' => $user->id,
+        'recipient_name' => 'Dimas',
+        'recipient_phone' => '0812345678',
+        'address' => 'Jakarta',
+        'courier' => 'JNE',
+        'shipping_cost' => 0,
+        'payment_method' => 'bri_va',
+        'payment_channel' => 'BRI Virtual Account',
+        'payment_code' => '1280012345678',
+        'payment_notes' => 'KPAY-GATEWAY-12345',
+        'payment_status' => 'pending',
+        'status' => 'menunggu_pembayaran',
+        'subtotal' => 500000,
+        'total_amount' => 500000,
+    ]);
+
+    $order->items()->create([
+        'product_id' => $variant->product_id,
+        'variant_id' => $variant->id,
+        'product_name' => 'Oud Royale Test',
+        'variant_name' => '50ml EDP',
+        'volume' => '50ml',
+        'price' => 500000,
+        'quantity' => 1,
+        'total_price' => 500000,
+    ]);
+
+    $response = $this->actingAs($user)->post(route('account.orders.cancel', ['order' => $order->id]));
+
+    $response->assertSessionHas('success');
+
+    Http::assertSent(function ($request) {
+        return str_contains($request->url(), 'payment/cancel')
+            && $request['payment_id'] === 'KPAY-GATEWAY-12345'
+            && $request['order_id'] === 'ARPL-CANCEL-GATEWAY-001';
+    });
+});
