@@ -239,8 +239,8 @@ export default function ProductCard({
 
                 {/* Rating & Ulasan — tepat di bawah harga */}
                 <div className={cn('flex items-center gap-1 text-[11px]', darkTheme ? 'text-white/70' : 'text-muted-foreground')}>
-                    <span className={darkTheme ? 'text-amber-400' : 'text-amber-500'}>★</span>
-                    <span>{Number(product.rating || 5).toFixed(1)}</span>
+                    <span className={Number(product.rating || 0) > 0 ? (darkTheme ? 'text-amber-400' : 'text-amber-500') : 'text-muted-foreground/40'}>★</span>
+                    <span>{Number(product.rating || 0) > 0 ? Number(product.rating).toFixed(1) : '0'}</span>
                     <span>({reviews})</span>
                 </div>
             </CardContent>

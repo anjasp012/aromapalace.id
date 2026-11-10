@@ -592,7 +592,12 @@ export default function AdminProductsIndex({
                                                         key={v.id}
                                                         className="p-1.5 rounded-md border bg-muted/30 flex items-center justify-between gap-2 text-xs"
                                                     >
-                                                        <div className="flex items-center gap-1.5">
+                                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                                            {v.name && v.name !== '-' && v.name.toLowerCase() !== formatVolume(v.volume).toLowerCase() && (
+                                                                <Badge variant="outline" className="px-1.5 py-0 text-[10px] font-semibold">
+                                                                    {v.name}
+                                                                </Badge>
+                                                            )}
                                                             <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
                                                                 {formatVolume(v.volume)}
                                                             </Badge>

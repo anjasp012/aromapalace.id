@@ -176,6 +176,25 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
     const [newReviewAuthor, setNewReviewAuthor] = useState('');
     const [newReviewText, setNewReviewText] = useState('');
     const [customReviews, setCustomReviews] = useState<FragranceReview[]>(product.reviews || []);
+
+    const currentRating = useMemo(() => {
+        if (customReviews.length > 0) {
+            const sum = customReviews.reduce((acc, r) => acc + (Number(r.rating) || 0), 0);
+            return Number((sum / customReviews.length).toFixed(1));
+        }
+        return Number(product.rating || 0);
+    }, [customReviews, product.rating]);
+
+    const starCounts = useMemo(() => {
+        const counts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+        customReviews.forEach((r) => {
+            const score = Math.min(5, Math.max(1, Math.round(Number(r.rating) || 0)));
+            if (score in counts) {
+                counts[score as 1 | 2 | 3 | 4 | 5]++;
+            }
+        });
+        return counts;
+    }, [customReviews]);
     const [copiedShare, setCopiedShare] = useState(false);
     const [isAddingToCart, setIsAddingToCart] = useState(false);
     const [isAddedToCart, setIsAddedToCart] = useState(false);
@@ -716,15 +735,15 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
                         {/* Rating, Reviews count & Question link */}
                         <div className="flex items-center gap-3 text-xs border-y border-border/70 py-2.5">
                             <div className="flex items-center gap-1.5 font-bold text-foreground">
-                                <span className="text-amber-500 text-sm">★</span>
-                                <span>{Number(product.rating || 5).toFixed(1)}</span>
+                                <span className={currentRating > 0 ? "text-amber-500 text-sm" : "text-muted-foreground/40 text-sm"}>★</span>
+                                <span>{currentRating > 0 ? currentRating.toFixed(1) : '0'}</span>
                             </div>
                             <span className="text-muted-foreground">/</span>
                             <a
                                 href="#ulasan"
                                 className="text-muted-foreground hover:text-[#4A070B] transition-colors"
                             >
-                                {product.reviews_count || customReviews.length || 0} {isEn ? 'Customer Reviews' : 'Ulasan Pelanggan'}
+                                {customReviews.length} {isEn ? 'Customer Reviews' : 'Ulasan Pelanggan'}
                             </a>
                             <span className="text-muted-foreground">/</span>
                             <span className="text-emerald-600 font-medium flex items-center gap-1">
@@ -981,49 +1000,47 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
                         <div className="lg:col-span-4 p-6 rounded-lg border border-border/80 bg-card/60 space-y-4 shadow-none">
                             <div className="text-center space-y-1 pb-4 border-b border-border/70">
                                 <div className="text-4xl font-extrabold text-[#4A070B] dark:text-[#E8D0BA]">
-                                    {Number(product.rating || 5).toFixed(1)}
+                                    {currentRating > 0 ? currentRating.toFixed(1) : '0'}
                                 </div>
-                                <div className="flex items-center justify-center gap-1 text-amber-500 text-sm">
-                                    {'★'.repeat(5)}
+                                <div className="flex items-center justify-center gap-1 text-sm">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <span
+                                            key={star}
+                                            className={currentRating > 0 && star <= Math.round(currentRating) ? 'text-amber-500' : 'text-muted-foreground/30'}
+                                        >
+                                            ★
+                                        </span>
+                                    ))}
                                 </div>
                                 <div className="text-xs text-muted-foreground">
-                                    {isEn
-                                        ? `Based on ${customReviews.length} verified reviews`
-                                        : `Berdasarkan ${customReviews.length} ulasan terverifikasi`}
+                                    {customReviews.length > 0 ? (
+                                        isEn
+                                            ? `Based on ${customReviews.length} verified reviews`
+                                            : `Berdasarkan ${customReviews.length} ulasan terverifikasi`
+                                    ) : (
+                                        isEn ? 'No reviews yet' : 'Belum ada ulasan'
+                                    )}
                                 </div>
                             </div>
 
                             <div className="space-y-2 text-xs">
-                                <div className="flex items-center gap-2">
-                                    <span className="w-7 flex items-center justify-between text-muted-foreground font-medium shrink-0">
-                                        <span>5</span>
-                                        <span className="text-amber-500">★</span>
-                                    </span>
-                                    <div className="flex-1 bg-muted rounded-full h-1.5 overflow-hidden">
-                                        <div className="bg-[#4A070B] h-full rounded-full" style={{ width: '92%' }}></div>
-                                    </div>
-                                    <span className="w-8 text-right font-bold text-foreground">92%</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="w-7 flex items-center justify-between text-muted-foreground font-medium shrink-0">
-                                        <span>4</span>
-                                        <span className="text-amber-500">★</span>
-                                    </span>
-                                    <div className="flex-1 bg-muted rounded-full h-1.5 overflow-hidden">
-                                        <div className="bg-[#4A070B] h-full rounded-full" style={{ width: '8%' }}></div>
-                                    </div>
-                                    <span className="w-8 text-right font-bold text-foreground">8%</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="w-7 flex items-center justify-between text-muted-foreground font-medium shrink-0">
-                                        <span>3</span>
-                                        <span className="text-amber-500">★</span>
-                                    </span>
-                                    <div className="flex-1 bg-muted rounded-full h-1.5 overflow-hidden">
-                                        <div className="bg-[#4A070B] h-full rounded-full" style={{ width: '0%' }}></div>
-                                    </div>
-                                    <span className="w-8 text-right font-bold text-foreground">0%</span>
-                                </div>
+                                {[5, 4, 3, 2, 1].map((star) => {
+                                    const pct = customReviews.length > 0
+                                        ? Math.round((starCounts[star as 1 | 2 | 3 | 4 | 5] / customReviews.length) * 100)
+                                        : 0;
+                                    return (
+                                        <div key={star} className="flex items-center gap-2">
+                                            <span className="w-7 flex items-center justify-between text-muted-foreground font-medium shrink-0">
+                                                <span>{star}</span>
+                                                <span className={pct > 0 ? "text-amber-500" : "text-muted-foreground/40"}>★</span>
+                                            </span>
+                                            <div className="flex-1 bg-muted rounded-full h-1.5 overflow-hidden">
+                                                <div className="bg-[#4A070B] h-full rounded-full transition-all" style={{ width: `${pct}%` }}></div>
+                                            </div>
+                                            <span className="w-8 text-right font-bold text-foreground">{pct}%</span>
+                                        </div>
+                                    );
+                                })}
                             </div>
 
                         </div>

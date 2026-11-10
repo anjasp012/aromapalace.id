@@ -196,7 +196,7 @@ class ProductController extends Controller
         if ($rating !== null && $rating !== '' && is_numeric($rating)) {
             $minRating = (float) $rating;
             if ($minRating > 0) {
-                $query->whereRaw('(SELECT COALESCE(AVG(rating), 5.0) FROM product_reviews WHERE product_reviews.product_id = products.id) >= ?', [$minRating]);
+                $query->whereRaw('(SELECT COALESCE(AVG(rating), 0) FROM product_reviews WHERE product_reviews.product_id = products.id) >= ?', [$minRating]);
             }
         } else {
             $minRating = 0;

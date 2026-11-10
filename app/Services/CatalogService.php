@@ -113,7 +113,7 @@ class CatalogService
 
         $avgRating = $p->reviews->isNotEmpty()
             ? round((float) $p->reviews->avg('rating'), 2)
-            : 5.0;
+            : 0.0;
 
         $inStock = $p->variants->isNotEmpty()
             ? $p->variants->contains(fn ($v) => $v->stock > 0)
