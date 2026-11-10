@@ -631,10 +631,12 @@ class ProductImportService
             ->first();
 
         if ($product) {
-            // If existing product lacks a brand and we now have one, assign it
+            // Update to draft as requested ("aku import ulang ya nanti, update jadi draft")
+            $updates = ['is_draft' => true];
             if ($brandId && ! $product->brand_id) {
-                $product->update(['brand_id' => $brandId]);
+                $updates['brand_id'] = $brandId;
             }
+            $product->update($updates);
             $productsUpdated++;
         } else {
             $slug = $this->generateUniqueProductSlug($productName);
@@ -645,16 +647,10 @@ class ProductImportService
                 'brand_id' => $brandId,
                 'description' => '-',
                 'description_en' => '-',
-                'is_draft' => false,
+                'is_draft' => true,
                 'is_new_arrivals' => false,
                 'is_best_sellers' => false,
                 'is_special_offers' => false,
-            ]);
-
-            // Add default fallback gallery image
-            ProductGallery::create([
-                'product_id' => $product->id,
-                'image' => 'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=800&q=80',
             ]);
 
             $productsCreated++;

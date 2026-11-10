@@ -91,8 +91,7 @@ class ProductController extends Controller
         }
 
         $products = $query->paginate(12)->withQueryString()->through(function (Product $product) {
-            $primaryImage = $product->galleries->first()?->image
-                ?: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=800&q=80';
+            $primaryImage = $product->galleries->first()?->image ?: null;
 
             $totalStock = $product->variants->sum('stock');
             $minPrice = $product->variants->min('price') ?? 0;
@@ -290,14 +289,6 @@ class ProductController extends Controller
                         $hasGalleries = true;
                     }
                 }
-            }
-
-            // 3. Fallback default image if none provided
-            if (! $hasGalleries) {
-                ProductGallery::create([
-                    'product_id' => $product->id,
-                    'image' => 'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=800&q=80',
-                ]);
             }
 
             // Save variants
@@ -620,14 +611,6 @@ class ProductController extends Controller
                         ]);
                     }
                 }
-            }
-
-            // 4. Default fallback if all galleries were deleted
-            if ($product->galleries()->count() === 0) {
-                ProductGallery::create([
-                    'product_id' => $product->id,
-                    'image' => 'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=800&q=80',
-                ]);
             }
 
             // Sync variants

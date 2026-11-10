@@ -93,11 +93,11 @@ class CatalogService
     {
         $primaryImg = $p->primaryImage?->image
             ?? $p->galleries->first()?->image
-            ?? 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?auto=format&fit=crop&w=800&q=80';
+            ?? null;
 
         $galleryImgs = $p->galleries->isNotEmpty()
             ? $p->galleries->pluck('image')->all()
-            : [$primaryImg];
+            : ($primaryImg ? [$primaryImg] : []);
 
         $reviews = $p->reviews->map(fn ($r) => [
             'id' => $r->id,

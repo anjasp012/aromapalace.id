@@ -117,12 +117,14 @@ test('admin can execute product import and create brand, product with default da
     $brand = Brand::where('name', 'AL FARES')->first();
     expect($brand)->not->toBeNull();
 
-    // Check product was created with dash for required description
+    // Check product was created with dash for required description, as draft, and without fake galleries
     $product = Product::where('name', 'Al Fares Khayal Al Faris Edp inspired by Parfums De Marly Greenley')->first();
     expect($product)->not->toBeNull()
         ->and($product->brand_id)->toBe($brand->id)
         ->and($product->description)->toBe('-')
-        ->and($product->description_en)->toBe('-');
+        ->and($product->description_en)->toBe('-')
+        ->and($product->is_draft)->toBeTrue()
+        ->and($product->galleries()->count())->toBe(0);
 
     // Check variant
     $variant = ProductVariant::where('product_id', $product->id)->first();

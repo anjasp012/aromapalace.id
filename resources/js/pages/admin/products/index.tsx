@@ -481,11 +481,17 @@ export default function AdminProductsIndex({
                                     <tr key={product.id} className="hover:bg-muted/50 transition-colors">
                                         <td className="p-4 align-middle">
                                             <div className="flex items-center gap-3">
-                                                <img
-                                                    src={product.primary_image}
-                                                    alt={product.name}
-                                                    className="size-12 rounded-md object-cover border bg-muted shrink-0"
-                                                />
+                                                {product.primary_image ? (
+                                                    <img
+                                                        src={product.primary_image}
+                                                        alt={product.name}
+                                                        className="size-12 rounded-md object-cover border bg-muted shrink-0"
+                                                    />
+                                                ) : (
+                                                    <div className="size-12 rounded-md border bg-muted flex flex-col items-center justify-center text-muted-foreground/40 shrink-0">
+                                                        <Package className="size-5" />
+                                                    </div>
+                                                )}
                                                 <div className="min-w-0">
                                                     <Link
                                                         href={`/manajemen-produk/${product.id}/edit`}

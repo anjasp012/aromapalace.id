@@ -19,7 +19,7 @@ import { cn, formatVolume } from '@/lib/utils';
 import { isNativeApp } from '@/lib/native-app';
 import { useTranslation, formatCategoryName } from '@/lib/i18n';
 import { getAdminUrl } from '@/lib/route-resolver';
-import { Check, Loader2 } from 'lucide-react';
+import { Check, Loader2, Package } from 'lucide-react';
 
 export interface FragranceReview {
     name: string;
@@ -479,15 +479,24 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
                                 className="flex w-full h-full overflow-x-auto snap-x snap-mandatory scroll-smooth"
                                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                             >
-                                {images.map((imgUrl, idx) => (
-                                    <div key={idx} className="w-full h-full shrink-0 snap-center relative">
-                                        <img
-                                            src={imgUrl}
-                                            alt={`${product.name} ${idx + 1}`}
-                                            className="w-full h-full object-cover"
-                                        />
+                                {images.length > 0 ? (
+                                    images.map((imgUrl, idx) => (
+                                        <div key={idx} className="w-full h-full shrink-0 snap-center relative">
+                                            <img
+                                                src={imgUrl}
+                                                alt={`${product.name} ${idx + 1}`}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="w-full h-full flex flex-col items-center justify-center bg-muted text-muted-foreground/35 select-none">
+                                        <Package className="size-16 stroke-[1.25]" />
+                                        <span className="text-xs mt-2 font-medium tracking-wider uppercase text-muted-foreground/40">
+                                            {isEn ? 'No Photo Available' : 'Tanpa Foto'}
+                                        </span>
                                     </div>
-                                ))}
+                                )}
                             </div>
 
                             {/* Product Labels: Top Left */}
@@ -577,8 +586,11 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
                                     className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                                 />
                             ) : (
-                                <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
-                                    {isEn ? 'Fragrance Image' : 'Gambar Wewangian'}
+                                <div className="w-full h-full flex flex-col items-center justify-center bg-muted text-muted-foreground/35 select-none">
+                                    <Package className="size-16 stroke-[1.25]" />
+                                    <span className="text-xs mt-2 font-medium tracking-wider uppercase text-muted-foreground/40">
+                                        {isEn ? 'No Photo Available' : 'Tanpa Foto'}
+                                    </span>
                                 </div>
                             )}
 

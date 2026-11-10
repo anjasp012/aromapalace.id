@@ -1,4 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
+import { Package } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -96,15 +97,33 @@ export default function ProductCard({
                     cacheFor="2m"
                     className="block w-full h-full cursor-pointer"
                 >
-                    {product.image && (
+                    {product.image ? (
                         <img
                             src={product.image}
                             alt={product.name}
                             loading="lazy"
                             decoding="async"
+                            onError={(e) => {
+                                (e.currentTarget as HTMLElement).style.display = 'none';
+                                const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                                if (fallback) {
+                                    fallback.style.display = 'flex';
+                                }
+                            }}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
-                    )}
+                    ) : null}
+                    <div
+                        className={cn(
+                            'w-full h-full flex flex-col items-center justify-center bg-muted text-muted-foreground/35 select-none',
+                            product.image ? 'hidden' : 'flex'
+                        )}
+                    >
+                        <Package className="size-10 sm:size-12 stroke-[1.25]" />
+                        <span className="text-[10px] mt-1.5 font-medium tracking-wider uppercase text-muted-foreground/40">
+                            {isEn ? 'No Photo' : 'Tanpa Foto'}
+                        </span>
+                    </div>
                 </Link>
 
                 {/* Badges Container */}

@@ -210,7 +210,7 @@ export default function ProductImportModal({ open, onOpenChange }: ProductImport
                             </div>
                             <DialogDescription className="text-xs text-muted-foreground">
                                 Format 4 kolom: <span className="font-semibold text-foreground">Brand</span> &bull; <span className="font-semibold text-foreground">Product</span> &bull; <span className="font-semibold text-foreground">Price</span> &bull; <span className="font-semibold text-foreground">Varian</span>.
-                                Sistem otomatis mencocokkan Brand, memisahkan varian, dan mengisi kolom wajib lainnya dengan tanda (-).
+                                Seluruh produk otomatis disimpan sebagai <span className="font-semibold text-amber-600 dark:text-amber-400">Draft</span> terlebih dahulu (tidak langsung tayang di toko) dan tanpa gambar palsu (tampilan otomatis abu-abu netral).
                             </DialogDescription>
                         </div>
                         <Button
@@ -460,10 +460,9 @@ export default function ProductImportModal({ open, onOpenChange }: ProductImport
                                                         )}
                                                     </td>
                                                     <td className="p-3 text-center">
-                                                        <span className="inline-flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
-                                                            <CheckCircle2 className="size-3.5" />
-                                                            Siap
-                                                        </span>
+                                                        <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 font-medium">
+                                                            Draft
+                                                        </Badge>
                                                     </td>
                                                 </tr>
                                             ))}
