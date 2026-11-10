@@ -135,6 +135,24 @@ test('admin can execute product import and create brand, product with default da
         ->and($variant->stock)->toBe(20);
 });
 
+test('cleanPrice correctly handles various price formats without adding trailing zeros', function () {
+    $service = new \App\Services\ProductImportService();
+
+    expect($service->cleanPrice('412,500'))->toBe(412500)
+        ->and($service->cleanPrice('412.500'))->toBe(412500)
+        ->and($service->cleanPrice('412500'))->toBe(412500)
+        ->and($service->cleanPrice('412,500.0'))->toBe(412500)
+        ->and($service->cleanPrice('412,500.00'))->toBe(412500)
+        ->and($service->cleanPrice('412500.0'))->toBe(412500)
+        ->and($service->cleanPrice('412500.00'))->toBe(412500)
+        ->and($service->cleanPrice('412.500,0'))->toBe(412500)
+        ->and($service->cleanPrice('412.500,00'))->toBe(412500)
+        ->and($service->cleanPrice('Rp 412,500'))->toBe(412500)
+        ->and($service->cleanPrice('Rp. 412.500,-'))->toBe(412500)
+        ->and($service->cleanPrice('4,125,000'))->toBe(4125000)
+        ->and($service->cleanPrice('4.125.000'))->toBe(4125000);
+});
+
 test('importing multiple variants for the same product attaches variants to single product', function () {
     $admin = User::factory()->admin()->create();
 

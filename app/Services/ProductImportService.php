@@ -278,8 +278,12 @@ class ProductImportService
                 }
 
                 $ref = (string) $cell['r'];
-                $colLetters = preg_replace('/[0-9]/', '', $ref);
-                $colIndex = $this->colLetterToIndex($colLetters);
+                if ($ref !== '') {
+                    $colLetters = preg_replace('/[0-9]/', '', $ref);
+                    $colIndex = $this->colLetterToIndex($colLetters);
+                } else {
+                    $colIndex = count($rowData);
+                }
 
                 $rowData[$colIndex] = trim($cellValue);
             }
@@ -711,7 +715,7 @@ class ProductImportService
     }
 
     /**
-     * Clean and parse price strings into integer (e.g. "412,500" -> 412500, "Rp 412.500,00" -> 412500).
+     * Clean and parse price strings into integer (e.g. "412,500" -> 412500, "Rp 412.500,00" -> 412500, "412500.0" -> 412500).
      */
     public function cleanPrice(string $priceStr): int
     {
@@ -720,10 +724,126 @@ class ProductImportService
             return 0;
         }
 
-        // Strip decimal zero cents at end (e.g. ,00 or .00)
-        $str = preg_replace('/[,\.]00$/', '', $str);
+        // Replace non-breaking spaces and unicode spaces with standard space
+        $str = preg_replace('/[\x{00A0}\x{200B}\s]+/u', ' ', $str);
 
-        // Remove non-digit characters
+        // Remove common currency symbols and labels (Rp, IDR, rp., etc.) and trailing dashes (e.g. ,-)
+        $str = preg_replace('/^(?:rp\.?|idr)\s*/i', '', $str);
+        $str = preg_replace('/\s*(?:idr|rp\.?)$/i', '', $str);
+        $str = preg_replace('/,-\s*$/', '', $str);
+        $str = preg_replace('/\.-\s*$/', '', $str);
+        $str = trim($str);
+
+        if ($str === '') {
+            return 0;
+        }
+
+        // Handle scientific notation (e.g. 4.125e5 or 4.125E+5 from Excel)
+        if (preg_match('/^[0-9]+(?:\.[0-9]+)?[eE][+-]?[0-9]+$/', $str)) {
+            return (int) round((float) $str);
+        }
+
+        // Count occurrences of commas and dots
+        $hasComma = str_contains($str, ',');
+        $hasDot = str_contains($str, '.');
+
+        // Case 1: Both comma and dot are present (e.g. "412,500.00", "412,500.0", "412.500,00", "412.500,0")
+        if ($hasComma && $hasDot) {
+            $lastCommaPos = strrpos($str, ',');
+            $lastDotPos = strrpos($str, '.');
+
+            if ($lastDotPos > $lastCommaPos) {
+                // Dot is the decimal separator (US format: "412,500.00" or "412,500.0")
+                $intPart = substr($str, 0, $lastDotPos);
+                $decPart = substr($str, $lastDotPos + 1);
+                $cleanInt = preg_replace('/[^\d]/', '', $intPart);
+                $decVal = (float) ('0.' . preg_replace('/[^\d]/', '', $decPart));
+
+                return (int) round(((float) $cleanInt) + $decVal);
+            } else {
+                // Comma is the decimal separator (EU/ID format: "412.500,00" or "412.500,0")
+                $intPart = substr($str, 0, $lastCommaPos);
+                $decPart = substr($str, $lastCommaPos + 1);
+                $cleanInt = preg_replace('/[^\d]/', '', $intPart);
+                $decVal = (float) ('0.' . preg_replace('/[^\d]/', '', $decPart));
+
+                return (int) round(((float) $cleanInt) + $decVal);
+            }
+        }
+
+        // Case 2: Only commas present (e.g. "412,500", "4,125,000", "412500,0", "412500,00")
+        if ($hasComma) {
+            $commaCount = substr_count($str, ',');
+            if ($commaCount > 1) {
+                // Multiple commas: always thousands separators ("4,125,000")
+                return (int) preg_replace('/[^\d]/', '', $str);
+            }
+
+            // Exactly one comma: check suffix
+            $parts = explode(',', $str);
+            $intPart = $parts[0];
+            $suffix = $parts[1] ?? '';
+            $cleanSuffix = preg_replace('/[^\d]/', '', $suffix);
+            $suffixLen = strlen($cleanSuffix);
+
+            // If suffix is NOT 3 digits (e.g. "412500,0" or "412500,00" or "412500,5"), it's a decimal separator
+            if ($suffixLen !== 3) {
+                $cleanInt = preg_replace('/[^\d]/', '', $intPart);
+                $decVal = $suffixLen > 0 ? (float) ('0.' . $cleanSuffix) : 0.0;
+
+                return (int) round(((float) $cleanInt) + $decVal);
+            }
+
+            // Suffix is 3 digits.
+            // If integer part has 4+ digits without separator (e.g. "412500,000"), comma is decimal
+            $cleanInt = preg_replace('/[^\d]/', '', $intPart);
+            if (strlen($cleanInt) > 3) {
+                $decVal = (float) ('0.' . $cleanSuffix);
+
+                return (int) round(((float) $cleanInt) + $decVal);
+            }
+
+            // Standard thousands separator: "412,500" -> 412500
+            return (int) ($cleanInt . $cleanSuffix);
+        }
+
+        // Case 3: Only dots present (e.g. "412.500", "4.125.000", "412500.0", "412500.00")
+        if ($hasDot) {
+            $dotCount = substr_count($str, '.');
+            if ($dotCount > 1) {
+                // Multiple dots: always thousands separators ("4.125.000")
+                return (int) preg_replace('/[^\d]/', '', $str);
+            }
+
+            // Exactly one dot: check suffix
+            $parts = explode('.', $str);
+            $intPart = $parts[0];
+            $suffix = $parts[1] ?? '';
+            $cleanSuffix = preg_replace('/[^\d]/', '', $suffix);
+            $suffixLen = strlen($cleanSuffix);
+
+            // If suffix is NOT 3 digits (e.g. "412500.0", "412500.00", "412500.5"), it's a decimal separator
+            if ($suffixLen !== 3) {
+                $cleanInt = preg_replace('/[^\d]/', '', $intPart);
+                $decVal = $suffixLen > 0 ? (float) ('0.' . $cleanSuffix) : 0.0;
+
+                return (int) round(((float) $cleanInt) + $decVal);
+            }
+
+            // Suffix is 3 digits.
+            // If integer part has 4+ digits without separator (e.g. "412500.000"), dot is decimal
+            $cleanInt = preg_replace('/[^\d]/', '', $intPart);
+            if (strlen($cleanInt) > 3) {
+                $decVal = (float) ('0.' . $cleanSuffix);
+
+                return (int) round(((float) $cleanInt) + $decVal);
+            }
+
+            // Standard thousands separator: "412.500" -> 412500
+            return (int) ($cleanInt . $cleanSuffix);
+        }
+
+        // Case 4: No commas, no dots (e.g. "412500" or with spaces "412 500")
         $digits = preg_replace('/[^\d]/', '', $str);
 
         return (int) $digits;
