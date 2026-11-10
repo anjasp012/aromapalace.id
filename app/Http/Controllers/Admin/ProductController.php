@@ -9,8 +9,11 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductGallery;
 use App\Models\ProductVariant;
+use App\Services\ProductImportService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -343,6 +346,129 @@ class ProductController extends Controller
 
         return redirect()->route('admin.products.index')
             ->with('success', "Produk \"{$validated['name']}\" beserta variannya berhasil ditambahkan!");
+    }
+
+    /**
+     * Download CSV template for product importing.
+     */
+    public function downloadImportTemplate(ProductImportService $importService): HttpResponse
+    {
+        $csv = $importService->generateTemplateCsv();
+
+        return response($csv, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="template_import_produk.csv"',
+        ]);
+    }
+
+    /**
+     * Preview product import data before execution.
+     */
+    public function previewImport(Request $request, ProductImportService $importService): JsonResponse
+    {
+        $request->validate([
+            'file' => ['nullable', 'file', 'max:10240'],
+            'raw_text' => ['nullable', 'string'],
+            'rows' => ['nullable', 'array'],
+        ]);
+
+        if ($request->hasFile('file')) {
+            $rawRows = $importService->parseInput($request->file('file'));
+            $normalized = $importService->normalizeRows($rawRows);
+        } elseif ($request->filled('raw_text')) {
+            $rawRows = $importService->parseRawText($request->input('raw_text'));
+            $normalized = $importService->normalizeRows($rawRows);
+        } elseif ($request->has('rows') && is_array($request->input('rows'))) {
+            $normalized = $request->input('rows');
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Silakan unggah file Excel/CSV atau tempel teks data produk.',
+            ], 422);
+        }
+
+        if (empty($normalized)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak ada data produk yang terdeteksi. Pastikan kolom sesuai format (Brand, Product, Price, Varian).',
+            ], 422);
+        }
+
+        $previewData = $importService->preview($normalized);
+
+        return response()->json([
+            'success' => true,
+            'data' => $previewData,
+            'normalized_rows' => $normalized,
+        ]);
+    }
+
+    /**
+     * Import products and variants from uploaded file, raw text, or parsed rows.
+     */
+    public function import(Request $request, ProductImportService $importService): RedirectResponse|JsonResponse
+    {
+        $request->validate([
+            'file' => ['nullable', 'file', 'max:10240'],
+            'raw_text' => ['nullable', 'string'],
+            'rows' => ['nullable', 'array'],
+        ]);
+
+        if ($request->hasFile('file')) {
+            $rawRows = $importService->parseInput($request->file('file'));
+            $rows = $importService->normalizeRows($rawRows);
+        } elseif ($request->filled('raw_text')) {
+            $rawRows = $importService->parseRawText($request->input('raw_text'));
+            $rows = $importService->normalizeRows($rawRows);
+        } elseif ($request->has('rows') && is_array($request->input('rows'))) {
+            $rows = $request->input('rows');
+        } else {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak ada data produk untuk diimpor.',
+                ], 422);
+            }
+
+            return back()->with('error', 'Tidak ada data produk untuk diimpor.');
+        }
+
+        if (empty($rows)) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Data produk kosong atau format kolom tidak sesuai.',
+                ], 422);
+            }
+
+            return back()->with('error', 'Data produk kosong atau format kolom tidak sesuai.');
+        }
+
+        $result = $importService->executeImport($rows);
+
+        $msg = sprintf(
+            'Berhasil mengimpor %d produk (%d baru, %d diperbarui) dan %d varian (%d baru, %d diperbarui).',
+            $result['products_created'] + $result['products_updated'],
+            $result['products_created'],
+            $result['products_updated'],
+            $result['variants_created'] + $result['variants_updated'],
+            $result['variants_created'],
+            $result['variants_updated']
+        );
+
+        if ($result['brands_created'] > 0) {
+            $msg .= sprintf(' %d brand baru otomatis didaftarkan.', $result['brands_created']);
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $msg,
+                'result' => $result,
+            ]);
+        }
+
+        return redirect()->route('admin.products.index')->with('success', $msg);
     }
 
     /**

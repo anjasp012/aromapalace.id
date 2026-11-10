@@ -64,6 +64,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/manajemen-produk', [ProductController::class, 'index'])->name('products.index');
     Route::get('/manajemen-produk/create', [ProductController::class, 'create'])->name('products.create');
     Route::post('/manajemen-produk', [ProductController::class, 'store'])->name('products.store');
+    Route::get('/manajemen-produk/import/template', [ProductController::class, 'downloadImportTemplate'])->name('products.import.template');
+    Route::post('/manajemen-produk/import/preview', [ProductController::class, 'previewImport'])->name('products.import.preview');
+    Route::post('/manajemen-produk/import', [ProductController::class, 'import'])->name('products.import');
     Route::get('/manajemen-produk/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
     Route::match(['put', 'patch', 'post'], '/manajemen-produk/{product}', [ProductController::class, 'update'])->name('products.update');
     Route::post('/manajemen-produk/{id}/pulihkan', [ProductController::class, 'restore'])->name('products.restore');

@@ -16,7 +16,9 @@ import {
     Boxes,
     X,
     RotateCcw,
+    FileSpreadsheet,
 } from 'lucide-react';
+import ProductImportModal from './ProductImportModal';
 import {
     Card,
     CardHeader,
@@ -149,6 +151,7 @@ export default function AdminProductsIndex({
     const [isDeleting, setIsDeleting] = useState(false);
     const [isForceDeleting, setIsForceDeleting] = useState(false);
     const [restoringId, setRestoringId] = useState<number | null>(null);
+    const [importModalOpen, setImportModalOpen] = useState(false);
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -435,6 +438,17 @@ export default function AdminProductsIndex({
                                     <span>Reset</span>
                                 </Button>
                             )}
+
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setImportModalOpen(true)}
+                                className="h-9 cursor-pointer gap-1.5 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-500/50"
+                            >
+                                <FileSpreadsheet className="size-4" />
+                                <span>Import Excel</span>
+                            </Button>
 
                             <Button size="sm" asChild className="h-9 cursor-pointer">
                                 <Link href="/manajemen-produk/create">
@@ -826,6 +840,8 @@ export default function AdminProductsIndex({
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            <ProductImportModal open={importModalOpen} onOpenChange={setImportModalOpen} />
         </AdminLayout>
     );
 }
