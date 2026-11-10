@@ -7,6 +7,7 @@ use App\Models\ProductVariant;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Voucher;
+use Carbon\Carbon;
 use Illuminate\Http\Client\Factory;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
@@ -878,4 +879,50 @@ test('order payment channel sanitizes rajaongkir markers when retrieved', functi
 
     $order2 = new Order(['payment_channel' => 'QRIS Instant (RajaOngkir)']);
     expect($order2->payment_channel)->toBe('QRIS Instant');
+});
+
+test('checkout stores gateway expired_at from rajaongkir payment response', function () {
+    Http::swap(new Factory);
+    $mockExpiry = '2026-11-06 15:00:00';
+    Http::fake([
+        '*collaborator.komerce.id/*payment/create*' => Http::response([
+            'meta' => [
+                'code' => 200,
+                'status' => 'success',
+                'message' => 'success create payment',
+            ],
+            'data' => [
+                'payment_id' => 'KPAY-VA-999',
+                'va_number' => '12800987654321',
+                'expired_at' => $mockExpiry,
+            ],
+        ], 200),
+        '*' => Http::response([], 200),
+    ]);
+
+    $user = User::factory()->create();
+    $variant = ProductVariant::where('product_id', 1)->firstOrFail();
+
+    CartItem::create([
+        'user_id' => $user->id,
+        'product_id' => 1,
+        'variant_id' => $variant->id,
+        'quantity' => 1,
+    ]);
+
+    $response = $this->actingAs($user)->post(route('checkout.store'), [
+        'delivery_type' => 'delivery',
+        'recipient_name' => 'Dimas Pratama',
+        'recipient_phone' => '081234567890',
+        'address' => 'Jl. Senopati No. 45',
+        'city' => 'Jakarta Selatan',
+        'courier' => 'JNE REG',
+        'shipping_cost' => 15000,
+        'payment_method' => 'bri_va',
+    ]);
+
+    $order = Order::where('user_id', $user->id)->first();
+    expect($order)->not->toBeNull();
+    expect($order->expired_at)->not->toBeNull();
+    expect($order->expired_at->timestamp)->toBe(Carbon::parse($mockExpiry)->timestamp);
 });

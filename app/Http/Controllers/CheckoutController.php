@@ -16,6 +16,7 @@ use App\Services\CatalogService;
 use App\Services\FirebaseNotificationService;
 use App\Services\KurirAPIService;
 use App\Services\RajaOngkirPaymentService;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -577,6 +578,7 @@ class CheckoutController extends Controller
             $orderNumber = 'ARPL-'.date('Ymd').'-'.strtoupper(Str::random(5));
             $paymentStatus = 'pending';
             $gatewayPaymentId = null;
+            $expiredAt = null;
 
             if ($totalAmount === 0) {
                 $paymentCode = 'FREE-VOUCHER';
@@ -585,6 +587,7 @@ class CheckoutController extends Controller
             } elseif ($isManualPayment) {
                 $paymentChannel = $pm ? $pm->name : 'Transfer Manual';
                 $paymentCode = ($pm && $pm->account_number) ? $pm->account_number : 'MANUAL-'.strtoupper(Str::random(6));
+                $expiredAt = now()->addHours(24);
 
                 // Check if unique code is enabled for this specific payment method
                 $methodUnique = $pm ? (bool) $pm->use_unique_code : false;
@@ -674,7 +677,27 @@ class CheckoutController extends Controller
                     ?: (($pData['payment_url'] ?? null)
                     ?: ($pData['payment_id'] ?? ($pData['id'] ?? null)))));
 
-                $gatewayPaymentId = $pData['payment_id'] ?? null;
+                $gatewayPaymentId = $pData['payment_id'] ?? ($pData['id'] ?? null);
+
+                // Parse expired_at from payment gateway response
+                $rawExpiredAt = $pData['expired_at']
+                    ?? ($pData['expires_at']
+                    ?? ($pData['expired_time']
+                    ?? ($pData['expiry_time']
+                    ?? ($pData['expiry_date'] ?? null))));
+
+                if (! empty($rawExpiredAt)) {
+                    try {
+                        $expiredAt = is_numeric($rawExpiredAt)
+                            ? Carbon::createFromTimestamp($rawExpiredAt)
+                            : Carbon::parse($rawExpiredAt);
+                    } catch (\Throwable $e) {
+                        Log::warning('Failed to parse gateway expired_at: '.$e->getMessage(), ['raw' => $rawExpiredAt]);
+                        $expiredAt = now()->addHours(24);
+                    }
+                } else {
+                    $expiredAt = now()->addHours(24);
+                }
 
                 if (! $paymentCode) {
                     return redirect()->route('checkout.index')
@@ -770,7 +793,8 @@ class CheckoutController extends Controller
                 $voucherId,
                 $totalAmount,
                 $orderItemsData,
-                $gatewayPaymentId
+                $gatewayPaymentId,
+                $expiredAt
             ) {
                 // 2. Race condition guard: Lock Cart Items and verify cart is still available
                 $lockedCartItems = $user->cartItems()->lockForUpdate()->get();
@@ -860,6 +884,7 @@ class CheckoutController extends Controller
                     'voucher_id' => $voucherId,
                     'total_amount' => $totalAmount,
                     'payment_notes' => $gatewayPaymentId,
+                    'expired_at' => $expiredAt,
                     'notes' => $validated['notes'] ?? null,
                 ]);
 

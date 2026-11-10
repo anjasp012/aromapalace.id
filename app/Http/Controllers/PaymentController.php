@@ -43,14 +43,16 @@ class PaymentController extends Controller
             return redirect()->route('home')->with('error', 'Pesanan tidak ditemukan.');
         }
 
-        // Auto-cancel if unpaid (and NOT awaiting admin confirmation) after 24 hours
+        $expiryTime = $orderModel->expired_at ?: ($orderModel->created_at ? $orderModel->created_at->copy()->addHours(24) : null);
+
+        // Auto-cancel if unpaid (and NOT awaiting admin confirmation) after expired_at / 24 hours
         if (
             $orderModel->payment_status !== 'paid'
             && $orderModel->status !== 'menunggu_konfirmasi'
-            && $orderModel->created_at
-            && $orderModel->created_at->copy()->addHours(24)->isPast()
+            && $expiryTime
+            && $expiryTime->isPast()
         ) {
-            app(OrderService::class)->cancelOrder($orderModel, 'Batas waktu pembayaran 24 jam telah berakhir.');
+            app(OrderService::class)->cancelOrder($orderModel, 'Batas waktu pembayaran telah berakhir.');
             $orderModel->refresh();
         }
 
@@ -70,6 +72,9 @@ class PaymentController extends Controller
                 'order_number' => $orderModel->order_number,
                 'recipient_name' => $orderModel->recipient_name,
                 'created_at' => $orderModel->created_at?->toIso8601String(),
+                'expired_at' => $expiryTime?->toIso8601String(),
+                'pay_before' => $expiryTime?->format('d M Y, H:i').' WIB',
+                'pay_before_formatted' => $expiryTime?->format('d M Y, H:i').' WIB',
                 'payment_method' => $orderModel->payment_method,
                 'payment_channel' => $orderModel->payment_channel ? trim((string) preg_replace('/\s*\(?RajaOngkir\)?/i', '', (string) $orderModel->payment_channel)) : null,
                 'payment_code' => $orderModel->payment_code,
@@ -121,15 +126,17 @@ class PaymentController extends Controller
             return redirect()->route('home')->with('error', 'Pesanan tidak ditemukan.');
         }
 
-        // For manual confirmation orders, auto-cancel if 24h passed and proof NOT yet uploaded
+        $expiryTime = $orderModel->expired_at ?: ($orderModel->created_at ? $orderModel->created_at->copy()->addHours(24) : null);
+
+        // For manual confirmation orders, auto-cancel if deadline passed and proof NOT yet uploaded
         if ($orderModel->is_manual) {
             if (
                 $orderModel->payment_status !== 'paid'
                 && $orderModel->status !== 'menunggu_konfirmasi'
-                && $orderModel->created_at
-                && $orderModel->created_at->copy()->addHours(24)->isPast()
+                && $expiryTime
+                && $expiryTime->isPast()
             ) {
-                app(OrderService::class)->cancelOrder($orderModel, 'Batas waktu pembayaran 24 jam telah berakhir.');
+                app(OrderService::class)->cancelOrder($orderModel, 'Batas waktu pembayaran telah berakhir.');
                 $orderModel->refresh();
             }
 
@@ -141,7 +148,7 @@ class PaymentController extends Controller
                     'message' => $orderModel->payment_status === 'paid'
                         ? 'Pembayaran telah diverifikasi lunas.'
                         : ($orderModel->status === 'dibatalkan'
-                            ? 'Pesanan dibatalkan karena melewati batas waktu 24 jam.'
+                            ? 'Pesanan dibatalkan karena melewati batas waktu pembayaran.'
                             : ($orderModel->payment_proof ? 'Bukti transfer sedang diverifikasi oleh admin.' : 'Silakan unggah bukti transfer pembayaran.')),
                 ]);
             }
@@ -150,14 +157,14 @@ class PaymentController extends Controller
                 ->with('info', $orderModel->payment_status === 'paid'
                     ? 'Pembayaran berhasil dikonfirmasi lunas!'
                     : ($orderModel->status === 'dibatalkan'
-                        ? 'Pesanan dibatalkan karena melewati batas waktu 24 jam.'
+                        ? 'Pesanan dibatalkan karena melewati batas waktu pembayaran.'
                         : ($orderModel->payment_proof ? 'Bukti transfer sedang diverifikasi oleh admin.' : 'Silakan unggah bukti transfer pembayaran.')));
         }
 
         if ($orderModel->payment_status === 'pending') {
-            // Auto-cancel if pending and older than 24 hours
-            if ($orderModel->created_at && $orderModel->created_at->copy()->addHours(24)->isPast()) {
-                app(OrderService::class)->cancelOrder($orderModel, 'Batas waktu pembayaran 24 jam telah berakhir.');
+            // Auto-cancel if pending and expired
+            if ($expiryTime && $expiryTime->isPast()) {
+                app(OrderService::class)->cancelOrder($orderModel, 'Batas waktu pembayaran telah berakhir.');
                 $orderModel->refresh();
             } else {
                 // Query status from RajaOngkir (using gateway payment_id if available, falling back to order_number)

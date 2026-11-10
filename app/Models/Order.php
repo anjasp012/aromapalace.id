@@ -40,6 +40,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $payment_code
  * @property string $payment_status
  * @property string|null $status
+ * @property Carbon|null $expired_at
  * @property int $subtotal
  * @property int $discount_amount
  * @property string|null $voucher_code
@@ -89,6 +90,7 @@ use Illuminate\Support\Carbon;
     'payment_sender_name',
     'payment_notes',
     'status',
+    'expired_at',
     'subtotal',
     'discount_amount',
     'voucher_code',
@@ -125,6 +127,7 @@ class Order extends Model
             'latitude' => 'float',
             'longitude' => 'float',
             'payment_proof_uploaded_at' => 'datetime',
+            'expired_at' => 'datetime',
         ];
     }
 
@@ -138,6 +141,18 @@ class Order extends Model
         }
 
         return trim((string) preg_replace('/\s*\(?RajaOngkir\)?/i', '', $value));
+    }
+
+    /**
+     * Get the effective expiry time (from gateway or fallback 24h).
+     */
+    public function getEffectiveExpiredAtAttribute(): ?\Carbon\Carbon
+    {
+        if ($this->expired_at) {
+            return $this->expired_at;
+        }
+
+        return $this->created_at ? $this->created_at->copy()->addHours(24) : null;
     }
 
     /**

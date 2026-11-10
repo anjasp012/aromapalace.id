@@ -118,7 +118,8 @@ class OrderController extends Controller
                 default => ucfirst(str_replace('_', ' ', $orderStatus)),
             };
 
-            $payBefore = $order->created_at ? $order->created_at->copy()->addDay() : null;
+            $expiry = $order->expired_at ?: ($order->created_at ? $order->created_at->copy()->addHours(24) : null);
+            $payBefore = $expiry ? $expiry->format('d M Y, H:i').' WIB' : null;
 
             return [
                 'id' => $order->id,
@@ -134,8 +135,9 @@ class OrderController extends Controller
                 ] : null,
                 'created_at' => $order->created_at?->format('d M Y, H:i').' WIB',
                 'created_at_raw' => $order->created_at?->toIso8601String(),
-                'pay_before' => $payBefore ? $payBefore->format('d M Y, H:i').' WIB' : null,
-                'pay_before_raw' => $payBefore?->toIso8601String(),
+                'expired_at' => $expiry?->toIso8601String(),
+                'pay_before' => $payBefore,
+                'pay_before_raw' => $expiry?->toIso8601String(),
                 'status' => $order->payment_status,
                 'order_status' => $orderStatus,
                 'status_label' => $statusLabel,

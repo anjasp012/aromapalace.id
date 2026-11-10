@@ -18,6 +18,9 @@ interface PaymentProps {
         order_number: string;
         recipient_name?: string;
         created_at?: string;
+        expired_at?: string | null;
+        pay_before?: string | null;
+        pay_before_formatted?: string | null;
         payment_method: string;
         payment_channel: string;
         payment_code: string;
@@ -56,8 +59,14 @@ function PaymentContent({ order }: PaymentProps) {
     const isPaymentLink = order.payment_method === 'payment_link' || order.payment_code?.startsWith('http');
     const hasUploadedProof = !!order.payment_proof;
 
-    // 24 hour countdown timer calculated from order creation time
+    // Countdown timer calculated from gateway expired_at or 24 hours fallback
     const [timeLeft, setTimeLeft] = useState<number>(() => {
+        const expiryIso = order.expired_at || order.pay_before;
+        if (expiryIso) {
+            const expiryMs = new Date(expiryIso).getTime();
+            const nowMs = Date.now();
+            return Math.max(0, Math.floor((expiryMs - nowMs) / 1000));
+        }
         if (order.created_at) {
             const expiryMs = new Date(order.created_at).getTime() + 24 * 3600 * 1000;
             const nowMs = Date.now();
@@ -526,7 +535,7 @@ function PaymentContent({ order }: PaymentProps) {
                             <div className="bg-card/60 backdrop-blur-xs border border-border/80 rounded-2xl p-4 sm:p-5 text-center space-y-1">
                                 <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground font-normal">
                                     <Clock className="w-3.5 h-3.5 text-amber-500" />
-                                    <span>{isEn ? 'Payment deadline (24 hours from order)' : 'Batas waktu bayar (24 jam sejak pesan)'}</span>
+                                    <span>{order.pay_before_formatted ? `${isEn ? 'Pay before' : 'Batas bayar'}: ${order.pay_before_formatted}` : (isEn ? 'Payment deadline' : 'Batas waktu pembayaran')}</span>
                                 </div>
                                 <div className={`text-xl sm:text-2xl font-black tracking-tight font-mono ${timeLeft < 3600 ? 'text-rose-600 dark:text-rose-400' : 'text-foreground'}`}>
                                     {hours} {isEn ? 'hrs' : 'jam'} : {minutes} {isEn ? 'min' : 'menit'} : {seconds} {isEn ? 'sec' : 'detik'}
@@ -912,7 +921,7 @@ function PaymentContent({ order }: PaymentProps) {
                         <div className="bg-card/60 backdrop-blur-xs border border-border/80 rounded-2xl p-4 sm:p-5 text-center space-y-1">
                             <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground font-normal">
                                 <Clock className="w-3.5 h-3.5 text-amber-500" />
-                                <span>{isEn ? 'Payment deadline (24 hours from order)' : 'Batas waktu bayar (24 jam sejak pesan)'}</span>
+                                <span>{order.pay_before_formatted ? `${isEn ? 'Pay before' : 'Batas bayar'}: ${order.pay_before_formatted}` : (isEn ? 'Payment deadline' : 'Batas waktu pembayaran')}</span>
                             </div>
                             <div className={`text-xl sm:text-2xl font-black tracking-tight font-mono ${timeLeft < 3600 ? 'text-rose-600 dark:text-rose-400' : 'text-foreground'}`}>
                                 {hours} {isEn ? 'hrs' : 'jam'} : {minutes} {isEn ? 'min' : 'menit'} : {seconds} {isEn ? 'sec' : 'detik'}

@@ -77,6 +77,7 @@ interface OrderData {
     created_at_raw?: string;
     pay_before?: string;
     pay_before_raw?: string;
+    expired_at?: string | null;
     status: string;
     order_status?: string;
     status_label: string;
@@ -842,6 +843,11 @@ export default function OrdersPage({
                 const isPendingPayment = effectiveStatus === 'menunggu_pembayaran' || selectedOrder.status === 'pending';
                 const canCancelOrder = selectedOrder.can_cancel ?? (isPendingPayment && selectedOrder.status !== 'menunggu_konfirmasi');
                 const payBeforeFormatted = selectedOrder.pay_before || (() => {
+                    const raw = selectedOrder.expired_at || selectedOrder.pay_before_raw;
+                    if (raw) {
+                        const d = new Date(raw);
+                        return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Jakarta' }) + ', ' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' }) + ' WIB';
+                    }
                     if (selectedOrder.created_at_raw) {
                         const d = new Date(new Date(selectedOrder.created_at_raw).getTime() + 24 * 3600 * 1000);
                         return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Jakarta' }) + ', ' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' }) + ' WIB';

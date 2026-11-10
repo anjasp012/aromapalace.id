@@ -78,12 +78,17 @@ class OrderService
                 ->orWhere('status', 'menunggu_pembayaran');
         })
             ->whereNotIn('status', ['menunggu_konfirmasi', 'diproses', 'dikirim', 'selesai', 'dibatalkan'])
-            ->where('created_at', '<=', $cutoff)
+            ->where(function ($q) use ($cutoff) {
+                $q->whereNotNull('expired_at')->where('expired_at', '<=', now())
+                    ->orWhere(function ($sub) use ($cutoff) {
+                        $sub->whereNull('expired_at')->where('created_at', '<=', $cutoff);
+                    });
+            })
             ->get();
 
         $canceledCount = 0;
         foreach ($expiredOrders as $order) {
-            if ($this->cancelOrder($order, 'Batas waktu pembayaran 24 jam telah berakhir.')) {
+            if ($this->cancelOrder($order, 'Batas waktu pembayaran telah berakhir.')) {
                 $canceledCount++;
             }
         }
