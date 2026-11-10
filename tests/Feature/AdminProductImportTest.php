@@ -28,9 +28,49 @@ test('admin can download product import csv template', function () {
         ->assertHeader('Content-Disposition', 'attachment; filename="template_import_produk.csv"');
 
     $content = $response->getContent();
-    expect($content)->toContain('Brand,Product,Price,Varian')
+    expect($content)->toContain('Brand,Product,Price,Volume,Varian')
         ->toContain('AL FARES')
-        ->toContain('100 ml');
+        ->toContain('100 ml')
+        ->toContain('EDP');
+});
+
+test('admin can preview import data from raw text with 5 columns', function () {
+    $admin = User::factory()->admin()->create();
+    $existingBrand = Brand::create([
+        'name' => 'AL FARES',
+        'slug' => 'al-fares',
+        'description' => '-',
+    ]);
+
+    $rawText = "Brand\tProduct\tPrice\tVolume\tVarian\nAL FARES\tAl Fares Khayal Al Faris inspired by Parfums De Marly Greenley\t412,500\t100 ml\tEDP";
+
+    $response = $this->actingAs($admin)
+        ->postJson(route('admin.products.import.preview'), [
+            'raw_text' => $rawText,
+        ]);
+
+    $response->assertOk()
+        ->assertJson([
+            'success' => true,
+            'data' => [
+                'total_rows' => 1,
+                'brands_found_count' => 1,
+                'brands_new_count' => 0,
+                'products_new_count' => 1,
+                'rows' => [
+                    [
+                        'brand_name' => 'AL FARES',
+                        'brand_id' => $existingBrand->id,
+                        'brand_status' => 'found',
+                        'product_name' => 'Al Fares Khayal Al Faris inspired by Parfums De Marly Greenley',
+                        'price_clean' => 412500,
+                        'volume' => 100,
+                        'volume_raw' => '100 ml',
+                        'varian_name' => 'EDP',
+                    ],
+                ],
+            ],
+        ]);
 });
 
 test('admin can preview import data from raw text', function () {
@@ -130,6 +170,39 @@ test('admin can execute product import and create brand, product with default da
     $variant = ProductVariant::where('product_id', $product->id)->first();
     expect($variant)->not->toBeNull()
         ->and($variant->name)->toBe('100 ml')
+        ->and($variant->volume)->toBe(100)
+        ->and($variant->price)->toBe(412500)
+        ->and($variant->stock)->toBe(20);
+});
+
+test('admin can execute product import with 5 columns saving variant name to variant and volume to volume', function () {
+    $admin = User::factory()->admin()->create();
+
+    $rows = [
+        [
+            'brand' => 'AL FARES',
+            'product' => 'Al Fares Khayal Al Faris inspired by Parfums De Marly Greenley',
+            'price' => '412,500',
+            'volume' => '100 ml',
+            'varian' => 'EDP',
+        ],
+    ];
+
+    $response = $this->actingAs($admin)
+        ->postJson(route('admin.products.import'), [
+            'rows' => $rows,
+        ]);
+
+    $response->assertOk()
+        ->assertJson(['success' => true]);
+
+    $product = Product::where('name', 'Al Fares Khayal Al Faris inspired by Parfums De Marly Greenley')->first();
+    expect($product)->not->toBeNull()
+        ->and($product->is_draft)->toBeTrue();
+
+    $variant = ProductVariant::where('product_id', $product->id)->first();
+    expect($variant)->not->toBeNull()
+        ->and($variant->name)->toBe('EDP')
         ->and($variant->volume)->toBe(100)
         ->and($variant->price)->toBe(412500)
         ->and($variant->stock)->toBe(20);

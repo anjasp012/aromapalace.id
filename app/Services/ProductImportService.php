@@ -322,7 +322,7 @@ class ProductImportService
      * Normalize raw rows into structured import row dictionaries with column mapping.
      *
      * @param  array<int, array<int, string>>  $rawRows
-     * @return array<int, array{brand: string, product: string, price: string, varian: string}>
+     * @return array<int, array{brand: string, product: string, price: string, volume: string, varian: string}>
      */
     public function normalizeRows(array $rawRows): array
     {
@@ -330,30 +330,36 @@ class ProductImportService
             return [];
         }
 
-        // Determine if first row is a header
+        $firstRow = $rawRows[0];
+        $colCount = count($firstRow);
+
+        // Default header map depending on column count
         $headerMap = [
             'brand' => 0,
             'product' => 1,
             'price' => 2,
-            'varian' => 3,
+            'volume' => $colCount >= 5 ? 3 : null,
+            'varian' => $colCount >= 5 ? 4 : 3,
         ];
 
-        $firstRow = $rawRows[0];
         $isHeader = false;
-
         $tempMap = [];
+
         foreach ($firstRow as $idx => $cell) {
             $normalized = strtolower(trim($cell));
             if (in_array($normalized, ['brand', 'merek', 'merk'], true)) {
                 $tempMap['brand'] = $idx;
                 $isHeader = true;
-            } elseif (in_array($normalized, ['product', 'produk', 'nama produk', 'name'], true)) {
+            } elseif (in_array($normalized, ['product', 'produk', 'nama produk', 'nama', 'name'], true)) {
                 $tempMap['product'] = $idx;
                 $isHeader = true;
             } elseif (in_array($normalized, ['price', 'harga', 'harga jual', 'price idr'], true)) {
                 $tempMap['price'] = $idx;
                 $isHeader = true;
-            } elseif (in_array($normalized, ['varian', 'variant', 'ukuran', 'volume', 'size'], true)) {
+            } elseif (in_array($normalized, ['volume', 'ukuran', 'size', 'isi', 'vol'], true)) {
+                $tempMap['volume'] = $idx;
+                $isHeader = true;
+            } elseif (in_array($normalized, ['varian', 'variant', 'tipe', 'type', 'jenis', 'konsentrasi', 'edp/edt'], true)) {
                 $tempMap['varian'] = $idx;
                 $isHeader = true;
             }
@@ -367,13 +373,14 @@ class ProductImportService
 
         $normalizedList = [];
         foreach ($dataRows as $row) {
-            $brand = $row[$headerMap['brand']] ?? '';
-            $product = $row[$headerMap['product']] ?? '';
-            $price = $row[$headerMap['price']] ?? '';
-            $varian = $row[$headerMap['varian']] ?? '';
+            $brand = $headerMap['brand'] !== null ? ($row[$headerMap['brand']] ?? '') : '';
+            $product = $headerMap['product'] !== null ? ($row[$headerMap['product']] ?? '') : '';
+            $price = $headerMap['price'] !== null ? ($row[$headerMap['price']] ?? '') : '';
+            $volume = $headerMap['volume'] !== null ? ($row[$headerMap['volume']] ?? '') : '';
+            $varian = $headerMap['varian'] !== null ? ($row[$headerMap['varian']] ?? '') : '';
 
             // Skip if completely blank
-            if ($brand === '' && $product === '' && $price === '' && $varian === '') {
+            if ($brand === '' && $product === '' && $price === '' && $volume === '' && $varian === '') {
                 continue;
             }
 
@@ -381,6 +388,7 @@ class ProductImportService
                 'brand' => trim((string) $brand),
                 'product' => trim((string) $product),
                 'price' => trim((string) $price),
+                'volume' => trim((string) $volume),
                 'varian' => trim((string) $varian),
             ];
         }
@@ -391,7 +399,7 @@ class ProductImportService
     /**
      * Preview normalized rows: resolve brand ID, clean price, calculate volume, and detect new vs existing products.
      *
-     * @param  array<int, array{brand: string, product: string, price: string, varian: string}>  $rows
+     * @param  array<int, array{brand: string, product: string, price: string, volume?: string, varian?: string}>  $rows
      * @return array{
      *     rows: array<int, array{
      *         index: int,
@@ -403,8 +411,9 @@ class ProductImportService
      *         price_raw: string,
      *         price_clean: int,
      *         price_formatted: string,
-     *         varian_name: string,
+     *         volume_raw: string,
      *         volume: int,
+     *         varian_name: string,
      *         is_valid: bool
      *     }>,
      *     total_rows: int,
@@ -431,7 +440,8 @@ class ProductImportService
             $brandName = $row['brand'];
             $productName = $row['product'] ?: '-';
             $priceRaw = $row['price'];
-            $varianName = $row['varian'] ?: '-';
+            $volumeRaw = trim((string) ($row['volume'] ?? ''));
+            $varianRaw = trim((string) ($row['varian'] ?? ''));
 
             // 1. Resolve Brand
             $brandId = null;
@@ -453,8 +463,20 @@ class ProductImportService
             $cleanPrice = $this->cleanPrice($priceRaw);
             $formattedPrice = 'Rp '.number_format($cleanPrice, 0, ',', '.');
 
-            // 3. Variant Volume
-            $volume = $this->extractVolume($varianName);
+            // 3. Variant Volume & Variant Name
+            if ($volumeRaw !== '') {
+                $volume = $this->extractVolume($volumeRaw);
+            } else {
+                $volume = $this->extractVolume($varianRaw);
+            }
+
+            if ($varianRaw !== '' && $varianRaw !== '-') {
+                $varianName = $varianRaw;
+            } elseif ($volumeRaw !== '') {
+                $varianName = $volumeRaw;
+            } else {
+                $varianName = $volume > 0 ? ($volume.' ml') : '-';
+            }
 
             // 4. Product Status
             $lowerProdName = mb_strtolower(trim($productName));
@@ -481,8 +503,9 @@ class ProductImportService
                 'price_raw' => $priceRaw,
                 'price_clean' => $cleanPrice,
                 'price_formatted' => $formattedPrice,
-                'varian_name' => $varianName,
+                'volume_raw' => $volumeRaw ?: ($volume > 0 ? ($volume.' ml') : '-'),
                 'volume' => $volume,
+                'varian_name' => $varianName,
                 'is_valid' => true,
             ];
         }
@@ -531,7 +554,8 @@ class ProductImportService
                 $brandName = trim((string) ($row['brand'] ?? ''));
                 $productName = trim((string) ($row['product'] ?? '')) ?: '-';
                 $priceRaw = $row['price'] ?? '0';
-                $varianName = trim((string) ($row['varian'] ?? '')) ?: '-';
+                $volumeRaw = trim((string) ($row['volume'] ?? ''));
+                $varianRaw = trim((string) ($row['varian'] ?? ''));
 
                 // 1. Resolve or create Brand
                 $brandId = null;
@@ -545,11 +569,24 @@ class ProductImportService
 
                 // 3. Resolve or create Product Variant
                 $cleanPrice = $this->cleanPrice((string) $priceRaw);
-                $volume = $this->extractVolume($varianName);
+
+                if ($volumeRaw !== '') {
+                    $volume = $this->extractVolume($volumeRaw);
+                } else {
+                    $volume = $this->extractVolume($varianRaw);
+                }
+
+                if ($varianRaw !== '' && $varianRaw !== '-') {
+                    $variantName = $varianRaw;
+                } elseif ($volumeRaw !== '') {
+                    $variantName = $volumeRaw;
+                } else {
+                    $variantName = $volume > 0 ? ($volume.' ml') : '-';
+                }
 
                 $this->resolveOrCreateVariant(
                     $product,
-                    $varianName,
+                    $variantName,
                     $volume,
                     $cleanPrice,
                     $variantsCreated,
@@ -676,20 +713,48 @@ class ProductImportService
         int &$variantsCreated,
         int &$variantsUpdated
     ): ProductVariant {
+        // 1. Exact match by variant name AND volume
         $existingVariant = ProductVariant::where('product_id', $product->id)
             ->where(function ($q) use ($variantName, $volume) {
                 $q->whereRaw('LOWER(TRIM(name)) = ?', [mb_strtolower(trim($variantName))]);
                 if ($volume > 0) {
-                    $q->orWhere('volume', $volume);
+                    $q->where('volume', $volume);
                 }
             })
             ->first();
 
+        // 2. If not found and volume > 0, match existing variant that has this volume with generic/default name
+        if (! $existingVariant && $volume > 0) {
+            $existingVariant = ProductVariant::where('product_id', $product->id)
+                ->where('volume', $volume)
+                ->where(function ($q) use ($volume) {
+                    $q->where('name', '-')
+                        ->orWhere('name', (string) $volume)
+                        ->orWhere('name', $volume.' ml')
+                        ->orWhere('name', $volume.'ml');
+                })
+                ->first();
+        }
+
+        // 3. If product has only one variant with this volume, treat as match
+        if (! $existingVariant && $volume > 0) {
+            $existingVariant = ProductVariant::where('product_id', $product->id)
+                ->where('volume', $volume)
+                ->first();
+        }
+
         if ($existingVariant) {
-            $existingVariant->update([
+            $updates = [
                 'price' => $price > 0 ? $price : $existingVariant->price,
                 'stock' => max($existingVariant->stock, 20),
-            ]);
+            ];
+            if ($variantName !== '-' && $variantName !== '') {
+                $updates['name'] = $variantName;
+            }
+            if ($volume > 0 && ! $existingVariant->volume) {
+                $updates['volume'] = $volume;
+            }
+            $existingVariant->update($updates);
             $variantsUpdated++;
 
             return $existingVariant;
@@ -901,17 +966,18 @@ class ProductImportService
     }
 
     /**
-     * Generate a downloadable sample CSV template.
+     * Generate a downloadable sample CSV template with 5 columns.
      */
     public function generateTemplateCsv(): string
     {
         $output = fopen('php://temp', 'r+');
-        fputcsv($output, ['Brand', 'Product', 'Price', 'Varian'], ',', '"', '\\');
+        fputcsv($output, ['Brand', 'Product', 'Price', 'Volume', 'Varian'], ',', '"', '\\');
         fputcsv($output, [
             'AL FARES',
-            'Al Fares Khayal Al Faris Edp inspired by Parfums De Marly Greenley',
+            'Al Fares Khayal Al Faris inspired by Parfums De Marly Greenley',
             '412,500',
             '100 ml',
+            'EDP',
         ], ',', '"', '\\');
 
         rewind($output);

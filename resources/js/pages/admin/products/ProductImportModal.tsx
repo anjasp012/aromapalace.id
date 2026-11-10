@@ -36,8 +36,9 @@ interface PreviewRow {
     price_raw: string;
     price_clean: number;
     price_formatted: string;
-    varian_name: string;
+    volume_raw: string;
     volume: number;
+    varian_name: string;
     is_valid: boolean;
 }
 
@@ -56,8 +57,8 @@ interface ProductImportModalProps {
     onOpenChange: (open: boolean) => void;
 }
 
-const SAMPLE_PASTE_DATA = `Brand\tProduct\tPrice\tVarian
-AL FARES\tAl Fares Khayal Al Faris Edp inspired by Parfums De Marly Greenley\t412,500\t100 ml`;
+const SAMPLE_PASTE_DATA = `Brand\tProduct\tPrice\tVolume\tVarian
+AL FARES\tAl Fares Khayal Al Faris inspired by Parfums De Marly Greenley\t412,500\t100 ml\tEDP`;
 
 export default function ProductImportModal({ open, onOpenChange }: ProductImportModalProps) {
     const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -68,7 +69,7 @@ export default function ProductImportModal({ open, onOpenChange }: ProductImport
 
     const [isLoadingPreview, setIsLoadingPreview] = useState<boolean>(false);
     const [previewData, setPreviewData] = useState<PreviewData | null>(null);
-    const [normalizedRows, setNormalizedRows] = useState<Array<{ brand: string; product: string; price: string; varian: string }>>([]);
+    const [normalizedRows, setNormalizedRows] = useState<Array<{ brand: string; product: string; price: string; volume?: string; varian: string }>>([]);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const [isImporting, setIsImporting] = useState<boolean>(false);
@@ -209,7 +210,7 @@ export default function ProductImportModal({ open, onOpenChange }: ProductImport
                                 <DialogTitle className="text-lg font-bold">Import Produk dari Excel / CSV</DialogTitle>
                             </div>
                             <DialogDescription className="text-xs text-muted-foreground">
-                                Format 4 kolom: <span className="font-semibold text-foreground">Brand</span> &bull; <span className="font-semibold text-foreground">Product</span> &bull; <span className="font-semibold text-foreground">Price</span> &bull; <span className="font-semibold text-foreground">Varian</span>.
+                                Format 5 kolom: <span className="font-semibold text-foreground">Brand</span> &bull; <span className="font-semibold text-foreground">Product</span> &bull; <span className="font-semibold text-foreground">Price</span> &bull; <span className="font-semibold text-foreground">Volume</span> &bull; <span className="font-semibold text-foreground">Varian</span>.
                                 Seluruh produk otomatis disimpan sebagai <span className="font-semibold text-amber-600 dark:text-amber-400">Draft</span> terlebih dahulu (tidak langsung tayang di toko) dan tanpa gambar palsu (tampilan otomatis abu-abu netral).
                             </DialogDescription>
                         </div>
@@ -315,7 +316,7 @@ export default function ProductImportModal({ open, onOpenChange }: ProductImport
                                     </div>
                                     <Textarea
                                         rows={6}
-                                        placeholder={`Brand\tProduct\tPrice\tVarian\nAL FARES\tAl Fares Khayal Al Faris Edp inspired by Parfums De Marly Greenley\t412,500\t100 ml`}
+                                        placeholder={`Brand\tProduct\tPrice\tVolume\tVarian\nAL FARES\tAl Fares Khayal Al Faris inspired by Parfums De Marly Greenley\t412,500\t100 ml\tEDP`}
                                         value={rawText}
                                         onChange={(e) => setRawText(e.target.value)}
                                         className="font-mono text-xs leading-relaxed"
@@ -412,6 +413,7 @@ export default function ProductImportModal({ open, onOpenChange }: ProductImport
                                                 <th className="h-8 px-3 text-left font-medium">Brand</th>
                                                 <th className="h-8 px-3 text-left font-medium">Nama Produk</th>
                                                 <th className="h-8 px-3 text-left font-medium">Harga</th>
+                                                <th className="h-8 px-3 text-left font-medium">Volume</th>
                                                 <th className="h-8 px-3 text-left font-medium">Varian</th>
                                                 <th className="h-8 px-3 text-center font-medium">Status</th>
                                             </tr>
@@ -449,15 +451,15 @@ export default function ProductImportModal({ open, onOpenChange }: ProductImport
                                                     <td className="p-3 font-semibold text-foreground whitespace-nowrap">
                                                         {row.price_formatted}
                                                     </td>
+                                                    <td className="p-3 whitespace-nowrap">
+                                                        <Badge variant="outline" className="text-[10px] font-mono">
+                                                            {row.volume > 0 ? `${row.volume} ml` : (row.volume_raw || '-')}
+                                                        </Badge>
+                                                    </td>
                                                     <td className="p-3">
                                                         <Badge variant="secondary" className="text-[10px]">
                                                             {row.varian_name}
                                                         </Badge>
-                                                        {row.volume > 0 && (
-                                                            <span className="text-[10px] text-muted-foreground ml-1.5">
-                                                                ({row.volume}ml)
-                                                            </span>
-                                                        )}
                                                     </td>
                                                     <td className="p-3 text-center">
                                                         <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 font-medium">
