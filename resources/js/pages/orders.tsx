@@ -1200,11 +1200,17 @@ export default function OrdersPage({
                                                     <div key={item.id} className="flex items-center justify-between gap-3 text-xs">
                                                         <div className="flex items-center gap-3 min-w-0">
                                                             <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-md border border-border/80 bg-muted/30 overflow-hidden shrink-0">
-                                                                <img
-                                                                    src={item.image}
-                                                                    alt={item.product_name}
-                                                                    className="w-full h-full object-cover"
-                                                                />
+                                                                {item.image ? (
+                                                                    <img
+                                                                        src={item.image}
+                                                                        alt={item.product_name}
+                                                                        className="w-full h-full object-cover"
+                                                                    />
+                                                                ) : (
+                                                                    <div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground/35">
+                                                                        <Package className="size-5 stroke-[1.25]" />
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                             <div className="space-y-0.5 min-w-0">
                                                                 <h4 className="font-semibold text-foreground truncate">

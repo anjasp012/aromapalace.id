@@ -85,12 +85,14 @@ class ProductSeeder extends Seeder
             ))));
 
             foreach ($allImages as $galleryImg) {
-                ProductGallery::updateOrCreate(
-                    [
-                        'product_id' => $product->id,
-                        'image' => $galleryImg,
-                    ]
-                );
+                if ($galleryImg && ! str_contains($galleryImg, 'unsplash.com')) {
+                    ProductGallery::updateOrCreate(
+                        [
+                            'product_id' => $product->id,
+                            'image' => $galleryImg,
+                        ]
+                    );
+                }
             }
 
             // Seed product reviews

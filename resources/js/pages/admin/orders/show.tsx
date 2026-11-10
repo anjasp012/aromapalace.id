@@ -471,11 +471,17 @@ export default function AdminOrderShow({ order }: OrderShowProps) {
                                 <div className="divide-y text-sm">
                                     {order.items.map((item) => (
                                         <div key={item.id} className="p-4 flex items-center gap-4">
-                                            <img
-                                                src={item.image}
-                                                alt={item.product_name}
-                                                className="size-16 rounded-md object-cover border bg-muted shrink-0"
-                                            />
+                                            {item.image ? (
+                                                <img
+                                                    src={item.image}
+                                                    alt={item.product_name}
+                                                    className="size-16 rounded-md object-cover border bg-muted shrink-0"
+                                                />
+                                            ) : (
+                                                <div className="size-16 rounded-md border bg-muted flex items-center justify-center text-muted-foreground/35 shrink-0">
+                                                    <Package className="size-6 stroke-[1.25]" />
+                                                </div>
+                                            )}
                                             <div className="flex-1 min-w-0">
                                                 <div className="font-medium text-foreground truncate">{item.product_name}</div>
                                                 <div className="text-xs text-muted-foreground mt-0.5">

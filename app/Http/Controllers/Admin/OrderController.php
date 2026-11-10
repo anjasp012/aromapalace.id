@@ -554,7 +554,7 @@ class OrderController extends Controller
                 'quantity' => (int) $item->quantity,
                 'total_price' => (int) $item->total_price,
                 'total_price_formatted' => 'Rp '.number_format($item->total_price, 0, ',', '.'),
-                'image' => $productData['image'] ?? 'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=800&q=80',
+                'image' => ($productData['image'] ?? null) && ! str_contains((string) $productData['image'], 'unsplash.com') ? $productData['image'] : null,
             ];
         });
 

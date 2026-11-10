@@ -91,13 +91,17 @@ class CatalogService
      */
     public static function formatProduct(Product $p): array
     {
-        $primaryImg = $p->primaryImage?->image
-            ?? $p->galleries->first()?->image
-            ?? null;
+        $rawPrimary = $p->primaryImage?->image
+            ?? $p->galleries->first()?->image;
+        $primaryImg = ($rawPrimary && ! str_contains((string) $rawPrimary, 'unsplash.com'))
+            ? $rawPrimary
+            : null;
 
-        $galleryImgs = $p->galleries->isNotEmpty()
-            ? $p->galleries->pluck('image')->all()
-            : ($primaryImg ? [$primaryImg] : []);
+        $galleryImgs = $p->galleries
+            ->pluck('image')
+            ->reject(fn ($img) => empty($img) || str_contains((string) $img, 'unsplash.com'))
+            ->values()
+            ->all();
 
         $reviews = $p->reviews->map(fn ($r) => [
             'id' => $r->id,

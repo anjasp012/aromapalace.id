@@ -69,7 +69,7 @@ test('admin can store a new product with multiple variants and galleries', funct
         'brand_id' => $brand->id,
         'description' => '<p>A luxurious oriental fragrance with <strong>warm amber</strong> and smoky vanilla.</p>',
         'images' => [
-            'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=800&q=80',
+            '/storage/products/majestic-amber.jpg',
         ],
         'variants' => [
             [

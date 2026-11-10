@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { cn, formatVolume } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
-import { Loader2, Ticket, Truck } from 'lucide-react';
+import { Loader2, Package, Ticket, Truck } from 'lucide-react';
 import VoucherSelectorModal, { AvailableVoucher } from '@/components/VoucherSelectorModal';
 
 const isShippingVoucher = (v?: AvailableVoucher | null): boolean => {
@@ -444,14 +444,20 @@ export default function CartPage({
                                                     href={`/products/${product.slug}`}
                                                     className="w-20 h-20 sm:w-24 sm:h-24 rounded-md border border-border/80 bg-muted/30 overflow-hidden shrink-0 group block relative"
                                                 >
-                                                    <img
-                                                        src={product.image}
-                                                        alt={product.name}
-                                                        className={cn(
-                                                            "w-full h-full object-cover group-hover:scale-105 transition-transform duration-500",
-                                                            isInvalid && "opacity-75 grayscale-[30%]"
-                                                        )}
-                                                    />
+                                                    {product.image ? (
+                                                        <img
+                                                            src={product.image}
+                                                            alt={product.name}
+                                                            className={cn(
+                                                                "w-full h-full object-cover group-hover:scale-105 transition-transform duration-500",
+                                                                isInvalid && "opacity-75 grayscale-[30%]"
+                                                            )}
+                                                        />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground/35">
+                                                            <Package className="size-6 stroke-[1.25]" />
+                                                        </div>
+                                                    )}
                                                 </Link>
 
                                                 <div className="space-y-1.5">

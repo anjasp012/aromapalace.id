@@ -91,7 +91,8 @@ class ProductController extends Controller
         }
 
         $products = $query->paginate(12)->withQueryString()->through(function (Product $product) {
-            $primaryImage = $product->galleries->first()?->image ?: null;
+            $rawImage = $product->galleries->first()?->image;
+            $primaryImage = ($rawImage && ! str_contains((string) $rawImage, 'unsplash.com')) ? $rawImage : null;
 
             $totalStock = $product->variants->sum('stock');
             $minPrice = $product->variants->min('price') ?? 0;
@@ -491,7 +492,7 @@ class ProductController extends Controller
                 'is_best_sellers' => (bool) $product->is_best_sellers,
                 'is_special_offers' => (bool) $product->is_special_offers,
                 'is_draft' => (bool) $product->is_draft,
-                'images' => $product->galleries->pluck('image')->all(),
+                'images' => $product->galleries->pluck('image')->reject(fn ($img) => empty($img) || str_contains((string) $img, 'unsplash.com'))->values()->all(),
                 'variants' => $product->variants->map(fn (ProductVariant $variant) => [
                     'id' => $variant->id,
                     'name' => $variant->name,
