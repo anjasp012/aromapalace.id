@@ -1327,13 +1327,12 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
                 </main>
             </PullToRefresh>
 
-            {/* Modern Clean Footer with Rich Burgundy Gradient matching Produk Diskon */}
-            {(showFooter || (isAndroidBrowser && !url.includes('/checkout'))) && (
+            {/* Modern Clean Footer with Rich Burgundy Gradient matching Produk Diskon (Desktop only, hidden on mobile & tablet) */}
+            {showFooter && (
                 <footer
                     className={cn(
                         "bg-gradient-to-br from-[#4A070B] via-[#52090F] to-[#360407] text-white/80 border-t border-[#360407] mt-12 sm:mt-16",
-                        isAndroidBrowser ? "block" : "hidden md:block",
-                        shouldShowBottomNav && isAndroidBrowser ? "pb-20 md:pb-0" : ""
+                        "hidden lg:block"
                     )}
                 >
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-14">

@@ -286,17 +286,17 @@ export default function Home({
                                         {banners.map((banner) => (
                                             <div key={banner.id} className="min-w-0 shrink-0 grow-0 basis-[90%] sm:basis-[90%] md:basis-full pl-3 md:pl-0">
                                                 <div className="grid grid-cols-1 md:grid-cols-12 items-center">
-                                                    {/* Left Column: Content (Desktop & Tablet mode) */}
-                                                    <div className="hidden md:flex md:col-span-6 p-6 pb-8 md:p-8 md:pb-8 lg:p-14 lg:pb-14 flex-col justify-center">
-                                                        <h1 className="text-2xl md:text-3xl lg:text-5xl font-bold tracking-tight text-foreground leading-[1.15]">
+                                                    {/* Left Column: Content (Tablet 5/12, Desktop 6/12) */}
+                                                    <div className="hidden md:flex md:col-span-5 lg:col-span-6 p-4 md:p-6 lg:p-12 flex-col justify-center">
+                                                        <h1 className="text-xl sm:text-2xl md:text-2xl lg:text-4xl font-bold tracking-tight text-foreground leading-[1.2]">
                                                             {banner.title}
                                                         </h1>
-                                                        <p className="mt-2.5 md:mt-3 lg:mt-4 text-xs md:text-sm text-foreground/75 leading-relaxed max-w-md">
+                                                        <p className="mt-2 md:mt-2.5 lg:mt-3 text-xs md:text-sm text-foreground/75 leading-relaxed max-w-md">
                                                             {banner.subtitle}
                                                         </p>
 
                                                         {/* Action Buttons using shadcn Button */}
-                                                        <div className="mt-5 md:mt-6 lg:mt-8 flex flex-wrap items-center gap-2.5 sm:gap-3">
+                                                        <div className="mt-4 md:mt-5 lg:mt-8 flex flex-wrap items-center gap-2 sm:gap-3">
                                                             <Button
                                                                 asChild
                                                                 size="default"
@@ -321,34 +321,34 @@ export default function Home({
                                                         </div>
 
                                                         {/* 4 Feature Points with subtle glass border */}
-                                                        <div className="mt-6 md:mt-8 lg:mt-12 pt-4 md:pt-6 border-t border-border/70 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                                                        <div className="mt-5 md:mt-6 lg:mt-10 pt-3 md:pt-4 border-t border-border/70 grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
                                                             <div>
                                                                 <p className="text-xs font-semibold text-foreground">Gratis Ongkir</p>
-                                                                <p className="text-[11px] text-muted-foreground">Min. Rp 500rb</p>
+                                                                <p className="text-[10px] md:text-[11px] text-muted-foreground">Min. Rp 500rb</p>
                                                             </div>
                                                             <div>
                                                                 <p className="text-xs font-semibold text-foreground">Pembayaran Aman</p>
-                                                                <p className="text-[11px] text-muted-foreground">100% Terenkripsi</p>
+                                                                <p className="text-[10px] md:text-[11px] text-muted-foreground">100% Terenkripsi</p>
                                                             </div>
                                                             <div>
                                                                 <p className="text-xs font-semibold text-foreground">Layanan 24/7</p>
-                                                                <p className="text-[11px] text-muted-foreground">Bantuan Ramah</p>
+                                                                <p className="text-[10px] md:text-[11px] text-muted-foreground">Bantuan Ramah</p>
                                                             </div>
                                                             <div>
                                                                 <p className="text-xs font-semibold text-foreground">Garansi Retur</p>
-                                                                <p className="text-[11px] text-muted-foreground">100% Original</p>
+                                                                <p className="text-[10px] md:text-[11px] text-muted-foreground">100% Original</p>
                                                             </div>
                                                         </div>
                                                     </div>
 
-                                                    {/* Right Column: Image / Video / GIF (Aspect 5:4 matching 500x400 - zero cropping) */}
-                                                    <div className="md:col-span-6 relative w-full aspect-[5/4] md:aspect-auto md:h-[380px] lg:h-[480px] p-0 md:p-6 lg:p-12 flex items-center justify-center">
+                                                    {/* Right Column: Image / Video / GIF (Tablet 7/12, Desktop 6/12 - Exact 5:4 ratio matching 500x400) */}
+                                                    <div className="md:col-span-7 lg:col-span-6 relative w-full p-0 md:p-4 lg:p-10 flex items-center justify-center">
                                                         <Link
                                                             href={banner.link}
-                                                            className="relative w-full h-full md:max-w-[420px] lg:max-w-[500px] flex items-center justify-center block cursor-pointer"
+                                                            className="relative w-full max-w-[500px] flex items-center justify-center block cursor-pointer"
                                                         >
-                                                            {/* Crisp Main Media Card */}
-                                                            <div className="relative z-10 w-full h-full aspect-[5/4] rounded-2xl overflow-hidden border border-border/50 md:border md:border-white/60 dark:md:border-white/10 bg-background shadow-md md:shadow-xl">
+                                                            {/* Crisp Main Media Card with exact 5:4 ratio */}
+                                                            <div className="relative z-10 w-full aspect-[5/4] rounded-2xl overflow-hidden border border-border/50 md:border md:border-white/60 dark:md:border-white/10 bg-background shadow-md md:shadow-xl">
                                                                 {isVideoUrl(banner.image) ? (
                                                                     <video
                                                                         src={banner.image}
