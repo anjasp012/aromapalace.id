@@ -276,27 +276,27 @@ export default function Home({
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 sm:space-y-16">
                     {/* 1. HERO CAROUSEL BANNER */}
                     {banners.length > 0 && (
-                        <section className="-mx-4 md:mx-0">
+                        <section className="-mx-4 lg:mx-0">
                             <Card
-                                className="relative overflow-hidden border-0 md:border md:border-border/70 py-0 gap-0 shadow-none md:shadow-lg rounded-none md:rounded-2xl group transition-all duration-700 bg-transparent md:bg-card"
+                                className="relative overflow-hidden border-0 lg:border lg:border-border/70 py-0 gap-0 shadow-none lg:shadow-lg rounded-none lg:rounded-2xl group transition-all duration-700 bg-transparent lg:bg-card"
                             >
                                 {/* Slide Content with Embla Carousel Swipe */}
                                 <div ref={heroRef} className="relative z-10 overflow-hidden cursor-grab active:cursor-grabbing select-none">
                                     <div className="flex">
                                         {banners.map((banner) => (
-                                            <div key={banner.id} className="min-w-0 shrink-0 grow-0 basis-[90%] sm:basis-[90%] md:basis-full pl-3 md:pl-0">
-                                                <div className="grid grid-cols-1 md:grid-cols-12 items-center">
-                                                    {/* Left Column: Content (Tablet 5/12, Desktop 6/12) */}
-                                                    <div className="hidden md:flex md:col-span-5 lg:col-span-6 p-4 md:p-6 lg:p-12 flex-col justify-center">
-                                                        <h1 className="text-xl sm:text-2xl md:text-2xl lg:text-4xl font-bold tracking-tight text-foreground leading-[1.2]">
+                                            <div key={banner.id} className="min-w-0 shrink-0 grow-0 basis-[90%] sm:basis-[75%] md:basis-[62%] lg:basis-full pl-3 sm:pl-4 lg:pl-0">
+                                                <div className="grid grid-cols-1 lg:grid-cols-12 items-center">
+                                                    {/* Left Column: Content (Desktop only, hidden on mobile & tablet) */}
+                                                    <div className="hidden lg:flex lg:col-span-6 p-6 pb-12 sm:p-10 sm:pb-12 lg:p-14 lg:pb-14 flex-col justify-center">
+                                                        <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-foreground leading-[1.15]">
                                                             {banner.title}
                                                         </h1>
-                                                        <p className="mt-2 md:mt-2.5 lg:mt-3 text-xs md:text-sm text-foreground/75 leading-relaxed max-w-md">
+                                                        <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-foreground/75 leading-relaxed max-w-md">
                                                             {banner.subtitle}
                                                         </p>
 
                                                         {/* Action Buttons using shadcn Button */}
-                                                        <div className="mt-4 md:mt-5 lg:mt-8 flex flex-wrap items-center gap-2 sm:gap-3">
+                                                        <div className="mt-6 sm:mt-8 flex flex-wrap items-center gap-3">
                                                             <Button
                                                                 asChild
                                                                 size="default"
@@ -321,7 +321,7 @@ export default function Home({
                                                         </div>
 
                                                         {/* 4 Feature Points with subtle glass border */}
-                                                        <div className="mt-5 md:mt-6 lg:mt-10 pt-3 md:pt-4 border-t border-border/70 grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+                                                        <div className="mt-8 sm:mt-12 pt-6 border-t border-border/70 grid grid-cols-2 lg:grid-cols-4 gap-4">
                                                             <div>
                                                                 <p className="text-xs font-semibold text-foreground">Gratis Ongkir</p>
                                                                 <p className="text-[10px] md:text-[11px] text-muted-foreground">Min. Rp 500rb</p>
@@ -341,14 +341,14 @@ export default function Home({
                                                         </div>
                                                     </div>
 
-                                                    {/* Right Column: Image / Video / GIF (Tablet 7/12, Desktop 6/12 - Exact 5:4 ratio matching 500x400) */}
-                                                    <div className="md:col-span-7 lg:col-span-6 relative w-full p-0 md:p-4 lg:p-10 flex items-center justify-center">
+                                                    {/* Right Column: Media Showcase (Banner Image / Video Card) */}
+                                                    <div className="lg:col-span-6 relative w-full p-0 lg:p-10 flex items-center justify-center">
                                                         <Link
                                                             href={banner.link}
                                                             className="relative w-full max-w-[500px] flex items-center justify-center block cursor-pointer"
                                                         >
                                                             {/* Crisp Main Media Card with exact 5:4 ratio */}
-                                                            <div className="relative z-10 w-full aspect-[5/4] rounded-2xl overflow-hidden border border-border/50 md:border md:border-white/60 dark:md:border-white/10 bg-background shadow-md md:shadow-xl">
+                                                            <div className="relative z-10 w-full aspect-[5/4] rounded-2xl overflow-hidden border border-border/50 lg:border lg:border-white/60 dark:lg:border-white/10 bg-background shadow-md lg:shadow-xl">
                                                                 {isVideoUrl(banner.image) ? (
                                                                     <video
                                                                         src={banner.image}
@@ -377,12 +377,12 @@ export default function Home({
                                     </div>
                                 </div>
 
-                                {/* Prev / Next Slide Arrows (Desktop & Tablet Interactive) */}
+                                {/* Prev / Next Slide Arrows (Desktop Interactive) */}
                                 <button
                                     type="button"
                                     onClick={() => heroApi?.scrollPrev()}
                                     aria-label="Slide Sebelumnya"
-                                    className="hidden md:flex items-center justify-center absolute left-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-background/80 hover:bg-background text-[#4A070B] dark:text-[#E8D0BA] border border-border/70 shadow-md backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity z-20 cursor-pointer"
+                                    className="hidden lg:flex items-center justify-center absolute left-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-background/80 hover:bg-background text-[#4A070B] dark:text-[#E8D0BA] border border-border/70 shadow-md backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity z-20 cursor-pointer"
                                 >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
@@ -392,7 +392,7 @@ export default function Home({
                                     type="button"
                                     onClick={() => heroApi?.scrollNext()}
                                     aria-label="Slide Berikutnya"
-                                    className="hidden md:flex items-center justify-center absolute right-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-background/80 hover:bg-background text-[#4A070B] dark:text-[#E8D0BA] border border-border/70 shadow-md backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity z-20 cursor-pointer"
+                                    className="hidden lg:flex items-center justify-center absolute right-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-background/80 hover:bg-background text-[#4A070B] dark:text-[#E8D0BA] border border-border/70 shadow-md backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity z-20 cursor-pointer"
                                 >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
@@ -400,7 +400,7 @@ export default function Home({
                                 </button>
 
                                 {/* Slide Indicators: Centered Floating Glass Capsule */}
-                                <div className="absolute bottom-2.5 sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 sm:gap-2 z-20 px-2 py-0.5 rounded-full bg-black/25 backdrop-blur-xs border border-white/10 md:bg-transparent md:border-none md:backdrop-blur-none">
+                                <div className="absolute bottom-2.5 sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 sm:gap-2 z-20 px-2 py-0.5 rounded-full bg-black/25 backdrop-blur-xs border border-white/10 lg:bg-transparent lg:border-none lg:backdrop-blur-none">
                                     {banners.map((b, i) => (
                                         <button
                                             key={b.id}
@@ -408,8 +408,8 @@ export default function Home({
                                             onClick={() => heroApi?.scrollTo(i)}
                                             aria-label={`Slide ${i + 1}`}
                                             className={`h-1.5 sm:h-2 rounded-full transition-all duration-500 cursor-pointer ${activeSlide === i
-                                                    ? 'w-6 sm:w-8 bg-white md:bg-[#4A070B] dark:md:bg-[#D4A373] shadow-xs'
-                                                    : 'w-1.5 sm:w-2 bg-white/60 md:bg-foreground/25 hover:bg-white/80 md:hover:bg-foreground/50'
+                                                    ? 'w-6 sm:w-8 bg-white lg:bg-[#4A070B] dark:lg:bg-[#D4A373] shadow-xs'
+                                                    : 'w-1.5 sm:w-2 bg-white/60 lg:bg-foreground/25 hover:bg-white/80 lg:hover:bg-foreground/50'
                                                 }`}
                                         />
                                     ))}
