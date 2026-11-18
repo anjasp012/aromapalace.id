@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\ArticleController;
 use App\Http\Controllers\Admin\AuthController;
+use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -118,6 +119,15 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/manajemen-slider-promo/{slider_promo}/edit', [SliderPromoController::class, 'edit'])->name('slider-promos.edit');
     Route::match(['put', 'patch', 'post'], '/manajemen-slider-promo/{slider_promo}', [SliderPromoController::class, 'update'])->name('slider-promos.update');
     Route::delete('/manajemen-slider-promo/{slider_promo}', [SliderPromoController::class, 'destroy'])->name('slider-promos.destroy');
+
+    // Banner Promo Management
+    Route::get('/manajemen-banner', [BannerController::class, 'index'])->name('banners.index');
+    Route::get('/manajemen-banner/create', [BannerController::class, 'create'])->name('banners.create');
+    Route::post('/manajemen-banner', [BannerController::class, 'store'])->name('banners.store');
+    Route::get('/manajemen-banner/{banner}/edit', [BannerController::class, 'edit'])->name('banners.edit');
+    Route::patch('/manajemen-banner/{banner}/toggle-active', [BannerController::class, 'toggleActive'])->name('banners.toggle-active');
+    Route::match(['put', 'patch', 'post'], '/manajemen-banner/{banner}', [BannerController::class, 'update'])->name('banners.update');
+    Route::delete('/manajemen-banner/{banner}', [BannerController::class, 'destroy'])->name('banners.destroy');
 
     // Payment Method Management
     Route::get('/manajemen-pembayaran', [PaymentMethodController::class, 'index'])->name('payment-methods.index');

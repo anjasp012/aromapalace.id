@@ -34,6 +34,23 @@ export interface SliderPromoItem {
     thumbnail: string;
 }
 
+interface BannerItem {
+    id: number;
+    subtitle?: string | null;
+    subtitle_en?: string | null;
+    title: string;
+    title_en?: string | null;
+    description?: string | null;
+    description_en?: string | null;
+    image: string;
+    button_text?: string | null;
+    button_text_en?: string | null;
+    button_link?: string | null;
+    secondary_button_text?: string | null;
+    secondary_button_text_en?: string | null;
+    secondary_button_link?: string | null;
+}
+
 interface HomeProps {
     popularProducts?: ProductItem[];
     discountedProducts?: ProductItem[];
@@ -44,6 +61,7 @@ interface HomeProps {
     vouchers?: VoucherItem[];
     articles?: ArticleItem[];
     sliderPromos?: SliderPromoItem[];
+    banner?: BannerItem | null;
 }
 
 export default function Home({
@@ -56,50 +74,12 @@ export default function Home({
     vouchers: propVouchers = [],
     articles: propArticles = [],
     sliderPromos: propSliderPromos = [],
+    banner: propBanner = null,
 }: HomeProps) {
     const { props } = usePage<any>();
     const user = props?.auth?.user;
     const isAdmin = Boolean(props?.auth?.is_admin || user?.role === 'admin');
     const { t, pickText, isEn } = useTranslation();
-
-    const heroGradients = [
-        'from-[#FAF6F0] via-[#F4ECE1] to-[#EAE0D0] dark:from-[#21160F] dark:via-[#19110B] dark:to-[#120B07]',
-        'from-[#FDF2F3] via-[#F8E9EB] to-[#F1DEE1] dark:from-[#24080B] dark:via-[#1B0508] dark:to-[#120305]',
-        'from-[#FBF8F2] via-[#F6F0E4] to-[#EDE3D0] dark:from-[#1E1810] dark:via-[#16120B] dark:to-[#0F0D07]',
-    ];
-
-    const defaultBanners = [
-        {
-            id: 1,
-            title: isEn ? 'The Art of Fragrance' : 'Seni Wewangian Mahakarya',
-            subtitle: isEn
-                ? 'Explore our world-renowned luxury fragrance collection with artisanal scents that captivate every sense.'
-                : 'Jelajahi koleksi wewangian mewah dunia dengan keharuman artisanal eksklusif yang memikat setiap indera.',
-            image: 'https://images.unsplash.com/photo-1615397349754-cfa2066a298e?auto=format&fit=crop&w=1200&q=80',
-            link: '/products',
-            ambientGradient: heroGradients[0],
-        },
-        {
-            id: 2,
-            title: isEn ? 'Flash Sale up to 20% Off' : 'Flash Sale Diskon hingga 20%',
-            subtitle: isEn
-                ? 'Use promo code AROMA20 for special discounts on first orders of selected extrait & niche fragrances.'
-                : 'Gunakan kode promo AROMA20 untuk potongan harga spesial di pesanan pertama wewangian ekstrak & niche terpilih.',
-            image: 'https://images.unsplash.com/photo-1547887537-6158d64c35b3?auto=format&fit=crop&w=1200&q=80',
-            link: '/products?discount=1',
-            ambientGradient: heroGradients[1],
-        },
-        {
-            id: 3,
-            title: isEn ? 'Boutique Store Pickup Available' : 'Store Pickup Sekarang Tersedia',
-            subtitle: isEn
-                ? 'Order online with ease, pick up at our flagship boutiques in Grand Indonesia, Senayan City, & TP5 Surabaya.'
-                : 'Pesan langsung secara online, ambil di gerai flagship Grand Indonesia, Senayan City, & TP5 Surabaya.',
-            image: 'https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?auto=format&fit=crop&w=1200&q=80',
-            link: '/products',
-            ambientGradient: heroGradients[2],
-        },
-    ];
 
     const [cachedHome] = useState<any>(() => {
         if (typeof window === 'undefined') return null;
@@ -115,16 +95,15 @@ export default function Home({
         ? propSliderPromos
         : (cachedHome?.sliderPromos || []);
 
-    const banners = sliderPromosList.length > 0
-        ? sliderPromosList.map((item, idx) => ({
-            id: item.id,
-            title: pickText(item.title, item.title_en),
-            subtitle: pickText(item.description || '', item.description_en),
-            image: item.thumbnail,
-            link: item.link || '/products',
-            ambientGradient: heroGradients[idx % heroGradients.length],
-        }))
-        : defaultBanners;
+    const banners = sliderPromosList.map((item) => ({
+        id: item.id,
+        title: pickText(item.title, item.title_en),
+        subtitle: pickText(item.description || '', item.description_en),
+        image: item.thumbnail,
+        link: item.link || '/products',
+    }));
+
+    const midBanner: BannerItem | null = propBanner || cachedHome?.banner || null;
 
     const [activeSlide, setActiveSlide] = useState(0);
     const [heroRef, heroApi] = useEmblaCarousel(
@@ -295,259 +274,279 @@ export default function Home({
 
             <div className="py-6 sm:py-10 space-y-10 sm:space-y-16">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 sm:space-y-16">
-                    {/* 1. HERO CAROUSEL BANNER DENGAN YOUTUBE-STYLE AMBIENT FLARE */}
-                    <section className="-mx-4 sm:mx-0">
-                        <Card
-                            className="relative overflow-hidden border-0 sm:border sm:border-border/70 py-0 gap-0 shadow-none sm:shadow-lg rounded-none sm:rounded-2xl group transition-all duration-700 bg-transparent sm:bg-card"
-                        >
-                            {/* Subtle Ambient Background Tint (Desktop only, 0% CPU/GPU overhead, no heavy blur image) */}
-                            <div className="hidden lg:block absolute inset-0 pointer-events-none overflow-hidden -z-20">
-                                {banners.map((b, idx) => (
-                                    <div
-                                        key={`ambient-${b.id}`}
-                                        aria-hidden="true"
-                                        className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${activeSlide === idx ? 'opacity-100' : 'opacity-0'}`}
-                                    >
-                                        <div className={`absolute inset-0 bg-gradient-to-br ${b.ambientGradient}`} />
-                                    </div>
-                                ))}
-                            </div>
+                    {/* 1. HERO CAROUSEL BANNER */}
+                    {banners.length > 0 && (
+                        <section className="-mx-4 sm:mx-0">
+                            <Card
+                                className="relative overflow-hidden border-0 sm:border sm:border-border/70 py-0 gap-0 shadow-none sm:shadow-lg rounded-none sm:rounded-2xl group transition-all duration-700 bg-transparent sm:bg-card"
+                            >
+                                {/* Slide Content with Embla Carousel Swipe */}
+                                <div ref={heroRef} className="relative z-10 overflow-hidden cursor-grab active:cursor-grabbing select-none">
+                                    <div className="flex">
+                                        {banners.map((banner) => (
+                                            <div key={banner.id} className="min-w-0 shrink-0 grow-0 basis-[88%] sm:basis-full pl-4 sm:pl-0">
+                                                <div className="grid grid-cols-1 lg:grid-cols-12 items-center">
+                                                    {/* Left Column: Content (Desktop only, hidden on mobile) */}
+                                                    <div className="hidden lg:flex lg:col-span-6 p-6 pb-12 sm:p-10 sm:pb-12 lg:p-14 lg:pb-14 flex-col justify-center">
+                                                        <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-foreground leading-[1.15]">
+                                                            {banner.title}
+                                                        </h1>
+                                                        <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-foreground/75 leading-relaxed max-w-md">
+                                                            {banner.subtitle}
+                                                        </p>
 
-                            {/* Slide Content with Embla Carousel Swipe */}
-                            <div ref={heroRef} className="relative z-10 overflow-hidden cursor-grab active:cursor-grabbing select-none">
-                                <div className="flex">
-                                    {banners.map((banner) => (
-                                        <div key={banner.id} className="min-w-0 shrink-0 grow-0 basis-[88%] sm:basis-full pl-4 sm:pl-0">
-                                            <div className="grid grid-cols-1 lg:grid-cols-12 items-center">
-                                                {/* Left Column: Content (Desktop only, hidden on mobile) */}
-                                                <div className="hidden lg:flex lg:col-span-6 p-6 pb-12 sm:p-10 sm:pb-12 lg:p-14 lg:pb-14 flex-col justify-center">
-                                                    <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-foreground leading-[1.15]">
-                                                        {banner.title}
-                                                    </h1>
-                                                    <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-foreground/75 leading-relaxed max-w-md">
-                                                        {banner.subtitle}
-                                                    </p>
+                                                        {/* Action Buttons using shadcn Button */}
+                                                        <div className="mt-6 sm:mt-8 flex flex-wrap items-center gap-3">
+                                                            <Button
+                                                                asChild
+                                                                size="default"
+                                                                className="shadow-sm font-semibold hover:shadow-md transition-shadow cursor-pointer"
+                                                            >
+                                                                <Link href={banner.link} onClick={() => setLoadingButtonId(`hero_explore_${banner.id}`)}>
+                                                                    {loadingButtonId === `hero_explore_${banner.id}` && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                                                                    <span>{isEn ? 'Explore Collection' : 'Jelajahi Koleksi'}</span>
+                                                                </Link>
+                                                            </Button>
+                                                            <Button
+                                                                asChild
+                                                                variant="outline"
+                                                                size="default"
+                                                                className="bg-background/60 hover:bg-background/90 backdrop-blur-xs border-border/80 cursor-pointer"
+                                                            >
+                                                                <Link href="/products" onClick={() => setLoadingButtonId(`hero_shop_${banner.id}`)}>
+                                                                    {loadingButtonId === `hero_shop_${banner.id}` && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                                                                    <span>{isEn ? 'Shop Now' : 'Belanja Sekarang'}</span>
+                                                                </Link>
+                                                            </Button>
+                                                        </div>
 
-                                                    {/* Action Buttons using shadcn Button */}
-                                                    <div className="mt-6 sm:mt-8 flex flex-wrap items-center gap-3">
-                                                        <Button
-                                                            asChild
-                                                            size="default"
-                                                            className="shadow-sm font-semibold hover:shadow-md transition-shadow cursor-pointer"
-                                                        >
-                                                            <Link href={banner.link} onClick={() => setLoadingButtonId(`hero_explore_${banner.id}`)}>
-                                                                {loadingButtonId === `hero_explore_${banner.id}` && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
-                                                                <span>{isEn ? 'Explore Collection' : 'Jelajahi Koleksi'}</span>
-                                                            </Link>
-                                                        </Button>
-                                                        <Button
-                                                            asChild
-                                                            variant="outline"
-                                                            size="default"
-                                                            className="bg-background/60 hover:bg-background/90 backdrop-blur-xs border-border/80 cursor-pointer"
-                                                        >
-                                                            <Link href="/products" onClick={() => setLoadingButtonId(`hero_shop_${banner.id}`)}>
-                                                                {loadingButtonId === `hero_shop_${banner.id}` && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
-                                                                <span>{isEn ? 'Shop Now' : 'Belanja Sekarang'}</span>
-                                                            </Link>
-                                                        </Button>
+                                                        {/* 4 Feature Points with subtle glass border */}
+                                                        <div className="mt-8 sm:mt-12 pt-6 border-t border-border/70 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                                            <div>
+                                                                <p className="text-xs font-semibold text-foreground">Gratis Ongkir</p>
+                                                                <p className="text-[11px] text-muted-foreground">Min. Rp 500rb</p>
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-xs font-semibold text-foreground">Pembayaran Aman</p>
+                                                                <p className="text-[11px] text-muted-foreground">100% Terenkripsi</p>
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-xs font-semibold text-foreground">Layanan 24/7</p>
+                                                                <p className="text-[11px] text-muted-foreground">Bantuan Ramah</p>
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-xs font-semibold text-foreground">Garansi Retur</p>
+                                                                <p className="text-[11px] text-muted-foreground">100% Original</p>
+                                                            </div>
+                                                        </div>
                                                     </div>
 
-                                                    {/* 4 Feature Points with subtle glass border */}
-                                                    <div className="mt-8 sm:mt-12 pt-6 border-t border-border/70 grid grid-cols-2 sm:grid-cols-4 gap-4">
-                                                        <div>
-                                                            <p className="text-xs font-semibold text-foreground">Gratis Ongkir</p>
-                                                            <p className="text-[11px] text-muted-foreground">Min. Rp 500rb</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-xs font-semibold text-foreground">Pembayaran Aman</p>
-                                                            <p className="text-[11px] text-muted-foreground">100% Terenkripsi</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-xs font-semibold text-foreground">Layanan 24/7</p>
-                                                            <p className="text-[11px] text-muted-foreground">Bantuan Ramah</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-xs font-semibold text-foreground">Garansi Retur</p>
-                                                            <p className="text-[11px] text-muted-foreground">100% Original</p>
-                                                        </div>
+                                                    {/* Right Column: Image / Video / GIF (Full banner on mobile, featured card on desktop) */}
+                                                    <div className="lg:col-span-6 relative w-full aspect-[16/9] sm:aspect-[21/9] lg:aspect-auto lg:h-[480px] p-0 lg:p-12 flex items-center justify-center">
+                                                        <Link
+                                                            href={banner.link}
+                                                            className="relative w-full h-full lg:max-w-[500px] flex items-center justify-center block cursor-pointer"
+                                                        >
+                                                            {/* Crisp Main Media Card */}
+                                                            <div className="relative z-10 w-full h-full rounded-2xl overflow-hidden border border-border/50 lg:border lg:border-white/60 dark:lg:border-white/10 bg-background shadow-md lg:shadow-xl">
+                                                                {isVideoUrl(banner.image) ? (
+                                                                    <video
+                                                                        src={banner.image}
+                                                                        autoPlay
+                                                                        loop
+                                                                        muted
+                                                                        playsInline
+                                                                        preload="auto"
+                                                                        className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                                                                    />
+                                                                ) : (
+                                                                    <img
+                                                                        src={banner.image}
+                                                                        alt={banner.title}
+                                                                        className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                                                                    />
+                                                                )}
+                                                                {/* Subtle gradient vignette on image bottom */}
+                                                                <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent pointer-events-none" />
+                                                            </div>
+                                                        </Link>
                                                     </div>
-                                                </div>
-
-                                                {/* Right Column: Image / Video / GIF (Full banner on mobile, featured card on desktop) */}
-                                                <div className="lg:col-span-6 relative w-full aspect-[16/9] sm:aspect-[21/9] lg:aspect-auto lg:h-[480px] p-0 lg:p-12 flex items-center justify-center">
-                                                    <Link
-                                                        href={banner.link}
-                                                        className="relative w-full h-full lg:max-w-[500px] flex items-center justify-center block cursor-pointer"
-                                                    >
-                                                        {/* Crisp Main Media Card */}
-                                                        <div className="relative z-10 w-full h-full rounded-2xl overflow-hidden border border-border/50 lg:border lg:border-white/60 dark:lg:border-white/10 bg-background shadow-md lg:shadow-xl">
-                                                            {isVideoUrl(banner.image) ? (
-                                                                <video
-                                                                    src={banner.image}
-                                                                    autoPlay
-                                                                    loop
-                                                                    muted
-                                                                    playsInline
-                                                                    preload="auto"
-                                                                    className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
-                                                                />
-                                                            ) : (
-                                                                <img
-                                                                    src={banner.image}
-                                                                    alt={banner.title}
-                                                                    className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
-                                                                />
-                                                            )}
-                                                            {/* Subtle gradient vignette on image bottom */}
-                                                            <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent pointer-events-none" />
-                                                        </div>
-                                                    </Link>
                                                 </div>
                                             </div>
-                                        </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Prev / Next Slide Arrows (Desktop & Interactive) */}
+                                <button
+                                    type="button"
+                                    onClick={() => heroApi?.scrollPrev()}
+                                    aria-label="Slide Sebelumnya"
+                                    className="hidden lg:flex items-center justify-center absolute left-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-background/80 hover:bg-background text-[#4A070B] dark:text-[#E8D0BA] border border-border/70 shadow-md backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity z-20 cursor-pointer"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                                    </svg>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => heroApi?.scrollNext()}
+                                    aria-label="Slide Berikutnya"
+                                    className="hidden lg:flex items-center justify-center absolute right-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-background/80 hover:bg-background text-[#4A070B] dark:text-[#E8D0BA] border border-border/70 shadow-md backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity z-20 cursor-pointer"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </button>
+
+                                {/* Slide Indicators: Centered Floating Glass Capsule */}
+                                <div className="absolute bottom-2.5 sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 sm:gap-2 z-20 px-2 py-0.5 rounded-full bg-black/25 backdrop-blur-xs border border-white/10 lg:bg-transparent lg:border-none lg:backdrop-blur-none">
+                                    {banners.map((b, i) => (
+                                        <button
+                                            key={b.id}
+                                            type="button"
+                                            onClick={() => heroApi?.scrollTo(i)}
+                                            aria-label={`Slide ${i + 1}`}
+                                            className={`h-1.5 sm:h-2 rounded-full transition-all duration-500 cursor-pointer ${activeSlide === i
+                                                    ? 'w-6 sm:w-8 bg-white lg:bg-[#4A070B] dark:lg:bg-[#D4A373] shadow-xs'
+                                                    : 'w-1.5 sm:w-2 bg-white/60 lg:bg-foreground/25 hover:bg-white/80 lg:hover:bg-foreground/50'
+                                                }`}
+                                        />
                                     ))}
                                 </div>
+                            </Card>
+                        </section>
+                    )}
+
+                    {/* 2. CATEGORY SCENTS */}
+                    {scentsList.length > 0 && (
+                        <section id="scents">
+                            <div className="flex items-center justify-between mb-4 sm:mb-6">
+                                <h2 className="text-xl sm:text-2xl tracking-tight text-foreground">
+                                    <span className="font-normal">{isEn ? 'Category' : 'Kategori'}</span>{' '}
+                                    <span className="font-bold">{isEn ? 'Scents' : 'Aroma'}</span>
+                                </h2>
+                                <Button asChild variant="ghost" size="sm" className="text-xs">
+                                    <Link href="/categories" onClick={() => setLoadingButtonId('scents_all')}>
+                                        {loadingButtonId === 'scents_all' && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                                        <span>{t('common.see_all')} &rarr;</span>
+                                    </Link>
+                                </Button>
                             </div>
 
-                            {/* Prev / Next Slide Arrows (Desktop & Interactive) */}
-                            <button
-                                type="button"
-                                onClick={() => heroApi?.scrollPrev()}
-                                aria-label="Slide Sebelumnya"
-                                className="hidden lg:flex items-center justify-center absolute left-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-background/80 hover:bg-background text-[#4A070B] dark:text-[#E8D0BA] border border-border/70 shadow-md backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity z-20 cursor-pointer"
-                            >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-                                </svg>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => heroApi?.scrollNext()}
-                                aria-label="Slide Berikutnya"
-                                className="hidden lg:flex items-center justify-center absolute right-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-background/80 hover:bg-background text-[#4A070B] dark:text-[#E8D0BA] border border-border/70 shadow-md backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity z-20 cursor-pointer"
-                            >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                                </svg>
-                            </button>
-
-                            {/* Slide Indicators: Centered Floating Glass Capsule */}
-                            <div className="absolute bottom-2.5 sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 sm:gap-2 z-20 px-2 py-0.5 rounded-full bg-black/25 backdrop-blur-xs border border-white/10 lg:bg-transparent lg:border-none lg:backdrop-blur-none">
-                                {banners.map((b, i) => (
-                                    <button
-                                        key={b.id}
-                                        type="button"
-                                        onClick={() => heroApi?.scrollTo(i)}
-                                        aria-label={`Slide ${i + 1}`}
-                                        className={`h-1.5 sm:h-2 rounded-full transition-all duration-500 cursor-pointer ${activeSlide === i
-                                                ? 'w-6 sm:w-8 bg-white lg:bg-[#4A070B] dark:lg:bg-[#D4A373] shadow-xs'
-                                                : 'w-1.5 sm:w-2 bg-white/60 lg:bg-foreground/25 hover:bg-white/80 lg:hover:bg-foreground/50'
-                                            }`}
+                            <div className="-mx-4 px-4 sm:mx-0 sm:px-0 scroll-pl-4 sm:scroll-pl-0 flex sm:grid overflow-x-auto sm:overflow-visible gap-3 sm:gap-5 pb-2 sm:pb-0 scrollbar-none snap-x snap-mandatory sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7">
+                                {scentsList.map((scent, idx) => (
+                                    <CategoryCard
+                                        key={scent.slug}
+                                        category={scent}
+                                        colorIndex={idx}
+                                        className="w-[calc((100%-24px)/3.5)] sm:w-auto shrink-0 sm:shrink snap-start"
                                     />
                                 ))}
                             </div>
-                        </Card>
-                    </section>
-
-                    {/* 2. CATEGORY SCENTS */}
-                    <section id="scents">
-                        <div className="flex items-center justify-between mb-4 sm:mb-6">
-                            <h2 className="text-xl sm:text-2xl tracking-tight text-foreground">
-                                <span className="font-normal">{isEn ? 'Category' : 'Kategori'}</span>{' '}
-                                <span className="font-bold">{isEn ? 'Scents' : 'Aroma'}</span>
-                            </h2>
-                            <Button asChild variant="ghost" size="sm" className="text-xs">
-                                <Link href="/categories" onClick={() => setLoadingButtonId('scents_all')}>
-                                    {loadingButtonId === 'scents_all' && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
-                                    <span>{t('common.see_all')} &rarr;</span>
-                                </Link>
-                            </Button>
-                        </div>
-
-                        <div className="-mx-4 px-4 sm:mx-0 sm:px-0 scroll-pl-4 sm:scroll-pl-0 flex sm:grid overflow-x-auto sm:overflow-visible gap-3 sm:gap-5 pb-2 sm:pb-0 scrollbar-none snap-x snap-mandatory sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7">
-                            {scentsList.map((scent, idx) => (
-                                <CategoryCard
-                                    key={scent.slug}
-                                    category={scent}
-                                    colorIndex={idx}
-                                    className="w-[calc((100%-24px)/3.5)] sm:w-auto shrink-0 sm:shrink snap-start"
-                                />
-                            ))}
-                        </div>
-                    </section>
+                        </section>
+                    )}
 
                     {/* 3. PRODUK POPULER (Slider 2.5 on Mobile, Grid on Desktop) */}
-                    <section id="best-sellers">
-                        <div className="flex items-center justify-between mb-4 sm:mb-6">
-                            <h2 className="text-xl sm:text-2xl tracking-tight text-foreground">
-                                <span className="font-normal">{isEn ? 'Popular' : 'Produk'}</span>{' '}
-                                <span className="font-bold">{isEn ? 'Fragrances' : 'Populer'}</span>
-                            </h2>
-                            <Button asChild variant="ghost" size="sm" className="text-xs">
-                                <Link href="/products?sort=popular" onClick={() => setLoadingButtonId('popular_all')}>
-                                    {loadingButtonId === 'popular_all' && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
-                                    <span>{t('common.see_all')} &rarr;</span>
-                                </Link>
-                            </Button>
-                        </div>
-
-                        <div className="-mx-4 px-4 sm:mx-0 sm:px-0 scroll-pl-4 sm:scroll-pl-0 flex sm:grid overflow-x-auto sm:overflow-visible gap-3 sm:gap-5 pb-3 sm:pb-0 snap-x snap-mandatory scrollbar-none sm:grid-cols-3 lg:grid-cols-5">
-                            {popularProducts.map((p) => (
-                                <ProductCard
-                                    key={p.id}
-                                    product={p}
-                                    isWishlisted={wishlistedIds.includes(p.id)}
-                                    onToggleWishlist={toggleWishlist}
-                                    onQuickView={openQuickView}
-                                    className="w-[calc((100%-16px)/2.45)] sm:w-auto shrink-0 sm:shrink snap-start"
-                                />
-                            ))}
-                        </div>
-                    </section>
-
-                    {/* 4. MID-BANNER PROMO */}
-                    <section id="special-offers">
-                        <Card className="bg-primary text-primary-foreground p-6 sm:p-10 lg:p-12 overflow-hidden border-none shadow-none rounded-lg">
-                            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-                                <div className="md:col-span-7 space-y-3">
-                                    <Badge variant="secondary" className="w-fit">{isEn ? 'Exclusive Offer' : 'Penawaran Eksklusif'}</Badge>
-                                    <h2 className="text-2xl sm:text-4xl tracking-tight">
-                                        <span className="font-normal">{isEn ? "Today's" : 'Promo Spesial'}</span>{' '}
-                                        <span className="font-bold">{isEn ? 'Special Deals!' : 'Hari Ini!'}</span>
-                                    </h2>
-                                    <p className="text-xs sm:text-sm opacity-90 max-w-md leading-relaxed">
-                                        {isEn
-                                            ? 'Get special discounts for selected luxury fragrance collections with official Aroma Palace voucher codes.'
-                                            : 'Dapatkan diskon istimewa untuk berbagai koleksi wewangian terpilih dengan menggunakan kode voucher resmi Aroma Palace.'}
-                                    </p>
-                                    <div className="pt-2 flex flex-wrap gap-2.5">
-                                        <Button asChild variant="secondary" size="default">
-                                            <Link href="/products?discount=1" onClick={() => setLoadingButtonId('promo_shop')}>
-                                                {loadingButtonId === 'promo_shop' && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
-                                                <span>{isEn ? 'Shop Promo' : 'Belanja Promo'}</span>
-                                            </Link>
-                                        </Button>
-                                        <Button asChild variant="outline" size="default" className="bg-transparent border-primary-foreground/30 hover:bg-primary-foreground/10 text-primary-foreground">
-                                            <Link href="/cart" onClick={() => setLoadingButtonId('promo_cart')}>
-                                                {loadingButtonId === 'promo_cart' && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
-                                                <span>{isEn ? 'View Cart' : 'Cek Keranjang'}</span>
-                                            </Link>
-                                        </Button>
-                                    </div>
-                                </div>
-                                <div className="md:col-span-5 flex justify-center lg:justify-end">
-                                    <div className="relative w-full h-44 sm:h-64 rounded-xl overflow-hidden border border-primary-foreground/20">
-                                        <img
-                                            src="https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=700&q=80"
-                                            alt={isEn ? 'Special Promo' : 'Promo Spesial'}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    </div>
-                                </div>
+                    {popularProducts.length > 0 && (
+                        <section id="best-sellers">
+                            <div className="flex items-center justify-between mb-4 sm:mb-6">
+                                <h2 className="text-xl sm:text-2xl tracking-tight text-foreground">
+                                    <span className="font-normal">{isEn ? 'Popular' : 'Produk'}</span>{' '}
+                                    <span className="font-bold">{isEn ? 'Fragrances' : 'Populer'}</span>
+                                </h2>
+                                <Button asChild variant="ghost" size="sm" className="text-xs">
+                                    <Link href="/products?sort=popular" onClick={() => setLoadingButtonId('popular_all')}>
+                                        {loadingButtonId === 'popular_all' && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                                        <span>{t('common.see_all')} &rarr;</span>
+                                    </Link>
+                                </Button>
                             </div>
-                        </Card>
-                    </section>
+
+                            <div className="-mx-4 px-4 sm:mx-0 sm:px-0 scroll-pl-4 sm:scroll-pl-0 flex sm:grid overflow-x-auto sm:overflow-visible gap-3 sm:gap-5 pb-3 sm:pb-0 snap-x snap-mandatory scrollbar-none sm:grid-cols-3 lg:grid-cols-5">
+                                {popularProducts.map((p) => (
+                                    <ProductCard
+                                        key={p.id}
+                                        product={p}
+                                        isWishlisted={wishlistedIds.includes(p.id)}
+                                        onToggleWishlist={toggleWishlist}
+                                        onQuickView={openQuickView}
+                                        className="w-[calc((100%-16px)/2.45)] sm:w-auto shrink-0 sm:shrink snap-start"
+                                    />
+                                ))}
+                            </div>
+                        </section>
+                    )}
+
+                    {/* 4. MID-BANNER PROMO DARI CMS */}
+                    {midBanner && (
+                        <section id="special-offers">
+                            <Card className="bg-primary text-primary-foreground p-6 sm:p-10 lg:p-12 overflow-hidden border-none shadow-none rounded-lg">
+                                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                                    <div className="md:col-span-7 space-y-3">
+                                        {(midBanner.subtitle || midBanner.subtitle_en) && (
+                                            <Badge variant="secondary" className="w-fit">
+                                                {pickText(midBanner.subtitle || '', midBanner.subtitle_en)}
+                                            </Badge>
+                                        )}
+                                        <h2 className="text-2xl sm:text-4xl tracking-tight font-bold">
+                                            {pickText(midBanner.title, midBanner.title_en)}
+                                        </h2>
+                                        {(midBanner.description || midBanner.description_en) && (
+                                            <p className="text-xs sm:text-sm opacity-90 max-w-md leading-relaxed">
+                                                {pickText(midBanner.description || '', midBanner.description_en)}
+                                            </p>
+                                        )}
+                                        <div className="pt-2 flex flex-wrap gap-2.5">
+                                            {midBanner.button_link && (
+                                                <Button asChild variant="secondary" size="default">
+                                                    <Link href={midBanner.button_link} onClick={() => setLoadingButtonId('promo_shop')}>
+                                                        {loadingButtonId === 'promo_shop' && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                                                        <span>{pickText(midBanner.button_text || 'Belanja Promo', midBanner.button_text_en)}</span>
+                                                    </Link>
+                                                </Button>
+                                            )}
+                                            {midBanner.secondary_button_link && (
+                                                <Button asChild variant="outline" size="default" className="bg-transparent border-primary-foreground/30 hover:bg-primary-foreground/10 text-primary-foreground">
+                                                    <Link href={midBanner.secondary_button_link} onClick={() => setLoadingButtonId('promo_cart')}>
+                                                        {loadingButtonId === 'promo_cart' && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                                                        <span>{pickText(midBanner.secondary_button_text || 'Cek Keranjang', midBanner.secondary_button_text_en)}</span>
+                                                    </Link>
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="md:col-span-5 flex justify-center lg:justify-end">
+                                        <div className="relative w-full h-44 sm:h-64 rounded-xl overflow-hidden border border-primary-foreground/20 bg-black/10 flex items-center justify-center">
+                                            {midBanner.image ? (
+                                                isVideoUrl(midBanner.image) ? (
+                                                    <video
+                                                        src={midBanner.image}
+                                                        autoPlay
+                                                        loop
+                                                        muted
+                                                        playsInline
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <img
+                                                        src={midBanner.image}
+                                                        alt={pickText(midBanner.title, midBanner.title_en)}
+                                                        className="w-full h-full object-cover"
+                                                        onError={(e) => {
+                                                            (e.target as HTMLElement).style.display = 'none';
+                                                        }}
+                                                    />
+                                                )
+                                            ) : (
+                                                <div className="text-xs opacity-75">Tidak ada media</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </Card>
+                        </section>
+                    )}
 
                     {/* 5. VOUCHER & PROMO EKSKLUSIF */}
                     {activeVouchers.length > 0 && (
@@ -607,33 +606,35 @@ export default function Home({
                     )}
 
                     {/* 6. DIPILIH KHUSUS UNTUKMU (RECOMMENDED) */}
-                    <section>
-                        <div className="flex items-center justify-between mb-4 sm:mb-6">
-                            <h2 className="text-xl sm:text-2xl tracking-tight text-foreground">
-                                <span className="font-normal">{isEn ? 'Curated' : 'Dipilih'}</span>{' '}
-                                <span className="font-bold">{isEn ? 'Just For You' : 'Khusus Untukmu'}</span>
-                            </h2>
-                            <Button asChild variant="ghost" size="sm" className="text-xs">
-                                <Link href="/products" onClick={() => setLoadingButtonId('recommended_all')}>
-                                    {loadingButtonId === 'recommended_all' && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
-                                    <span>{t('common.see_all')} &rarr;</span>
-                                </Link>
-                            </Button>
-                        </div>
+                    {recommendedProducts.length > 0 && (
+                        <section>
+                            <div className="flex items-center justify-between mb-4 sm:mb-6">
+                                <h2 className="text-xl sm:text-2xl tracking-tight text-foreground">
+                                    <span className="font-normal">{isEn ? 'Curated' : 'Dipilih'}</span>{' '}
+                                    <span className="font-bold">{isEn ? 'Just For You' : 'Khusus Untukmu'}</span>
+                                </h2>
+                                <Button asChild variant="ghost" size="sm" className="text-xs">
+                                    <Link href="/products" onClick={() => setLoadingButtonId('recommended_all')}>
+                                        {loadingButtonId === 'recommended_all' && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                                        <span>{t('common.see_all')} &rarr;</span>
+                                    </Link>
+                                </Button>
+                            </div>
 
-                        <div className="-mx-4 px-4 sm:mx-0 sm:px-0 scroll-pl-4 sm:scroll-pl-0 flex sm:grid overflow-x-auto sm:overflow-visible gap-3 sm:gap-5 pb-3 sm:pb-0 snap-x snap-mandatory scrollbar-none sm:grid-cols-3 lg:grid-cols-5">
-                            {recommendedProducts.map((p) => (
-                                <ProductCard
-                                    key={p.id}
-                                    product={p}
-                                    isWishlisted={wishlistedIds.includes(p.id)}
-                                    onToggleWishlist={toggleWishlist}
-                                    onQuickView={openQuickView}
-                                    className="w-[calc((100%-16px)/2.45)] sm:w-auto shrink-0 sm:shrink snap-start"
-                                />
-                            ))}
-                        </div>
-                    </section>
+                            <div className="-mx-4 px-4 sm:mx-0 sm:px-0 scroll-pl-4 sm:scroll-pl-0 flex sm:grid overflow-x-auto sm:overflow-visible gap-3 sm:gap-5 pb-3 sm:pb-0 snap-x snap-mandatory scrollbar-none sm:grid-cols-3 lg:grid-cols-5">
+                                {recommendedProducts.map((p) => (
+                                    <ProductCard
+                                        key={p.id}
+                                        product={p}
+                                        isWishlisted={wishlistedIds.includes(p.id)}
+                                        onToggleWishlist={toggleWishlist}
+                                        onQuickView={openQuickView}
+                                        className="w-[calc((100%-16px)/2.45)] sm:w-auto shrink-0 sm:shrink snap-start"
+                                    />
+                                ))}
+                            </div>
+                        </section>
+                    )}
                 </div>
 
                 {/* 7. PRODUK DENGAN DISKON (FULL-WIDTH SECTION SLIDER) */}
@@ -712,30 +713,32 @@ export default function Home({
 
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 sm:space-y-16">
                     {/* 8. BRAND PILIHAN */}
-                    <section id="brands">
-                        <div className="flex items-center justify-between mb-4 sm:mb-6">
-                            <h2 className="text-xl sm:text-2xl tracking-tight text-foreground">
-                                <span className="font-normal">{isEn ? 'Featured' : 'Brand'}</span>{' '}
-                                <span className="font-bold">{isEn ? 'Brands' : 'Pilihan'}</span>
-                            </h2>
-                            <Button asChild variant="ghost" size="sm" className="text-xs">
-                                <Link href="/brands" onClick={() => setLoadingButtonId('brands_all')}>
-                                    {loadingButtonId === 'brands_all' && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
-                                    <span>{isEn ? 'Explore Brands' : 'Jelajahi Brand'} &rarr;</span>
-                                </Link>
-                            </Button>
-                        </div>
+                    {brandList.length > 0 && (
+                        <section id="brands">
+                            <div className="flex items-center justify-between mb-4 sm:mb-6">
+                                <h2 className="text-xl sm:text-2xl tracking-tight text-foreground">
+                                    <span className="font-normal">{isEn ? 'Featured' : 'Brand'}</span>{' '}
+                                    <span className="font-bold">{isEn ? 'Brands' : 'Pilihan'}</span>
+                                </h2>
+                                <Button asChild variant="ghost" size="sm" className="text-xs">
+                                    <Link href="/brands" onClick={() => setLoadingButtonId('brands_all')}>
+                                        {loadingButtonId === 'brands_all' && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                                        <span>{isEn ? 'Explore Brands' : 'Jelajahi Brand'} &rarr;</span>
+                                    </Link>
+                                </Button>
+                            </div>
 
-                        <div className="-mx-4 px-4 sm:mx-0 sm:px-0 scroll-pl-4 sm:scroll-pl-0 flex sm:grid overflow-x-auto sm:overflow-visible gap-3 sm:gap-4 pb-2 sm:pb-0 no-scrollbar scrollbar-none bg-transparent snap-x snap-mandatory grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-                            {brandList.map((b) => (
-                                <BrandCard
-                                    key={b.slug}
-                                    brand={b}
-                                    className="w-[calc((100%-30px)/3.5)] sm:w-auto shrink-0 sm:shrink snap-start"
-                                />
-                            ))}
-                        </div>
-                    </section>
+                            <div className="-mx-4 px-4 sm:mx-0 sm:px-0 scroll-pl-4 sm:scroll-pl-0 flex sm:grid overflow-x-auto sm:overflow-visible gap-3 sm:gap-4 pb-2 sm:pb-0 no-scrollbar scrollbar-none bg-transparent snap-x snap-mandatory grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+                                {brandList.map((b) => (
+                                    <BrandCard
+                                        key={b.slug}
+                                        brand={b}
+                                        className="w-[calc((100%-30px)/3.5)] sm:w-auto shrink-0 sm:shrink snap-start"
+                                    />
+                                ))}
+                            </div>
+                        </section>
+                    )}
 
                     {/* 9. ARTIKEL TERBARU */}
                     {articlesList.length > 0 && (

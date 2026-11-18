@@ -38,7 +38,6 @@ export default function AdminSliderPromoEdit({ sliderPromo }: AdminSliderPromoEd
     const [previewUrl, setPreviewUrl] = useState<string | null>(sliderPromo.thumbnail || null);
     const [isMediaVideo, setIsMediaVideo] = useState<boolean>(() => isVideoUrl(sliderPromo.thumbnail || ''));
     const [isDragging, setIsDragging] = useState(false);
-    const [showUrlInput, setShowUrlInput] = useState(false);
 
     const { data, setData, processing, errors } = useForm<{
         title: string;
@@ -72,7 +71,6 @@ export default function AdminSliderPromoEdit({ sliderPromo }: AdminSliderPromoEd
         setData('thumbnail', file);
         setPreviewUrl(URL.createObjectURL(file));
         setIsMediaVideo(isVideo);
-        setShowUrlInput(false);
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -157,79 +155,45 @@ export default function AdminSliderPromoEdit({ sliderPromo }: AdminSliderPromoEd
                 {/* 1. Banner Image Card */}
                 <Card>
                     <CardHeader>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <CardTitle className="text-base flex items-center gap-2">
-                                    <ImageIcon className="size-4 text-primary" />
-                                    <span>Media Banner / Video / GIF</span>
-                                </CardTitle>
-                                <CardDescription>
-                                    Format landscape disarankan (16:9 atau 21:9). Mendukung Gambar, GIF Animasi, dan Video loop.
-                                </CardDescription>
-                            </div>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setShowUrlInput(!showUrlInput)}
-                                className="text-xs cursor-pointer"
-                            >
-                                {showUrlInput ? 'Unggah dari Perangkat' : 'Gunakan URL Media'}
-                            </Button>
-                        </div>
+                        <CardTitle className="text-base flex items-center gap-2">
+                            <ImageIcon className="size-4 text-primary" />
+                            <span>Media Banner / Video / GIF</span>
+                        </CardTitle>
+                        <CardDescription>
+                            Format landscape disarankan (16:9 atau 21:9). Unggah berkas Gambar, GIF Animasi, atau Video loop dari perangkat.
+                        </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        {showUrlInput ? (
-                            <div className="space-y-2">
-                                <label className="text-xs font-medium text-foreground">URL Media Banner (Gambar / Video / GIF)</label>
-                                <Input
-                                    type="url"
-                                    placeholder="https://domain.com/video.mp4 atau https://domain.com/banner.gif"
-                                    value={typeof data.thumbnail === 'string' ? data.thumbnail : ''}
-                                    onChange={(e) => {
-                                        const val = e.target.value;
-                                        setData('thumbnail', val);
-                                        setPreviewUrl(val || null);
-                                        setIsMediaVideo(isVideoUrl(val));
-                                    }}
-                                    className="text-xs"
-                                />
-                                <p className="text-[11px] text-muted-foreground">
-                                    Tempelkan tautan HTTPS langsung ke berkas gambar, GIF, atau video MP4/WEBM.
+                        <div
+                            onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
+                            onDrop={handleDrop}
+                            onClick={() => fileInputRef.current?.click()}
+                            className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
+                                isDragging
+                                    ? 'border-primary bg-primary/5 scale-[0.99]'
+                                    : 'border-border hover:border-primary/60 hover:bg-muted/40'
+                            }`}
+                        >
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,image/avif,video/mp4,video/webm,video/ogg,video/quicktime"
+                                className="hidden"
+                                onChange={handleFileChange}
+                            />
+                            <div className="flex flex-col items-center justify-center gap-2">
+                                <div className="size-12 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                                    <Upload className="size-6" />
+                                </div>
+                                <div className="text-sm font-semibold text-foreground">
+                                    Klik untuk mengganti media atau seret berkas ke sini
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    Mendukung Gambar (JPG, PNG, WEBP, GIF) &amp; Video (MP4, WEBM, MOV) Maks. 50MB
                                 </p>
                             </div>
-                        ) : (
-                            <div
-                                onDragOver={handleDragOver}
-                                onDragLeave={handleDragLeave}
-                                onDrop={handleDrop}
-                                onClick={() => fileInputRef.current?.click()}
-                                className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
-                                    isDragging
-                                        ? 'border-primary bg-primary/5 scale-[0.99]'
-                                        : 'border-border hover:border-primary/60 hover:bg-muted/40'
-                                }`}
-                            >
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,image/avif,video/mp4,video/webm,video/ogg,video/quicktime"
-                                    className="hidden"
-                                    onChange={handleFileChange}
-                                />
-                                <div className="flex flex-col items-center justify-center gap-2">
-                                    <div className="size-12 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-                                        <Upload className="size-6" />
-                                    </div>
-                                    <div className="text-sm font-semibold text-foreground">
-                                        Klik untuk mengganti media atau seret berkas ke sini
-                                    </div>
-                                    <p className="text-xs text-muted-foreground">
-                                        Mendukung Gambar (JPG, PNG, WEBP, GIF) &amp; Video (MP4, WEBM, MOV) Maks. 50MB
-                                    </p>
-                                </div>
-                            </div>
-                        )}
+                        </div>
 
                         {errors.thumbnail && (
                             <p className="text-xs text-destructive font-medium">{errors.thumbnail}</p>

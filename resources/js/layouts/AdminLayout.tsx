@@ -22,6 +22,7 @@ import {
     MapPin,
     Users,
     SlidersHorizontal,
+    LayoutTemplate,
     Bell,
     CheckCheck,
     Truck,
@@ -225,6 +226,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
     const isVouchers = url.startsWith('/manajemen-voucher');
     const isArticles = url.startsWith('/manajemen-artikel');
     const isSliderPromos = url.startsWith('/manajemen-slider-promo');
+    const isBanners = url.startsWith('/manajemen-banner');
     const isStores = url.startsWith('/manajemen-butik');
     const isPaymentMethods = url.startsWith('/manajemen-pembayaran');
     const isShippingServices = url.startsWith('/layanan-pengiriman') || url.startsWith('/manajemen-pengiriman');
@@ -465,6 +467,19 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                         >
                             <SlidersHorizontal className="size-4" />
                             <span>Slider Promo</span>
+                        </Link>
+
+                        <Link
+                            href="/manajemen-banner"
+                            onClick={() => setSidebarOpen(false)}
+                            className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
+                                isBanners
+                                    ? 'bg-muted text-primary font-semibold'
+                                    : 'text-muted-foreground hover:text-primary hover:bg-muted'
+                            }`}
+                        >
+                            <LayoutTemplate className="size-4" />
+                            <span>Banner</span>
                         </Link>
 
                         <Separator className="my-2" />

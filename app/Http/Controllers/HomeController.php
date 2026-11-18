@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Article;
+use App\Models\Banner;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
@@ -207,6 +208,29 @@ class HomeController extends Controller
             ->values()
             ->all();
 
+        // 9. Promotional Mid-Banner from DB
+        $bannerModel = Banner::query()
+            ->where('is_active', true)
+            ->latest('id')
+            ->first();
+
+        $banner = $bannerModel ? [
+            'id' => $bannerModel->id,
+            'subtitle' => $bannerModel->subtitle,
+            'subtitle_en' => $bannerModel->subtitle_en,
+            'title' => $bannerModel->title,
+            'title_en' => $bannerModel->title_en,
+            'description' => $bannerModel->description,
+            'description_en' => $bannerModel->description_en,
+            'image' => $bannerModel->image,
+            'button_text' => $bannerModel->button_text,
+            'button_text_en' => $bannerModel->button_text_en,
+            'button_link' => $bannerModel->button_link,
+            'secondary_button_text' => $bannerModel->secondary_button_text,
+            'secondary_button_text_en' => $bannerModel->secondary_button_text_en,
+            'secondary_button_link' => $bannerModel->secondary_button_link,
+        ] : null;
+
         return [
             'popularProducts' => $popularProducts,
             'discountedProducts' => $discountedProducts,
@@ -217,12 +241,7 @@ class HomeController extends Controller
             'vouchers' => $vouchers,
             'articles' => $articles,
             'sliderPromos' => $sliderPromos,
-            'stats' => [
-                'creations' => '24+',
-                'sourcing_countries' => '18',
-                'concentration' => '30% Extrait',
-                'rating' => '4.9/5.0',
-            ],
+            'banner' => $banner,
         ];
     }
 }
