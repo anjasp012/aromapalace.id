@@ -126,14 +126,14 @@ export default function AdminBannersIndex({
                     <Card className="shadow-xs">
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <CardTitle className="text-sm font-medium text-muted-foreground">
-                                Total Banner
+                                Kuota Banner
                             </CardTitle>
                             <LayoutTemplate className="size-4 text-primary" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{metrics.total_banners}</div>
+                            <div className="text-2xl font-bold">{metrics.total_banners} / 1 Banner</div>
                             <p className="text-xs text-muted-foreground mt-1">
-                                Konten banner promosi tengah yang tersimpan di sistem
+                                Hanya diperbolehkan maksimal 1 banner promosi untuk penawaran khusus di beranda
                             </p>
                         </CardContent>
                     </Card>
@@ -264,12 +264,21 @@ export default function AdminBannersIndex({
                             )}
                         </form>
 
-                        <Button size="sm" asChild className="w-full sm:w-auto h-9">
-                            <Link href="/manajemen-banner/create" className="flex items-center gap-1.5">
-                                <Plus className="size-4" />
-                                <span>Tambah Banner Baru</span>
-                            </Link>
-                        </Button>
+                        {banners.total === 0 ? (
+                            <Button size="sm" asChild className="w-full sm:w-auto h-9">
+                                <Link href="/manajemen-banner/create" className="flex items-center gap-1.5">
+                                    <Plus className="size-4" />
+                                    <span>Tambah Banner</span>
+                                </Link>
+                            </Button>
+                        ) : (
+                            <Button size="sm" variant="outline" asChild className="w-full sm:w-auto h-9">
+                                <Link href={`/manajemen-banner/${banners.data[0]?.id}/edit`} className="flex items-center gap-1.5">
+                                    <Edit3 className="size-4" />
+                                    <span>Edit Banner</span>
+                                </Link>
+                            </Button>
+                        )}
                     </CardContent>
                 </Card>
 

@@ -47,13 +47,24 @@ class BannerController extends Controller
         ]);
     }
 
-    public function create(): Response
+    public function create(): Response|RedirectResponse
     {
+        $existing = Banner::first();
+        if ($existing) {
+            return redirect()->route('admin.banners.edit', $existing)
+                ->with('info', 'Hanya diperbolehkan memiliki 1 banner promosi. Anda telah diarahkan ke halaman edit banner.');
+        }
+
         return Inertia::render('admin/banners/create');
     }
 
     public function store(Request $request): RedirectResponse
     {
+        if (Banner::count() >= 1) {
+            return redirect()->route('admin.banners.index')
+                ->with('error', 'Hanya diperbolehkan memiliki maksimal 1 banner promosi. Silakan edit banner yang sudah ada.');
+        }
+
         $validated = $request->validate([
             'subtitle' => ['nullable', 'string', 'max:255'],
             'subtitle_en' => ['nullable', 'string', 'max:255'],
