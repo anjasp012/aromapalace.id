@@ -21,6 +21,7 @@ import VoucherCard, { type VoucherItem } from '@/components/VoucherCard';
 import ArticleCard, { type ArticleItem } from '@/components/ArticleCard';
 import BrandCard, { type BrandItem } from '@/components/BrandCard';
 import { useTranslation } from '@/lib/i18n';
+import { isVideoUrl } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 
 export interface SliderPromoItem {
@@ -334,9 +335,9 @@ export default function Home({
                                                             size="default"
                                                             className="shadow-sm font-semibold hover:shadow-md transition-shadow cursor-pointer"
                                                         >
-                                                            <Link href={banner.link} onClick={() => setLoadingButtonId(`hero_shop_${banner.id}`)}>
-                                                                {loadingButtonId === `hero_shop_${banner.id}` && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
-                                                                <span>{isEn ? 'Shop Now' : 'Belanja Sekarang'}</span>
+                                                            <Link href={banner.link} onClick={() => setLoadingButtonId(`hero_explore_${banner.id}`)}>
+                                                                {loadingButtonId === `hero_explore_${banner.id}` && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                                                                <span>{isEn ? 'Explore Collection' : 'Jelajahi Koleksi'}</span>
                                                             </Link>
                                                         </Button>
                                                         <Button
@@ -345,9 +346,9 @@ export default function Home({
                                                             size="default"
                                                             className="bg-background/60 hover:bg-background/90 backdrop-blur-xs border-border/80 cursor-pointer"
                                                         >
-                                                            <Link href="/products?sort=popular" onClick={() => setLoadingButtonId(`hero_explore_${banner.id}`)}>
-                                                                {loadingButtonId === `hero_explore_${banner.id}` && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
-                                                                <span>{isEn ? 'Explore Collection' : 'Jelajahi Koleksi'}</span>
+                                                            <Link href="/products" onClick={() => setLoadingButtonId(`hero_shop_${banner.id}`)}>
+                                                                {loadingButtonId === `hero_shop_${banner.id}` && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                                                                <span>{isEn ? 'Shop Now' : 'Belanja Sekarang'}</span>
                                                             </Link>
                                                         </Button>
                                                     </div>
@@ -373,19 +374,31 @@ export default function Home({
                                                     </div>
                                                 </div>
 
-                                                {/* Right Column: Image (Full banner on mobile, featured card on desktop) */}
+                                                {/* Right Column: Image / Video / GIF (Full banner on mobile, featured card on desktop) */}
                                                 <div className="lg:col-span-6 relative w-full aspect-[16/9] sm:aspect-[21/9] lg:aspect-auto lg:h-[480px] p-0 lg:p-12 flex items-center justify-center">
                                                     <Link
                                                         href={banner.link}
                                                         className="relative w-full h-full lg:max-w-[500px] flex items-center justify-center block cursor-pointer"
                                                     >
-                                                        {/* Crisp Main Image Card */}
+                                                        {/* Crisp Main Media Card */}
                                                         <div className="relative z-10 w-full h-full rounded-2xl overflow-hidden border border-border/50 lg:border lg:border-white/60 dark:lg:border-white/10 bg-background shadow-md lg:shadow-xl">
-                                                            <img
-                                                                src={banner.image}
-                                                                alt={banner.title}
-                                                                className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
-                                                            />
+                                                            {isVideoUrl(banner.image) ? (
+                                                                <video
+                                                                    src={banner.image}
+                                                                    autoPlay
+                                                                    loop
+                                                                    muted
+                                                                    playsInline
+                                                                    preload="auto"
+                                                                    className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                                                                />
+                                                            ) : (
+                                                                <img
+                                                                    src={banner.image}
+                                                                    alt={banner.title}
+                                                                    className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                                                                />
+                                                            )}
                                                             {/* Subtle gradient vignette on image bottom */}
                                                             <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent pointer-events-none" />
                                                         </div>

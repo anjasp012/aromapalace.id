@@ -25,6 +25,7 @@ import {
     DialogDescription,
     DialogFooter,
 } from '@/components/ui/dialog';
+import { isVideoUrl, isGifUrl } from '@/lib/utils';
 
 interface SliderPromoItem {
     id: number;
@@ -214,16 +215,39 @@ export default function AdminSliderPromosIndex({
                                             {/* Banner & Title (ID) */}
                                             <td className="p-4 align-middle font-medium text-foreground">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-20 h-12 rounded-md border bg-muted flex items-center justify-center overflow-hidden shrink-0 shadow-xs">
+                                                    <div className="w-20 h-12 rounded-md border bg-muted flex items-center justify-center overflow-hidden shrink-0 shadow-xs relative">
                                                         {slider.thumbnail ? (
-                                                            <img
-                                                                src={slider.thumbnail}
-                                                                alt={slider.title}
-                                                                className="size-full object-cover"
-                                                                onError={(e) => {
-                                                                    (e.target as HTMLElement).style.display = 'none';
-                                                                }}
-                                                            />
+                                                            isVideoUrl(slider.thumbnail) ? (
+                                                                <>
+                                                                    <video
+                                                                        src={slider.thumbnail}
+                                                                        autoPlay
+                                                                        loop
+                                                                        muted
+                                                                        playsInline
+                                                                        className="size-full object-cover"
+                                                                    />
+                                                                    <span className="absolute bottom-1 right-1 bg-black/80 text-[8px] font-bold text-white px-1 py-0.5 rounded leading-none">
+                                                                        VID
+                                                                    </span>
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <img
+                                                                        src={slider.thumbnail}
+                                                                        alt={slider.title}
+                                                                        className="size-full object-cover"
+                                                                        onError={(e) => {
+                                                                            (e.target as HTMLElement).style.display = 'none';
+                                                                        }}
+                                                                    />
+                                                                    {isGifUrl(slider.thumbnail) && (
+                                                                        <span className="absolute bottom-1 right-1 bg-black/80 text-[8px] font-bold text-white px-1 py-0.5 rounded leading-none">
+                                                                            GIF
+                                                                        </span>
+                                                                    )}
+                                                                </>
+                                                            )
                                                         ) : (
                                                             <ImageIcon className="size-4 text-muted-foreground" />
                                                         )}

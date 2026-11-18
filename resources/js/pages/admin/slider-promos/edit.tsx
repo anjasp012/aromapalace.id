@@ -9,6 +9,7 @@ import {
     SlidersHorizontal,
     Trash2,
     Link as LinkIcon,
+    Film,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { isVideoUrl, isGifUrl } from '@/lib/utils';
 
 interface SliderPromoData {
     id: number;
@@ -34,6 +36,7 @@ interface AdminSliderPromoEditProps {
 export default function AdminSliderPromoEdit({ sliderPromo }: AdminSliderPromoEditProps) {
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(sliderPromo.thumbnail || null);
+    const [isMediaVideo, setIsMediaVideo] = useState<boolean>(() => isVideoUrl(sliderPromo.thumbnail || ''));
     const [isDragging, setIsDragging] = useState(false);
     const [showUrlInput, setShowUrlInput] = useState(false);
 
@@ -54,12 +57,21 @@ export default function AdminSliderPromoEdit({ sliderPromo }: AdminSliderPromoEd
     });
 
     const handleFile = (file: File) => {
-        if (!file.type.startsWith('image/')) {
-            alert('Silakan pilih file gambar yang valid (JPG, PNG, WEBP).');
+        const isVideo = file.type.startsWith('video/') || /\.(mp4|webm|ogg|mov|m4v)$/i.test(file.name);
+        const isImg = file.type.startsWith('image/') || /\.(png|jpe?g|webp|gif|svg|avif)$/i.test(file.name);
+
+        if (!isVideo && !isImg) {
+            alert('Silakan pilih file gambar, GIF, atau video yang valid (JPG, PNG, WEBP, GIF, MP4, WEBM).');
             return;
         }
+        if (file.size > 50 * 1024 * 1024) {
+            alert('Ukuran file maksimal adalah 50MB.');
+            return;
+        }
+
         setData('thumbnail', file);
         setPreviewUrl(URL.createObjectURL(file));
+        setIsMediaVideo(isVideo);
         setShowUrlInput(false);
     };
 
@@ -95,6 +107,7 @@ export default function AdminSliderPromoEdit({ sliderPromo }: AdminSliderPromoEd
     const handleResetImage = () => {
         setData('thumbnail', sliderPromo.thumbnail);
         setPreviewUrl(sliderPromo.thumbnail);
+        setIsMediaVideo(isVideoUrl(sliderPromo.thumbnail || ''));
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
@@ -148,10 +161,10 @@ export default function AdminSliderPromoEdit({ sliderPromo }: AdminSliderPromoEd
                             <div>
                                 <CardTitle className="text-base flex items-center gap-2">
                                     <ImageIcon className="size-4 text-primary" />
-                                    <span>Gambar Banner / Thumbnail</span>
+                                    <span>Media Banner / Video / GIF</span>
                                 </CardTitle>
                                 <CardDescription>
-                                    Format landscape disarankan (16:9 atau 21:9, min. 1200x600px).
+                                    Format landscape disarankan (16:9 atau 21:9). Mendukung Gambar, GIF Animasi, dan Video loop.
                                 </CardDescription>
                             </div>
                             <Button
@@ -161,27 +174,28 @@ export default function AdminSliderPromoEdit({ sliderPromo }: AdminSliderPromoEd
                                 onClick={() => setShowUrlInput(!showUrlInput)}
                                 className="text-xs cursor-pointer"
                             >
-                                {showUrlInput ? 'Unggah dari Perangkat' : 'Gunakan URL Gambar'}
+                                {showUrlInput ? 'Unggah dari Perangkat' : 'Gunakan URL Media'}
                             </Button>
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {showUrlInput ? (
                             <div className="space-y-2">
-                                <label className="text-xs font-medium text-foreground">URL Gambar Banner</label>
+                                <label className="text-xs font-medium text-foreground">URL Media Banner (Gambar / Video / GIF)</label>
                                 <Input
                                     type="url"
-                                    placeholder="https://images.unsplash.com/... atau /images/banner.jpg"
+                                    placeholder="https://domain.com/video.mp4 atau https://domain.com/banner.gif"
                                     value={typeof data.thumbnail === 'string' ? data.thumbnail : ''}
                                     onChange={(e) => {
                                         const val = e.target.value;
                                         setData('thumbnail', val);
                                         setPreviewUrl(val || null);
+                                        setIsMediaVideo(isVideoUrl(val));
                                     }}
                                     className="text-xs"
                                 />
                                 <p className="text-[11px] text-muted-foreground">
-                                    Tempelkan tautan HTTPS langsung ke gambar banner.
+                                    Tempelkan tautan HTTPS langsung ke berkas gambar, GIF, atau video MP4/WEBM.
                                 </p>
                             </div>
                         ) : (
@@ -199,7 +213,7 @@ export default function AdminSliderPromoEdit({ sliderPromo }: AdminSliderPromoEd
                                 <input
                                     ref={fileInputRef}
                                     type="file"
-                                    accept="image/png,image/jpeg,image/webp"
+                                    accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,image/avif,video/mp4,video/webm,video/ogg,video/quicktime"
                                     className="hidden"
                                     onChange={handleFileChange}
                                 />
@@ -208,10 +222,10 @@ export default function AdminSliderPromoEdit({ sliderPromo }: AdminSliderPromoEd
                                         <Upload className="size-6" />
                                     </div>
                                     <div className="text-sm font-semibold text-foreground">
-                                        Klik untuk mengganti gambar atau seret file ke sini
+                                        Klik untuk mengganti media atau seret berkas ke sini
                                     </div>
                                     <p className="text-xs text-muted-foreground">
-                                        Mendukung format WEBP, PNG, JPG (Maks. 5MB)
+                                        Mendukung Gambar (JPG, PNG, WEBP, GIF) &amp; Video (MP4, WEBM, MOV) Maks. 50MB
                                     </p>
                                 </div>
                             </div>
@@ -221,18 +235,39 @@ export default function AdminSliderPromoEdit({ sliderPromo }: AdminSliderPromoEd
                             <p className="text-xs text-destructive font-medium">{errors.thumbnail}</p>
                         )}
 
-                        {/* Image Preview Box */}
+                        {/* Media Preview Box */}
                         {previewUrl && (
                             <div className="relative mt-4 rounded-xl overflow-hidden border bg-muted group max-w-xl mx-auto shadow-sm">
-                                <div className="aspect-[16/7] w-full overflow-hidden flex items-center justify-center">
-                                    <img
-                                        src={previewUrl}
-                                        alt={data.title || 'Pratinjau Banner'}
-                                        className="size-full object-cover"
-                                        onError={(e) => {
-                                            (e.target as HTMLElement).style.display = 'none';
-                                        }}
-                                    />
+                                <div className="aspect-[16/7] w-full overflow-hidden flex items-center justify-center bg-black/5 dark:bg-black/40">
+                                    {isMediaVideo ? (
+                                        <video
+                                            src={previewUrl}
+                                            autoPlay
+                                            loop
+                                            muted
+                                            playsInline
+                                            controls
+                                            className="size-full object-cover"
+                                        />
+                                    ) : (
+                                        <img
+                                            src={previewUrl}
+                                            alt={data.title || 'Pratinjau Banner'}
+                                            className="size-full object-cover"
+                                            onError={(e) => {
+                                                (e.target as HTMLElement).style.display = 'none';
+                                            }}
+                                        />
+                                    )}
+                                </div>
+                                <div className="absolute top-3 left-3 flex items-center gap-1.5 pointer-events-none">
+                                    <Badge className="bg-black/75 backdrop-blur-md text-white text-[10px] border-none font-medium px-2 py-0.5">
+                                        {isMediaVideo
+                                            ? 'Video (Looping)'
+                                            : isGifUrl(previewUrl)
+                                            ? 'GIF Animasi'
+                                            : 'Gambar Banner'}
+                                    </Badge>
                                 </div>
                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                                     <Button

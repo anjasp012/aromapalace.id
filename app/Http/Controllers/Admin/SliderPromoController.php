@@ -62,6 +62,17 @@ class SliderPromoController extends Controller
 
         $thumbnail = null;
         if ($request->hasFile('thumbnail')) {
+            $request->validate([
+                'thumbnail' => [
+                    'file',
+                    'mimes:jpeg,png,jpg,webp,gif,svg,avif,mp4,webm,ogg,mov,m4v',
+                    'max:51200',
+                ],
+            ], [
+                'thumbnail.mimes' => 'Format file harus berupa media yang valid: Gambar/GIF (JPG, PNG, WEBP, GIF, SVG) atau Video (MP4, WebM, OGG, MOV).',
+                'thumbnail.max' => 'Ukuran file banner media maksimal 50MB.',
+            ]);
+
             $file = $request->file('thumbnail');
             if ($file instanceof UploadedFile && $file->isValid()) {
                 $path = $file->store('slider-promos', 'public');
@@ -72,7 +83,7 @@ class SliderPromoController extends Controller
         }
 
         if (empty($thumbnail)) {
-            return back()->withErrors(['thumbnail' => 'Banner / thumbnail gambar wajib diunggah atau cantumkan URL gambar.'])->withInput();
+            return back()->withErrors(['thumbnail' => 'Banner media (video, animasi GIF, atau gambar) wajib diunggah atau cantumkan URL media.'])->withInput();
         }
 
         $validated['thumbnail'] = $thumbnail;
@@ -104,8 +115,24 @@ class SliderPromoController extends Controller
 
         $thumbnail = $sliderPromo->thumbnail;
         if ($request->hasFile('thumbnail')) {
+            $request->validate([
+                'thumbnail' => [
+                    'file',
+                    'mimes:jpeg,png,jpg,webp,gif,svg,avif,mp4,webm,ogg,mov,m4v',
+                    'max:51200',
+                ],
+            ], [
+                'thumbnail.mimes' => 'Format file harus berupa media yang valid: Gambar/GIF (JPG, PNG, WEBP, GIF, SVG) atau Video (MP4, WebM, OGG, MOV).',
+                'thumbnail.max' => 'Ukuran file banner media maksimal 50MB.',
+            ]);
+
             $file = $request->file('thumbnail');
             if ($file instanceof UploadedFile && $file->isValid()) {
+                if (! empty($sliderPromo->thumbnail) && str_contains($sliderPromo->thumbnail, '/storage/slider-promos/')) {
+                    $storagePath = str_replace('/storage/', '', $sliderPromo->thumbnail);
+                    Storage::disk('public')->delete($storagePath);
+                }
+
                 $path = $file->store('slider-promos', 'public');
                 $thumbnail = Storage::url($path);
             }
