@@ -278,12 +278,12 @@ export default function Home({
                     {banners.length > 0 && (
                         <section className="-mx-4 md:mx-0 relative group">
                             {/* Slide Content with Embla Carousel Swipe */}
-                            <div ref={heroRef} className="overflow-hidden cursor-grab active:cursor-grabbing select-none px-4 md:px-0">
+                            <div ref={heroRef} className="overflow-hidden cursor-grab active:cursor-grabbing select-none px-4 md:px-0 lg:-mx-4">
                                 <div className="flex">
                                     {banners.map((banner) => (
                                         <div
                                             key={banner.id}
-                                            className="min-w-0 shrink-0 grow-0 basis-[90%] sm:basis-[75%] md:basis-[62%] lg:basis-full pl-3 sm:pl-4 lg:pl-0 lg:pr-0"
+                                            className="min-w-0 shrink-0 grow-0 basis-[90%] sm:basis-[75%] md:basis-[62%] lg:basis-full pl-3 sm:pl-4 lg:px-4"
                                         >
                                             {/* Setiap Slide Adalah 1 Card Mandiri (1 Slider = 1 Card) */}
                                             <Card className="relative overflow-hidden border border-border/70 py-0 gap-0 shadow-none rounded-2xl transition-all duration-500 bg-card">
@@ -402,8 +402,8 @@ export default function Home({
                                 </svg>
                             </button>
 
-                            {/* Slide Indicators: Centered Floating Glass Capsule */}
-                            <div className="absolute bottom-2.5 sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 sm:gap-2 z-20 px-2.5 py-1 rounded-full bg-black/30 backdrop-blur-xs border border-white/15">
+                            {/* Slide Indicators: Centered Floating Glass Capsule (Disamarkan / Subtle Glass) */}
+                            <div className="absolute bottom-2.5 sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 sm:gap-2 z-20 px-2 py-0.5 rounded-full bg-black/15 dark:bg-black/30 backdrop-blur-xs border border-white/10">
                                 {banners.map((b, i) => (
                                     <button
                                         key={b.id}
