@@ -276,15 +276,17 @@ export default function Home({
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 sm:space-y-16">
                     {/* 1. HERO CAROUSEL BANNER */}
                     {banners.length > 0 && (
-                        <section className="-mx-4 lg:mx-0">
-                            <Card
-                                className="relative overflow-hidden border-0 lg:border lg:border-border/70 py-0 gap-0 shadow-none lg:shadow-lg rounded-none lg:rounded-2xl group transition-all duration-700 bg-transparent lg:bg-card"
-                            >
-                                {/* Slide Content with Embla Carousel Swipe */}
-                                <div ref={heroRef} className="relative z-10 overflow-hidden cursor-grab active:cursor-grabbing select-none">
-                                    <div className="flex">
-                                        {banners.map((banner) => (
-                                            <div key={banner.id} className="min-w-0 shrink-0 grow-0 basis-[90%] sm:basis-[75%] md:basis-[62%] lg:basis-full pl-3 sm:pl-4 lg:pl-0">
+                        <section className="-mx-4 md:mx-0 relative group">
+                            {/* Slide Content with Embla Carousel Swipe */}
+                            <div ref={heroRef} className="overflow-hidden cursor-grab active:cursor-grabbing select-none px-4 md:px-0">
+                                <div className="flex">
+                                    {banners.map((banner) => (
+                                        <div
+                                            key={banner.id}
+                                            className="min-w-0 shrink-0 grow-0 basis-[90%] sm:basis-[75%] md:basis-[62%] lg:basis-full pl-3 sm:pl-4 lg:pl-0 lg:pr-0"
+                                        >
+                                            {/* Setiap Slide Adalah 1 Card Mandiri (1 Slider = 1 Card) */}
+                                            <Card className="relative overflow-hidden border border-border/70 py-0 gap-0 shadow-md lg:shadow-xl rounded-2xl transition-all duration-500 bg-card">
                                                 <div className="grid grid-cols-1 lg:grid-cols-12 items-center">
                                                     {/* Left Column: Content (Desktop only, hidden on mobile & tablet) */}
                                                     <div className="hidden lg:flex lg:col-span-6 p-6 pb-12 sm:p-10 sm:pb-12 lg:p-14 lg:pb-14 flex-col justify-center">
@@ -348,7 +350,7 @@ export default function Home({
                                                             className="relative w-full max-w-[500px] flex items-center justify-center block cursor-pointer"
                                                         >
                                                             {/* Crisp Main Media Card with exact 5:4 ratio */}
-                                                            <div className="relative z-10 w-full aspect-[5/4] rounded-2xl overflow-hidden border border-border/50 lg:border lg:border-white/60 dark:lg:border-white/10 bg-background shadow-md lg:shadow-xl">
+                                                            <div className="relative z-10 w-full aspect-[5/4] rounded-2xl overflow-hidden border border-border/50 lg:border lg:border-white/60 dark:lg:border-white/10 bg-background shadow-none lg:shadow-md">
                                                                 {isVideoUrl(banner.image) ? (
                                                                     <video
                                                                         src={banner.image}
@@ -372,49 +374,49 @@ export default function Home({
                                                         </Link>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Prev / Next Slide Arrows (Desktop Interactive) */}
-                                <button
-                                    type="button"
-                                    onClick={() => heroApi?.scrollPrev()}
-                                    aria-label="Slide Sebelumnya"
-                                    className="hidden lg:flex items-center justify-center absolute left-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-background/80 hover:bg-background text-[#4A070B] dark:text-[#E8D0BA] border border-border/70 shadow-md backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity z-20 cursor-pointer"
-                                >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-                                    </svg>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => heroApi?.scrollNext()}
-                                    aria-label="Slide Berikutnya"
-                                    className="hidden lg:flex items-center justify-center absolute right-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-background/80 hover:bg-background text-[#4A070B] dark:text-[#E8D0BA] border border-border/70 shadow-md backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity z-20 cursor-pointer"
-                                >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                                    </svg>
-                                </button>
-
-                                {/* Slide Indicators: Centered Floating Glass Capsule */}
-                                <div className="absolute bottom-2.5 sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 sm:gap-2 z-20 px-2 py-0.5 rounded-full bg-black/25 backdrop-blur-xs border border-white/10 lg:bg-transparent lg:border-none lg:backdrop-blur-none">
-                                    {banners.map((b, i) => (
-                                        <button
-                                            key={b.id}
-                                            type="button"
-                                            onClick={() => heroApi?.scrollTo(i)}
-                                            aria-label={`Slide ${i + 1}`}
-                                            className={`h-1.5 sm:h-2 rounded-full transition-all duration-500 cursor-pointer ${activeSlide === i
-                                                    ? 'w-6 sm:w-8 bg-white lg:bg-[#4A070B] dark:lg:bg-[#D4A373] shadow-xs'
-                                                    : 'w-1.5 sm:w-2 bg-white/60 lg:bg-foreground/25 hover:bg-white/80 lg:hover:bg-foreground/50'
-                                                }`}
-                                        />
+                                            </Card>
+                                        </div>
                                     ))}
                                 </div>
-                            </Card>
+                            </div>
+
+                            {/* Prev / Next Slide Arrows (Desktop Interactive) */}
+                            <button
+                                type="button"
+                                onClick={() => heroApi?.scrollPrev()}
+                                aria-label="Slide Sebelumnya"
+                                className="hidden lg:flex items-center justify-center absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/90 hover:bg-background text-[#4A070B] dark:text-[#E8D0BA] border border-border shadow-md backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity z-20 cursor-pointer"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                                </svg>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => heroApi?.scrollNext()}
+                                aria-label="Slide Berikutnya"
+                                className="hidden lg:flex items-center justify-center absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/90 hover:bg-background text-[#4A070B] dark:text-[#E8D0BA] border border-border shadow-md backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity z-20 cursor-pointer"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </button>
+
+                            {/* Slide Indicators: Centered Floating Glass Capsule */}
+                            <div className="absolute bottom-2.5 sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 sm:gap-2 z-20 px-2.5 py-1 rounded-full bg-black/30 backdrop-blur-xs border border-white/15">
+                                {banners.map((b, i) => (
+                                    <button
+                                        key={b.id}
+                                        type="button"
+                                        onClick={() => heroApi?.scrollTo(i)}
+                                        aria-label={`Slide ${i + 1}`}
+                                        className={`h-1.5 sm:h-2 rounded-full transition-all duration-500 cursor-pointer ${activeSlide === i
+                                                ? 'w-6 sm:w-8 bg-white shadow-xs'
+                                                : 'w-1.5 sm:w-2 bg-white/50 hover:bg-white/80'
+                                            }`}
+                                    />
+                                ))}
+                            </div>
                         </section>
                     )}
 
