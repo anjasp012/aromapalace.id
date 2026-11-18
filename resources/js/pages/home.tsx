@@ -286,7 +286,7 @@ export default function Home({
                                             className="min-w-0 shrink-0 grow-0 basis-[90%] sm:basis-[75%] md:basis-[62%] lg:basis-full pl-3 sm:pl-4 lg:pl-0 lg:pr-0"
                                         >
                                             {/* Setiap Slide Adalah 1 Card Mandiri (1 Slider = 1 Card) */}
-                                            <Card className="relative overflow-hidden border border-border/70 py-0 gap-0 shadow-md lg:shadow-xl rounded-2xl transition-all duration-500 bg-card">
+                                            <Card className="relative overflow-hidden border border-border/70 py-0 gap-0 shadow-none rounded-2xl transition-all duration-500 bg-card">
                                                 <div className="grid grid-cols-1 lg:grid-cols-12 items-center">
                                                     {/* Left Column: Content (Desktop only, hidden on mobile & tablet) */}
                                                     <div className="hidden lg:flex lg:col-span-6 p-6 pb-12 sm:p-10 sm:pb-12 lg:p-14 lg:pb-14 flex-col justify-center">
@@ -350,7 +350,7 @@ export default function Home({
                                                             className="relative w-full max-w-[500px] flex items-center justify-center block cursor-pointer"
                                                         >
                                                             {/* Crisp Main Media Card with exact 5:4 ratio */}
-                                                            <div className="relative z-10 w-full aspect-[5/4] rounded-2xl overflow-hidden border border-border/50 lg:border lg:border-white/60 dark:lg:border-white/10 bg-background shadow-none lg:shadow-md">
+                                                            <div className="relative z-10 w-full aspect-[5/4] rounded-2xl overflow-hidden border border-border/50 lg:border lg:border-white/60 dark:lg:border-white/10 bg-background shadow-none">
                                                                 {isVideoUrl(banner.image) ? (
                                                                     <video
                                                                         src={banner.image}
