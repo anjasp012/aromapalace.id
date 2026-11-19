@@ -154,6 +154,7 @@ class BannerController extends Controller
                     'max:51200',
                 ],
             ], [
+                'image.file' => 'Banner media harus berupa berkas yang valid.',
                 'image.mimes' => 'Format file media harus berupa Gambar/GIF (JPG, PNG, WEBP, GIF, SVG) atau Video (MP4, WebM, OGG, MOV).',
                 'image.max' => 'Ukuran file media banner maksimal 50MB.',
             ]);
@@ -168,20 +169,30 @@ class BannerController extends Controller
                 $path = $file->store('banners', 'public');
                 $image = Storage::url($path);
             }
-        } elseif ($request->filled('image') && is_string($validated['image'])) {
-            $image = trim($validated['image']);
+        } elseif ($request->filled('image') && is_string($request->input('image'))) {
+            $image = trim($request->input('image'));
         }
 
         if (empty($image)) {
             return back()->withErrors(['image' => 'Banner media (gambar, animasi GIF, atau video) wajib diunggah.'])->withInput();
         }
 
-        $validated['image'] = $image;
-        $validated['button_text'] = ! empty($validated['button_text']) ? trim($validated['button_text']) : 'Belanja Promo';
-        $validated['button_link'] = ! empty($validated['button_link']) ? trim($validated['button_link']) : '/products?discount=1';
-        $validated['is_active'] = $request->boolean('is_active', true);
-
-        $banner->update($validated);
+        $banner->update([
+            'subtitle' => $validated['subtitle'] ?? null,
+            'subtitle_en' => $validated['subtitle_en'] ?? null,
+            'title' => $validated['title'],
+            'title_en' => $validated['title_en'] ?? null,
+            'description' => $validated['description'] ?? null,
+            'description_en' => $validated['description_en'] ?? null,
+            'image' => $image,
+            'button_text' => ! empty($validated['button_text']) ? trim($validated['button_text']) : 'Belanja Promo',
+            'button_text_en' => ! empty($validated['button_text_en']) ? trim($validated['button_text_en']) : 'Shop Promo',
+            'button_link' => ! empty($validated['button_link']) ? trim($validated['button_link']) : '/products?discount=1',
+            'secondary_button_text' => $validated['secondary_button_text'] ?? null,
+            'secondary_button_text_en' => $validated['secondary_button_text_en'] ?? null,
+            'secondary_button_link' => $validated['secondary_button_link'] ?? null,
+            'is_active' => $request->boolean('is_active', true),
+        ]);
 
         return redirect()->route('admin.banners.index')
             ->with('success', "Banner '{$banner->title}' berhasil diperbarui.");

@@ -122,6 +122,7 @@ class SliderPromoController extends Controller
                     'max:51200',
                 ],
             ], [
+                'thumbnail.file' => 'Banner media harus berupa berkas yang valid.',
                 'thumbnail.mimes' => 'Format file harus berupa media yang valid: Gambar/GIF (JPG, PNG, WEBP, GIF, SVG) atau Video (MP4, WebM, OGG, MOV).',
                 'thumbnail.max' => 'Ukuran file banner media maksimal 50MB.',
             ]);
@@ -136,18 +137,22 @@ class SliderPromoController extends Controller
                 $path = $file->store('slider-promos', 'public');
                 $thumbnail = Storage::url($path);
             }
-        } elseif ($request->filled('thumbnail') && is_string($validated['thumbnail'])) {
-            $thumbnail = trim($validated['thumbnail']);
+        } elseif ($request->filled('thumbnail') && is_string($request->input('thumbnail'))) {
+            $thumbnail = trim($request->input('thumbnail'));
         }
 
         if (empty($thumbnail)) {
             return back()->withErrors(['thumbnail' => 'Banner media (gambar, animasi GIF, atau video) wajib diunggah.'])->withInput();
         }
 
-        $validated['thumbnail'] = $thumbnail;
-        $validated['link'] = ! empty($validated['link']) ? trim($validated['link']) : '/products';
-
-        $sliderPromo->update($validated);
+        $sliderPromo->update([
+            'title' => $validated['title'],
+            'title_en' => $validated['title_en'] ?? null,
+            'description' => $validated['description'] ?? null,
+            'description_en' => $validated['description_en'] ?? null,
+            'link' => ! empty($validated['link']) ? trim($validated['link']) : '/products',
+            'thumbnail' => $thumbnail,
+        ]);
 
         return redirect()->route('admin.slider-promos.index')
             ->with('success', "Slider promo '{$sliderPromo->title}' berhasil diperbarui.");

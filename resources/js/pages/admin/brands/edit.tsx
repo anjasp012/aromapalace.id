@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Head, Link, useForm, router } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import AdminLayout from '@/layouts/AdminLayout';
 import {
     ArrowLeft,
@@ -34,16 +34,18 @@ export default function AdminBrandEdit({ brand }: AdminBrandEditProps) {
     const [previewUrl, setPreviewUrl] = useState<string | null>(brand.thumbnail || null);
     const [isDragging, setIsDragging] = useState(false);
 
-    const { data, setData, processing, errors } = useForm<{
+    const { data, setData, post, processing, errors } = useForm<{
+        _method: string;
         name: string;
         slug: string;
-        thumbnail: File | string | null;
+        thumbnail: File | null;
         description: string;
         description_en: string;
     }>({
+        _method: 'put',
         name: brand.name || '',
         slug: brand.slug || '',
-        thumbnail: brand.thumbnail || null,
+        thumbnail: null,
         description: brand.description || '',
         description_en: brand.description_en || '',
     });
@@ -109,10 +111,7 @@ export default function AdminBrandEdit({ brand }: AdminBrandEditProps) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        router.post(`/manajemen-brand/${brand.id}`, {
-            _method: 'put',
-            ...data,
-        }, {
+        post(`/manajemen-brand/${brand.id}`, {
             forceFormData: true,
         });
     };
@@ -158,6 +157,10 @@ export default function AdminBrandEdit({ brand }: AdminBrandEditProps) {
                             accept="image/*"
                             className="hidden"
                             onChange={handleFileChange}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                (e.target as HTMLInputElement).value = '';
+                            }}
                         />
 
                         {previewUrl ? (

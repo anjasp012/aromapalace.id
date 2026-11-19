@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Head, Link, useForm, router } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import AdminLayout from '@/layouts/AdminLayout';
 import {
     ArrowLeft,
@@ -39,20 +39,22 @@ export default function AdminSliderPromoEdit({ sliderPromo }: AdminSliderPromoEd
     const [isMediaVideo, setIsMediaVideo] = useState<boolean>(() => isVideoUrl(sliderPromo.thumbnail || ''));
     const [isDragging, setIsDragging] = useState(false);
 
-    const { data, setData, processing, errors, setError, clearErrors } = useForm<{
+    const { data, setData, post, processing, errors, setError, clearErrors } = useForm<{
+        _method: string;
         title: string;
         title_en: string;
         description: string;
         description_en: string;
         link: string;
-        thumbnail: File | string | null;
+        thumbnail: File | null;
     }>({
+        _method: 'put',
         title: sliderPromo.title || '',
         title_en: sliderPromo.title_en || '',
         description: sliderPromo.description || '',
         description_en: sliderPromo.description_en || '',
         link: sliderPromo.link || '/products',
-        thumbnail: sliderPromo.thumbnail || null,
+        thumbnail: null,
     });
 
     const handleFile = (file: File) => {
@@ -110,7 +112,7 @@ export default function AdminSliderPromoEdit({ sliderPromo }: AdminSliderPromoEd
     };
 
     const handleResetImage = () => {
-        setData('thumbnail', sliderPromo.thumbnail);
+        setData('thumbnail', null);
         setPreviewUrl(sliderPromo.thumbnail);
         setIsMediaVideo(isVideoUrl(sliderPromo.thumbnail || ''));
         if (fileInputRef.current) {
@@ -126,10 +128,7 @@ export default function AdminSliderPromoEdit({ sliderPromo }: AdminSliderPromoEd
             dropzone?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             return;
         }
-        router.post(`/manajemen-slider-promo/${sliderPromo.id}`, {
-            _method: 'put',
-            ...data,
-        }, {
+        post(`/manajemen-slider-promo/${sliderPromo.id}`, {
             forceFormData: true,
         });
     };
@@ -186,7 +185,10 @@ export default function AdminSliderPromoEdit({ sliderPromo }: AdminSliderPromoEd
                             accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,image/avif,video/mp4,video/webm,video/ogg,video/quicktime"
                             className="hidden"
                             onChange={handleFileChange}
-                            onClick={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                (e.target as HTMLInputElement).value = '';
+                            }}
                         />
                         <div
                             id="media-dropzone"

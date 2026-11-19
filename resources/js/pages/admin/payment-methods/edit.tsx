@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Head, Link, useForm, router } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import AdminLayout from '@/layouts/AdminLayout';
 import {
     ArrowLeft,
@@ -39,7 +39,8 @@ export default function AdminPaymentMethodEdit({ paymentMethod }: AdminPaymentMe
     const [previewUrl, setPreviewUrl] = useState<string | null>(paymentMethod.icon || null);
     const [isDragging, setIsDragging] = useState(false);
 
-    const { data, setData, processing, errors } = useForm<{
+    const { data, setData, post, processing, errors } = useForm<{
+        _method: string;
         name: string;
         code: string;
         type: 'automatic' | 'manual';
@@ -50,6 +51,7 @@ export default function AdminPaymentMethodEdit({ paymentMethod }: AdminPaymentMe
         is_active: boolean;
         use_unique_code: boolean;
     }>({
+        _method: 'put',
         name: paymentMethod.name || '',
         code: paymentMethod.code || '',
         type: paymentMethod.type ?? 'automatic',
@@ -124,10 +126,7 @@ export default function AdminPaymentMethodEdit({ paymentMethod }: AdminPaymentMe
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        router.post(`/manajemen-pembayaran/${paymentMethod.id}`, {
-            _method: 'put',
-            ...data,
-        }, {
+        post(`/manajemen-pembayaran/${paymentMethod.id}`, {
             forceFormData: true,
         });
     };
@@ -176,6 +175,10 @@ export default function AdminPaymentMethodEdit({ paymentMethod }: AdminPaymentMe
                             accept="image/*"
                             className="hidden"
                             onChange={handleFileChange}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                (e.target as HTMLInputElement).value = '';
+                            }}
                         />
 
                         {previewUrl ? (

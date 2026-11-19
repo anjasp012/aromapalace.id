@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Head, Link, useForm, router } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import AdminLayout from '@/layouts/AdminLayout';
 import {
     ArrowLeft,
@@ -46,20 +46,22 @@ export default function AdminCategoryEdit({ category, type }: AdminCategoryEditP
     const currentType = category.type || type || 'genders';
     const itemLabel = typeLabels[currentType] || 'Kategori';
 
-    const { data, setData, processing, errors } = useForm<{
+    const { data, setData, post, processing, errors } = useForm<{
+        _method: string;
         name: string;
         name_en: string;
         type: string;
         slug: string;
-        thumbnail: File | string | null;
+        thumbnail: File | null;
         description: string;
         description_en: string;
     }>({
+        _method: 'put',
         name: category.name || '',
         name_en: category.name_en || '',
         type: category.type || 'genders',
         slug: category.slug || '',
-        thumbnail: category.thumbnail || null,
+        thumbnail: null,
         description: category.description || '',
         description_en: category.description_en || '',
     });
@@ -125,10 +127,7 @@ export default function AdminCategoryEdit({ category, type }: AdminCategoryEditP
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        router.post(`/manajemen-kategori/${category.id}`, {
-            _method: 'put',
-            ...data,
-        }, {
+        post(`/manajemen-kategori/${category.id}`, {
             forceFormData: true,
         });
     };
@@ -174,6 +173,10 @@ export default function AdminCategoryEdit({ category, type }: AdminCategoryEditP
                             accept="image/*"
                             className="hidden"
                             onChange={handleFileChange}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                (e.target as HTMLInputElement).value = '';
+                            }}
                         />
 
                         {previewUrl ? (

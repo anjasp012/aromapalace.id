@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Head, Link, useForm, router } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import AdminLayout from '@/layouts/AdminLayout';
 import {
     ArrowLeft,
@@ -40,19 +40,21 @@ export default function AdminStoreEdit({ store }: AdminStoreEditProps) {
     const [previewUrl, setPreviewUrl] = useState<string | null>(store.thumbnail || null);
     const [isDragging, setIsDragging] = useState(false);
 
-    const { data, setData, processing, errors } = useForm<{
+    const { data, setData, post, processing, errors } = useForm<{
+        _method: string;
         name: string;
         description: string;
         description_en: string;
-        thumbnail: File | string | null;
+        thumbnail: File | null;
         latitude: number;
         longitude: number;
         gmaps_link: string;
     }>({
+        _method: 'put',
         name: store.name || '',
         description: store.description || '',
         description_en: store.description_en || '',
-        thumbnail: store.thumbnail || null,
+        thumbnail: null,
         latitude: store.latitude ?? -6.2088,
         longitude: store.longitude ?? 106.8456,
         gmaps_link: store.gmaps_link || '',
@@ -120,10 +122,7 @@ export default function AdminStoreEdit({ store }: AdminStoreEditProps) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        router.post(`/manajemen-butik/${store.id}`, {
-            _method: 'put',
-            ...data,
-        }, {
+        post(`/manajemen-butik/${store.id}`, {
             forceFormData: true,
         });
     };
@@ -169,6 +168,10 @@ export default function AdminStoreEdit({ store }: AdminStoreEditProps) {
                             accept="image/*"
                             className="hidden"
                             onChange={handleFileChange}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                (e.target as HTMLInputElement).value = '';
+                            }}
                         />
 
                         {previewUrl ? (

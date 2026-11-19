@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Head, Link, useForm, router } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import AdminLayout from '@/layouts/AdminLayout';
 import {
     ArrowLeft,
@@ -46,7 +46,8 @@ export default function AdminBannerEdit({ banner }: AdminBannerEditProps) {
     const [isMediaVideo, setIsMediaVideo] = useState<boolean>(() => isVideoUrl(banner.image || ''));
     const [isDragging, setIsDragging] = useState(false);
 
-    const { data, setData, processing, errors, setError, clearErrors } = useForm<{
+    const { data, setData, post, processing, errors, setError, clearErrors } = useForm<{
+        _method: string;
         subtitle: string;
         subtitle_en: string;
         title: string;
@@ -59,9 +60,10 @@ export default function AdminBannerEdit({ banner }: AdminBannerEditProps) {
         secondary_button_text: string;
         secondary_button_text_en: string;
         secondary_button_link: string;
-        image: File | string | null;
+        image: File | null;
         is_active: boolean;
     }>({
+        _method: 'put',
         subtitle: banner.subtitle || '',
         subtitle_en: banner.subtitle_en || '',
         title: banner.title || '',
@@ -74,7 +76,7 @@ export default function AdminBannerEdit({ banner }: AdminBannerEditProps) {
         secondary_button_text: banner.secondary_button_text || 'Cek Keranjang',
         secondary_button_text_en: banner.secondary_button_text_en || 'View Cart',
         secondary_button_link: banner.secondary_button_link || '/cart',
-        image: banner.image || null,
+        image: null,
         is_active: Boolean(banner.is_active),
     });
 
@@ -133,7 +135,7 @@ export default function AdminBannerEdit({ banner }: AdminBannerEditProps) {
     };
 
     const handleResetImage = () => {
-        setData('image', banner.image);
+        setData('image', null);
         setPreviewUrl(banner.image);
         setIsMediaVideo(isVideoUrl(banner.image || ''));
         if (fileInputRef.current) {
@@ -149,10 +151,7 @@ export default function AdminBannerEdit({ banner }: AdminBannerEditProps) {
             dropzone?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             return;
         }
-        router.post(`/manajemen-banner/${banner.id}`, {
-            _method: 'put',
-            ...data,
-        }, {
+        post(`/manajemen-banner/${banner.id}`, {
             forceFormData: true,
         });
     };
@@ -209,7 +208,10 @@ export default function AdminBannerEdit({ banner }: AdminBannerEditProps) {
                             accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,image/avif,video/mp4,video/webm,video/ogg,video/quicktime"
                             className="hidden"
                             onChange={handleFileChange}
-                            onClick={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                (e.target as HTMLInputElement).value = '';
+                            }}
                         />
                         <div
                             id="media-dropzone"
