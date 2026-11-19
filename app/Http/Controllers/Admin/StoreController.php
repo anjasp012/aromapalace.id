@@ -69,6 +69,14 @@ class StoreController extends Controller
 
         $thumbnail = null;
         if ($request->hasFile('thumbnail')) {
+            $request->validate([
+                'thumbnail' => ['file', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            ], [
+                'thumbnail.image' => 'File foto butik/toko harus berupa gambar yang valid (JPG, PNG, WEBP).',
+                'thumbnail.mimes' => 'Format file foto butik/toko harus berupa JPG, PNG, atau WEBP.',
+                'thumbnail.max' => 'Ukuran file foto butik/toko maksimal adalah 5MB.',
+            ]);
+
             $file = $request->file('thumbnail');
             if ($file instanceof UploadedFile && $file->isValid()) {
                 $path = $file->store('stores', 'public');
@@ -120,6 +128,14 @@ class StoreController extends Controller
 
         $thumbnail = $store->thumbnail;
         if ($request->hasFile('thumbnail')) {
+            $request->validate([
+                'thumbnail' => ['file', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            ], [
+                'thumbnail.image' => 'File foto butik/toko harus berupa gambar yang valid (JPG, PNG, WEBP).',
+                'thumbnail.mimes' => 'Format file foto butik/toko harus berupa JPG, PNG, atau WEBP.',
+                'thumbnail.max' => 'Ukuran file foto butik/toko maksimal adalah 5MB.',
+            ]);
+
             $file = $request->file('thumbnail');
             if ($file instanceof UploadedFile && $file->isValid()) {
                 $path = $file->store('stores', 'public');

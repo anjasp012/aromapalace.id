@@ -111,16 +111,45 @@ export default function AdminProductCreate({
     const handleFilesSelected = (files: FileList | null) => {
         if (!files || files.length === 0) return;
         const newItems: UploadedPreview[] = [];
+        const maxMB = 5;
+        const oversizedFiles: string[] = [];
+        const invalidTypeFiles: string[] = [];
+
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
+            const isImg = file.type.startsWith('image/') || /\.(png|jpe?g|webp|gif|svg|avif)$/i.test(file.name);
+            if (!isImg) {
+                invalidTypeFiles.push(file.name);
+                continue;
+            }
+            const sizeMB = file.size / (1024 * 1024);
+            if (sizeMB > maxMB) {
+                oversizedFiles.push(`"${file.name}" (${sizeMB.toFixed(2)} MB)`);
+                continue;
+            }
             newItems.push({
                 file,
                 previewUrl: URL.createObjectURL(file),
             });
         }
-        const updated = [...imagePreviews, ...newItems];
-        setImagePreviews(updated);
-        setData('images', updated.map((item) => item.file));
+
+        if (invalidTypeFiles.length > 0) {
+            alert(`⚠️ Format Berkas Tidak Valid!\n\nFile berikut bukan gambar yang didukung (JPG, PNG, WEBP):\n- ${invalidTypeFiles.join('\n- ')}`);
+        }
+
+        if (oversizedFiles.length > 0) {
+            alert(`⚠️ Ukuran Foto Terlalu Besar!\n\nBatas maksimal ukuran foto produk adalah ${maxMB} MB per foto.\nFile berikut melebihi batas dan batal ditambahkan:\n- ${oversizedFiles.join('\n- ')}\n\nSilakan kompres foto sebelum diunggah.`);
+        }
+
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+
+        if (newItems.length > 0) {
+            const updated = [...imagePreviews, ...newItems];
+            setImagePreviews(updated);
+            setData('images', updated.map((item) => item.file));
+        }
     };
 
     const handleRemoveFile = (index: number) => {

@@ -250,11 +250,11 @@ export default function AccountPage({
         const MAX_AVATAR_SIZE = 3 * 1024 * 1024; // 3MB
         if (file.size > MAX_AVATAR_SIZE) {
             const sizeInMB = (file.size / (1024 * 1024)).toFixed(1);
-            setAvatarError(
-                isEn
-                    ? `Photo size (${sizeInMB}MB) exceeds the 3MB limit. Please choose a smaller photo.`
-                    : `Ukuran file foto (${sizeInMB}MB) melebihi batas 3MB. Silakan pilih foto dengan ukuran lebih kecil.`
-            );
+            const msg = isEn
+                ? `⚠️ Photo size (${sizeInMB}MB) exceeds the 3MB limit. Please choose a smaller photo.`
+                : `⚠️ Ukuran file foto (${sizeInMB}MB) melebihi batas 3MB. Silakan pilih foto dengan ukuran lebih kecil.`;
+            alert(msg);
+            setAvatarError(msg);
             return;
         }
 

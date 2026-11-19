@@ -181,6 +181,18 @@ function PaymentContent({ order }: PaymentProps) {
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0] ?? null;
+        if (file) {
+            const maxMB = 5;
+            const sizeMB = file.size / (1024 * 1024);
+            if (sizeMB > maxMB) {
+                alert(`⚠️ Ukuran Berkas Bukti Transfer Terlalu Besar!\n\nUkuran file Anda: ${sizeMB.toFixed(2)} MB\nBatas maksimal: ${maxMB} MB\n\nSilakan pilih foto bukti transfer yang lebih kecil atau kompres terlebih dahulu.`);
+                if (fileInputRef.current) fileInputRef.current.value = '';
+                setSelectedFile(null);
+                setFilePreview(null);
+                manualForm.setData('payment_proof', null);
+                return;
+            }
+        }
         setSelectedFile(file);
         manualForm.setData('payment_proof', file);
         if (file && file.type.startsWith('image/')) {

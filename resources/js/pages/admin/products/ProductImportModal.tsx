@@ -84,6 +84,15 @@ export default function ProductImportModal({ open, onOpenChange }: ProductImport
     };
 
     const handleFileSelect = (file: File) => {
+        const maxMB = 10;
+        const sizeMB = file.size / (1024 * 1024);
+        if (sizeMB > maxMB) {
+            alert(`⚠️ Ukuran Berkas Terlalu Besar!\n\nUkuran file import: ${sizeMB.toFixed(2)} MB\nBatas maksimal: ${maxMB} MB\n\nSilakan kurangi data atau bagi berkas menjadi beberapa file.`);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+            setErrorMessage(`Ukuran file import terlalu besar (${sizeMB.toFixed(2)} MB). Maksimal ${maxMB} MB.`);
+            return;
+        }
+
         setSelectedFile(file);
         setErrorMessage(null);
         setPreviewData(null);

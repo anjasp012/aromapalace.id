@@ -65,6 +65,14 @@ class BrandController extends Controller
 
         $thumbnail = null;
         if ($request->hasFile('thumbnail')) {
+            $request->validate([
+                'thumbnail' => ['file', 'image', 'mimes:jpeg,png,jpg,webp,svg', 'max:5120'],
+            ], [
+                'thumbnail.image' => 'File logo/gambar merek harus berupa gambar yang valid (JPG, PNG, WEBP, SVG).',
+                'thumbnail.mimes' => 'Format file logo/gambar merek harus berupa JPG, PNG, WEBP, atau SVG.',
+                'thumbnail.max' => 'Ukuran file logo/gambar merek maksimal adalah 5MB.',
+            ]);
+
             $file = $request->file('thumbnail');
             if ($file instanceof UploadedFile && $file->isValid()) {
                 $path = $file->store('brands', 'public');
@@ -114,6 +122,14 @@ class BrandController extends Controller
 
         $thumbnail = $brand->thumbnail;
         if ($request->hasFile('thumbnail')) {
+            $request->validate([
+                'thumbnail' => ['file', 'image', 'mimes:jpeg,png,jpg,webp,svg', 'max:5120'],
+            ], [
+                'thumbnail.image' => 'File logo/gambar merek harus berupa gambar yang valid (JPG, PNG, WEBP, SVG).',
+                'thumbnail.mimes' => 'Format file logo/gambar merek harus berupa JPG, PNG, WEBP, atau SVG.',
+                'thumbnail.max' => 'Ukuran file logo/gambar merek maksimal adalah 5MB.',
+            ]);
+
             $file = $request->file('thumbnail');
             if ($file instanceof UploadedFile && $file->isValid()) {
                 $path = $file->store('brands', 'public');

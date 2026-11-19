@@ -62,9 +62,19 @@ export default function AdminPaymentMethodCreate() {
 
     const handleFile = (file: File) => {
         if (!file.type.startsWith('image/')) {
-            alert('Silakan pilih file gambar logo (JPG, PNG, WEBP, SVG).');
+            alert('⚠️ Format Berkas Tidak Valid!\n\nSilakan pilih file gambar logo (JPG, PNG, WEBP, SVG).');
+            if (fileInputRef.current) fileInputRef.current.value = '';
             return;
         }
+
+        const maxMB = 2;
+        const sizeMB = file.size / (1024 * 1024);
+        if (sizeMB > maxMB) {
+            alert(`⚠️ Ukuran Logo Terlalu Besar!\n\nUkuran file yang dipilih: ${sizeMB.toFixed(2)} MB\nBatas maksimal ukuran file logo metode pembayaran adalah ${maxMB} MB.\n\nSilakan pilih logo yang lebih kecil.`);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+            return;
+        }
+
         setData('icon', file);
         setPreviewUrl(URL.createObjectURL(file));
     };

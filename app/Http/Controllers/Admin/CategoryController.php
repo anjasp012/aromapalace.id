@@ -87,6 +87,14 @@ class CategoryController extends Controller
 
         $thumbnail = null;
         if ($request->hasFile('thumbnail')) {
+            $request->validate([
+                'thumbnail' => ['file', 'image', 'mimes:jpeg,png,jpg,webp,svg', 'max:5120'],
+            ], [
+                'thumbnail.image' => 'File gambar kategori harus berupa gambar yang valid (JPG, PNG, WEBP, SVG).',
+                'thumbnail.mimes' => 'Format file gambar kategori harus berupa JPG, PNG, WEBP, atau SVG.',
+                'thumbnail.max' => 'Ukuran file gambar kategori maksimal adalah 5MB.',
+            ]);
+
             $file = $request->file('thumbnail');
             if ($file instanceof UploadedFile && $file->isValid()) {
                 $path = $file->store('categories', 'public');
@@ -150,6 +158,14 @@ class CategoryController extends Controller
 
         $thumbnail = $category->thumbnail;
         if ($request->hasFile('thumbnail')) {
+            $request->validate([
+                'thumbnail' => ['file', 'image', 'mimes:jpeg,png,jpg,webp,svg', 'max:5120'],
+            ], [
+                'thumbnail.image' => 'File gambar kategori harus berupa gambar yang valid (JPG, PNG, WEBP, SVG).',
+                'thumbnail.mimes' => 'Format file gambar kategori harus berupa JPG, PNG, WEBP, atau SVG.',
+                'thumbnail.max' => 'Ukuran file gambar kategori maksimal adalah 5MB.',
+            ]);
+
             $file = $request->file('thumbnail');
             if ($file instanceof UploadedFile && $file->isValid()) {
                 $path = $file->store('categories', 'public');

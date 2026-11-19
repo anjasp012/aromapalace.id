@@ -55,9 +55,19 @@ export default function AdminBrandCreate() {
 
     const handleFile = (file: File) => {
         if (!file.type.startsWith('image/')) {
-            alert('Silakan pilih file gambar (JPG, PNG, WEBP).');
+            alert('⚠️ Format Berkas Tidak Valid!\n\nSilakan pilih file gambar yang didukung (JPG, PNG, WEBP).');
+            if (fileInputRef.current) fileInputRef.current.value = '';
             return;
         }
+
+        const maxMB = 5;
+        const sizeMB = file.size / (1024 * 1024);
+        if (sizeMB > maxMB) {
+            alert(`⚠️ Ukuran Logo/Gambar Terlalu Besar!\n\nUkuran file yang dipilih: ${sizeMB.toFixed(2)} MB\nBatas maksimal ukuran gambar brand adalah ${maxMB} MB.\n\nSilakan kompres gambar terlebih dahulu.`);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+            return;
+        }
+
         setData('thumbnail', file);
         setPreviewUrl(URL.createObjectURL(file));
         setShowUrlInput(false);

@@ -232,6 +232,16 @@ class ProductController extends Controller
             'variants.*.stock' => ['required', 'integer', 'min:0'],
         ]);
 
+        if ($request->hasFile('images')) {
+            $request->validate([
+                'images.*' => ['file', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            ], [
+                'images.*.image' => 'File foto produk harus berupa gambar yang valid (JPG, PNG, WEBP).',
+                'images.*.mimes' => 'Format foto produk harus berupa JPG, PNG, atau WEBP.',
+                'images.*.max' => 'Ukuran file foto produk maksimal adalah 5MB per foto.',
+            ]);
+        }
+
         // Validate that variant names within the same request are distinct
         $variantNames = array_map(fn ($v) => trim(mb_strtolower($v['name'])), $validated['variants']);
         if (count($variantNames) !== count(array_unique($variantNames))) {
@@ -548,6 +558,16 @@ class ProductController extends Controller
             'variants.*.sku' => ['nullable', 'string', 'max:100'],
             'variants.*.stock' => ['required', 'integer', 'min:0'],
         ]);
+
+        if ($request->hasFile('images')) {
+            $request->validate([
+                'images.*' => ['file', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            ], [
+                'images.*.image' => 'File foto produk harus berupa gambar yang valid (JPG, PNG, WEBP).',
+                'images.*.mimes' => 'Format foto produk harus berupa JPG, PNG, atau WEBP.',
+                'images.*.max' => 'Ukuran file foto produk maksimal adalah 5MB per foto.',
+            ]);
+        }
 
         // Validate that variant names within the same request are distinct
         $variantNames = array_map(fn ($v) => trim(mb_strtolower($v['name'])), $validated['variants']);

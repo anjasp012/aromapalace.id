@@ -77,6 +77,9 @@ class PaymentMethodController extends Controller
             'icon' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp,svg', 'max:2048'],
             'is_active' => ['nullable', 'boolean'],
             'use_unique_code' => ['nullable', 'boolean'],
+        ], [
+            'icon.mimes' => 'Format file logo pembayaran harus berupa PNG, JPG, JPEG, WEBP, atau SVG.',
+            'icon.max' => 'Ukuran file logo pembayaran maksimal 2MB.',
         ]);
 
         $code = Str::slug($validated['code'], '_');
@@ -124,6 +127,9 @@ class PaymentMethodController extends Controller
             'remove_icon' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
             'use_unique_code' => ['nullable', 'boolean'],
+        ], [
+            'icon.mimes' => 'Format file logo pembayaran harus berupa PNG, JPG, JPEG, WEBP, atau SVG.',
+            'icon.max' => 'Ukuran file logo pembayaran maksimal 2MB.',
         ]);
 
         $code = Str::slug($validated['code'], '_');

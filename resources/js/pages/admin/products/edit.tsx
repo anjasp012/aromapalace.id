@@ -143,16 +143,45 @@ export default function AdminProductEdit({
         if (!files || files.length === 0) return;
         const newPreviews: UploadedPreview[] = [];
         const newFilesList: File[] = [];
+        const maxMB = 5;
+        const oversizedFiles: string[] = [];
+        const invalidTypeFiles: string[] = [];
+
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
+            const isImg = file.type.startsWith('image/') || /\.(png|jpe?g|webp|gif|svg|avif)$/i.test(file.name);
+            if (!isImg) {
+                invalidTypeFiles.push(file.name);
+                continue;
+            }
+            const sizeMB = file.size / (1024 * 1024);
+            if (sizeMB > maxMB) {
+                oversizedFiles.push(`"${file.name}" (${sizeMB.toFixed(2)} MB)`);
+                continue;
+            }
             newPreviews.push({
                 file,
                 previewUrl: URL.createObjectURL(file),
             });
             newFilesList.push(file);
         }
-        setNewImagePreviews((prev) => [...prev, ...newPreviews]);
-        setData('images', [...data.images, ...newFilesList]);
+
+        if (invalidTypeFiles.length > 0) {
+            alert(`⚠️ Format Berkas Tidak Valid!\n\nFile berikut bukan gambar yang didukung (JPG, PNG, WEBP):\n- ${invalidTypeFiles.join('\n- ')}`);
+        }
+
+        if (oversizedFiles.length > 0) {
+            alert(`⚠️ Ukuran Foto Terlalu Besar!\n\nBatas maksimal ukuran foto produk adalah ${maxMB} MB per foto.\nFile berikut melebihi batas dan batal ditambahkan:\n- ${oversizedFiles.join('\n- ')}\n\nSilakan kompres foto sebelum diunggah.`);
+        }
+
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+
+        if (newPreviews.length > 0) {
+            setNewImagePreviews((prev) => [...prev, ...newPreviews]);
+            setData('images', [...data.images, ...newFilesList]);
+        }
     };
 
     const handleRemoveExistingImage = (index: number) => {

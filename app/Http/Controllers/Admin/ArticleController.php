@@ -72,6 +72,14 @@ class ArticleController extends Controller
 
         $thumbnail = null;
         if ($request->hasFile('thumbnail')) {
+            $request->validate([
+                'thumbnail' => ['file', 'image', 'mimes:jpeg,png,jpg,webp,gif', 'max:5120'],
+            ], [
+                'thumbnail.image' => 'File gambar artikel harus berupa gambar yang valid (JPG, PNG, WEBP, GIF).',
+                'thumbnail.mimes' => 'Format file gambar artikel harus berupa JPG, PNG, WEBP, atau GIF.',
+                'thumbnail.max' => 'Ukuran file gambar artikel maksimal adalah 5MB.',
+            ]);
+
             $file = $request->file('thumbnail');
             if ($file instanceof UploadedFile && $file->isValid()) {
                 $path = $file->store('articles', 'public');
@@ -132,6 +140,14 @@ class ArticleController extends Controller
 
         $thumbnail = $article->thumbnail;
         if ($request->hasFile('thumbnail')) {
+            $request->validate([
+                'thumbnail' => ['file', 'image', 'mimes:jpeg,png,jpg,webp,gif', 'max:5120'],
+            ], [
+                'thumbnail.image' => 'File gambar artikel harus berupa gambar yang valid (JPG, PNG, WEBP, GIF).',
+                'thumbnail.mimes' => 'Format file gambar artikel harus berupa JPG, PNG, WEBP, atau GIF.',
+                'thumbnail.max' => 'Ukuran file gambar artikel maksimal adalah 5MB.',
+            ]);
+
             $file = $request->file('thumbnail');
             if ($file instanceof UploadedFile && $file->isValid()) {
                 $path = $file->store('articles', 'public');

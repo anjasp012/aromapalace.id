@@ -61,11 +61,17 @@ export default function AdminBannerCreate() {
         const isImg = file.type.startsWith('image/') || /\.(png|jpe?g|webp|gif|svg|avif)$/i.test(file.name);
 
         if (!isVideo && !isImg) {
-            alert('Silakan pilih file gambar, GIF, atau video yang valid (JPG, PNG, WEBP, GIF, MP4, WEBM).');
+            alert('⚠️ Format Berkas Tidak Didukung!\n\nSilakan pilih berkas media yang valid: Gambar/GIF (JPG, PNG, WEBP, GIF, SVG) atau Video (MP4, WEBM, MOV).');
+            if (fileInputRef.current) fileInputRef.current.value = '';
             return;
         }
-        if (file.size > 50 * 1024 * 1024) {
-            alert('Ukuran file maksimal adalah 50MB.');
+
+        const maxMB = 50;
+        const fileSizeMB = file.size / (1024 * 1024);
+        if (fileSizeMB > maxMB) {
+            alert(`⚠️ Ukuran Berkas Terlalu Besar!\n\nUkuran file: ${fileSizeMB.toFixed(2)} MB\nBatas maksimal: ${maxMB} MB\n\nSilakan pilih berkas yang lebih kecil atau lakukan kompresi terlebih dahulu.`);
+            setError('image', `Ukuran file terlalu besar (${fileSizeMB.toFixed(2)} MB). Maksimal ukuran file adalah ${maxMB} MB.`);
+            if (fileInputRef.current) fileInputRef.current.value = '';
             return;
         }
 
