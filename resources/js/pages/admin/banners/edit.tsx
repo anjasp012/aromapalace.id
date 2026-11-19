@@ -46,7 +46,7 @@ export default function AdminBannerEdit({ banner }: AdminBannerEditProps) {
     const [isMediaVideo, setIsMediaVideo] = useState<boolean>(() => isVideoUrl(banner.image || ''));
     const [isDragging, setIsDragging] = useState(false);
 
-    const { data, setData, processing, errors } = useForm<{
+    const { data, setData, processing, errors, setError, clearErrors } = useForm<{
         subtitle: string;
         subtitle_en: string;
         title: string;
@@ -91,6 +91,7 @@ export default function AdminBannerEdit({ banner }: AdminBannerEditProps) {
             return;
         }
 
+        clearErrors('image');
         setData('image', file);
         setPreviewUrl(URL.createObjectURL(file));
         setIsMediaVideo(isVideo);
@@ -136,6 +137,12 @@ export default function AdminBannerEdit({ banner }: AdminBannerEditProps) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        if (!data.image && !previewUrl) {
+            setError('image', 'Banner media (gambar, animasi GIF, atau video) wajib diunggah.');
+            const dropzone = document.getElementById('media-dropzone');
+            dropzone?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
         router.post(`/manajemen-banner/${banner.id}`, {
             _method: 'put',
             ...data,
@@ -178,35 +185,48 @@ export default function AdminBannerEdit({ banner }: AdminBannerEditProps) {
                 {/* 1. Media Upload Card */}
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-base flex items-center gap-2">
-                            <ImageIcon className="size-4 text-primary" />
-                            <span>Gambar / Video Banner</span>
+                        <CardTitle className="text-base flex items-center justify-between">
+                            <span className="flex items-center gap-2">
+                                <ImageIcon className="size-4 text-primary" />
+                                <span>Gambar / Video Banner</span>
+                                <span className="text-destructive font-bold text-xs">* (Wajib diunggah)</span>
+                            </span>
                         </CardTitle>
                         <CardDescription>
                             Format landscape disarankan (16:9 atau 4:3). Unggah berkas Gambar, GIF Animasi, atau Video loop dari perangkat Anda.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,image/avif,video/mp4,video/webm,video/ogg,video/quicktime"
+                            className="hidden"
+                            onChange={handleFileChange}
+                            onClick={(e) => e.stopPropagation()}
+                        />
                         <div
+                            id="media-dropzone"
                             onDragOver={handleDragOver}
                             onDragLeave={handleDragLeave}
                             onDrop={handleDrop}
                             onClick={() => fileInputRef.current?.click()}
                             className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
-                                isDragging
+                                errors.image
+                                    ? 'border-destructive bg-destructive/5 ring-2 ring-destructive/20'
+                                    : isDragging
                                     ? 'border-primary bg-primary/5 scale-[0.99]'
                                     : 'border-border hover:border-primary/60 hover:bg-muted/40'
                             }`}
                         >
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,image/avif,video/mp4,video/webm,video/ogg,video/quicktime"
-                                className="hidden"
-                                onChange={handleFileChange}
-                            />
                             <div className="flex flex-col items-center justify-center gap-2">
-                                <div className="size-12 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                                <div
+                                    className={`size-12 rounded-full flex items-center justify-center ${
+                                        errors.image
+                                            ? 'bg-destructive/10 text-destructive'
+                                            : 'bg-primary/10 text-primary'
+                                    }`}
+                                >
                                     <Upload className="size-6" />
                                 </div>
                                 <div className="text-sm font-semibold text-foreground">
@@ -219,7 +239,9 @@ export default function AdminBannerEdit({ banner }: AdminBannerEditProps) {
                         </div>
 
                         {errors.image && (
-                            <p className="text-xs text-destructive font-medium">{errors.image}</p>
+                            <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-xs text-destructive font-medium flex items-center gap-2">
+                                <span>⚠️ {errors.image}</span>
+                            </div>
                         )}
 
                         {/* Media Preview Box */}
@@ -256,6 +278,16 @@ export default function AdminBannerEdit({ banner }: AdminBannerEditProps) {
                                             : 'Gambar Banner'}
                                     </Badge>
                                 </div>
+                                {data.image instanceof File && (
+                                    <div className="px-3 py-2 bg-background/90 border-t flex items-center justify-between text-xs">
+                                        <span className="truncate max-w-[280px] font-medium text-foreground">
+                                            {data.image.name}
+                                        </span>
+                                        <span className="text-muted-foreground font-mono text-[11px]">
+                                            {(data.image.size / (1024 * 1024)).toFixed(2)} MB
+                                        </span>
+                                    </div>
+                                )}
                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                                     <Button
                                         type="button"

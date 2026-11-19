@@ -83,7 +83,7 @@ class SliderPromoController extends Controller
         }
 
         if (empty($thumbnail)) {
-            return back()->withErrors(['thumbnail' => 'Banner media (video, animasi GIF, atau gambar) wajib diunggah atau cantumkan URL media.'])->withInput();
+            return back()->withErrors(['thumbnail' => 'Banner media (gambar, animasi GIF, atau video) wajib diunggah.'])->withInput();
         }
 
         $validated['thumbnail'] = $thumbnail;
@@ -138,6 +138,10 @@ class SliderPromoController extends Controller
             }
         } elseif ($request->filled('thumbnail') && is_string($validated['thumbnail'])) {
             $thumbnail = trim($validated['thumbnail']);
+        }
+
+        if (empty($thumbnail)) {
+            return back()->withErrors(['thumbnail' => 'Banner media (gambar, animasi GIF, atau video) wajib diunggah.'])->withInput();
         }
 
         $validated['thumbnail'] = $thumbnail;

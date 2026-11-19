@@ -230,7 +230,7 @@ export default function Home({
                     sliderPromos: propSliderPromos,
                     cachedAt: Date.now(),
                 }));
-            } catch (e) {}
+            } catch (e) { }
         }
     }, [propPopularProducts, propDiscountedProducts, propRecommendedProducts, propCategories, propBrands, propVouchers, propArticles, propSliderPromos]);
 
@@ -411,8 +411,8 @@ export default function Home({
                                         onClick={() => heroApi?.scrollTo(i)}
                                         aria-label={`Slide ${i + 1}`}
                                         className={`h-1.5 sm:h-2 rounded-full transition-all duration-500 cursor-pointer ${activeSlide === i
-                                                ? 'w-6 sm:w-8 bg-white shadow-xs'
-                                                : 'w-1.5 sm:w-2 bg-white/50 hover:bg-white/80'
+                                            ? 'w-6 sm:w-8 bg-white shadow-xs'
+                                            : 'w-1.5 sm:w-2 bg-white/50 hover:bg-white/80'
                                             }`}
                                     />
                                 ))}

@@ -105,7 +105,7 @@ class BannerController extends Controller
         }
 
         if (empty($image)) {
-            return back()->withErrors(['image' => 'Banner media (video, GIF, atau gambar) wajib diunggah atau cantumkan tautan URL.'])->withInput();
+            return back()->withErrors(['image' => 'Banner media (gambar, animasi GIF, atau video) wajib diunggah.'])->withInput();
         }
 
         $validated['image'] = $image;
@@ -172,6 +172,10 @@ class BannerController extends Controller
             $image = trim($validated['image']);
         }
 
+        if (empty($image)) {
+            return back()->withErrors(['image' => 'Banner media (gambar, animasi GIF, atau video) wajib diunggah.'])->withInput();
+        }
+
         $validated['image'] = $image;
         $validated['button_text'] = ! empty($validated['button_text']) ? trim($validated['button_text']) : 'Belanja Promo';
         $validated['button_link'] = ! empty($validated['button_link']) ? trim($validated['button_link']) : '/products?discount=1';
@@ -185,7 +189,7 @@ class BannerController extends Controller
 
     public function toggleActive(Banner $banner): RedirectResponse
     {
-        $banner->update(['is_active' => ! $banner->is_active]);
+        $banner->update(['is_active' => ! empty($banner->is_active) ? false : true]);
 
         $statusText = $banner->is_active ? 'diaktifkan' : 'dinonaktifkan';
 
