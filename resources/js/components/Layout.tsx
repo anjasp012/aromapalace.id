@@ -146,6 +146,10 @@ interface SharedProps {
         phone?: string;
         whatsapp?: string;
         store_name?: string;
+        facebook?: string;
+        instagram?: string;
+        youtube?: string;
+        tiktok?: string;
     };
     [key: string]: unknown;
 }
@@ -1354,55 +1358,84 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
                                         ? 'World luxury fragrance collection and high-end artisanal perfumes. Crafted for true elegance in every spray.'
                                         : 'Koleksi wewangian mewah dunia dan parfum artisanal berkualitas tinggi. Dirancang untuk keanggunan sejati dalam setiap semprotan.'}
                                 </p>
-                                <div className="pt-2 flex items-center gap-2.5">
-                                    <a
-                                        href="https://instagram.com"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        aria-label="Instagram"
-                                        className="w-8 h-8 rounded-full border border-white/15 bg-white/5 flex items-center justify-center text-white/70 hover:text-white hover:border-white/40 hover:bg-white/10 transition-all cursor-pointer shadow-2xs group"
-                                    >
-                                        <svg className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
-                                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-                                        </svg>
-                                    </a>
+                                {(() => {
+                                    const formatSocial = (url?: string, defaultUrl: string = '#') => {
+                                        if (!url) return defaultUrl;
+                                        if (url.startsWith('http://') || url.startsWith('https://')) return url;
+                                        if (url.startsWith('@')) return `https://instagram.com/${url.slice(1)}`;
+                                        return `https://${url}`;
+                                    };
+                                    const rawWa = (props?.contact?.whatsapp || '6289529591732').replace(/\D/g, '').replace(/^0/, '62');
+                                    const igUrl = formatSocial(props?.contact?.instagram, 'https://instagram.com/aromapalace');
+                                    const ttUrl = formatSocial(props?.contact?.tiktok, 'https://tiktok.com/@aromapalace');
+                                    const fbUrl = formatSocial(props?.contact?.facebook, 'https://facebook.com/aromapalace');
+                                    const ytUrl = formatSocial(props?.contact?.youtube, 'https://youtube.com/@aromapalace');
+                                    const waUrl = `https://wa.me/${rawWa}`;
 
-                                    <a
-                                        href="https://tiktok.com"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        aria-label="TikTok"
-                                        className="w-8 h-8 rounded-full border border-white/15 bg-white/5 flex items-center justify-center text-white/70 hover:text-white hover:border-white/40 hover:bg-white/10 transition-all cursor-pointer shadow-2xs group"
-                                    >
-                                        <svg className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
-                                            <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.298-.002.595.042.88.13V9.4a6.33 6.33 0 0 0-1-.08A6.34 6.34 0 0 0 3 15.66a6.34 6.34 0 0 0 10.82 4.5 6.3 6.3 0 0 0 1.96-4.49V8.62a8.28 8.28 0 0 0 4.81 1.52v-3.45z" />
-                                        </svg>
-                                    </a>
+                                    return (
+                                        <div className="pt-2 flex items-center gap-2.5">
+                                            <a
+                                                href={igUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                aria-label="Instagram"
+                                                className="w-8 h-8 rounded-full border border-white/15 bg-white/5 flex items-center justify-center text-white/70 hover:text-white hover:border-white/40 hover:bg-white/10 transition-all cursor-pointer shadow-2xs group"
+                                            >
+                                                <svg className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                                                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                                                </svg>
+                                            </a>
 
-                                    <a
-                                        href="https://wa.me"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        aria-label="WhatsApp"
-                                        className="w-8 h-8 rounded-full border border-white/15 bg-white/5 flex items-center justify-center text-white/70 hover:text-white hover:border-white/40 hover:bg-white/10 transition-all cursor-pointer shadow-2xs group"
-                                    >
-                                        <svg className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
-                                            <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.23 8.23 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.19.53-1.11 1.04-1.54 1.1-.38.07-.88.1-2.58-.6a9.47 9.47 0 0 1-3.61-3.19c-.43-.58-.93-1.55-.93-2.37 0-.83.43-1.24.58-1.4.15-.17.33-.21.44-.21.11 0 .22 0 .32.01.1.01.24-.04.38.29.14.33.48 1.17.52 1.25.04.09.07.19.01.3-.06.12-.09.19-.18.29-.09.1-.19.23-.27.31-.09.09-.19.19-.08.38.11.19.49.8 1.05 1.3 1.03.92 1.54.98 1.74 1.08.19.09.31.08.43-.05.12-.13.51-.59.65-.79.14-.2.28-.17.47-.1.19.07 1.2.57 1.41.67.2.1.34.15.39.24.05.09.05.53-.14 1.06z" />
-                                        </svg>
-                                    </a>
+                                            <a
+                                                href={ttUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                aria-label="TikTok"
+                                                className="w-8 h-8 rounded-full border border-white/15 bg-white/5 flex items-center justify-center text-white/70 hover:text-white hover:border-white/40 hover:bg-white/10 transition-all cursor-pointer shadow-2xs group"
+                                            >
+                                                <svg className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                                                    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.298-.002.595.042.88.13V9.4a6.33 6.33 0 0 0-1-.08A6.34 6.34 0 0 0 3 15.66a6.34 6.34 0 0 0 10.82 4.5 6.3 6.3 0 0 0 1.96-4.49V8.62a8.28 8.28 0 0 0 4.81 1.52v-3.45z" />
+                                                </svg>
+                                            </a>
 
-                                    <a
-                                        href="https://youtube.com"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        aria-label="YouTube"
-                                        className="w-8 h-8 rounded-full border border-white/15 bg-white/5 flex items-center justify-center text-white/70 hover:text-white hover:border-white/40 hover:bg-white/10 transition-all cursor-pointer shadow-2xs group"
-                                    >
-                                        <svg className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
-                                            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-                                        </svg>
-                                    </a>
-                                </div>
+                                            <a
+                                                href={fbUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                aria-label="Facebook"
+                                                className="w-8 h-8 rounded-full border border-white/15 bg-white/5 flex items-center justify-center text-white/70 hover:text-white hover:border-white/40 hover:bg-white/10 transition-all cursor-pointer shadow-2xs group"
+                                            >
+                                                <svg className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                                                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                                                </svg>
+                                            </a>
+
+                                            <a
+                                                href={waUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                aria-label="WhatsApp"
+                                                className="w-8 h-8 rounded-full border border-white/15 bg-white/5 flex items-center justify-center text-white/70 hover:text-white hover:border-white/40 hover:bg-white/10 transition-all cursor-pointer shadow-2xs group"
+                                            >
+                                                <svg className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                                                    <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.23 8.23 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.19.53-1.11 1.04-1.54 1.1-.38.07-.88.1-2.58-.6a9.47 9.47 0 0 1-3.61-3.19c-.43-.58-.93-1.55-.93-2.37 0-.83.43-1.24.58-1.4.15-.17.33-.21.44-.21.11 0 .22 0 .32.01.1.01.24-.04.38.29.14.33.48 1.17.52 1.25.04.09.07.19.01.3-.06.12-.09.19-.18.29-.09.1-.19.23-.27.31-.09.09-.19.19-.08.38.11.19.49.8 1.05 1.3 1.03.92 1.54.98 1.74 1.08.19.09.31.08.43-.05.12-.13.51-.59.65-.79.14-.2.28-.17.47-.1.19.07 1.2.57 1.41.67.2.1.34.15.39.24.05.09.05.53-.14 1.06z" />
+                                                </svg>
+                                            </a>
+
+                                            <a
+                                                href={ytUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                aria-label="YouTube"
+                                                className="w-8 h-8 rounded-full border border-white/15 bg-white/5 flex items-center justify-center text-white/70 hover:text-white hover:border-white/40 hover:bg-white/10 transition-all cursor-pointer shadow-2xs group"
+                                            >
+                                                <svg className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                                                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                                                </svg>
+                                            </a>
+                                        </div>
+                                    );
+                                })()}
                             </div>
 
                             {/* Baris 2 di Mobile / Col 2 di Desktop: Katalog */}

@@ -60,7 +60,7 @@ export default function AdminBrandCreate() {
             return;
         }
 
-        const maxMB = 5;
+        const maxMB = 10;
         const sizeMB = file.size / (1024 * 1024);
         if (sizeMB > maxMB) {
             alert(`⚠️ Ukuran Logo/Gambar Terlalu Besar!\n\nUkuran file yang dipilih: ${sizeMB.toFixed(2)} MB\nBatas maksimal ukuran gambar brand adalah ${maxMB} MB.\n\nSilakan kompres gambar terlebih dahulu.`);
@@ -157,9 +157,8 @@ export default function AdminBrandCreate() {
                                 onDragOver={handleDragOver}
                                 onDragLeave={handleDragLeave}
                                 onDrop={handleDrop}
-                                className={`group relative w-full h-56 rounded-xl border-2 overflow-hidden bg-muted/40 transition-all ${
-                                    isDragging ? 'border-primary ring-4 ring-primary/20 scale-[1.01]' : 'border-border/80'
-                                }`}
+                                className={`group relative w-full h-56 rounded-xl border-2 overflow-hidden bg-muted/40 transition-all ${isDragging ? 'border-primary ring-4 ring-primary/20 scale-[1.01]' : 'border-border/80'
+                                    }`}
                             >
                                 <img
                                     src={previewUrl}
@@ -212,11 +211,10 @@ export default function AdminBrandCreate() {
                                 onDragLeave={handleDragLeave}
                                 onDrop={handleDrop}
                                 onClick={() => fileInputRef.current?.click()}
-                                className={`w-full h-44 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2.5 cursor-pointer transition-colors ${
-                                    isDragging
-                                        ? 'border-primary bg-primary/5 text-primary'
-                                        : 'border-muted-foreground/25 hover:border-muted-foreground/50 hover:bg-muted/30 text-muted-foreground'
-                                }`}
+                                className={`w-full h-44 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2.5 cursor-pointer transition-colors ${isDragging
+                                    ? 'border-primary bg-primary/5 text-primary'
+                                    : 'border-muted-foreground/25 hover:border-muted-foreground/50 hover:bg-muted/30 text-muted-foreground'
+                                    }`}
                             >
                                 <div className="p-3 rounded-full bg-muted/60 border border-border/60">
                                     <ImageIcon className="size-6 text-muted-foreground" />
@@ -226,7 +224,7 @@ export default function AdminBrandCreate() {
                                         Klik untuk upload atau tarik &amp; lepas gambar di sini
                                     </p>
                                     <p className="text-[11px] text-muted-foreground mt-0.5">
-                                        Mendukung format PNG, JPG, atau WEBP (Maks. 2MB)
+                                        Mendukung format PNG, JPG, atau WEBP (Maks. 10MB)
                                     </p>
                                 </div>
                             </div>

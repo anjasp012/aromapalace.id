@@ -246,13 +246,13 @@ export default function AccountPage({
             return;
         }
 
-        // 2. Strict validation: file size limit (max 3MB)
-        const MAX_AVATAR_SIZE = 3 * 1024 * 1024; // 3MB
+        // 2. Strict validation: file size limit (max 10MB)
+        const MAX_AVATAR_SIZE = 10 * 1024 * 1024; // 10MB
         if (file.size > MAX_AVATAR_SIZE) {
             const sizeInMB = (file.size / (1024 * 1024)).toFixed(1);
             const msg = isEn
-                ? `⚠️ Photo size (${sizeInMB}MB) exceeds the 3MB limit. Please choose a smaller photo.`
-                : `⚠️ Ukuran file foto (${sizeInMB}MB) melebihi batas 3MB. Silakan pilih foto dengan ukuran lebih kecil.`;
+                ? `⚠️ Photo size (${sizeInMB}MB) exceeds the 10MB limit. Please choose a smaller photo.`
+                : `⚠️ Ukuran file foto (${sizeInMB}MB) melebihi batas 10MB. Silakan pilih foto dengan ukuran lebih kecil.`;
             alert(msg);
             setAvatarError(msg);
             return;
@@ -697,7 +697,7 @@ export default function AccountPage({
 
                             {/* WhatsApp VIP Concierge */}
                             <a
-                                href="https://wa.me/6281234567890?text=Halo%20Aroma%20Palace,%20saya%20ingin%20konsultasi%20parfum"
+                                href={`https://wa.me/${(props?.contact?.whatsapp || '6289529591732').replace(/\D/g, '').replace(/^0/, '62')}?text=Halo%20Aroma%20Palace,%20saya%20ingin%20konsultasi%20parfum`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center justify-between p-3.5 hover:bg-muted/40 transition cursor-pointer"

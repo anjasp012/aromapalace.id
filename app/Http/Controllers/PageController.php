@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Setting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -15,10 +16,20 @@ class PageController extends Controller
      */
     public function privacyPolicy(): Response
     {
+        $rawWa = (string) Setting::get('store_whatsapp', '6289529591732');
+        $cleanWa = preg_replace('/\D/', '', $rawWa);
+        if (str_starts_with($cleanWa, '0')) {
+            $cleanWa = '62'.substr($cleanWa, 1);
+        }
+        $formattedWa = str_starts_with($cleanWa, '62')
+            ? '+62 '.substr($cleanWa, 2, 3).'-'.substr($cleanWa, 5, 4).'-'.substr($cleanWa, 9)
+            : '+'.$cleanWa;
+        $storeEmail = (string) Setting::get('store_email', 'support@aromapalace.id');
+
         return Inertia::render('privacy-policy', [
             'last_updated' => '2026-04-01',
-            'support_email' => 'privacy@aromapalace.id',
-            'dpo_contact' => '+62 812-3456-7890',
+            'support_email' => $storeEmail,
+            'dpo_contact' => $formattedWa,
         ]);
     }
 
@@ -28,6 +39,16 @@ class PageController extends Controller
      */
     public function support(): Response
     {
+        $rawWa = (string) Setting::get('store_whatsapp', '6289529591732');
+        $cleanWa = preg_replace('/\D/', '', $rawWa);
+        if (str_starts_with($cleanWa, '0')) {
+            $cleanWa = '62'.substr($cleanWa, 1);
+        }
+        $formattedWa = str_starts_with($cleanWa, '62')
+            ? '+62 '.substr($cleanWa, 2, 3).'-'.substr($cleanWa, 5, 4).'-'.substr($cleanWa, 9)
+            : '+'.$cleanWa;
+        $storeEmail = (string) Setting::get('store_email', 'support@aromapalace.id');
+        $instagram = (string) Setting::get('store_instagram', 'https://instagram.com/aromapalace');
         $faqs = [
             [
                 'category' => 'orders',
@@ -69,12 +90,12 @@ class PageController extends Controller
         return Inertia::render('support', [
             'faqs' => $faqs,
             'channels' => [
-                'whatsapp' => '+62 812-3456-7890',
-                'whatsapp_url' => 'https://wa.me/6281234567890?text=Halo%20VIP%20Concierge%20Aroma%20Palace%2C%20saya%20butuh%20bantuan.',
-                'email' => 'concierge@aromapalace.id',
+                'whatsapp' => $formattedWa,
+                'whatsapp_url' => "https://wa.me/{$cleanWa}?text=".rawurlencode('Halo VIP Concierge Aroma Palace, saya butuh bantuan.'),
+                'email' => $storeEmail,
                 'operating_hours' => 'Senin - Minggu: 08:00 - 22:00 WIB (VIP Concierge 24 Jam)',
                 'operating_hours_en' => 'Monday - Sunday: 08:00 - 22:00 WIB (VIP Concierge 24/7)',
-                'instagram' => 'https://instagram.com/aromapalace.id',
+                'instagram' => $instagram,
             ],
         ]);
     }

@@ -72,7 +72,7 @@ export default function AdminArticleCreate() {
             return;
         }
 
-        const maxMB = 5;
+        const maxMB = 10;
         const sizeMB = file.size / (1024 * 1024);
         if (sizeMB > maxMB) {
             alert(`⚠️ Ukuran Gambar Terlalu Besar!\n\nUkuran file yang dipilih: ${sizeMB.toFixed(2)} MB\nBatas maksimal ukuran gambar artikel adalah ${maxMB} MB.\n\nSilakan kompres gambar terlebih dahulu.`);
@@ -200,9 +200,8 @@ export default function AdminArticleCreate() {
                                     onDragOver={handleDragOver}
                                     onDragLeave={handleDragLeave}
                                     onDrop={handleDrop}
-                                    className={`group relative w-full h-48 sm:h-64 rounded-xl border-2 overflow-hidden bg-muted transition-all ${
-                                        isDragging ? 'border-primary ring-4 ring-primary/20 scale-[1.01]' : 'border-border/80'
-                                    }`}
+                                    className={`group relative w-full h-48 sm:h-64 rounded-xl border-2 overflow-hidden bg-muted transition-all ${isDragging ? 'border-primary ring-4 ring-primary/20 scale-[1.01]' : 'border-border/80'
+                                        }`}
                                 >
                                     <img
                                         src={previewUrl}
@@ -260,15 +259,13 @@ export default function AdminArticleCreate() {
                                     onDragLeave={handleDragLeave}
                                     onDrop={handleDrop}
                                     onClick={() => fileInputRef.current?.click()}
-                                    className={`border-2 border-dashed rounded-xl p-8 sm:p-12 text-center flex flex-col items-center justify-center cursor-pointer transition-all duration-200 ${
-                                        isDragging
-                                            ? 'border-primary bg-primary/10 ring-4 ring-primary/20 scale-[1.01]'
-                                            : 'border-muted-foreground/30 hover:border-primary/60 bg-muted/10 hover:bg-muted/20'
-                                    }`}
+                                    className={`border-2 border-dashed rounded-xl p-8 sm:p-12 text-center flex flex-col items-center justify-center cursor-pointer transition-all duration-200 ${isDragging
+                                        ? 'border-primary bg-primary/10 ring-4 ring-primary/20 scale-[1.01]'
+                                        : 'border-muted-foreground/30 hover:border-primary/60 bg-muted/10 hover:bg-muted/20'
+                                        }`}
                                 >
-                                    <div className={`size-14 rounded-full flex items-center justify-center mb-3 transition-transform ${
-                                        isDragging ? 'bg-primary text-primary-foreground scale-110' : 'bg-muted text-muted-foreground'
-                                    }`}>
+                                    <div className={`size-14 rounded-full flex items-center justify-center mb-3 transition-transform ${isDragging ? 'bg-primary text-primary-foreground scale-110' : 'bg-muted text-muted-foreground'
+                                        }`}>
                                         <Upload className="size-7" />
                                     </div>
                                     <div className="text-sm font-semibold text-foreground">

@@ -343,12 +343,13 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
 
     // WhatsApp Consultation
     const handleWhatsAppConsultation = () => {
+        const rawWa = (props?.contact?.whatsapp || '6289529591732').replace(/\D/g, '').replace(/^0/, '62');
         const message = encodeURIComponent(
             isEn
                 ? `Hello Aroma Palace, I am interested in consulting about the fragrance "${product.name}" (${product.concentration || 'Extrait de Parfum'}). Please provide batch information and shipping recommendations.`
                 : `Halo Aroma Palace, saya tertarik berkonsultasi mengenai parfum "${product.name}" (${product.concentration || 'Extrait de Parfum'}). Mohon informasi ketersediaan batch maserasi dan rekomendasi pengiriman.`
         );
-        window.open(`https://wa.me/6281234567890?text=${message}`, '_blank');
+        window.open(`https://wa.me/${rawWa}?text=${message}`, '_blank');
     };
 
     // Share link
@@ -911,57 +912,6 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
                                     </Button>
                                 </div>
                             )}
-                        </div>
-
-                        {/* TRUST VALUE BADGES (4 COMPACT PILLARS) */}
-                        <div className="grid grid-cols-2 gap-3 pt-3">
-                            <div className="flex items-start gap-2.5 p-3 rounded-lg border border-border/70 bg-card/60">
-                                <div className="w-7 h-7 rounded-md bg-[#4A070B]/10 text-[#4A070B] flex items-center justify-center shrink-0">
-                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                                    </svg>
-                                </div>
-                                <div className="space-y-0.5">
-                                    <div className="text-[11px] font-bold text-foreground">{isEn ? '100% Authentic Extrait' : '100% Extrait Asli'}</div>
-                                    <div className="text-[10px] text-muted-foreground leading-snug">{isEn ? 'IFRA Paris Standards & Lab Tested.' : 'Standar IFRA Paris & Teruji Laboratorium.'}</div>
-                                </div>
-                            </div>
-
-                            <div className="flex items-start gap-2.5 p-3 rounded-lg border border-border/70 bg-card/60">
-                                <div className="w-7 h-7 rounded-md bg-[#4A070B]/10 text-[#4A070B] flex items-center justify-center shrink-0">
-                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                                    </svg>
-                                </div>
-                                <div className="space-y-0.5">
-                                    <div className="text-[11px] font-bold text-foreground">{isEn ? 'Secure Luxury Packaging' : 'Kemasan Khusus Aman'}</div>
-                                    <div className="text-[10px] text-muted-foreground leading-snug">{isEn ? 'Exclusive wooden case & anti-breakage guarantee.' : 'Boks kayu eksklusif & garansi anti-pecah.'}</div>
-                                </div>
-                            </div>
-
-                            <div className="flex items-start gap-2.5 p-3 rounded-lg border border-border/70 bg-card/60">
-                                <div className="w-7 h-7 rounded-md bg-[#4A070B]/10 text-[#4A070B] flex items-center justify-center shrink-0">
-                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
-                                    </svg>
-                                </div>
-                                <div className="space-y-0.5">
-                                    <div className="text-[11px] font-bold text-foreground">{isEn ? 'Complimentary 2 Sample Vials' : 'Gratis 2 Sampel Vial'}</div>
-                                    <div className="text-[10px] text-muted-foreground leading-snug">{isEn ? 'Experience 2 other scents in every delivery.' : 'Coba 2 aroma lain di setiap pengiriman.'}</div>
-                                </div>
-                            </div>
-
-                            <div className="flex items-start gap-2.5 p-3 rounded-lg border border-border/70 bg-card/60">
-                                <div className="w-7 h-7 rounded-md bg-[#4A070B]/10 text-[#4A070B] flex items-center justify-center shrink-0">
-                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                    </svg>
-                                </div>
-                                <div className="space-y-0.5">
-                                    <div className="text-[11px] font-bold text-foreground">{isEn ? 'Fragrance Exchange Guarantee' : 'Garansi Tukar Aroma'}</div>
-                                    <div className="text-[10px] text-muted-foreground leading-snug">{isEn ? 'Exchangeable if the primary seal remains intact.' : 'Bisa tukar aroma jika segel utama belum dibuka.'}</div>
-                                </div>
-                            </div>
                         </div>
 
                     </div>

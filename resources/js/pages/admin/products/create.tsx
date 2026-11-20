@@ -111,7 +111,7 @@ export default function AdminProductCreate({
     const handleFilesSelected = (files: FileList | null) => {
         if (!files || files.length === 0) return;
         const newItems: UploadedPreview[] = [];
-        const maxMB = 5;
+        const maxMB = 10;
         const oversizedFiles: string[] = [];
         const invalidTypeFiles: string[] = [];
 

@@ -221,24 +221,23 @@ class PaymentController extends Controller
 
         $file = $request->file('payment_proof');
         if ($file instanceof UploadedFile && ! $file->isValid() && $file->getError() !== UPLOAD_ERR_NO_FILE) {
-            $maxUpload = ini_get('upload_max_filesize') ?: '2M';
             $errorMsg = match ($file->getError()) {
-                UPLOAD_ERR_INI_SIZE => "Ukuran berkas melebihi batas maksimal server PHP ({$maxUpload}). Silakan kompres berkas bukti pembayaran di bawah {$maxUpload}.",
-                UPLOAD_ERR_FORM_SIZE => 'Ukuran berkas melebihi batas form.',
+                UPLOAD_ERR_INI_SIZE => 'Ukuran berkas bukti pembayaran terlalu besar (maksimal 10MB). Silakan pilih berkas yang lebih kecil atau lakukan kompresi terlebih dahulu.',
+                UPLOAD_ERR_FORM_SIZE => 'Ukuran berkas melebihi batas maksimal yang diizinkan.',
                 UPLOAD_ERR_PARTIAL => 'Berkas hanya terunggah sebagian. Silakan coba unggah kembali.',
-                default => 'Gagal mengunggah berkas: ' . $file->getErrorMessage(),
+                default => 'Gagal mengunggah berkas. Silakan coba beberapa saat lagi.',
             };
             return back()->withErrors(['payment_proof' => $errorMsg])->withInput();
         }
 
         $validated = $request->validate([
-            'payment_proof' => [$orderModel->payment_proof ? 'nullable' : 'required', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
+            'payment_proof' => [$orderModel->payment_proof ? 'nullable' : 'required', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:10240'],
             'payment_sender_name' => ['required', 'string', 'max:255'],
             'payment_notes' => ['nullable', 'string', 'max:500'],
         ], [
             'payment_proof.required' => 'Foto atau berkas bukti transfer wajib diunggah.',
             'payment_proof.mimes' => 'Bukti transfer harus berformat JPG, JPEG, PNG, WEBP, atau PDF.',
-            'payment_proof.max' => 'Ukuran file bukti transfer maksimal 5MB.',
+            'payment_proof.max' => 'Ukuran file bukti transfer maksimal 10MB.',
             'payment_sender_name.required' => 'Nama pemilik rekening pengirim wajib diisi.',
         ]);
 

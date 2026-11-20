@@ -182,7 +182,7 @@ function PaymentContent({ order }: PaymentProps) {
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0] ?? null;
         if (file) {
-            const maxMB = 5;
+            const maxMB = 10;
             const sizeMB = file.size / (1024 * 1024);
             if (sizeMB > maxMB) {
                 alert(`⚠️ Ukuran Berkas Bukti Transfer Terlalu Besar!\n\nUkuran file Anda: ${sizeMB.toFixed(2)} MB\nBatas maksimal: ${maxMB} MB\n\nSilakan pilih foto bukti transfer yang lebih kecil atau kompres terlebih dahulu.`);

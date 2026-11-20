@@ -86,13 +86,18 @@ class CategoryController extends Controller
         }
 
         $thumbnail = null;
+        $file = $request->file('thumbnail');
+        if ($file instanceof UploadedFile && ! $file->isValid() && $file->getError() !== UPLOAD_ERR_NO_FILE) {
+            return back()->withErrors(['thumbnail' => 'Ukuran file gambar kategori terlalu besar (maksimal 10MB). Silakan pilih gambar yang lebih kecil atau lakukan kompresi terlebih dahulu.'])->withInput();
+        }
+
         if ($request->hasFile('thumbnail')) {
             $request->validate([
-                'thumbnail' => ['file', 'image', 'mimes:jpeg,png,jpg,webp,svg', 'max:5120'],
+                'thumbnail' => ['file', 'image', 'mimes:jpeg,png,jpg,webp,svg', 'max:10240'],
             ], [
                 'thumbnail.image' => 'File gambar kategori harus berupa gambar yang valid (JPG, PNG, WEBP, SVG).',
                 'thumbnail.mimes' => 'Format file gambar kategori harus berupa JPG, PNG, WEBP, atau SVG.',
-                'thumbnail.max' => 'Ukuran file gambar kategori maksimal adalah 5MB.',
+                'thumbnail.max' => 'Ukuran file gambar kategori maksimal adalah 10MB.',
             ]);
 
             $file = $request->file('thumbnail');
@@ -157,13 +162,18 @@ class CategoryController extends Controller
         }
 
         $thumbnail = $category->thumbnail;
+        $file = $request->file('thumbnail');
+        if ($file instanceof UploadedFile && ! $file->isValid() && $file->getError() !== UPLOAD_ERR_NO_FILE) {
+            return back()->withErrors(['thumbnail' => 'Ukuran file gambar kategori terlalu besar (maksimal 10MB). Silakan pilih gambar yang lebih kecil atau lakukan kompresi terlebih dahulu.'])->withInput();
+        }
+
         if ($request->hasFile('thumbnail')) {
             $request->validate([
-                'thumbnail' => ['file', 'image', 'mimes:jpeg,png,jpg,webp,svg', 'max:5120'],
+                'thumbnail' => ['file', 'image', 'mimes:jpeg,png,jpg,webp,svg', 'max:10240'],
             ], [
                 'thumbnail.image' => 'File gambar kategori harus berupa gambar yang valid (JPG, PNG, WEBP, SVG).',
                 'thumbnail.mimes' => 'Format file gambar kategori harus berupa JPG, PNG, WEBP, atau SVG.',
-                'thumbnail.max' => 'Ukuran file gambar kategori maksimal adalah 5MB.',
+                'thumbnail.max' => 'Ukuran file gambar kategori maksimal adalah 10MB.',
             ]);
 
             $file = $request->file('thumbnail');

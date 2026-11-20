@@ -67,7 +67,7 @@ export default function AdminStoreEdit({ store }: AdminStoreEditProps) {
             return;
         }
 
-        const maxMB = 5;
+        const maxMB = 10;
         const sizeMB = file.size / (1024 * 1024);
         if (sizeMB > maxMB) {
             alert(`⚠️ Ukuran Foto Toko Terlalu Besar!\n\nUkuran file yang dipilih: ${sizeMB.toFixed(2)} MB\nBatas maksimal ukuran foto butik adalah ${maxMB} MB.\n\nSilakan kompres gambar terlebih dahulu.`);
@@ -248,7 +248,7 @@ export default function AdminStoreEdit({ store }: AdminStoreEditProps) {
                                         Klik untuk upload atau tarik &amp; lepas gambar di sini
                                     </p>
                                     <p className="text-[11px] text-muted-foreground mt-0.5">
-                                        Mendukung format PNG, JPG, atau WEBP (Maks. 2MB)
+                                        Mendukung format PNG, JPG, atau WEBP (Maks. 10MB)
                                     </p>
                                 </div>
                             </div>

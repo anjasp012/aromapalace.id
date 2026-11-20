@@ -79,7 +79,7 @@ export default function AdminPaymentMethodEdit({ paymentMethod }: AdminPaymentMe
             return;
         }
 
-        const maxMB = 2;
+        const maxMB = 10;
         const sizeMB = file.size / (1024 * 1024);
         if (sizeMB > maxMB) {
             alert(`⚠️ Ukuran Logo Terlalu Besar!\n\nUkuran file yang dipilih: ${sizeMB.toFixed(2)} MB\nBatas maksimal ukuran file logo metode pembayaran adalah ${maxMB} MB.\n\nSilakan pilih logo yang lebih kecil.`);
@@ -262,7 +262,7 @@ export default function AdminPaymentMethodEdit({ paymentMethod }: AdminPaymentMe
                                         Klik untuk upload atau tarik &amp; lepas gambar di sini
                                     </p>
                                     <p className="text-[11px] text-muted-foreground mt-0.5">
-                                        Mendukung format PNG, JPG, WEBP, atau SVG (Maks. 2MB)
+                                        Mendukung format PNG, JPG, WEBP, atau SVG (Maks. 10MB)
                                     </p>
                                 </div>
                             </div>

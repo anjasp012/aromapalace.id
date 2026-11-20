@@ -143,7 +143,7 @@ export default function AdminProductEdit({
         if (!files || files.length === 0) return;
         const newPreviews: UploadedPreview[] = [];
         const newFilesList: File[] = [];
-        const maxMB = 5;
+        const maxMB = 10;
         const oversizedFiles: string[] = [];
         const invalidTypeFiles: string[] = [];
 

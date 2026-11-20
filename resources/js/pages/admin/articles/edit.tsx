@@ -103,7 +103,7 @@ export default function AdminArticleEdit({ article }: ArticleEditProps) {
             return;
         }
 
-        const maxMB = 5;
+        const maxMB = 10;
         const sizeMB = file.size / (1024 * 1024);
         if (sizeMB > maxMB) {
             alert(`⚠️ Ukuran Gambar Terlalu Besar!\n\nUkuran file yang dipilih: ${sizeMB.toFixed(2)} MB\nBatas maksimal ukuran gambar artikel adalah ${maxMB} MB.\n\nSilakan kompres gambar terlebih dahulu.`);

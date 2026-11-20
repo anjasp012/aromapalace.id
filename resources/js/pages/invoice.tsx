@@ -1,5 +1,5 @@
 import React from 'react';
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { ArrowLeft, Download, Loader2 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 import { formatVolume } from '@/lib/utils';
@@ -406,20 +406,26 @@ export default function InvoicePage({ order, seller, buyer }: InvoiceProps) {
                     </div>
 
                     {/* Footer Note */}
-                    <div className="pt-6 pb-1 text-center text-[10px] sm:text-[10.5px] text-gray-500 space-y-0.5">
-                        <p>Invoice ini sah dan diproses oleh komputer.</p>
-                        <p>
-                            Jika butuh bantuan, silakan hubungi{' '}
-                            <a
-                                href="https://wa.me/6289529591732"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="font-bold text-blue-600 hover:underline"
-                            >
-                                Admin Aroma Palace
-                            </a>
-                        </p>
-                    </div>
+                    {(() => {
+                        const { props } = usePage<any>();
+                        const rawWa = (props?.contact?.whatsapp || '6289529591732').replace(/\D/g, '').replace(/^0/, '62');
+                        return (
+                            <div className="pt-6 pb-1 text-center text-[10px] sm:text-[10.5px] text-gray-500 space-y-0.5">
+                                <p>Invoice ini sah dan diproses oleh komputer.</p>
+                                <p>
+                                    Jika butuh bantuan, silakan hubungi{' '}
+                                    <a
+                                        href={`https://wa.me/${rawWa}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="font-bold text-blue-600 hover:underline"
+                                    >
+                                        Admin {props?.contact?.store_name || 'Aroma Palace'}
+                                    </a>
+                                </p>
+                            </div>
+                        );
+                    })()}
                 </div>
             </main>
         </div>

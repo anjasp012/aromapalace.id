@@ -68,13 +68,18 @@ class StoreController extends Controller
         ]);
 
         $thumbnail = null;
+        $file = $request->file('thumbnail');
+        if ($file instanceof UploadedFile && ! $file->isValid() && $file->getError() !== UPLOAD_ERR_NO_FILE) {
+            return back()->withErrors(['thumbnail' => 'Ukuran file foto butik/toko terlalu besar (maksimal 10MB). Silakan pilih foto yang lebih kecil atau lakukan kompresi terlebih dahulu.'])->withInput();
+        }
+
         if ($request->hasFile('thumbnail')) {
             $request->validate([
-                'thumbnail' => ['file', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+                'thumbnail' => ['file', 'image', 'mimes:jpeg,png,jpg,webp', 'max:10240'],
             ], [
                 'thumbnail.image' => 'File foto butik/toko harus berupa gambar yang valid (JPG, PNG, WEBP).',
                 'thumbnail.mimes' => 'Format file foto butik/toko harus berupa JPG, PNG, atau WEBP.',
-                'thumbnail.max' => 'Ukuran file foto butik/toko maksimal adalah 5MB.',
+                'thumbnail.max' => 'Ukuran file foto butik/toko maksimal adalah 10MB.',
             ]);
 
             $file = $request->file('thumbnail');
@@ -127,13 +132,18 @@ class StoreController extends Controller
         ]);
 
         $thumbnail = $store->thumbnail;
+        $file = $request->file('thumbnail');
+        if ($file instanceof UploadedFile && ! $file->isValid() && $file->getError() !== UPLOAD_ERR_NO_FILE) {
+            return back()->withErrors(['thumbnail' => 'Ukuran file foto butik/toko terlalu besar (maksimal 10MB). Silakan pilih foto yang lebih kecil atau lakukan kompresi terlebih dahulu.'])->withInput();
+        }
+
         if ($request->hasFile('thumbnail')) {
             $request->validate([
-                'thumbnail' => ['file', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+                'thumbnail' => ['file', 'image', 'mimes:jpeg,png,jpg,webp', 'max:10240'],
             ], [
                 'thumbnail.image' => 'File foto butik/toko harus berupa gambar yang valid (JPG, PNG, WEBP).',
                 'thumbnail.mimes' => 'Format file foto butik/toko harus berupa JPG, PNG, atau WEBP.',
-                'thumbnail.max' => 'Ukuran file foto butik/toko maksimal adalah 5MB.',
+                'thumbnail.max' => 'Ukuran file foto butik/toko maksimal adalah 10MB.',
             ]);
 
             $file = $request->file('thumbnail');

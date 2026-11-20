@@ -46,16 +46,17 @@ export default function AdminSliderPromoCreate() {
         const isImg = file.type.startsWith('image/') || /\.(png|jpe?g|webp|gif|svg|avif)$/i.test(file.name);
 
         if (!isVideo && !isImg) {
-            alert('⚠️ Format Berkas Tidak Didukung!\n\nSilakan pilih berkas media yang valid: Gambar/GIF (JPG, PNG, WEBP, GIF, SVG) atau Video (MP4, WEBM, MOV).');
+            alert('⚠️ Format Berkas Tidak Didukung!\n\nSilakan pilih berkas media yang valid: Foto/GIF (JPG, PNG, WEBP, GIF, SVG) atau Video (MP4, WEBM, MOV).');
             if (fileInputRef.current) fileInputRef.current.value = '';
             return;
         }
 
-        const maxMB = 50;
+        const maxMB = isVideo ? 50 : 10;
+        const typeLabel = isVideo ? 'video' : 'foto';
         const fileSizeMB = file.size / (1024 * 1024);
         if (fileSizeMB > maxMB) {
-            alert(`⚠️ Ukuran Berkas Terlalu Besar!\n\nUkuran file: ${fileSizeMB.toFixed(2)} MB\nBatas maksimal: ${maxMB} MB\n\nSilakan pilih berkas yang lebih kecil atau lakukan kompresi terlebih dahulu.`);
-            setError('thumbnail', `Ukuran file terlalu besar (${fileSizeMB.toFixed(2)} MB). Maksimal ukuran file adalah ${maxMB} MB.`);
+            alert(`⚠️ Ukuran Berkas Terlalu Besar!\n\nUkuran file: ${fileSizeMB.toFixed(2)} MB\nBatas maksimal ukuran ${typeLabel} adalah ${maxMB} MB.\n\nSilakan pilih berkas yang lebih kecil atau lakukan kompresi terlebih dahulu.`);
+            setError('thumbnail', `Ukuran ${typeLabel} terlalu besar (${fileSizeMB.toFixed(2)} MB). Maksimal ukuran file adalah ${maxMB} MB.`);
             if (fileInputRef.current) fileInputRef.current.value = '';
             return;
         }
@@ -177,21 +178,19 @@ export default function AdminSliderPromoCreate() {
                             onDragLeave={handleDragLeave}
                             onDrop={handleDrop}
                             onClick={() => fileInputRef.current?.click()}
-                            className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
-                                errors.thumbnail
-                                    ? 'border-destructive bg-destructive/5 ring-2 ring-destructive/20'
-                                    : isDragging
+                            className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${errors.thumbnail
+                                ? 'border-destructive bg-destructive/5 ring-2 ring-destructive/20'
+                                : isDragging
                                     ? 'border-primary bg-primary/5 scale-[0.99]'
                                     : 'border-border hover:border-primary/60 hover:bg-muted/40'
-                            }`}
+                                }`}
                         >
                             <div className="flex flex-col items-center justify-center gap-2">
                                 <div
-                                    className={`size-12 rounded-full flex items-center justify-center ${
-                                        errors.thumbnail
-                                            ? 'bg-destructive/10 text-destructive'
-                                            : 'bg-primary/10 text-primary'
-                                    }`}
+                                    className={`size-12 rounded-full flex items-center justify-center ${errors.thumbnail
+                                        ? 'bg-destructive/10 text-destructive'
+                                        : 'bg-primary/10 text-primary'
+                                        }`}
                                 >
                                     <Upload className="size-6" />
                                 </div>
@@ -199,7 +198,7 @@ export default function AdminSliderPromoCreate() {
                                     Klik untuk memilih atau seret berkas media ke sini
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                    Mendukung Gambar (JPG, PNG, WEBP, GIF) &amp; Video (MP4, WEBM, MOV) Maks. 50MB
+                                    Mendukung Foto (JPG, PNG, WEBP, GIF Maks. 10MB) &amp; Video (MP4, WEBM, MOV Maks. 50MB)
                                 </p>
                             </div>
                         </div>
@@ -240,8 +239,8 @@ export default function AdminSliderPromoCreate() {
                                         {isMediaVideo
                                             ? 'Video (Looping)'
                                             : isGifUrl(previewUrl)
-                                            ? 'GIF Animasi'
-                                            : 'Gambar Banner'}
+                                                ? 'GIF Animasi'
+                                                : 'Gambar Banner'}
                                     </Badge>
                                 </div>
                                 {data.thumbnail instanceof File && (

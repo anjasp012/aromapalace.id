@@ -70,14 +70,19 @@ class ArticleController extends Controller
             'is_draft' => ['nullable', 'boolean'],
         ]);
 
+        $file = $request->file('thumbnail');
+        if ($file instanceof UploadedFile && ! $file->isValid() && $file->getError() !== UPLOAD_ERR_NO_FILE) {
+            return back()->withErrors(['thumbnail' => 'Ukuran file gambar artikel terlalu besar (maksimal 10MB). Silakan pilih gambar yang lebih kecil atau lakukan kompresi terlebih dahulu.'])->withInput();
+        }
+
         $thumbnail = null;
         if ($request->hasFile('thumbnail')) {
             $request->validate([
-                'thumbnail' => ['file', 'image', 'mimes:jpeg,png,jpg,webp,gif', 'max:5120'],
+                'thumbnail' => ['file', 'image', 'mimes:jpeg,png,jpg,webp,gif', 'max:10240'],
             ], [
                 'thumbnail.image' => 'File gambar artikel harus berupa gambar yang valid (JPG, PNG, WEBP, GIF).',
                 'thumbnail.mimes' => 'Format file gambar artikel harus berupa JPG, PNG, WEBP, atau GIF.',
-                'thumbnail.max' => 'Ukuran file gambar artikel maksimal adalah 5MB.',
+                'thumbnail.max' => 'Ukuran file gambar artikel maksimal adalah 10MB.',
             ]);
 
             $file = $request->file('thumbnail');
@@ -138,14 +143,19 @@ class ArticleController extends Controller
             'is_draft' => ['nullable', 'boolean'],
         ]);
 
+        $file = $request->file('thumbnail');
+        if ($file instanceof UploadedFile && ! $file->isValid() && $file->getError() !== UPLOAD_ERR_NO_FILE) {
+            return back()->withErrors(['thumbnail' => 'Ukuran file gambar artikel terlalu besar (maksimal 10MB). Silakan pilih gambar yang lebih kecil atau lakukan kompresi terlebih dahulu.'])->withInput();
+        }
+
         $thumbnail = $article->thumbnail;
         if ($request->hasFile('thumbnail')) {
             $request->validate([
-                'thumbnail' => ['file', 'image', 'mimes:jpeg,png,jpg,webp,gif', 'max:5120'],
+                'thumbnail' => ['file', 'image', 'mimes:jpeg,png,jpg,webp,gif', 'max:10240'],
             ], [
                 'thumbnail.image' => 'File gambar artikel harus berupa gambar yang valid (JPG, PNG, WEBP, GIF).',
                 'thumbnail.mimes' => 'Format file gambar artikel harus berupa JPG, PNG, WEBP, atau GIF.',
-                'thumbnail.max' => 'Ukuran file gambar artikel maksimal adalah 5MB.',
+                'thumbnail.max' => 'Ukuran file gambar artikel maksimal adalah 10MB.',
             ]);
 
             $file = $request->file('thumbnail');

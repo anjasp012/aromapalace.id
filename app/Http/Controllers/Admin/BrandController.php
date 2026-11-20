@@ -64,13 +64,18 @@ class BrandController extends Controller
         ]);
 
         $thumbnail = null;
+        $file = $request->file('thumbnail');
+        if ($file instanceof UploadedFile && ! $file->isValid() && $file->getError() !== UPLOAD_ERR_NO_FILE) {
+            return back()->withErrors(['thumbnail' => 'Ukuran file logo/gambar merek terlalu besar (maksimal 10MB). Silakan pilih gambar yang lebih kecil atau lakukan kompresi terlebih dahulu.'])->withInput();
+        }
+
         if ($request->hasFile('thumbnail')) {
             $request->validate([
-                'thumbnail' => ['file', 'image', 'mimes:jpeg,png,jpg,webp,svg', 'max:5120'],
+                'thumbnail' => ['file', 'image', 'mimes:jpeg,png,jpg,webp,svg', 'max:10240'],
             ], [
                 'thumbnail.image' => 'File logo/gambar merek harus berupa gambar yang valid (JPG, PNG, WEBP, SVG).',
                 'thumbnail.mimes' => 'Format file logo/gambar merek harus berupa JPG, PNG, WEBP, atau SVG.',
-                'thumbnail.max' => 'Ukuran file logo/gambar merek maksimal adalah 5MB.',
+                'thumbnail.max' => 'Ukuran file logo/gambar merek maksimal adalah 10MB.',
             ]);
 
             $file = $request->file('thumbnail');
@@ -121,13 +126,18 @@ class BrandController extends Controller
         ]);
 
         $thumbnail = $brand->thumbnail;
+        $file = $request->file('thumbnail');
+        if ($file instanceof UploadedFile && ! $file->isValid() && $file->getError() !== UPLOAD_ERR_NO_FILE) {
+            return back()->withErrors(['thumbnail' => 'Ukuran file logo/gambar merek terlalu besar (maksimal 10MB). Silakan pilih gambar yang lebih kecil atau lakukan kompresi terlebih dahulu.'])->withInput();
+        }
+
         if ($request->hasFile('thumbnail')) {
             $request->validate([
-                'thumbnail' => ['file', 'image', 'mimes:jpeg,png,jpg,webp,svg', 'max:5120'],
+                'thumbnail' => ['file', 'image', 'mimes:jpeg,png,jpg,webp,svg', 'max:10240'],
             ], [
                 'thumbnail.image' => 'File logo/gambar merek harus berupa gambar yang valid (JPG, PNG, WEBP, SVG).',
                 'thumbnail.mimes' => 'Format file logo/gambar merek harus berupa JPG, PNG, WEBP, atau SVG.',
-                'thumbnail.max' => 'Ukuran file logo/gambar merek maksimal adalah 5MB.',
+                'thumbnail.max' => 'Ukuran file logo/gambar merek maksimal adalah 10MB.',
             ]);
 
             $file = $request->file('thumbnail');

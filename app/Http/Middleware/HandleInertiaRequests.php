@@ -109,6 +109,10 @@ class HandleInertiaRequests extends Middleware
                 'phone' => (string) Setting::get('store_phone', '081288889999'),
                 'whatsapp' => (string) Setting::get('store_whatsapp', '6289529591732'),
                 'store_name' => (string) Setting::get('store_name', 'Aroma Palace Official'),
+                'facebook' => (string) Setting::get('store_facebook', 'https://facebook.com/aromapalace'),
+                'instagram' => (string) Setting::get('store_instagram', 'https://instagram.com/aromapalace'),
+                'youtube' => (string) Setting::get('store_youtube', 'https://youtube.com/@aromapalace'),
+                'tiktok' => (string) Setting::get('store_tiktok', 'https://tiktok.com/@aromapalace'),
             ],
             'header_vouchers' => fn () => Cache::remember('active_header_vouchers', 600, function () {
                 return Voucher::query()

@@ -41,6 +41,12 @@ class SettingController extends Controller
         $settings['app_appstore_url'] = $settings['app_appstore_url'] ?? 'https://apps.apple.com/app/aromapalace/id6740000000';
         $settings['app_apk_url'] = $settings['app_apk_url'] ?? '';
 
+        // Ensure defaults for Social Media links
+        $settings['store_facebook'] = $settings['store_facebook'] ?? 'https://facebook.com/aromapalace';
+        $settings['store_instagram'] = $settings['store_instagram'] ?? 'https://instagram.com/aromapalace';
+        $settings['store_youtube'] = $settings['store_youtube'] ?? 'https://youtube.com/@aromapalace';
+        $settings['store_tiktok'] = $settings['store_tiktok'] ?? 'https://tiktok.com/@aromapalace';
+
         return Inertia::render('admin/settings/index', [
             'settings' => $settings,
         ]);
@@ -66,6 +72,10 @@ class SettingController extends Controller
             'store_phone' => ['nullable', 'string', 'max:25', 'regex:/^(\+628|628|08|02)[0-9]{6,13}$/'],
             'store_whatsapp' => ['nullable', 'string', 'max:25', 'regex:/^(\+628|628|08|02)[0-9]{6,13}$/'],
             'store_description' => ['nullable', 'string', 'max:1000'],
+            'store_facebook' => ['nullable', 'string', 'max:500'],
+            'store_instagram' => ['nullable', 'string', 'max:500'],
+            'store_youtube' => ['nullable', 'string', 'max:500'],
+            'store_tiktok' => ['nullable', 'string', 'max:500'],
 
             // Shipping Origin (managed in Layanan Pengiriman, optional here)
             'shipping_sender_name' => ['nullable', 'string', 'max:255'],
@@ -134,6 +144,10 @@ class SettingController extends Controller
             'store_phone' => ['group' => 'contact', 'type' => 'string'],
             'store_whatsapp' => ['group' => 'contact', 'type' => 'string'],
             'store_description' => ['group' => 'contact', 'type' => 'string'],
+            'store_facebook' => ['group' => 'contact', 'type' => 'string'],
+            'store_instagram' => ['group' => 'contact', 'type' => 'string'],
+            'store_youtube' => ['group' => 'contact', 'type' => 'string'],
+            'store_tiktok' => ['group' => 'contact', 'type' => 'string'],
             'shipping_sender_name' => ['group' => 'shipping', 'type' => 'string'],
             'shipping_sender_phone' => ['group' => 'shipping', 'type' => 'string'],
             'shipping_address' => ['group' => 'shipping', 'type' => 'string'],

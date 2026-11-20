@@ -67,12 +67,11 @@ class BannerController extends Controller
 
         $file = $request->file('image');
         if ($file instanceof UploadedFile && ! $file->isValid() && $file->getError() !== UPLOAD_ERR_NO_FILE) {
-            $maxUpload = ini_get('upload_max_filesize') ?: '2M';
             $errorMsg = match ($file->getError()) {
-                UPLOAD_ERR_INI_SIZE => "Ukuran berkas melebihi batas maksimal server PHP ({$maxUpload}). Silakan perbesar upload_max_filesize di php.ini Laragon atau pilih berkas di bawah {$maxUpload}.",
-                UPLOAD_ERR_FORM_SIZE => 'Ukuran berkas melebihi batas form.',
+                UPLOAD_ERR_INI_SIZE => 'Ukuran berkas terlalu besar (maksimal 10MB untuk foto, 50MB untuk video). Silakan pilih berkas yang lebih kecil atau lakukan kompresi terlebih dahulu.',
+                UPLOAD_ERR_FORM_SIZE => 'Ukuran berkas melebihi batas maksimal yang diizinkan.',
                 UPLOAD_ERR_PARTIAL => 'Berkas hanya terunggah sebagian. Silakan coba unggah kembali.',
-                default => 'Gagal mengunggah berkas: ' . $file->getErrorMessage(),
+                default => 'Gagal mengunggah berkas media. Silakan coba beberapa saat lagi.',
             };
             return back()->withErrors(['image' => $errorMsg])->withInput();
         }
@@ -96,18 +95,26 @@ class BannerController extends Controller
 
         $image = null;
         if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $mime = $file->getMimeType() ?? '';
+            $ext = strtolower($file->getClientOriginalExtension());
+            $isVideo = str_starts_with($mime, 'video/') || in_array($ext, ['mp4', 'webm', 'ogg', 'mov', 'm4v']);
+            $maxKb = $isVideo ? 51200 : 10240;
+            $maxLabel = $isVideo ? '50MB' : '10MB';
+            $typeLabel = $isVideo ? 'video' : 'foto';
+
             $request->validate([
                 'image' => [
                     'file',
                     'mimes:jpeg,png,jpg,webp,gif,svg,avif,mp4,webm,ogg,mov,m4v',
-                    'max:51200',
+                    "max:{$maxKb}",
                 ],
             ], [
-                'image.mimes' => 'Format file media harus berupa Gambar/GIF (JPG, PNG, WEBP, GIF, SVG) atau Video (MP4, WebM, OGG, MOV).',
-                'image.max' => 'Ukuran file media banner maksimal 50MB.',
+                'image.file' => 'Banner media harus berupa berkas yang valid.',
+                'image.mimes' => 'Format file media harus berupa Foto/GIF (JPG, PNG, WEBP, GIF, SVG) atau Video (MP4, WebM, OGG, MOV).',
+                'image.max' => "Ukuran berkas {$typeLabel} maksimal {$maxLabel}.",
             ]);
 
-            $file = $request->file('image');
             if ($file instanceof UploadedFile && $file->isValid()) {
                 $path = $file->store('banners', 'public');
                 $image = Storage::url($path);
@@ -142,12 +149,11 @@ class BannerController extends Controller
     {
         $file = $request->file('image');
         if ($file instanceof UploadedFile && ! $file->isValid() && $file->getError() !== UPLOAD_ERR_NO_FILE) {
-            $maxUpload = ini_get('upload_max_filesize') ?: '2M';
             $errorMsg = match ($file->getError()) {
-                UPLOAD_ERR_INI_SIZE => "Ukuran berkas melebihi batas maksimal server PHP ({$maxUpload}). Silakan perbesar upload_max_filesize di php.ini Laragon atau pilih berkas di bawah {$maxUpload}.",
-                UPLOAD_ERR_FORM_SIZE => 'Ukuran berkas melebihi batas form.',
+                UPLOAD_ERR_INI_SIZE => 'Ukuran berkas terlalu besar (maksimal 10MB untuk foto, 50MB untuk video). Silakan pilih berkas yang lebih kecil atau lakukan kompresi terlebih dahulu.',
+                UPLOAD_ERR_FORM_SIZE => 'Ukuran berkas melebihi batas maksimal yang diizinkan.',
                 UPLOAD_ERR_PARTIAL => 'Berkas hanya terunggah sebagian. Silakan coba unggah kembali.',
-                default => 'Gagal mengunggah berkas: ' . $file->getErrorMessage(),
+                default => 'Gagal mengunggah berkas media. Silakan coba beberapa saat lagi.',
             };
             return back()->withErrors(['image' => $errorMsg])->withInput();
         }
@@ -171,16 +177,24 @@ class BannerController extends Controller
 
         $image = $banner->image;
         if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $mime = $file->getMimeType() ?? '';
+            $ext = strtolower($file->getClientOriginalExtension());
+            $isVideo = str_starts_with($mime, 'video/') || in_array($ext, ['mp4', 'webm', 'ogg', 'mov', 'm4v']);
+            $maxKb = $isVideo ? 51200 : 10240;
+            $maxLabel = $isVideo ? '50MB' : '10MB';
+            $typeLabel = $isVideo ? 'video' : 'foto';
+
             $request->validate([
                 'image' => [
                     'file',
                     'mimes:jpeg,png,jpg,webp,gif,svg,avif,mp4,webm,ogg,mov,m4v',
-                    'max:51200',
+                    "max:{$maxKb}",
                 ],
             ], [
                 'image.file' => 'Banner media harus berupa berkas yang valid.',
-                'image.mimes' => 'Format file media harus berupa Gambar/GIF (JPG, PNG, WEBP, GIF, SVG) atau Video (MP4, WebM, OGG, MOV).',
-                'image.max' => 'Ukuran file media banner maksimal 50MB.',
+                'image.mimes' => 'Format file media harus berupa Foto/GIF (JPG, PNG, WEBP, GIF, SVG) atau Video (MP4, WebM, OGG, MOV).',
+                'image.max' => "Ukuran berkas {$typeLabel} maksimal {$maxLabel}.",
             ]);
 
             $file = $request->file('image');

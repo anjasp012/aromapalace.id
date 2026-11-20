@@ -232,13 +232,24 @@ class ProductController extends Controller
             'variants.*.stock' => ['required', 'integer', 'min:0'],
         ]);
 
+        if ($request->has('images')) {
+            $imageFiles = $request->file('images');
+            if (is_array($imageFiles)) {
+                foreach ($imageFiles as $imgFile) {
+                    if ($imgFile instanceof UploadedFile && ! $imgFile->isValid() && $imgFile->getError() !== UPLOAD_ERR_NO_FILE) {
+                        return back()->withErrors(['images' => 'Ukuran file foto produk terlalu besar (maksimal 10MB per foto). Silakan pilih foto yang lebih kecil atau lakukan kompresi terlebih dahulu.'])->withInput();
+                    }
+                }
+            }
+        }
+
         if ($request->hasFile('images')) {
             $request->validate([
-                'images.*' => ['file', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+                'images.*' => ['file', 'image', 'mimes:jpeg,png,jpg,webp', 'max:10240'],
             ], [
                 'images.*.image' => 'File foto produk harus berupa gambar yang valid (JPG, PNG, WEBP).',
                 'images.*.mimes' => 'Format foto produk harus berupa JPG, PNG, atau WEBP.',
-                'images.*.max' => 'Ukuran file foto produk maksimal adalah 5MB per foto.',
+                'images.*.max' => 'Ukuran file foto produk maksimal adalah 10MB per foto.',
             ]);
         }
 
@@ -559,13 +570,24 @@ class ProductController extends Controller
             'variants.*.stock' => ['required', 'integer', 'min:0'],
         ]);
 
+        if ($request->has('images')) {
+            $imageFiles = $request->file('images');
+            if (is_array($imageFiles)) {
+                foreach ($imageFiles as $imgFile) {
+                    if ($imgFile instanceof UploadedFile && ! $imgFile->isValid() && $imgFile->getError() !== UPLOAD_ERR_NO_FILE) {
+                        return back()->withErrors(['images' => 'Ukuran file foto produk terlalu besar (maksimal 10MB per foto). Silakan pilih foto yang lebih kecil atau lakukan kompresi terlebih dahulu.'])->withInput();
+                    }
+                }
+            }
+        }
+
         if ($request->hasFile('images')) {
             $request->validate([
-                'images.*' => ['file', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+                'images.*' => ['file', 'image', 'mimes:jpeg,png,jpg,webp', 'max:10240'],
             ], [
                 'images.*.image' => 'File foto produk harus berupa gambar yang valid (JPG, PNG, WEBP).',
                 'images.*.mimes' => 'Format foto produk harus berupa JPG, PNG, atau WEBP.',
-                'images.*.max' => 'Ukuran file foto produk maksimal adalah 5MB per foto.',
+                'images.*.max' => 'Ukuran file foto produk maksimal adalah 10MB per foto.',
             ]);
         }
 

@@ -68,18 +68,23 @@ class PaymentMethodController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $file = $request->file('icon');
+        if ($file instanceof UploadedFile && ! $file->isValid() && $file->getError() !== UPLOAD_ERR_NO_FILE) {
+            return back()->withErrors(['icon' => 'Ukuran file logo pembayaran terlalu besar (maksimal 10MB). Silakan pilih file gambar yang lebih kecil.'])->withInput();
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'code' => ['required', 'string', 'max:255', 'unique:payment_methods,code'],
             'type' => ['nullable', 'string', 'in:automatic,manual'],
             'account_number' => ['nullable', 'string', 'max:100'],
             'account_name' => ['nullable', 'string', 'max:255'],
-            'icon' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp,svg', 'max:2048'],
+            'icon' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp,svg', 'max:10240'],
             'is_active' => ['nullable', 'boolean'],
             'use_unique_code' => ['nullable', 'boolean'],
         ], [
             'icon.mimes' => 'Format file logo pembayaran harus berupa PNG, JPG, JPEG, WEBP, atau SVG.',
-            'icon.max' => 'Ukuran file logo pembayaran maksimal 2MB.',
+            'icon.max' => 'Ukuran file logo pembayaran maksimal 10MB.',
         ]);
 
         $code = Str::slug($validated['code'], '_');
@@ -117,19 +122,24 @@ class PaymentMethodController extends Controller
 
     public function update(Request $request, PaymentMethod $paymentMethod): RedirectResponse
     {
+        $file = $request->file('icon');
+        if ($file instanceof UploadedFile && ! $file->isValid() && $file->getError() !== UPLOAD_ERR_NO_FILE) {
+            return back()->withErrors(['icon' => 'Ukuran file logo pembayaran terlalu besar (maksimal 10MB). Silakan pilih file gambar yang lebih kecil.'])->withInput();
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'code' => ['required', 'string', 'max:255', Rule::unique('payment_methods', 'code')->ignore($paymentMethod->id)],
             'type' => ['nullable', 'string', 'in:automatic,manual'],
             'account_number' => ['nullable', 'string', 'max:100'],
             'account_name' => ['nullable', 'string', 'max:255'],
-            'icon' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp,svg', 'max:2048'],
+            'icon' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp,svg', 'max:10240'],
             'remove_icon' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
             'use_unique_code' => ['nullable', 'boolean'],
         ], [
             'icon.mimes' => 'Format file logo pembayaran harus berupa PNG, JPG, JPEG, WEBP, atau SVG.',
-            'icon.max' => 'Ukuran file logo pembayaran maksimal 2MB.',
+            'icon.max' => 'Ukuran file logo pembayaran maksimal 10MB.',
         ]);
 
         $code = Str::slug($validated['code'], '_');

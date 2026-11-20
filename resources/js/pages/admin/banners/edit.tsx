@@ -85,16 +85,17 @@ export default function AdminBannerEdit({ banner }: AdminBannerEditProps) {
         const isImg = file.type.startsWith('image/') || /\.(png|jpe?g|webp|gif|svg|avif)$/i.test(file.name);
 
         if (!isVideo && !isImg) {
-            alert('⚠️ Format Berkas Tidak Didukung!\n\nSilakan pilih berkas media yang valid: Gambar/GIF (JPG, PNG, WEBP, GIF, SVG) atau Video (MP4, WEBM, MOV).');
+            alert('⚠️ Format Berkas Tidak Didukung!\n\nSilakan pilih berkas media yang valid: Foto/GIF (JPG, PNG, WEBP, GIF, SVG) atau Video (MP4, WEBM, MOV).');
             if (fileInputRef.current) fileInputRef.current.value = '';
             return;
         }
 
-        const maxMB = 50;
+        const maxMB = isVideo ? 50 : 10;
+        const typeLabel = isVideo ? 'video' : 'foto';
         const fileSizeMB = file.size / (1024 * 1024);
         if (fileSizeMB > maxMB) {
-            alert(`⚠️ Ukuran Berkas Terlalu Besar!\n\nUkuran file: ${fileSizeMB.toFixed(2)} MB\nBatas maksimal: ${maxMB} MB\n\nSilakan pilih berkas yang lebih kecil atau lakukan kompresi terlebih dahulu.`);
-            setError('image', `Ukuran file terlalu besar (${fileSizeMB.toFixed(2)} MB). Maksimal ukuran file adalah ${maxMB} MB.`);
+            alert(`⚠️ Ukuran Berkas Terlalu Besar!\n\nUkuran file: ${fileSizeMB.toFixed(2)} MB\nBatas maksimal ukuran ${typeLabel} adalah ${maxMB} MB.\n\nSilakan pilih berkas yang lebih kecil atau lakukan kompresi terlebih dahulu.`);
+            setError('image', `Ukuran ${typeLabel} terlalu besar (${fileSizeMB.toFixed(2)} MB). Maksimal ukuran file adalah ${maxMB} MB.`);
             if (fileInputRef.current) fileInputRef.current.value = '';
             return;
         }
@@ -241,7 +242,7 @@ export default function AdminBannerEdit({ banner }: AdminBannerEditProps) {
                                     Klik untuk mengganti media atau seret berkas ke sini
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                    Mendukung Gambar (JPG, PNG, WEBP, GIF) &amp; Video (MP4, WEBM, MOV) Maks. 50MB
+                                    Mendukung Foto (JPG, PNG, WEBP, GIF Maks. 10MB) &amp; Video (MP4, WEBM, MOV Maks. 50MB)
                                 </p>
                             </div>
                         </div>

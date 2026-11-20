@@ -53,12 +53,11 @@ class SliderPromoController extends Controller
     {
         $file = $request->file('thumbnail');
         if ($file instanceof UploadedFile && ! $file->isValid() && $file->getError() !== UPLOAD_ERR_NO_FILE) {
-            $maxUpload = ini_get('upload_max_filesize') ?: '2M';
             $errorMsg = match ($file->getError()) {
-                UPLOAD_ERR_INI_SIZE => "Ukuran berkas melebihi batas maksimal server PHP ({$maxUpload}). Silakan perbesar upload_max_filesize di php.ini Laragon atau pilih berkas di bawah {$maxUpload}.",
-                UPLOAD_ERR_FORM_SIZE => 'Ukuran berkas melebihi batas form.',
+                UPLOAD_ERR_INI_SIZE => 'Ukuran berkas terlalu besar (maksimal 10MB untuk foto, 50MB untuk video). Silakan pilih berkas yang lebih kecil atau lakukan kompresi terlebih dahulu.',
+                UPLOAD_ERR_FORM_SIZE => 'Ukuran berkas melebihi batas maksimal yang diizinkan.',
                 UPLOAD_ERR_PARTIAL => 'Berkas hanya terunggah sebagian. Silakan coba unggah kembali.',
-                default => 'Gagal mengunggah berkas: ' . $file->getErrorMessage(),
+                default => 'Gagal mengunggah berkas media. Silakan coba beberapa saat lagi.',
             };
             return back()->withErrors(['thumbnail' => $errorMsg])->withInput();
         }
@@ -74,18 +73,26 @@ class SliderPromoController extends Controller
 
         $thumbnail = null;
         if ($request->hasFile('thumbnail')) {
+            $file = $request->file('thumbnail');
+            $mime = $file->getMimeType() ?? '';
+            $ext = strtolower($file->getClientOriginalExtension());
+            $isVideo = str_starts_with($mime, 'video/') || in_array($ext, ['mp4', 'webm', 'ogg', 'mov', 'm4v']);
+            $maxKb = $isVideo ? 51200 : 10240;
+            $maxLabel = $isVideo ? '50MB' : '10MB';
+            $typeLabel = $isVideo ? 'video' : 'foto';
+
             $request->validate([
                 'thumbnail' => [
                     'file',
                     'mimes:jpeg,png,jpg,webp,gif,svg,avif,mp4,webm,ogg,mov,m4v',
-                    'max:51200',
+                    "max:{$maxKb}",
                 ],
             ], [
-                'thumbnail.mimes' => 'Format file harus berupa media yang valid: Gambar/GIF (JPG, PNG, WEBP, GIF, SVG) atau Video (MP4, WebM, OGG, MOV).',
-                'thumbnail.max' => 'Ukuran file banner media maksimal 50MB.',
+                'thumbnail.file' => 'Banner media harus berupa berkas yang valid.',
+                'thumbnail.mimes' => 'Format file harus berupa Foto/GIF (JPG, PNG, WEBP, GIF, SVG) atau Video (MP4, WebM, OGG, MOV).',
+                'thumbnail.max' => "Ukuran berkas {$typeLabel} maksimal {$maxLabel}.",
             ]);
 
-            $file = $request->file('thumbnail');
             if ($file instanceof UploadedFile && $file->isValid()) {
                 $path = $file->store('slider-promos', 'public');
                 $thumbnail = Storage::url($path);
@@ -118,12 +125,11 @@ class SliderPromoController extends Controller
     {
         $file = $request->file('thumbnail');
         if ($file instanceof UploadedFile && ! $file->isValid() && $file->getError() !== UPLOAD_ERR_NO_FILE) {
-            $maxUpload = ini_get('upload_max_filesize') ?: '2M';
             $errorMsg = match ($file->getError()) {
-                UPLOAD_ERR_INI_SIZE => "Ukuran berkas melebihi batas maksimal server PHP ({$maxUpload}). Silakan perbesar upload_max_filesize di php.ini Laragon atau pilih berkas di bawah {$maxUpload}.",
-                UPLOAD_ERR_FORM_SIZE => 'Ukuran berkas melebihi batas form.',
+                UPLOAD_ERR_INI_SIZE => 'Ukuran berkas terlalu besar (maksimal 10MB untuk foto, 50MB untuk video). Silakan pilih berkas yang lebih kecil atau lakukan kompresi terlebih dahulu.',
+                UPLOAD_ERR_FORM_SIZE => 'Ukuran berkas melebihi batas maksimal yang diizinkan.',
                 UPLOAD_ERR_PARTIAL => 'Berkas hanya terunggah sebagian. Silakan coba unggah kembali.',
-                default => 'Gagal mengunggah berkas: ' . $file->getErrorMessage(),
+                default => 'Gagal mengunggah berkas media. Silakan coba beberapa saat lagi.',
             };
             return back()->withErrors(['thumbnail' => $errorMsg])->withInput();
         }
@@ -139,19 +145,26 @@ class SliderPromoController extends Controller
 
         $thumbnail = $sliderPromo->thumbnail;
         if ($request->hasFile('thumbnail')) {
+            $file = $request->file('thumbnail');
+            $mime = $file->getMimeType() ?? '';
+            $ext = strtolower($file->getClientOriginalExtension());
+            $isVideo = str_starts_with($mime, 'video/') || in_array($ext, ['mp4', 'webm', 'ogg', 'mov', 'm4v']);
+            $maxKb = $isVideo ? 51200 : 10240;
+            $maxLabel = $isVideo ? '50MB' : '10MB';
+            $typeLabel = $isVideo ? 'video' : 'foto';
+
             $request->validate([
                 'thumbnail' => [
                     'file',
                     'mimes:jpeg,png,jpg,webp,gif,svg,avif,mp4,webm,ogg,mov,m4v',
-                    'max:51200',
+                    "max:{$maxKb}",
                 ],
             ], [
                 'thumbnail.file' => 'Banner media harus berupa berkas yang valid.',
-                'thumbnail.mimes' => 'Format file harus berupa media yang valid: Gambar/GIF (JPG, PNG, WEBP, GIF, SVG) atau Video (MP4, WebM, OGG, MOV).',
-                'thumbnail.max' => 'Ukuran file banner media maksimal 50MB.',
+                'thumbnail.mimes' => 'Format file harus berupa Foto/GIF (JPG, PNG, WEBP, GIF, SVG) atau Video (MP4, WebM, OGG, MOV).',
+                'thumbnail.max' => "Ukuran berkas {$typeLabel} maksimal {$maxLabel}.",
             ]);
 
-            $file = $request->file('thumbnail');
             if ($file instanceof UploadedFile && $file->isValid()) {
                 if (! empty($sliderPromo->thumbnail) && str_contains($sliderPromo->thumbnail, '/storage/slider-promos/')) {
                     $storagePath = str_replace('/storage/', '', $sliderPromo->thumbnail);
