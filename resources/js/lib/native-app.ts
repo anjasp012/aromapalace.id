@@ -44,11 +44,38 @@ export function initNativeApp(): void {
 }
 
 function setupStatusBar(): void {
-    // Burgundy bar with white text (#360407 matches the luxury top announcement bar).
-    StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
-    StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {});
+    // Burgundy bar with white text (#4A070B matches the luxury top announcement bar and iOS status bar).
+    StatusBar.setStyle({ style: Style.Dark }).catch(() => { });
+    StatusBar.setOverlaysWebView({ overlay: true }).catch(() => { });
     if (Capacitor.getPlatform() === 'android') {
-        StatusBar.setBackgroundColor({ color: '#360407' }).catch(() => {});
+        StatusBar.setBackgroundColor({ color: '#4A070B' }).catch(() => { });
+    }
+}
+
+/**
+ * Dynamically adapt status bar style and background when scrolling past the top announcement bar.
+ * At top: Maroon #4A070B background with light (white) status bar text.
+ * Scrolled: White #FFFFFF background (or #09090b in dark mode) with dark status bar text.
+ */
+export function updateStatusBarForScroll(isScrolledPastTopbar: boolean): void {
+    if (typeof window === 'undefined') return;
+
+    const isDark = document.documentElement.classList.contains('dark');
+    const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+    const targetColor = isScrolledPastTopbar ? (isDark ? '#09090b' : '#FFFFFF') : '#4A070B';
+
+    if (themeColorMeta) {
+        themeColorMeta.setAttribute('content', targetColor);
+    }
+
+    if (Capacitor.isNativePlatform()) {
+        // Style.Light = dark text for light background (iOS darkContent for white header)
+        // Style.Dark = light/white text for dark background (iOS lightContent for #4A070B)
+        const targetStyle = isScrolledPastTopbar ? (isDark ? Style.Dark : Style.Light) : Style.Dark;
+        StatusBar.setStyle({ style: targetStyle }).catch(() => { });
+        if (Capacitor.getPlatform() === 'android') {
+            StatusBar.setBackgroundColor({ color: targetColor }).catch(() => { });
+        }
     }
 }
 
@@ -59,7 +86,7 @@ function setupStatusBar(): void {
 function hideSplashWhenReady(): void {
     const hide = () => {
         window.requestAnimationFrame(() => {
-            SplashScreen.hide({ fadeOutDuration: 400 }).catch(() => {});
+            SplashScreen.hide({ fadeOutDuration: 400 }).catch(() => { });
         });
     };
 
@@ -111,7 +138,7 @@ function setupNetworkWatcher(): void {
         .then(({ connected }) => {
             if (!connected) showOfflineBanner();
         })
-        .catch(() => {});
+        .catch(() => { });
 }
 
 function showOfflineBanner(): void {

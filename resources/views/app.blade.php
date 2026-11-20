@@ -7,8 +7,8 @@
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-        <meta name="theme-color" content="#360407">
-        <meta name="msapplication-navbutton-color" content="#360407">
+        <meta name="theme-color" content="#4A070B">
+        <meta name="msapplication-navbutton-color" content="#4A070B">
         <meta name="format-detection" content="telephone=no">
         @php
             $currentHost = request()->getHost();

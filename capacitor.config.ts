@@ -64,9 +64,9 @@ const config: CapacitorConfig = {
       showSpinner: false,
     },
     StatusBar: {
-      // DARK = white text, for the burgundy bar.
+      // DARK = white text, for the burgundy bar (#4A070B).
       style: 'DARK',
-      backgroundColor: '#360407',
+      backgroundColor: '#4A070B',
       overlaysWebView: true,
     },
     PushNotifications: {

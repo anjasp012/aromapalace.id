@@ -67,6 +67,7 @@ import { isRunningInNativeApp, isAdminContext } from '@/lib/app-redirect';
 import PullToRefresh from '@/components/PullToRefresh';
 import AppUpdateModal from '@/components/AppUpdateModal';
 import { FlagIndonesiaIcon, FlagEnglishIcon, FlagLocaleIcon } from '@/components/FlagIcons';
+import { updateStatusBarForScroll } from '@/lib/native-app';
 
 import { App as CapApp } from '@capacitor/app';
 
@@ -192,11 +193,19 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
     const [isVoucherFading, setIsVoucherFading] = useState(false);
     const [selectedHeaderVoucher, setSelectedHeaderVoucher] = useState<HeaderVoucher | null>(headerVouchers[0] || null);
     const [isScrolledPastTopbar, setIsScrolledPastTopbar] = useState(false);
+    const lastScrolledRef = useRef<boolean | null>(null);
 
     useEffect(() => {
         const handleScroll = () => {
-            setIsScrolledPastTopbar(window.scrollY > 32);
+            const scrolled = window.scrollY > 32;
+            setIsScrolledPastTopbar(scrolled);
+            if (lastScrolledRef.current !== scrolled) {
+                lastScrolledRef.current = scrolled;
+                updateStatusBarForScroll(scrolled);
+            }
         };
+
+        handleScroll();
         window.addEventListener('scroll', handleScroll, { passive: true });
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
@@ -802,7 +811,7 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
     return (
         <div className="bg-background text-foreground flex flex-col min-h-screen" suppressHydrationWarning>
             {/* Top Announcement Bar (Scrolls normally with page, NOT sticky on mobile) */}
-            <div className="bg-[#360407] text-white text-xs pt-[env(safe-area-inset-top,0px)]" suppressHydrationWarning>
+            <div className="bg-[#4A070B] text-white text-xs pt-[env(safe-area-inset-top,0px)]" suppressHydrationWarning>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between py-1.5 sm:py-2 gap-2">
                     {activeHeaderVoucher ? (
                         <button
