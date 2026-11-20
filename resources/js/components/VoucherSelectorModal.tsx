@@ -11,22 +11,30 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Ticket, Tag, Truck, Crown } from 'lucide-react';
 import { Link } from '@inertiajs/react';
+import { useTranslation } from '@/lib/i18n';
+import { formatVoucherBadge } from '@/components/VoucherCard';
 
 export interface AvailableVoucher {
     id: number;
     code: string;
     name: string;
+    name_en?: string;
     description?: string | null;
+    description_en?: string | null;
     terms?: string[];
+    terms_en?: string[];
     type: 'percentage' | 'fixed';
     discount_target?: 'subtotal' | 'shipping';
     is_shipping?: boolean;
     value: number;
     min_order_amount: number;
     min_order_amount_formatted: string;
+    min_order_amount_formatted_en?: string;
     max_discount_amount?: number | null;
     formatted_discount?: string;
+    formatted_discount_en?: string;
     expires_at?: string | null;
+    expires_at_iso?: string | null;
     voucher_type?: 'biasa' | 'ongkir' | 'reward';
     category?: 'voucher_biasa' | 'voucher_ongkir' | 'hanya_untuk_anda';
     category_label?: string;
@@ -56,6 +64,7 @@ export default function VoucherSelectorModal({
     onSelectVoucher,
     onApplyManualCode,
 }: VoucherSelectorModalProps) {
+    const { isEn } = useTranslation();
     const [manualCode, setManualCode] = useState('');
     const [activeTab, setActiveTab] = useState<'all' | 'reward'>('all');
 
@@ -104,11 +113,13 @@ export default function VoucherSelectorModal({
                             <Ticket className="w-4 h-4" />
                         </div>
                         <DialogTitle className="text-base sm:text-lg font-bold text-foreground">
-                            Pilih Voucher
+                            {isEn ? 'Select Voucher' : 'Pilih Voucher'}
                         </DialogTitle>
                     </div>
                     <DialogDescription className="text-xs text-muted-foreground">
-                        Pilih voucher yang tersedia atau masukkan kode promo Anda.
+                        {isEn
+                            ? 'Choose an available voucher or enter your promo code.'
+                            : 'Pilih voucher yang tersedia atau masukkan kode promo Anda.'}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -118,7 +129,7 @@ export default function VoucherSelectorModal({
                         <Tag className="w-3.5 h-3.5 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                         <Input
                             type="text"
-                            placeholder="Masukkan kode voucher..."
+                            placeholder={isEn ? 'Enter voucher code...' : 'Masukkan kode voucher...'}
                             value={manualCode}
                             onChange={(e) => setManualCode(e.target.value.toUpperCase())}
                             className="h-9 pl-8 pr-3 text-xs font-mono uppercase tracking-wider"
@@ -129,7 +140,7 @@ export default function VoucherSelectorModal({
                         disabled={!manualCode.trim()}
                         className="h-9 px-4 text-xs font-semibold bg-[#4A070B] hover:bg-[#360407] text-white shrink-0 cursor-pointer shadow-none"
                     >
-                        Terapkan
+                        {isEn ? 'Apply' : 'Terapkan'}
                     </Button>
                 </form>
 
@@ -144,7 +155,7 @@ export default function VoucherSelectorModal({
                                 : 'text-muted-foreground hover:text-foreground'
                         }`}
                     >
-                        <span>Semua</span>
+                        <span>{isEn ? 'All' : 'Semua'}</span>
                         <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
                             activeTab === 'all'
                                 ? 'bg-foreground/10 text-foreground'
@@ -180,17 +191,17 @@ export default function VoucherSelectorModal({
                         <div className="p-6 text-center text-xs text-muted-foreground border border-dashed border-border/80 rounded-lg">
                             {activeTab === 'reward' ? (
                                 <div className="space-y-1.5">
-                                    <p>Belum ada voucher penukaran reward Royale Club untuk akun Anda.</p>
+                                    <p>{isEn ? 'No Royale Club reward vouchers available for your account yet.' : 'Belum ada voucher penukaran reward Royale Club untuk akun Anda.'}</p>
                                     <Link
                                         href="/membership"
                                         onClick={() => onOpenChange(false)}
                                         className="inline-block text-xs font-semibold text-[#4A070B] dark:text-[#E8D0BA] underline"
                                     >
-                                        Tukar Poin di Royale Club &rarr;
+                                        {isEn ? 'Redeem Points in Royale Club →' : 'Tukar Poin di Royale Club →'}
                                     </Link>
                                 </div>
                             ) : (
-                                'Belum ada voucher yang tersedia saat ini.'
+                                isEn ? 'No vouchers available at the moment.' : 'Belum ada voucher yang tersedia saat ini.'
                             )}
                         </div>
                     ) : (
@@ -199,6 +210,42 @@ export default function VoucherSelectorModal({
                             const isEligible = v.is_eligible !== false;
                             const isRewardCard = isReward(v);
                             const isOngkirCard = isOngkir(v);
+
+                            // Bilingual formatted discount
+                            const discountLabel = isEn
+                                ? (v.formatted_discount_en || formatVoucherBadge(v.formatted_discount || '', true))
+                                : (v.formatted_discount || (
+                                    isOngkirCard
+                                        ? (v.type === 'percentage'
+                                            ? (v.value >= 100 ? 'Gratis Ongkir 100%' : `Diskon Ongkir ${v.value}%`)
+                                            : `Potongan Ongkir Rp ${new Intl.NumberFormat('id-ID').format(v.value)}`)
+                                        : (v.type === 'percentage'
+                                            ? `Diskon ${v.value}%`
+                                            : `Potongan Rp ${new Intl.NumberFormat('id-ID').format(v.value)}`)
+                                ));
+
+                            // Bilingual min spend
+                            const minSpendLabel = v.min_order_amount > 0
+                                ? (isEn
+                                    ? `Min. spend Rp ${new Intl.NumberFormat('id-ID').format(v.min_order_amount)}`
+                                    : `Min. belanja ${v.min_order_amount_formatted || `Rp ${new Intl.NumberFormat('id-ID').format(v.min_order_amount)}`}`)
+                                : (isEn ? 'No min. spend' : 'Tanpa min. belanja');
+
+                            // Expiry label
+                            let expiryDisplay: string | null = null;
+                            if (v.expires_at) {
+                                const parsedDate = new Date(v.expires_at_iso || v.expires_at);
+                                const dateFormatted = !isNaN(parsedDate.getTime())
+                                    ? parsedDate.toLocaleDateString(isEn ? 'en-US' : 'id-ID', {
+                                        day: 'numeric',
+                                        month: 'short',
+                                        year: 'numeric',
+                                    })
+                                    : v.expires_at;
+                                expiryDisplay = `${isEn ? 'until' : 's/d'} ${dateFormatted}`;
+                            } else {
+                                expiryDisplay = isEn ? 'Valid Forever' : 'Berlaku Selamanya';
+                            }
 
                             return (
                                 <div
@@ -221,52 +268,42 @@ export default function VoucherSelectorModal({
                                                 {isOngkirCard && (
                                                     <Badge variant="secondary" className="text-[10px] bg-sky-500/10 text-sky-700 dark:text-sky-400 border border-sky-500/30 py-0 h-4 font-semibold flex items-center gap-1">
                                                         <Truck className="w-2.5 h-2.5" />
-                                                        Voucher Ongkir
+                                                        {isEn ? 'Shipping Voucher' : 'Voucher Ongkir'}
                                                     </Badge>
                                                 )}
                                                 {isRewardCard && (
                                                     <Badge variant="secondary" className="text-[10px] bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 py-0 h-4 font-semibold">
-                                                        Hanya Untuk Anda
+                                                        {isEn ? 'Exclusive For You' : 'Hanya Untuk Anda'}
                                                     </Badge>
                                                 )}
                                                 {!isOngkirCard && (
                                                     v.applicable_type === 'specific' ? (
                                                         <Badge variant="outline" className="text-[10px] text-indigo-600 dark:text-indigo-400 border-indigo-200 py-0 h-4">
-                                                            Khusus Produk Tertentu
+                                                            {isEn ? 'Specific Products Only' : 'Khusus Produk Tertentu'}
                                                         </Badge>
                                                     ) : (
-                                                        <span className="text-[10px] text-muted-foreground">Semua Produk</span>
+                                                        <span className="text-[10px] text-muted-foreground">
+                                                            {isEn ? 'All Products' : 'Semua Produk'}
+                                                        </span>
                                                     )
                                                 )}
                                             </div>
 
                                             <div className="font-semibold text-xs sm:text-sm text-foreground pt-0.5">
-                                                {v.formatted_discount || (
-                                                    isOngkirCard
-                                                        ? (v.type === 'percentage'
-                                                            ? (v.value >= 100 ? 'Gratis Ongkir 100%' : `Diskon Ongkir ${v.value}%`)
-                                                            : `Potongan Ongkir Rp ${new Intl.NumberFormat('id-ID').format(v.value)}`)
-                                                        : (v.type === 'percentage'
-                                                            ? `Diskon ${v.value}%`
-                                                            : `Potongan Rp ${new Intl.NumberFormat('id-ID').format(v.value)}`)
-                                                )}
+                                                {discountLabel}
                                                 {v.name && <span className="font-normal text-muted-foreground text-xs ml-1.5">({v.name})</span>}
                                             </div>
 
                                             {v.applicable_type === 'specific' && v.applicable_product_names && v.applicable_product_names.length > 0 && (
                                                 <div className="text-[11px] text-muted-foreground">
-                                                    Khusus: <span className="font-medium text-foreground">{v.applicable_product_names.join(', ')}</span>
+                                                    {isEn ? 'Only: ' : 'Khusus: '}<span className="font-medium text-foreground">{v.applicable_product_names.join(', ')}</span>
                                                 </div>
                                             )}
 
                                             <div className="flex items-center gap-2 text-[11px] text-muted-foreground pt-0.5 flex-wrap">
-                                                {v.min_order_amount > 0 ? (
-                                                    <span>Min. belanja {v.min_order_amount_formatted || `Rp ${new Intl.NumberFormat('id-ID').format(v.min_order_amount)}`}</span>
-                                                ) : (
-                                                    <span>Tanpa min. belanja</span>
-                                                )}
-                                                {v.expires_at && (
-                                                    <span>&bull; s/d {new Date(v.expires_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                                                <span>{minSpendLabel}</span>
+                                                {expiryDisplay && (
+                                                    <span>&bull; {expiryDisplay}</span>
                                                 )}
                                             </div>
 
@@ -291,7 +328,7 @@ export default function VoucherSelectorModal({
                                                     : 'bg-[#4A070B] hover:bg-[#360407] text-white'
                                             }`}
                                         >
-                                            {isApplied ? 'Digunakan' : 'Gunakan'}
+                                            {isApplied ? (isEn ? 'Applied' : 'Digunakan') : (isEn ? 'Use' : 'Gunakan')}
                                         </Button>
                                     </div>
                                 </div>

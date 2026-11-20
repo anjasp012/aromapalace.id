@@ -26,6 +26,7 @@ import {
     ChevronRight,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
+import { formatVoucherBadge } from '@/components/VoucherCard';
 
 interface MembershipData {
     id: number;
@@ -357,7 +358,7 @@ export default function MembershipPage({
                                         <div className="space-y-1.5">
                                             <div className="flex items-center justify-between gap-2">
                                                 <Badge className="bg-[#4A070B] text-white text-[11px] font-bold px-2 py-0.5">
-                                                    {reward.formatted_discount}
+                                                    {formatVoucherBadge(reward.formatted_discount, isEn, (reward as any).formatted_discount_en)}
                                                 </Badge>
                                                 <div className="flex items-center gap-1 text-xs font-bold text-amber-600 dark:text-amber-400">
                                                     <Coins className="w-3.5 h-3.5" />
@@ -367,7 +368,9 @@ export default function MembershipPage({
 
                                             <h4 className="text-xs sm:text-sm font-bold text-foreground pt-0.5">{pickText(reward.name, reward.name_en)}</h4>
                                             <p className="text-xs text-muted-foreground leading-relaxed">{pickText(reward.description, reward.description_en)}</p>
-                                            <p className="text-[11px] text-muted-foreground font-medium">{reward.min_order_formatted}</p>
+                                            <p className="text-[11px] text-muted-foreground font-medium">
+                                                {isEn ? ((reward as any).min_order_formatted_en || reward.min_order_formatted?.replace(/Min\. Belanja/i, 'Min. Spend').replace(/Tanpa Min\. Belanja/i, 'No Min. Spend')) : reward.min_order_formatted}
+                                            </p>
                                         </div>
 
                                         <div className="pt-2.5 border-t border-border/60">
@@ -514,7 +517,7 @@ export default function MembershipPage({
                     <DialogContent className="w-[calc(100vw-32px)] max-w-md p-5 rounded-2xl">
                         <DialogHeader className="text-left space-y-2">
                             <Badge className="w-fit bg-[#4A070B] text-white text-xs">
-                                {selectedReward.formatted_discount}
+                                {formatVoucherBadge(selectedReward.formatted_discount, isEn, (selectedReward as any).formatted_discount_en)}
                             </Badge>
                             <DialogTitle className="text-base font-bold">
                                 {isEn ? 'Confirm Points Redemption' : 'Konfirmasi Penukaran Poin'}

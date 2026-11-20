@@ -142,31 +142,51 @@ class HomeController extends Controller
             })
             ->get()
             ->map(function (Voucher $v) {
-                $badge = $v->getFormattedDiscount();
+                $badge = $v->getFormattedDiscount('id');
+                $badgeEn = $v->getFormattedDiscount('en');
                 $expiry = $v->expires_at
                     ? $v->expires_at->format('d M Y')
                     : 'Berlaku Selamanya';
+                $expiryEn = $v->expires_at
+                    ? $v->expires_at->format('d M Y')
+                    : 'Valid Forever';
                 $minSpend = $v->min_order_amount > 0
                     ? 'Rp '.number_format($v->min_order_amount, 0, ',', '.')
                     : 'Tanpa Min. Belanja';
+                $minSpendEn = $v->min_order_amount > 0
+                    ? 'Rp '.number_format($v->min_order_amount, 0, ',', '.')
+                    : 'No Min. Spend';
                 $maxDiscount = $v->max_discount_amount
                     ? 'Maks. Rp '.number_format($v->max_discount_amount, 0, ',', '.')
+                    : null;
+                $maxDiscountEn = $v->max_discount_amount
+                    ? 'Max. Rp '.number_format($v->max_discount_amount, 0, ',', '.')
                     : null;
 
                 return [
                     'code' => $v->code,
                     'badge' => $badge,
+                    'badge_en' => $badgeEn,
+                    'expires_at' => $v->expires_at?->toIso8601String(),
                     'expiry' => $expiry,
+                    'expiry_en' => $expiryEn,
                     'title' => $v->name,
                     'title_en' => $v->name_en,
                     'desc' => $v->description ?? "Gunakan kode promo {$v->code} untuk mendapatkan diskon istimewa.",
-                    'desc_en' => $v->description_en,
+                    'desc_en' => $v->description_en ?? "Use promo code {$v->code} to get a special discount.",
                     'minSpend' => $minSpend,
+                    'minSpend_en' => $minSpendEn,
                     'maxDiscount' => $maxDiscount,
+                    'maxDiscount_en' => $maxDiscountEn,
                     'terms' => $v->terms ?? [
                         "Gunakan kode promo {$v->code} saat checkout.",
                         $v->min_order_amount > 0 ? "Minimal belanja {$minSpend}." : 'Tanpa minimal belanja.',
                         'Berlaku selama periode promosi aktif.',
+                    ],
+                    'terms_en' => $v->terms_en ?? [
+                        "Use promo code {$v->code} at checkout.",
+                        $v->min_order_amount > 0 ? "Minimum spend {$minSpend}." : 'No minimum spend.',
+                        'Valid during the active promotional period.',
                     ],
                 ];
             })

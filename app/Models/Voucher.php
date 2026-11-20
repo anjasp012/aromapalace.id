@@ -291,39 +291,60 @@ class Voucher extends Model
     /**
      * Get human-readable formatted discount label.
      */
-    public function getFormattedDiscount(): string
+    public function getFormattedDiscount(?string $locale = null): string
     {
+        $locale = $locale ?? app()->getLocale();
+        $isEn = $locale === 'en';
+
         if ($this->isShippingVoucher()) {
             if ($this->type === 'percentage') {
                 if ($this->value >= 100) {
                     if ($this->max_discount_amount && $this->max_discount_amount > 0) {
-                        return 'Gratis Ongkir s/d Rp '.number_format($this->max_discount_amount, 0, ',', '.');
+                        return $isEn
+                            ? 'Free Shipping up to Rp '.number_format($this->max_discount_amount, 0, ',', '.')
+                            : 'Gratis Ongkir s/d Rp '.number_format($this->max_discount_amount, 0, ',', '.');
                     }
 
-                    return 'Gratis Ongkir 100%';
+                    return $isEn ? '100% Free Shipping' : 'Gratis Ongkir 100%';
                 }
                 if ($this->max_discount_amount && $this->max_discount_amount > 0) {
-                    return "Diskon Ongkir {$this->value}% (Maks. Rp ".number_format($this->max_discount_amount, 0, ',', '.').')';
+                    return $isEn
+                        ? "{$this->value}% Shipping Discount (Max. Rp ".number_format($this->max_discount_amount, 0, ',', '.').')'
+                        : "Diskon Ongkir {$this->value}% (Maks. Rp ".number_format($this->max_discount_amount, 0, ',', '.').')';
                 }
 
-                return "Diskon Ongkir {$this->value}%";
+                return $isEn ? "{$this->value}% Shipping Discount" : "Diskon Ongkir {$this->value}%";
             }
 
-            return 'Potongan Ongkir Rp '.number_format($this->value, 0, ',', '.');
+            return $isEn
+                ? 'Rp '.number_format($this->value, 0, ',', '.').' Shipping Discount'
+                : 'Potongan Ongkir Rp '.number_format($this->value, 0, ',', '.');
         }
 
         if (str_contains(strtolower($this->name), 'bebas ongkir') || str_contains(strtolower($this->name), 'free shipping')) {
-            return 'Bebas Ongkir';
+            return $isEn ? 'Free Shipping' : 'Bebas Ongkir';
         }
 
         if ($this->type === 'percentage') {
             if ($this->max_discount_amount && $this->max_discount_amount > 0) {
-                return "Diskon {$this->value}% (Maks. Rp ".number_format($this->max_discount_amount, 0, ',', '.').')';
+                return $isEn
+                    ? "{$this->value}% Discount (Max. Rp ".number_format($this->max_discount_amount, 0, ',', '.').')'
+                    : "Diskon {$this->value}% (Maks. Rp ".number_format($this->max_discount_amount, 0, ',', '.').')';
             }
 
-            return "Diskon {$this->value}%";
+            return $isEn ? "{$this->value}% Discount" : "Diskon {$this->value}%";
         }
 
-        return 'Potongan Rp '.number_format($this->value, 0, ',', '.');
+        return $isEn
+            ? 'Rp '.number_format($this->value, 0, ',', '.').' Off'
+            : 'Potongan Rp '.number_format($this->value, 0, ',', '.');
+    }
+
+    /**
+     * Get English formatted discount label.
+     */
+    public function getFormattedDiscountEn(): string
+    {
+        return $this->getFormattedDiscount('en');
     }
 }

@@ -12,6 +12,7 @@ import type { UserAddress } from '@/types/address';
 import AddressModal from '@/components/AddressModal';
 import AddressSelectorModal from '@/components/AddressSelectorModal';
 import VoucherSelectorModal, { AvailableVoucher } from '@/components/VoucherSelectorModal';
+import { formatVoucherBadge } from '@/components/VoucherCard';
 import { formatVolume } from '@/lib/utils';
 
 interface CheckoutItem {
@@ -709,10 +710,11 @@ export default function CheckoutPage({
     const appliedVoucherLabel = useMemo(() => {
         if (!appliedVoucher) return '';
         if (appliedVoucherObj) {
-            return `${appliedVoucher} • ${appliedVoucherObj.formatted_discount}`;
+            const discountText = formatVoucherBadge(appliedVoucherObj.formatted_discount || '', isEn, (appliedVoucherObj as any).formatted_discount_en);
+            return `${appliedVoucher} • ${discountText}`;
         }
         return appliedVoucher;
-    }, [appliedVoucher, appliedVoucherObj]);
+    }, [appliedVoucher, appliedVoucherObj, isEn]);
 
     // Automatically sync applied voucher from props or localStorage when mounted / updated
     useEffect(() => {

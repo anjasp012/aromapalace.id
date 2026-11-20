@@ -122,8 +122,10 @@ class MembershipController extends Controller
                     'points_required' => $pointsReq,
                     'reward_type' => $v->type,
                     'reward_value' => $v->value,
-                    'formatted_discount' => $v->getFormattedDiscount(),
+                    'formatted_discount' => $v->getFormattedDiscount('id'),
+                    'formatted_discount_en' => $v->getFormattedDiscount('en'),
                     'min_order_formatted' => $v->min_order_amount > 0 ? 'Min. Belanja Rp '.number_format($v->min_order_amount, 0, ',', '.') : 'Tanpa Min. Belanja',
+                    'min_order_formatted_en' => $v->min_order_amount > 0 ? 'Min. Spend Rp '.number_format($v->min_order_amount, 0, ',', '.') : 'No Min. Spend',
                     'can_redeem' => $canRedeem,
                     'shortage' => max(0, $pointsReq - $userPoints),
                 ];

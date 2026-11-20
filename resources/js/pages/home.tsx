@@ -17,7 +17,7 @@ import {
 import ProductCard, { type ProductItem } from '@/components/ProductCard';
 import ProductQuickViewModal from '@/components/ProductQuickViewModal';
 import CategoryCard, { type CategoryItem } from '@/components/CategoryCard';
-import VoucherCard, { type VoucherItem } from '@/components/VoucherCard';
+import VoucherCard, { type VoucherItem, formatVoucherBadge } from '@/components/VoucherCard';
 import ArticleCard, { type ArticleItem } from '@/components/ArticleCard';
 import BrandCard, { type BrandItem } from '@/components/BrandCard';
 import { useTranslation } from '@/lib/i18n';
@@ -857,7 +857,9 @@ export default function Home({
                 {selectedVoucher && (
                     <DialogContent className="w-[calc(100vw-32px)] max-w-[calc(100vw-32px)] sm:w-full sm:max-w-md p-5 sm:p-6 rounded-2xl">
                         <DialogHeader className="text-left space-y-2">
-                            <Badge variant="secondary" className="w-fit">{selectedVoucher.badge}</Badge>
+                            <Badge variant="secondary" className="w-fit">
+                                {formatVoucherBadge(selectedVoucher.badge, isEn, selectedVoucher.badge_en)}
+                            </Badge>
                             <DialogTitle className="text-lg font-bold">
                                 {pickText(selectedVoucher.title, (selectedVoucher as any).title_en)}
                             </DialogTitle>
@@ -869,7 +871,25 @@ export default function Home({
                         <div className="my-3 p-3.5 rounded-lg bg-muted border border-border text-xs space-y-2">
                             <p className="font-semibold text-foreground">{isEn ? 'Terms & Conditions:' : 'Syarat & Ketentuan:'}</p>
                             <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                                {selectedVoucher.terms.map((t, i) => (
+                                {((isEn && (selectedVoucher as any).terms_en?.length)
+                                    ? (selectedVoucher as any).terms_en
+                                    : selectedVoucher.terms.map((t: string) => {
+                                        if (!isEn) return t;
+                                        if (/Gunakan kode promo/i.test(t)) {
+                                            return t.replace(/Gunakan kode promo\s+([^\s]+)\s+saat checkout\./i, 'Use promo code $1 at checkout.');
+                                        }
+                                        if (/Minimal belanja/i.test(t)) {
+                                            return t.replace(/Minimal belanja\s+([^.]+)\./i, 'Minimum spend $1.');
+                                        }
+                                        if (/Tanpa minimal belanja/i.test(t)) {
+                                            return 'No minimum spend.';
+                                        }
+                                        if (/Berlaku selama periode promosi aktif/i.test(t)) {
+                                            return 'Valid during the active promotional period.';
+                                        }
+                                        return t;
+                                    })
+                                ).map((t: string, i: number) => (
                                     <li key={i}>{t}</li>
                                 ))}
                             </ul>
