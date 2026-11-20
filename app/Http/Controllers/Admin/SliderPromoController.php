@@ -51,6 +51,18 @@ class SliderPromoController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $file = $request->file('thumbnail');
+        if ($file instanceof UploadedFile && ! $file->isValid() && $file->getError() !== UPLOAD_ERR_NO_FILE) {
+            $maxUpload = ini_get('upload_max_filesize') ?: '2M';
+            $errorMsg = match ($file->getError()) {
+                UPLOAD_ERR_INI_SIZE => "Ukuran berkas melebihi batas maksimal server PHP ({$maxUpload}). Silakan perbesar upload_max_filesize di php.ini Laragon atau pilih berkas di bawah {$maxUpload}.",
+                UPLOAD_ERR_FORM_SIZE => 'Ukuran berkas melebihi batas form.',
+                UPLOAD_ERR_PARTIAL => 'Berkas hanya terunggah sebagian. Silakan coba unggah kembali.',
+                default => 'Gagal mengunggah berkas: ' . $file->getErrorMessage(),
+            };
+            return back()->withErrors(['thumbnail' => $errorMsg])->withInput();
+        }
+
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'title_en' => ['nullable', 'string', 'max:255'],
@@ -104,6 +116,18 @@ class SliderPromoController extends Controller
 
     public function update(Request $request, SliderPromo $sliderPromo): RedirectResponse
     {
+        $file = $request->file('thumbnail');
+        if ($file instanceof UploadedFile && ! $file->isValid() && $file->getError() !== UPLOAD_ERR_NO_FILE) {
+            $maxUpload = ini_get('upload_max_filesize') ?: '2M';
+            $errorMsg = match ($file->getError()) {
+                UPLOAD_ERR_INI_SIZE => "Ukuran berkas melebihi batas maksimal server PHP ({$maxUpload}). Silakan perbesar upload_max_filesize di php.ini Laragon atau pilih berkas di bawah {$maxUpload}.",
+                UPLOAD_ERR_FORM_SIZE => 'Ukuran berkas melebihi batas form.',
+                UPLOAD_ERR_PARTIAL => 'Berkas hanya terunggah sebagian. Silakan coba unggah kembali.',
+                default => 'Gagal mengunggah berkas: ' . $file->getErrorMessage(),
+            };
+            return back()->withErrors(['thumbnail' => $errorMsg])->withInput();
+        }
+
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'title_en' => ['nullable', 'string', 'max:255'],

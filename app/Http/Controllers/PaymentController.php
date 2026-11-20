@@ -219,6 +219,18 @@ class PaymentController extends Controller
         $user = $request->user();
         $orderModel = $user->orders()->where('order_number', $order)->firstOrFail();
 
+        $file = $request->file('payment_proof');
+        if ($file instanceof UploadedFile && ! $file->isValid() && $file->getError() !== UPLOAD_ERR_NO_FILE) {
+            $maxUpload = ini_get('upload_max_filesize') ?: '2M';
+            $errorMsg = match ($file->getError()) {
+                UPLOAD_ERR_INI_SIZE => "Ukuran berkas melebihi batas maksimal server PHP ({$maxUpload}). Silakan kompres berkas bukti pembayaran di bawah {$maxUpload}.",
+                UPLOAD_ERR_FORM_SIZE => 'Ukuran berkas melebihi batas form.',
+                UPLOAD_ERR_PARTIAL => 'Berkas hanya terunggah sebagian. Silakan coba unggah kembali.',
+                default => 'Gagal mengunggah berkas: ' . $file->getErrorMessage(),
+            };
+            return back()->withErrors(['payment_proof' => $errorMsg])->withInput();
+        }
+
         $validated = $request->validate([
             'payment_proof' => [$orderModel->payment_proof ? 'nullable' : 'required', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
             'payment_sender_name' => ['required', 'string', 'max:255'],

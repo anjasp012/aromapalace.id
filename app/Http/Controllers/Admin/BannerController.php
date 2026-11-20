@@ -65,6 +65,18 @@ class BannerController extends Controller
                 ->with('error', 'Hanya diperbolehkan memiliki maksimal 1 banner promosi. Silakan edit banner yang sudah ada.');
         }
 
+        $file = $request->file('image');
+        if ($file instanceof UploadedFile && ! $file->isValid() && $file->getError() !== UPLOAD_ERR_NO_FILE) {
+            $maxUpload = ini_get('upload_max_filesize') ?: '2M';
+            $errorMsg = match ($file->getError()) {
+                UPLOAD_ERR_INI_SIZE => "Ukuran berkas melebihi batas maksimal server PHP ({$maxUpload}). Silakan perbesar upload_max_filesize di php.ini Laragon atau pilih berkas di bawah {$maxUpload}.",
+                UPLOAD_ERR_FORM_SIZE => 'Ukuran berkas melebihi batas form.',
+                UPLOAD_ERR_PARTIAL => 'Berkas hanya terunggah sebagian. Silakan coba unggah kembali.',
+                default => 'Gagal mengunggah berkas: ' . $file->getErrorMessage(),
+            };
+            return back()->withErrors(['image' => $errorMsg])->withInput();
+        }
+
         $validated = $request->validate([
             'subtitle' => ['nullable', 'string', 'max:255'],
             'subtitle_en' => ['nullable', 'string', 'max:255'],
@@ -128,6 +140,18 @@ class BannerController extends Controller
 
     public function update(Request $request, Banner $banner): RedirectResponse
     {
+        $file = $request->file('image');
+        if ($file instanceof UploadedFile && ! $file->isValid() && $file->getError() !== UPLOAD_ERR_NO_FILE) {
+            $maxUpload = ini_get('upload_max_filesize') ?: '2M';
+            $errorMsg = match ($file->getError()) {
+                UPLOAD_ERR_INI_SIZE => "Ukuran berkas melebihi batas maksimal server PHP ({$maxUpload}). Silakan perbesar upload_max_filesize di php.ini Laragon atau pilih berkas di bawah {$maxUpload}.",
+                UPLOAD_ERR_FORM_SIZE => 'Ukuran berkas melebihi batas form.',
+                UPLOAD_ERR_PARTIAL => 'Berkas hanya terunggah sebagian. Silakan coba unggah kembali.',
+                default => 'Gagal mengunggah berkas: ' . $file->getErrorMessage(),
+            };
+            return back()->withErrors(['image' => $errorMsg])->withInput();
+        }
+
         $validated = $request->validate([
             'subtitle' => ['nullable', 'string', 'max:255'],
             'subtitle_en' => ['nullable', 'string', 'max:255'],

@@ -24,6 +24,23 @@
     RewriteRule ^ index.php [L]
 </IfModule>
 
+# Increase upload and post limits for Apache mod_php
+<IfModule mod_php.c>
+    php_value upload_max_filesize 64M
+    php_value post_max_size 64M
+    php_value memory_limit 512M
+</IfModule>
+<IfModule mod_php7.c>
+    php_value upload_max_filesize 64M
+    php_value post_max_size 64M
+    php_value memory_limit 512M
+</IfModule>
+<IfModule mod_php8.c>
+    php_value upload_max_filesize 64M
+    php_value post_max_size 64M
+    php_value memory_limit 512M
+</IfModule>
+
 # Long-lived browser/WebView cache for fingerprinted build assets and images.
 <IfModule mod_headers.c>
     <FilesMatch "\.(js|css|woff2?|ttf|svg|png|jpe?g|webp|avif|gif|ico)$">
