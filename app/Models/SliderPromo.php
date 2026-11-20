@@ -17,10 +17,11 @@ use Illuminate\Support\Carbon;
  * @property string|null $description_en
  * @property string|null $link
  * @property string $thumbnail
+ * @property int $sort_order
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['title', 'title_en', 'description', 'description_en', 'link', 'thumbnail'])]
+#[Fillable(['title', 'title_en', 'description', 'description_en', 'link', 'thumbnail', 'sort_order'])]
 class SliderPromo extends Model
 {
     /** @use HasFactory<SliderPromoFactory> */
