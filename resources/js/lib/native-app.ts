@@ -61,11 +61,20 @@ export function updateStatusBarForScroll(isScrolledPastTopbar: boolean): void {
     if (typeof window === 'undefined') return;
 
     const isDark = document.documentElement.classList.contains('dark');
-    const themeColorMeta = document.querySelector('meta[name="theme-color"]');
     const targetColor = isScrolledPastTopbar ? (isDark ? '#09090b' : '#FFFFFF') : '#4A070B';
 
-    if (themeColorMeta) {
-        themeColorMeta.setAttribute('content', targetColor);
+    // Update <meta name="theme-color"> for Safari & Chrome
+    let themeColorMeta = document.querySelector('meta[name="theme-color"]');
+    if (!themeColorMeta) {
+        themeColorMeta = document.createElement('meta');
+        themeColorMeta.setAttribute('name', 'theme-color');
+        document.head.appendChild(themeColorMeta);
+    }
+    themeColorMeta.setAttribute('content', targetColor);
+    const parent = themeColorMeta.parentNode;
+    if (parent) {
+        const clone = themeColorMeta.cloneNode(true);
+        parent.replaceChild(clone, themeColorMeta);
     }
 
     if (Capacitor.isNativePlatform()) {
@@ -77,6 +86,46 @@ export function updateStatusBarForScroll(isScrolledPastTopbar: boolean): void {
             StatusBar.setBackgroundColor({ color: targetColor }).catch(() => { });
         }
     }
+}
+
+/**
+ * Apply seamless full-bleed Maroon #4A070B status bar for auth pages (login, register, forgot-password).
+ * Ensures status bar, notch, and HTML/body seamlessly match the auth background.
+ */
+export function applyAuthPageStatusBar(): () => void {
+    if (typeof window === 'undefined') return () => { };
+
+    const prevHtmlBg = document.documentElement.style.backgroundColor;
+    const prevBodyBg = document.body.style.backgroundColor;
+
+    document.documentElement.style.backgroundColor = '#4A070B';
+    document.body.style.backgroundColor = '#4A070B';
+
+    let themeColorMeta = document.querySelector('meta[name="theme-color"]');
+    if (!themeColorMeta) {
+        themeColorMeta = document.createElement('meta');
+        themeColorMeta.setAttribute('name', 'theme-color');
+        document.head.appendChild(themeColorMeta);
+    }
+    themeColorMeta.setAttribute('content', '#4A070B');
+    const parent = themeColorMeta.parentNode;
+    if (parent) {
+        const clone = themeColorMeta.cloneNode(true);
+        parent.replaceChild(clone, themeColorMeta);
+    }
+
+    if (Capacitor.isNativePlatform()) {
+        StatusBar.setStyle({ style: Style.Dark }).catch(() => { });
+        StatusBar.setOverlaysWebView({ overlay: true }).catch(() => { });
+        if (Capacitor.getPlatform() === 'android') {
+            StatusBar.setBackgroundColor({ color: '#4A070B' }).catch(() => { });
+        }
+    }
+
+    return () => {
+        document.documentElement.style.backgroundColor = prevHtmlBg;
+        document.body.style.backgroundColor = prevBodyBg;
+    };
 }
 
 /**
