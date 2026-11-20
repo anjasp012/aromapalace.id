@@ -63,6 +63,10 @@ export function updateStatusBarForScroll(isScrolledPastTopbar: boolean): void {
     const isDark = document.documentElement.classList.contains('dark');
     const targetColor = isScrolledPastTopbar ? (isDark ? '#09090b' : '#FFFFFF') : '#4A070B';
 
+    // Synchronize documentElement & body background so iOS/Android renders status bar & rubberband seamlessly without borders
+    document.documentElement.style.backgroundColor = targetColor;
+    document.body.style.backgroundColor = targetColor;
+
     // Update <meta name="theme-color"> for Safari & Chrome
     let themeColorMeta = document.querySelector('meta[name="theme-color"]');
     if (!themeColorMeta) {

@@ -193,11 +193,14 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
     const [isVoucherFading, setIsVoucherFading] = useState(false);
     const [selectedHeaderVoucher, setSelectedHeaderVoucher] = useState<HeaderVoucher | null>(headerVouchers[0] || null);
     const [isScrolledPastTopbar, setIsScrolledPastTopbar] = useState(false);
+    const topbarRef = useRef<HTMLDivElement>(null);
     const lastScrolledRef = useRef<boolean | null>(null);
 
     useEffect(() => {
         const handleScroll = () => {
-            const scrolled = window.scrollY > 32;
+            const topbarHeight = topbarRef.current?.offsetHeight || 36;
+            const scrollY = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+            const scrolled = scrollY >= Math.max(10, topbarHeight - 6);
             setIsScrolledPastTopbar(scrolled);
             if (lastScrolledRef.current !== scrolled) {
                 lastScrolledRef.current = scrolled;
@@ -810,8 +813,17 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
 
     return (
         <div className="bg-background text-foreground flex flex-col min-h-screen" suppressHydrationWarning>
+            {/* iOS Safe Area Status Bar Filler (Seamless full-bleed color without borders) */}
+            <div
+                className={cn(
+                    "fixed top-0 left-0 right-0 h-[env(safe-area-inset-top,0px)] z-50 pointer-events-none transition-colors duration-200 border-none outline-none",
+                    isScrolledPastTopbar ? "bg-white dark:bg-neutral-900" : "bg-[#4A070B]"
+                )}
+                aria-hidden="true"
+            />
+
             {/* Top Announcement Bar (Scrolls normally with page, NOT sticky on mobile) */}
-            <div className="bg-[#4A070B] text-white text-xs pt-[env(safe-area-inset-top,0px)]" suppressHydrationWarning>
+            <div ref={topbarRef} className="bg-[#4A070B] text-white text-xs pt-[env(safe-area-inset-top,0px)] border-none outline-none ring-0" suppressHydrationWarning>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between py-1.5 sm:py-2 gap-2">
                     {activeHeaderVoucher ? (
                         <button
@@ -936,8 +948,10 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
             <header
                 ref={headerRef}
                 className={cn(
-                    "sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-[#4A070B]/20 shadow-xs transition-[padding,background-color] duration-150",
-                    isScrolledPastTopbar ? "pt-[env(safe-area-inset-top,0px)]" : ""
+                    "sticky top-0 z-40 border-b border-[#4A070B]/20 shadow-xs transition-[padding,background-color] duration-150",
+                    isScrolledPastTopbar
+                        ? "pt-[env(safe-area-inset-top,0px)] bg-white dark:bg-neutral-900"
+                        : "bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md"
                 )}
             >
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

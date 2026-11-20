@@ -11,6 +11,7 @@ import {
     ExternalLink,
     CheckCircle2,
     AlertCircle,
+    AlertTriangle,
     ChevronRight,
     ChevronDown,
     Tags,
@@ -33,6 +34,7 @@ import {
     Award,
     Coins,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -80,12 +82,98 @@ interface SharedPageProps {
     [key: string]: unknown;
 }
 
+export interface AdminToast {
+    id: string;
+    type: 'success' | 'error' | 'warning' | 'info';
+    message: string;
+    title?: string;
+}
+
+declare global {
+    interface Window {
+        showAdminToast?: (message: string, type?: 'success' | 'error' | 'warning' | 'info', title?: string) => void;
+        adminToast?: {
+            success: (msg: string, title?: string) => void;
+            error: (msg: string, title?: string) => void;
+            warning: (msg: string, title?: string) => void;
+            info: (msg: string, title?: string) => void;
+        };
+    }
+}
+
 export default function AdminLayout({ title, subtitle, children }: AdminLayoutProps) {
     const { url, props } = usePage<SharedPageProps>();
     const user = props.auth?.user;
     const flash = props.flash;
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [dismissFlash, setDismissFlash] = useState(false);
+
+    // Toast States & Handlers
+    const [toasts, setToasts] = useState<AdminToast[]>([]);
+    const toastTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+    const lastFlashSuccessRef = useRef<string | null>(null);
+    const lastFlashErrorRef = useRef<string | null>(null);
+
+    const removeToast = (id: string) => {
+        const timeout = toastTimeoutsRef.current.get(id);
+        if (timeout) {
+            clearTimeout(timeout);
+            toastTimeoutsRef.current.delete(id);
+        }
+        setToasts((prev) => prev.filter((t) => t.id !== id));
+    };
+
+    const addToast = (message: string, type: 'success' | 'error' | 'warning' | 'info' = 'success', title?: string) => {
+        if (!message) return;
+        const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+        setToasts((prev) => [...prev, { id, type, message, title }]);
+
+        const duration = type === 'error' ? 5500 : 4000;
+        const timeout = setTimeout(() => {
+            removeToast(id);
+        }, duration);
+        toastTimeoutsRef.current.set(id, timeout);
+    };
+
+    // Watch for backend flash messages (e.g. "Slider promo '...' berhasil diperbarui.") and pop them as floating toasts
+    useEffect(() => {
+        if (flash?.success && flash.success !== lastFlashSuccessRef.current) {
+            lastFlashSuccessRef.current = flash.success;
+            addToast(flash.success, 'success', 'Berhasil');
+        }
+        if (flash?.error && flash.error !== lastFlashErrorRef.current) {
+            lastFlashErrorRef.current = flash.error;
+            addToast(flash.error, 'error', 'Perhatian');
+        }
+    }, [flash?.success, flash?.error]);
+
+    // Global toast helper & intercept window.alert in Admin CMS
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+
+        window.showAdminToast = (message: string, type?: 'success' | 'error' | 'warning' | 'info', title?: string) => {
+            addToast(message, type || 'success', title);
+        };
+        window.adminToast = {
+            success: (msg: string, title?: string) => addToast(msg, 'success', title || 'Berhasil'),
+            error: (msg: string, title?: string) => addToast(msg, 'error', title || 'Gagal'),
+            warning: (msg: string, title?: string) => addToast(msg, 'warning', title || 'Peringatan'),
+            info: (msg: string, title?: string) => addToast(msg, 'info', title || 'Informasi'),
+        };
+
+        const originalAlert = window.alert;
+        window.alert = (message?: any) => {
+            const text = typeof message === 'string' ? message : String(message ?? '');
+            addToast(text, 'warning', 'Peringatan');
+        };
+
+        return () => {
+            window.alert = originalAlert;
+            delete window.showAdminToast;
+            delete window.adminToast;
+            toastTimeoutsRef.current.forEach((t) => clearTimeout(t));
+            toastTimeoutsRef.current.clear();
+        };
+    }, []);
 
     const notifications = props.admin_notifications ?? [];
     const unreadCount = props.admin_unread_notifications_count ?? 0;
@@ -722,47 +810,6 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                     </div>
                 </header>
 
-                {/* Flash Messages */}
-                {flash?.success && !dismissFlash && (
-                    <div className="px-4 lg:px-6 pt-4">
-                        <div className="p-3.5 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200 flex items-center justify-between gap-3 text-sm">
-                            <div className="flex items-center gap-2">
-                                <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
-                                <span>{flash.success}</span>
-                            </div>
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => setDismissFlash(true)}
-                                className="size-6 text-emerald-700 hover:bg-emerald-100"
-                            >
-                                <X className="size-3.5" />
-                            </Button>
-                        </div>
-                    </div>
-                )}
-
-                {flash?.error && !dismissFlash && (
-                    <div className="px-4 lg:px-6 pt-4">
-                        <div className="p-3.5 rounded-lg border border-destructive/30 bg-destructive/10 text-destructive flex items-center justify-between gap-3 text-sm">
-                            <div className="flex items-center gap-2">
-                                <AlertCircle className="size-4 shrink-0" />
-                                <span>{flash.error}</span>
-                            </div>
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => setDismissFlash(true)}
-                                className="size-6"
-                            >
-                                <X className="size-3.5" />
-                            </Button>
-                        </div>
-                    </div>
-                )}
-
                 {/* Subtitle if provided */}
                 {subtitle && (
                     <div className="px-4 lg:px-6 pt-4">
@@ -777,6 +824,77 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
                 <footer className="hidden md:block border-t py-4 px-4 lg:px-6 text-center text-xs text-muted-foreground">
                     &copy; {new Date().getFullYear()} Aroma Palace &bull; Admin CMS
                 </footer>
+            </div>
+
+            {/* Floating Toast Notifications */}
+            <div
+                className="fixed top-4 right-4 sm:top-6 sm:right-6 z-[100] flex flex-col gap-2.5 max-w-[calc(100vw-2rem)] sm:max-w-md w-full pointer-events-none"
+                aria-live="polite"
+                aria-atomic="true"
+            >
+                {toasts.map((toast) => {
+                    const isSuccess = toast.type === 'success';
+                    const isError = toast.type === 'error';
+                    const isWarning = toast.type === 'warning';
+                    const isInfo = toast.type === 'info';
+
+                    return (
+                        <div
+                            key={toast.id}
+                            role="status"
+                            className={cn(
+                                "pointer-events-auto rounded-xl border p-4 shadow-2xl backdrop-blur-md flex items-start justify-between gap-3 text-xs sm:text-sm animate-in fade-in slide-in-from-top-3 duration-200 transition-all",
+                                isSuccess && "bg-white/95 dark:bg-neutral-900/95 border-emerald-500/40 text-emerald-950 dark:text-emerald-100 shadow-emerald-500/10",
+                                isError && "bg-white/95 dark:bg-neutral-900/95 border-red-500/40 text-red-950 dark:text-red-100 shadow-red-500/10",
+                                isWarning && "bg-white/95 dark:bg-neutral-900/95 border-amber-500/40 text-amber-950 dark:text-amber-100 shadow-amber-500/10",
+                                isInfo && "bg-white/95 dark:bg-neutral-900/95 border-blue-500/40 text-blue-950 dark:text-blue-100 shadow-blue-500/10"
+                            )}
+                        >
+                            <div className="flex items-start gap-3 min-w-0 flex-1">
+                                <div className="shrink-0 mt-0.5">
+                                    {isSuccess && (
+                                        <div className="size-6 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                                            <CheckCircle2 className="size-3.5" />
+                                        </div>
+                                    )}
+                                    {isError && (
+                                        <div className="size-6 rounded-full bg-red-500/15 text-red-600 dark:text-red-400 flex items-center justify-center">
+                                            <AlertCircle className="size-3.5" />
+                                        </div>
+                                    )}
+                                    {isWarning && (
+                                        <div className="size-6 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                                            <AlertTriangle className="size-3.5" />
+                                        </div>
+                                    )}
+                                    {isInfo && (
+                                        <div className="size-6 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                                            <Sparkles className="size-3.5" />
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="min-w-0 flex-1 space-y-0.5">
+                                    {toast.title && (
+                                        <p className="font-semibold text-xs tracking-wide">
+                                            {toast.title}
+                                        </p>
+                                    )}
+                                    <p className="whitespace-pre-line leading-relaxed text-xs sm:text-[13px] font-medium break-words">
+                                        {toast.message}
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => removeToast(toast.id)}
+                                className="shrink-0 size-6 rounded-md flex items-center justify-center opacity-60 hover:opacity-100 transition-opacity hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer"
+                                aria-label="Tutup notifikasi"
+                            >
+                                <X className="size-3.5" />
+                            </button>
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );

@@ -1,5 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 
 import { clearUserClientCache } from '@/lib/cache-cleanup';
+import { applyAuthPageStatusBar } from '@/lib/native-app';
 
 interface LoginProps {
     status?: string;
@@ -23,6 +24,8 @@ interface LoginProps {
 export default function Login({ status, notice }: LoginProps) {
     const { t, isEn, setLanguage } = useTranslation();
     const [showPassword, setShowPassword] = useState(false);
+
+    useEffect(() => applyAuthPageStatusBar(), []);
 
     const { data, setData, post, processing, errors } = useForm({
         email: '',
@@ -37,8 +40,11 @@ export default function Login({ status, notice }: LoginProps) {
     };
 
     return (
-        <div className="fixed inset-0 h-[100dvh] max-h-[100dvh] w-full bg-[#4A070B] text-slate-100 overflow-hidden flex flex-col justify-between selection:bg-[#E5A844] selection:text-[#4A070B] overscroll-none">
-            <Head title={`${t('auth.login_title')} • Aroma Palace`} />
+        <div className="fixed inset-0 h-[100dvh] max-h-[100dvh] w-full bg-[#4A070B] text-slate-100 overflow-hidden flex flex-col justify-between selection:bg-[#E5A844] selection:text-[#4A070B] overscroll-none border-none outline-none">
+            <Head>
+                <title>{`${t('auth.login_title')} • Aroma Palace`}</title>
+                <meta name="theme-color" content="#4A070B" />
+            </Head>
 
             {/* AMBIENT LUXURY DECORATIVE CIRCLES & BUBBLES */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
