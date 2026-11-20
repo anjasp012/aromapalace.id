@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\SliderPromo;
+use App\Support\CatalogCache;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -27,9 +28,10 @@ class SliderPromoController extends Controller
                         ->orWhere('link', 'like', "%{$search}%");
                 });
             })
-            ->latest('id');
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('id', 'asc');
 
-        $sliderPromos = $slidersQuery->paginate(15)->withQueryString();
+        $sliderPromos = $slidersQuery->paginate(50)->withQueryString();
 
         $metrics = [
             'total_sliders' => SliderPromo::count(),
@@ -208,5 +210,25 @@ class SliderPromoController extends Controller
 
         return redirect()->route('admin.slider-promos.index')
             ->with('success', "Slider promo '{$title}' berhasil dihapus.");
+    }
+
+    /**
+     * Reorder slider promos by updating sort_order for each item.
+     */
+    public function reorder(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'items' => ['required', 'array'],
+            'items.*.id' => ['required', 'integer', 'exists:slider_promos,id'],
+            'items.*.sort_order' => ['required', 'integer'],
+        ]);
+
+        foreach ($validated['items'] as $item) {
+            SliderPromo::where('id', $item['id'])->update(['sort_order' => $item['sort_order']]);
+        }
+
+        CatalogCache::flush();
+
+        return back()->with('success', 'Urutan slider promo berhasil disimpan.');
     }
 }

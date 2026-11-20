@@ -212,9 +212,10 @@ class HomeController extends Controller
             ->values()
             ->all();
 
-        // 8. Slider Promos from DB
+        // 8. Slider Promos from DB (ordered by custom sort_order)
         $sliderPromos = SliderPromo::query()
-            ->latest('id')
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('id', 'asc')
             ->get()
             ->map(fn (SliderPromo $slider) => [
                 'id' => $slider->id,

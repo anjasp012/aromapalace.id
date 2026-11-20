@@ -114,6 +114,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
     // Slider Promo Management
     Route::get('/manajemen-slider-promo', [SliderPromoController::class, 'index'])->name('slider-promos.index');
+    Route::post('/manajemen-slider-promo/reorder', [SliderPromoController::class, 'reorder'])->name('slider-promos.reorder');
     Route::get('/manajemen-slider-promo/create', [SliderPromoController::class, 'create'])->name('slider-promos.create');
     Route::post('/manajemen-slider-promo', [SliderPromoController::class, 'store'])->name('slider-promos.store');
     Route::get('/manajemen-slider-promo/{slider_promo}/edit', [SliderPromoController::class, 'edit'])->name('slider-promos.edit');
