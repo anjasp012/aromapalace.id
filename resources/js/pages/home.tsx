@@ -1,5 +1,5 @@
 import { Head, Link, usePage, router } from '@inertiajs/react';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import Layout from '@/components/Layout';
@@ -103,11 +103,20 @@ export default function Home({
         link: item.link || '/products',
     }));
 
+    // Ensure enough slide items so Embla Carousel loop never leaves empty gaps on the left on slide 0
+    const displayBanners = useMemo(() => {
+        if (banners.length === 0) return [];
+        if (banners.length === 1) return banners;
+        if (banners.length === 2) return [...banners, ...banners, ...banners];
+        if (banners.length < 5) return [...banners, ...banners];
+        return banners;
+    }, [banners]);
+
     const midBanner: BannerItem | null = propBanner || cachedHome?.banner || null;
 
     const [activeSlide, setActiveSlide] = useState(0);
     const [heroRef, heroApi] = useEmblaCarousel(
-        { loop: true, align: 'start', duration: 25 },
+        { loop: true, align: 'center', duration: 25 },
         [Autoplay({ delay: 5000, stopOnInteraction: false, stopOnMouseEnter: true })]
     );
 
@@ -278,12 +287,12 @@ export default function Home({
                     {banners.length > 0 && (
                         <section className="-mx-4 md:mx-0 relative group">
                             {/* Slide Content with Embla Carousel Swipe */}
-                            <div ref={heroRef} className="overflow-hidden cursor-grab active:cursor-grabbing select-none px-4 md:px-0 lg:-mx-4">
+                            <div ref={heroRef} className="overflow-hidden cursor-grab active:cursor-grabbing select-none px-2 sm:px-4 md:px-0 lg:-mx-4">
                                 <div className="flex">
-                                    {banners.map((banner) => (
+                                    {displayBanners.map((banner, index) => (
                                         <div
-                                            key={banner.id}
-                                            className="min-w-0 shrink-0 grow-0 basis-[90%] sm:basis-[75%] md:basis-[62%] lg:basis-full pl-3 sm:pl-4 lg:px-4"
+                                            key={`${banner.id}-${index}`}
+                                            className="min-w-0 shrink-0 grow-0 basis-[88%] sm:basis-[80%] md:basis-[70%] lg:basis-full px-2 sm:px-3 lg:px-4"
                                         >
                                             {/* Setiap Slide Adalah 1 Card Mandiri (1 Slider = 1 Card) */}
                                             <Card className="relative overflow-hidden border border-border/70 py-0 gap-0 shadow-none rounded-2xl transition-all duration-500 bg-card">
@@ -359,6 +368,20 @@ export default function Home({
                                                                         muted
                                                                         playsInline
                                                                         preload="auto"
+                                                                        onEnded={(e) => {
+                                                                            e.currentTarget.currentTime = 0;
+                                                                            e.currentTarget.play().catch(() => {});
+                                                                        }}
+                                                                        ref={(el) => {
+                                                                            if (el) {
+                                                                                el.defaultMuted = true;
+                                                                                el.muted = true;
+                                                                                el.loop = true;
+                                                                                if (el.paused) {
+                                                                                    el.play().catch(() => {});
+                                                                                }
+                                                                            }
+                                                                        }}
                                                                         className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
                                                                     />
                                                                 ) : (
@@ -401,22 +424,6 @@ export default function Home({
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                                 </svg>
                             </button>
-
-                            {/* Slide Indicators: Centered Floating Glass Capsule (Disamarkan / Subtle Glass) */}
-                            <div className="absolute bottom-2.5 sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 sm:gap-2 z-20 px-2 py-0.5 rounded-full bg-black/15 dark:bg-black/30 backdrop-blur-xs border border-white/10">
-                                {banners.map((b, i) => (
-                                    <button
-                                        key={b.id}
-                                        type="button"
-                                        onClick={() => heroApi?.scrollTo(i)}
-                                        aria-label={`Slide ${i + 1}`}
-                                        className={`h-1.5 sm:h-2 rounded-full transition-all duration-500 cursor-pointer ${activeSlide === i
-                                            ? 'w-6 sm:w-8 bg-white shadow-xs'
-                                            : 'w-1.5 sm:w-2 bg-white/50 hover:bg-white/80'
-                                            }`}
-                                    />
-                                ))}
-                            </div>
                         </section>
                     )}
 

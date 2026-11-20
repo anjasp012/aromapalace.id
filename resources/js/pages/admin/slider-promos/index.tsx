@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import AdminLayout from '@/layouts/AdminLayout';
 import {
@@ -12,6 +12,11 @@ import {
     Image as ImageIcon,
     Globe,
     Link as LinkIcon,
+    GripVertical,
+    ChevronUp,
+    ChevronDown,
+    Check,
+    Loader2,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,6 +40,7 @@ interface SliderPromoItem {
     description_en?: string | null;
     link?: string | null;
     thumbnail: string;
+    sort_order?: number;
     created_at?: string;
 }
 
@@ -69,6 +75,17 @@ export default function AdminSliderPromosIndex({
     const [deleteTarget, setDeleteTarget] = useState<SliderPromoItem | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
+    // Local items list for instant drag-and-drop reordering feedback
+    const [items, setItems] = useState<SliderPromoItem[]>(sliderPromos.data);
+    const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+    const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+    const [isSavingOrder, setIsSavingOrder] = useState(false);
+    const [orderSavedSuccess, setOrderSavedSuccess] = useState(false);
+
+    useEffect(() => {
+        setItems(sliderPromos.data);
+    }, [sliderPromos.data]);
+
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         router.get('/manajemen-slider-promo', { search: search || undefined }, { preserveState: true });
@@ -88,6 +105,84 @@ export default function AdminSliderPromosIndex({
                 setDeleteTarget(null);
             },
         });
+    };
+
+    // Save reordered list to database
+    const saveNewOrder = (newItems: SliderPromoItem[]) => {
+        setItems(newItems);
+        setIsSavingOrder(true);
+        setOrderSavedSuccess(false);
+
+        const payload = newItems.map((item, idx) => ({
+            id: item.id,
+            sort_order: idx + 1,
+        }));
+
+        router.post(
+            '/manajemen-slider-promo/reorder',
+            { items: payload },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => {
+                    setIsSavingOrder(false);
+                    setOrderSavedSuccess(true);
+                    setTimeout(() => setOrderSavedSuccess(false), 2500);
+                },
+                onError: () => {
+                    setIsSavingOrder(false);
+                },
+            }
+        );
+    };
+
+    // HTML5 Drag and Drop handlers
+    const handleDragStart = (e: React.DragEvent, index: number) => {
+        setDraggedIndex(index);
+        e.dataTransfer.effectAllowed = 'move';
+        if (e.dataTransfer.setDragImage && e.currentTarget instanceof HTMLElement) {
+            e.dataTransfer.setDragImage(e.currentTarget, 20, 20);
+        }
+    };
+
+    const handleDragOver = (e: React.DragEvent, index: number) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        if (dragOverIndex !== index) {
+            setDragOverIndex(index);
+        }
+    };
+
+    const handleDragEnd = () => {
+        setDraggedIndex(null);
+        setDragOverIndex(null);
+    };
+
+    const handleDrop = (e: React.DragEvent, targetIndex: number) => {
+        e.preventDefault();
+        if (draggedIndex === null || draggedIndex === targetIndex) {
+            handleDragEnd();
+            return;
+        }
+
+        const reordered = [...items];
+        const [movedItem] = reordered.splice(draggedIndex, 1);
+        reordered.splice(targetIndex, 0, movedItem);
+
+        handleDragEnd();
+        saveNewOrder(reordered);
+    };
+
+    // Quick move item up or down
+    const handleMove = (index: number, direction: 'up' | 'down') => {
+        const targetIndex = direction === 'up' ? index - 1 : index + 1;
+        if (targetIndex < 0 || targetIndex >= items.length) return;
+
+        const reordered = [...items];
+        const [movedItem] = reordered.splice(index, 1);
+        reordered.splice(targetIndex, 0, movedItem);
+
+        saveNewOrder(reordered);
     };
 
     return (

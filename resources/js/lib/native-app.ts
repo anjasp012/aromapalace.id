@@ -93,8 +93,8 @@ export function updateStatusBarForScroll(isScrolledPastTopbar: boolean): void {
 }
 
 /**
- * Apply seamless full-bleed Maroon #4A070B status bar for auth pages (login, register, forgot-password).
- * Ensures status bar, notch, and HTML/body seamlessly match the auth background.
+ * Apply 100% transparent status bar for auth pages (login, register, forgot-password).
+ * Overlays status bar over the ambient glow gradients seamlessly with white icons.
  */
 export function applyAuthPageStatusBar(): () => void {
     if (typeof window === 'undefined') return () => { };
@@ -102,7 +102,7 @@ export function applyAuthPageStatusBar(): () => void {
     const prevHtmlBg = document.documentElement.style.backgroundColor;
     const prevBodyBg = document.body.style.backgroundColor;
 
-    document.documentElement.style.backgroundColor = '#4A070B';
+    document.documentElement.style.backgroundColor = 'transparent';
     document.body.style.backgroundColor = '#4A070B';
 
     let themeColorMeta = document.querySelector('meta[name="theme-color"]');
@@ -122,7 +122,8 @@ export function applyAuthPageStatusBar(): () => void {
         StatusBar.setStyle({ style: Style.Dark }).catch(() => { });
         StatusBar.setOverlaysWebView({ overlay: true }).catch(() => { });
         if (Capacitor.getPlatform() === 'android') {
-            StatusBar.setBackgroundColor({ color: '#4A070B' }).catch(() => { });
+            // Full transparent status bar on Android so the page background and luxury gradients flow completely through
+            StatusBar.setBackgroundColor({ color: '#00000000' }).catch(() => { });
         }
     }
 
