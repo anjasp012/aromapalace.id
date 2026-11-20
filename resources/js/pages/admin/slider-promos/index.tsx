@@ -290,7 +290,7 @@ export default function AdminSliderPromosIndex({
                     </div>
                 </Card>
 
-                {/* Card Grid Layout (Reorderable like Categories) */}
+                {/* Card Grid Layout (Reorderable - 4 Items Per Row with Language Tabs) */}
                 {items.length === 0 ? (
                     <Card className="p-12 text-center text-muted-foreground">
                         <div className="flex flex-col items-center justify-center gap-2">
@@ -306,190 +306,27 @@ export default function AdminSliderPromosIndex({
                         </div>
                     </Card>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {items.map((slider, index) => {
                             const isBeingDragged = draggedIndex === index;
                             const isOver = dragOverIndex === index;
 
                             return (
-                                <div
+                                <SliderPromoCardItem
                                     key={slider.id}
-                                    draggable
+                                    slider={slider}
+                                    index={index}
+                                    totalItems={items.length}
+                                    isBeingDragged={isBeingDragged}
+                                    isOver={isOver}
+                                    isSavingOrder={isSavingOrder}
                                     onDragStart={(e) => handleDragStart(e, index)}
                                     onDragOver={(e) => handleDragOver(e, index)}
                                     onDragEnd={handleDragEnd}
                                     onDrop={(e) => handleDrop(e, index)}
-                                    className={`group relative rounded-xl border bg-card p-4 transition-all duration-200 select-none flex flex-col justify-between ${
-                                        isBeingDragged
-                                            ? 'opacity-40 scale-95 border-primary border-dashed ring-2 ring-primary/30'
-                                            : isOver
-                                            ? 'border-primary ring-2 ring-primary/40 shadow-md scale-[1.01]'
-                                            : 'hover:shadow-md hover:border-foreground/20'
-                                    }`}
-                                >
-                                    <div>
-                                        {/* Card Top: Drag Handle & Order Badge & Arrow controls */}
-                                        <div className="flex items-center justify-between gap-2 mb-3">
-                                            <div className="flex items-center gap-2 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground">
-                                                <GripVertical className="size-4 shrink-0" />
-                                                <Badge variant="secondary" className="font-mono text-[11px] px-2 py-0.5 h-5 font-semibold">
-                                                    Slide #{index + 1}
-                                                </Badge>
-                                            </div>
-
-                                            <div className="flex items-center gap-1">
-                                                {/* Up / Down buttons for mobile accessibility */}
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    disabled={index === 0 || isSavingOrder}
-                                                    onClick={() => handleMove(index, 'up')}
-                                                    className="size-7 text-muted-foreground hover:text-foreground disabled:opacity-20 cursor-pointer"
-                                                    title="Pindah ke Posisi Sebelumnya"
-                                                >
-                                                    <ChevronUp className="size-4" />
-                                                </Button>
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    disabled={index === items.length - 1 || isSavingOrder}
-                                                    onClick={() => handleMove(index, 'down')}
-                                                    className="size-7 text-muted-foreground hover:text-foreground disabled:opacity-20 cursor-pointer"
-                                                    title="Pindah ke Posisi Berikutnya"
-                                                >
-                                                    <ChevronDown className="size-4" />
-                                                </Button>
-                                            </div>
-                                        </div>
-
-                                        {/* Media Preview Box (16:9 Aspect Ratio) */}
-                                        <div className="relative w-full aspect-[16/9] rounded-lg border overflow-hidden bg-muted/40 mb-3.5 shadow-xs">
-                                            {slider.thumbnail ? (
-                                                isVideoUrl(slider.thumbnail) ? (
-                                                    <>
-                                                        <video
-                                                            src={slider.thumbnail}
-                                                            autoPlay
-                                                            loop
-                                                            muted
-                                                            playsInline
-                                                            onEnded={(e) => {
-                                                                e.currentTarget.currentTime = 0;
-                                                                e.currentTarget.play().catch(() => {});
-                                                            }}
-                                                            className="size-full object-cover"
-                                                        />
-                                                        <span className="absolute bottom-2 right-2 bg-black/80 backdrop-blur-xs text-[9px] font-bold text-white px-1.5 py-0.5 rounded leading-none">
-                                                            VIDEO
-                                                        </span>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <img
-                                                            src={slider.thumbnail}
-                                                            alt={slider.title}
-                                                            className="size-full object-cover"
-                                                            onError={(e) => {
-                                                                (e.target as HTMLElement).style.display = 'none';
-                                                            }}
-                                                        />
-                                                        {isGifUrl(slider.thumbnail) && (
-                                                            <span className="absolute bottom-2 right-2 bg-black/80 backdrop-blur-xs text-[9px] font-bold text-white px-1.5 py-0.5 rounded leading-none">
-                                                                GIF
-                                                            </span>
-                                                        )}
-                                                    </>
-                                                )
-                                            ) : (
-                                                <div className="size-full flex items-center justify-center text-muted-foreground/50">
-                                                    <ImageIcon className="size-8" />
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Titles & Descriptions */}
-                                        <div className="space-y-2">
-                                            <div>
-                                                <div className="flex items-center gap-1.5 mb-0.5">
-                                                    <Badge variant="outline" className="text-[9px] py-0 px-1 h-3.5 leading-none">
-                                                        ID
-                                                    </Badge>
-                                                    <h4 className="font-semibold text-sm text-foreground line-clamp-1" title={slider.title}>
-                                                        {slider.title}
-                                                    </h4>
-                                                </div>
-                                                {slider.description && (
-                                                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                                                        {slider.description}
-                                                    </p>
-                                                )}
-                                            </div>
-
-                                            {slider.title_en ? (
-                                                <div className="pt-1.5 border-t border-border/50">
-                                                    <div className="flex items-center gap-1.5 mb-0.5">
-                                                        <Badge variant="secondary" className="text-[9px] py-0 px-1 h-3.5 leading-none">
-                                                            EN
-                                                        </Badge>
-                                                        <p className="text-xs font-medium text-foreground/90 line-clamp-1 italic" title={slider.title_en}>
-                                                            {slider.title_en}
-                                                        </p>
-                                                    </div>
-                                                    {slider.description_en && (
-                                                        <p className="text-[11px] text-muted-foreground/80 line-clamp-1 leading-relaxed">
-                                                            {slider.description_en}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            ) : (
-                                                <p className="text-[11px] text-muted-foreground/50 italic">
-                                                    Versi bahasa Inggris belum diisi
-                                                </p>
-                                            )}
-
-                                            {/* Link */}
-                                            <div className="pt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
-                                                <LinkIcon className="size-3 text-muted-foreground/70 shrink-0" />
-                                                <a
-                                                    href={slider.link || '/products'}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="font-mono text-[11px] text-primary hover:underline truncate"
-                                                    title={slider.link || '/products'}
-                                                >
-                                                    {slider.link || '/products'}
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Card Footer Actions */}
-                                    <div className="mt-4 pt-3 border-t flex items-center justify-between gap-2">
-                                        <span className="text-[11px] text-muted-foreground">
-                                            {slider.created_at ? new Date(slider.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}
-                                        </span>
-
-                                        <div className="flex items-center gap-1.5">
-                                            <Button variant="outline" size="sm" asChild className="h-8 px-2.5 text-xs cursor-pointer">
-                                                <Link href={`/manajemen-slider-promo/${slider.id}/edit`}>
-                                                    <Edit3 className="size-3 mr-1" />
-                                                    <span>Edit</span>
-                                                </Link>
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => setDeleteTarget(slider)}
-                                                className="h-8 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer"
-                                                title="Hapus Slider"
-                                            >
-                                                <Trash2 className="size-3.5" />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </div>
+                                    onMove={handleMove}
+                                    onDelete={setDeleteTarget}
+                                />
                             );
                         })}
                     </div>
@@ -528,5 +365,212 @@ export default function AdminSliderPromosIndex({
                 </DialogContent>
             </Dialog>
         </AdminLayout>
+    );
+}
+
+interface SliderPromoCardItemProps {
+    slider: SliderPromoItem;
+    index: number;
+    totalItems: number;
+    isBeingDragged: boolean;
+    isOver: boolean;
+    isSavingOrder: boolean;
+    onDragStart: (e: React.DragEvent) => void;
+    onDragOver: (e: React.DragEvent) => void;
+    onDragEnd: () => void;
+    onDrop: (e: React.DragEvent) => void;
+    onMove: (index: number, direction: 'up' | 'down') => void;
+    onDelete: (slider: SliderPromoItem) => void;
+}
+
+function SliderPromoCardItem({
+    slider,
+    index,
+    totalItems,
+    isBeingDragged,
+    isOver,
+    isSavingOrder,
+    onDragStart,
+    onDragOver,
+    onDragEnd,
+    onDrop,
+    onMove,
+    onDelete,
+}: SliderPromoCardItemProps) {
+    const [activeLang, setActiveLang] = useState<'id' | 'en'>('id');
+
+    const currentTitle = activeLang === 'id' ? slider.title : slider.title_en;
+    const currentDesc = activeLang === 'id' ? slider.description : slider.description_en;
+
+    return (
+        <div
+            draggable
+            onDragStart={onDragStart}
+            onDragOver={onDragOver}
+            onDragEnd={onDragEnd}
+            onDrop={onDrop}
+            className={`group relative flex flex-col justify-between rounded-xl border bg-card p-3.5 transition-all duration-200 select-none ${
+                isBeingDragged
+                    ? 'opacity-40 scale-95 border-primary border-dashed ring-2 ring-primary/30'
+                    : isOver
+                    ? 'border-primary ring-2 ring-primary/40 shadow-md scale-[1.01]'
+                    : 'hover:shadow-md hover:border-foreground/20'
+            }`}
+        >
+            <div className="space-y-3">
+                {/* Header: Drag handle, Order Badge, & Quick move controls */}
+                <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground">
+                        <GripVertical className="size-4 shrink-0" />
+                        <Badge variant="secondary" className="font-mono text-[11px] px-1.5 py-0 h-5 font-semibold">
+                            #{index + 1}
+                        </Badge>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            disabled={index === 0 || isSavingOrder}
+                            onClick={() => onMove(index, 'up')}
+                            className="size-6 text-muted-foreground hover:text-foreground disabled:opacity-20 cursor-pointer"
+                            title="Pindah ke Atas / Depan"
+                        >
+                            <ChevronUp className="size-3.5" />
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            disabled={index === totalItems - 1 || isSavingOrder}
+                            onClick={() => onMove(index, 'down')}
+                            className="size-6 text-muted-foreground hover:text-foreground disabled:opacity-20 cursor-pointer"
+                            title="Pindah ke Bawah / Belakang"
+                        >
+                            <ChevronDown className="size-3.5" />
+                        </Button>
+                    </div>
+                </div>
+
+                {/* Media Preview (16:9 aspect ratio) */}
+                <div className="relative aspect-video w-full rounded-lg border overflow-hidden bg-muted/40">
+                    {isVideoUrl(slider.thumbnail) ? (
+                        <video
+                            src={slider.thumbnail}
+                            muted
+                            loop
+                            autoPlay
+                            playsInline
+                            className="size-full object-cover"
+                        />
+                    ) : (
+                        <img
+                            src={slider.thumbnail}
+                            alt={slider.title}
+                            className="size-full object-cover"
+                            onError={(e) => {
+                                (e.target as HTMLElement).style.display = 'none';
+                            }}
+                        />
+                    )}
+                    {isVideoUrl(slider.thumbnail) && (
+                        <Badge variant="secondary" className="absolute top-1.5 right-1.5 text-[10px] px-1.5 py-0 bg-black/70 text-white border-none backdrop-blur-xs">
+                            Video
+                        </Badge>
+                    )}
+                </div>
+
+                {/* Language Tabs: [🇮🇩 Indonesia] [🇬🇧 English] */}
+                <div className="flex items-center gap-1 p-0.5 bg-muted/70 rounded-md border text-[11px] font-medium">
+                    <button
+                        type="button"
+                        onClick={() => setActiveLang('id')}
+                        className={`flex-1 py-1 px-2 rounded text-center transition-colors cursor-pointer flex items-center justify-center gap-1 ${
+                            activeLang === 'id'
+                                ? 'bg-background text-foreground shadow-xs font-semibold'
+                                : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                    >
+                        <span>🇮🇩</span>
+                        <span>Indonesia</span>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setActiveLang('en')}
+                        className={`flex-1 py-1 px-2 rounded text-center transition-colors cursor-pointer flex items-center justify-center gap-1 ${
+                            activeLang === 'en'
+                                ? 'bg-background text-foreground shadow-xs font-semibold'
+                                : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                    >
+                        <span>🇬🇧</span>
+                        <span>English</span>
+                        {slider.title_en ? (
+                            <span className="size-1.5 rounded-full bg-emerald-500 ml-0.5" title="Terjemahan tersedia" />
+                        ) : null}
+                    </button>
+                </div>
+
+                {/* Content according to active language */}
+                <div className="space-y-1 min-h-[52px]">
+                    <h4 className="font-semibold text-sm text-foreground line-clamp-1" title={currentTitle || ''}>
+                        {currentTitle || (
+                            <span className="text-muted-foreground italic font-normal text-xs">
+                                {activeLang === 'en' ? 'Belum ada judul bahasa Inggris' : 'Tanpa judul'}
+                            </span>
+                        )}
+                    </h4>
+                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                        {currentDesc || (
+                            <span className="italic opacity-60">
+                                {activeLang === 'en' ? 'Belum ada deskripsi bahasa Inggris' : 'Tanpa deskripsi'}
+                            </span>
+                        )}
+                    </p>
+                </div>
+
+                {/* Promotional Link (if any) */}
+                <div className="pt-1 border-t text-[11px]">
+                    {slider.link ? (
+                        <a
+                            href={slider.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-primary hover:underline truncate"
+                            title={slider.link}
+                        >
+                            <LinkIcon className="size-3 shrink-0" />
+                            <span className="truncate">{slider.link}</span>
+                            <ExternalLink className="size-2.5 shrink-0 opacity-60" />
+                        </a>
+                    ) : (
+                        <span className="text-muted-foreground italic flex items-center gap-1">
+                            <LinkIcon className="size-3 shrink-0 opacity-40" />
+                            <span>Tanpa tautan redirect</span>
+                        </span>
+                    )}
+                </div>
+            </div>
+
+            {/* Actions: Edit and Delete */}
+            <div className="flex items-center gap-2 pt-3 mt-3 border-t">
+                <Button variant="outline" size="sm" asChild className="h-8 flex-1 text-xs cursor-pointer">
+                    <Link href={`/manajemen-slider-promo/${slider.id}/edit`}>
+                        <Edit3 className="size-3.5 mr-1" />
+                        <span>Edit</span>
+                    </Link>
+                </Button>
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDelete(slider)}
+                    className="h-8 px-2.5 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer"
+                    title="Hapus Slider"
+                >
+                    <Trash2 className="size-3.5" />
+                </Button>
+            </div>
+        </div>
     );
 }
