@@ -470,15 +470,18 @@ export default function OrdersPage({
                         {item.product_name}
                     </h4>
                     <div className="flex items-center gap-2 flex-wrap">
-                        <span className="inline-flex items-center gap-1 text-[11px] bg-muted/40 border border-border/70 px-2 py-0.5 rounded-md">
-                            <span>Ukuran:</span>
-                            <strong className="text-foreground">{formatVolume(item.volume)}</strong>
+                        <div className="inline-flex items-center gap-1.5">
+                            <span className="text-[11px] text-muted-foreground">Ukuran:</span>
+                            <span className="inline-flex items-center text-[11px] font-semibold bg-muted/80 text-foreground border border-border/70 px-2 py-0.5 rounded-md">
+                                {formatVolume(item.volume)}
+                            </span>
                             {item.variant_name && (
-                                <span className="hidden sm:inline text-[#4A070B] dark:text-[#E8D0BA] font-medium ml-0.5">
-                                    ({item.variant_name})
+                                <span className="inline-flex items-center text-[11px] text-muted-foreground bg-muted/40 border border-border/60 px-1.5 py-0.5 rounded-md">
+                                    {item.variant_name}
                                 </span>
                             )}
-                        </span>
+                        </div>
+                        <span className="text-muted-foreground/40 text-[10px] hidden sm:inline">&bull;</span>
                         <span className="text-[11px] text-muted-foreground">
                             Jumlah: <strong className="text-foreground">{item.quantity}</strong>
                         </span>

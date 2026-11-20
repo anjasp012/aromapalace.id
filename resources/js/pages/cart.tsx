@@ -491,13 +491,30 @@ export default function CartPage({
                                                         </p>
                                                     )}
 
-                                                    <div className="flex flex-col flex-wrap gap-2 text-xs text-muted-foreground pt-0.5">
-                                                        <span className="inline-flex items-center gap-1 text-[11px] bg-muted/40 border border-border/70 px-2 py-0.5 rounded-md">
-                                                            <span>{isEn ? 'Size:' : 'Ukuran:'}</span>
-                                                            <strong className="text-foreground">{formatVolume(item.volume)}</strong>
-                                                        </span>
-                                                        <span className="text-[11px]">
-                                                            {isEn ? 'Unit Price:' : 'Harga Satuan:'} <strong className="text-[#4A070B] dark:text-[#E8D0BA]">{item.unit_price_formatted}</strong>
+                                                    <div className="flex items-center gap-2 flex-wrap text-xs pt-1">
+                                                        <div className="inline-flex items-center gap-1.5">
+                                                            <span className="text-[11px] text-muted-foreground">{isEn ? 'Size:' : 'Ukuran:'}</span>
+                                                            <Badge
+                                                                variant="secondary"
+                                                                className="text-[11px] font-semibold px-2 py-0.5 h-5 bg-muted/80 text-foreground border border-border/70 rounded-md"
+                                                            >
+                                                                {formatVolume(item.volume)}
+                                                            </Badge>
+                                                            {item.variant_name && item.variant_name.toLowerCase() !== formatVolume(item.volume).toLowerCase() && (
+                                                                <Badge
+                                                                    variant="outline"
+                                                                    className="text-[11px] font-normal px-1.5 py-0.5 h-5 text-muted-foreground border-border/70 rounded-md"
+                                                                >
+                                                                    {item.variant_name}
+                                                                </Badge>
+                                                            )}
+                                                        </div>
+
+                                                        <span className="text-muted-foreground/40 text-[10px] hidden sm:inline">&bull;</span>
+
+                                                        <span className="text-[11px] text-muted-foreground">
+                                                            {isEn ? 'Unit Price:' : 'Harga Satuan:'}{' '}
+                                                            <strong className="text-[#4A070B] dark:text-[#E8D0BA] font-semibold">{item.unit_price_formatted}</strong>
                                                         </span>
                                                     </div>
                                                 </div>

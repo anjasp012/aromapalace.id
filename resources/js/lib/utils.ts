@@ -12,7 +12,11 @@ export function formatVolume(volume: number | string | null | undefined): string
     }
     const str = String(volume).trim();
     if (/^\d+$/.test(str)) {
-        return `${str}ml`;
+        return `${str} ml`;
+    }
+    const match = str.match(/^(\d+)\s*(ml|l|oz|g)?$/i);
+    if (match) {
+        return `${match[1]} ${match[2] ? match[2].toLowerCase() : 'ml'}`;
     }
     return str;
 }

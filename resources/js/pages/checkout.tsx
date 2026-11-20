@@ -1445,10 +1445,10 @@ export default function CheckoutPage({
                                                 <h3 className="font-semibold text-xs sm:text-sm text-foreground">
                                                     {item.product?.name}
                                                 </h3>
-                                                <div className="flex items-center gap-2 flex-wrap">
-                                                    <span className="inline-flex items-center gap-1 text-[11px] bg-muted/40 border border-border/70 px-2 py-0.5 rounded-md">
-                                                        <span className="text-muted-foreground">{isEn ? 'Size:' : 'Ukuran:'}</span>
-                                                        <strong className="text-foreground">{formatVolume(item.volume)}</strong>
+                                                <div className="flex items-center gap-1.5 flex-wrap">
+                                                    <span className="text-[11px] text-muted-foreground">{isEn ? 'Size:' : 'Ukuran:'}</span>
+                                                    <span className="inline-flex items-center text-[11px] font-semibold bg-muted/80 text-foreground border border-border/70 px-2 py-0.5 rounded-md">
+                                                        {formatVolume(item.volume)}
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center gap-2 flex-wrap text-xs">
