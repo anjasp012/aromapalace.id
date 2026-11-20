@@ -802,7 +802,7 @@ export default function Layout({ children, showFooter = true, showBottomNav, dis
     return (
         <div className="bg-background text-foreground flex flex-col min-h-screen" suppressHydrationWarning>
             {/* Top Announcement Bar (Scrolls normally with page, NOT sticky on mobile) */}
-            <div className="bg-gradient-to-r from-[#4A070B] via-[#52090F] to-[#360407] text-white text-xs pt-[env(safe-area-inset-top,0px)]" suppressHydrationWarning>
+            <div className="bg-[#360407] text-white text-xs pt-[env(safe-area-inset-top,0px)]" suppressHydrationWarning>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between py-1.5 sm:py-2 gap-2">
                     {activeHeaderVoucher ? (
                         <button

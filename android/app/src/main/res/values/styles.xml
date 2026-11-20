@@ -14,7 +14,7 @@
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
         <!-- Status bar color setelah splash -->
-        <item name="android:statusBarColor">@color/colorPrimary</item>
+        <item name="android:statusBarColor">@color/colorPrimaryDark</item>
         <item name="android:windowLightStatusBar">false</item>
     </style>
 
@@ -24,7 +24,7 @@
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
         <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
         <item name="android:windowBackground">@drawable/splash</item>
-        <item name="android:statusBarColor">@color/colorPrimary</item>
+        <item name="android:statusBarColor">@color/colorPrimaryDark</item>
         <item name="android:navigationBarColor">@color/colorPrimary</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
