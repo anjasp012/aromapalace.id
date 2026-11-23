@@ -206,7 +206,9 @@ class ProductController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $isDraft = $request->boolean('is_draft');
+
+        $rules = [
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', 'unique:products,slug'],
             'category_id' => ['nullable', 'integer', 'exists:categories,id'],
@@ -221,15 +223,41 @@ class ProductController extends Controller
             'is_draft' => ['nullable', 'boolean'],
             'images' => ['nullable', 'array'],
             'images.*' => ['nullable'],
-            'variants' => ['required', 'array', 'min:1'],
-            'variants.*.name' => ['required', 'string', 'max:255'],
-            'variants.*.volume' => ['required'],
-            'variants.*.price' => ['required', 'integer', 'min:0'],
-            'variants.*.original_price' => ['nullable', 'integer', 'min:0'],
-            'variants.*.discount_percent' => ['nullable', 'integer', 'min:0', 'max:100'],
-            'variants.*.discount_price' => ['nullable', 'integer', 'min:0'],
-            'variants.*.sku' => ['nullable', 'string', 'max:100'],
-            'variants.*.stock' => ['required', 'integer', 'min:0'],
+        ];
+
+        if ($isDraft) {
+            $rules['variants'] = ['nullable', 'array'];
+            $rules['variants.*.name'] = ['nullable', 'string', 'max:255'];
+            $rules['variants.*.volume'] = ['nullable'];
+            $rules['variants.*.price'] = ['nullable'];
+            $rules['variants.*.original_price'] = ['nullable'];
+            $rules['variants.*.discount_percent'] = ['nullable'];
+            $rules['variants.*.discount_price'] = ['nullable'];
+            $rules['variants.*.sku'] = ['nullable', 'string', 'max:100'];
+            $rules['variants.*.stock'] = ['nullable'];
+        } else {
+            $rules['variants'] = ['required', 'array', 'min:1'];
+            $rules['variants.*.name'] = ['required', 'string', 'max:255'];
+            $rules['variants.*.volume'] = ['required'];
+            $rules['variants.*.price'] = ['required', 'integer', 'min:0'];
+            $rules['variants.*.original_price'] = ['nullable', 'integer', 'min:0'];
+            $rules['variants.*.discount_percent'] = ['nullable', 'integer', 'min:0', 'max:100'];
+            $rules['variants.*.discount_price'] = ['nullable', 'integer', 'min:0'];
+            $rules['variants.*.sku'] = ['nullable', 'string', 'max:100'];
+            $rules['variants.*.stock'] = ['required', 'integer', 'min:0'];
+        }
+
+        $validated = $request->validate($rules, [
+            'name.required' => 'Nama parfum wajib diisi.',
+            'slug.unique' => 'URL slug ini sudah digunakan oleh produk lain.',
+            'variants.required' => 'Produk wajib memiliki setidaknya 1 varian ukuran.',
+            'variants.min' => 'Produk wajib memiliki setidaknya 1 varian ukuran.',
+            'variants.*.name.required' => 'Label varian wajib diisi (contoh: 50ml Reguler).',
+            'variants.*.volume.required' => 'Volume (ml) varian wajib diisi.',
+            'variants.*.price.required' => 'Harga jual (Rp) varian wajib diisi.',
+            'variants.*.price.min' => 'Harga jual tidak boleh bernilai negatif.',
+            'variants.*.stock.required' => 'Stok unit varian wajib diisi.',
+            'variants.*.stock.min' => 'Stok unit tidak boleh bernilai negatif.',
         ]);
 
         if ($request->has('images')) {
@@ -253,13 +281,21 @@ class ProductController extends Controller
             ]);
         }
 
-        // Validate that variant names within the same request are distinct
-        $variantNames = array_map(fn ($v) => trim(mb_strtolower($v['name'])), $validated['variants']);
-        if (count($variantNames) !== count(array_unique($variantNames))) {
-            return back()->withErrors(['variants' => 'Setiap varian dalam satu produk harus memiliki nama varian yang berbeda (contoh: Varian Oren, Varian Hijau).'])->withInput();
+        // Validate that non-empty variant names within the same request are distinct
+        if (! empty($validated['variants']) && is_array($validated['variants'])) {
+            $variantNames = [];
+            foreach ($validated['variants'] as $v) {
+                $trimmed = trim(mb_strtolower($v['name'] ?? ''));
+                if ($trimmed !== '') {
+                    $variantNames[] = $trimmed;
+                }
+            }
+            if (count($variantNames) !== count(array_unique($variantNames))) {
+                return back()->withErrors(['variants' => 'Setiap varian dalam satu produk harus memiliki nama varian yang berbeda (contoh: Varian Oren, Varian Hijau).'])->withInput();
+            }
         }
 
-        DB::transaction(function () use ($validated, $request) {
+        DB::transaction(function () use ($validated, $request, $isDraft) {
             $slug = ! empty($validated['slug'])
                 ? Str::slug($validated['slug'])
                 : $this->generateUniqueSlug($validated['name']);
@@ -314,46 +350,67 @@ class ProductController extends Controller
             }
 
             // Save variants
-            foreach ($validated['variants'] as $index => $v) {
-                $inputPrice = (int) $v['price'];
-                $inputOriginalPrice = ! empty($v['original_price']) ? (int) $v['original_price'] : null;
-                $inputDiscountPrice = ! empty($v['discount_price']) ? (int) $v['discount_price'] : null;
-                $discountPercent = ! empty($v['discount_percent']) ? (int) $v['discount_percent'] : null;
+            if (! empty($validated['variants']) && is_array($validated['variants'])) {
+                foreach ($validated['variants'] as $index => $v) {
+                    $hasData = ! empty(trim($v['name'] ?? ''))
+                        || ! empty($v['volume'])
+                        || (isset($v['price']) && $v['price'] !== '')
+                        || (isset($v['stock']) && $v['stock'] !== '');
 
-                if ($inputDiscountPrice !== null && $inputDiscountPrice > 0 && $inputDiscountPrice < $inputPrice) {
-                    $price = $inputDiscountPrice;
-                    $originalPrice = $inputPrice;
-                    if (! $discountPercent) {
-                        $discountPercent = (int) round((($originalPrice - $price) / $originalPrice) * 100);
+                    if (! $hasData && $isDraft) {
+                        continue;
                     }
-                } elseif ($inputOriginalPrice && $inputOriginalPrice > $inputPrice) {
-                    $price = $inputPrice;
-                    $originalPrice = $inputOriginalPrice;
-                    if (! $discountPercent) {
-                        $discountPercent = (int) round((($originalPrice - $price) / $originalPrice) * 100);
+
+                    $inputPrice = isset($v['price']) && $v['price'] !== '' ? (int) $v['price'] : 0;
+                    $inputOriginalPrice = ! empty($v['original_price']) ? (int) $v['original_price'] : null;
+                    $inputDiscountPrice = ! empty($v['discount_price']) ? (int) $v['discount_price'] : null;
+                    $discountPercent = ! empty($v['discount_percent']) ? (int) $v['discount_percent'] : null;
+
+                    if ($inputDiscountPrice !== null && $inputDiscountPrice > 0 && $inputDiscountPrice < $inputPrice) {
+                        $price = $inputDiscountPrice;
+                        $originalPrice = $inputPrice;
+                        if (! $discountPercent) {
+                            $discountPercent = (int) round((($originalPrice - $price) / $originalPrice) * 100);
+                        }
+                    } elseif ($inputOriginalPrice && $inputOriginalPrice > $inputPrice) {
+                        $price = $inputPrice;
+                        $originalPrice = $inputOriginalPrice;
+                        if (! $discountPercent) {
+                            $discountPercent = (int) round((($originalPrice - $price) / $originalPrice) * 100);
+                        }
+                    } else {
+                        $price = $inputPrice;
+                        $originalPrice = null;
+                        $discountPercent = null;
                     }
-                } else {
-                    $price = $inputPrice;
-                    $originalPrice = null;
-                    $discountPercent = null;
+
+                    $volInt = ! empty($v['volume'])
+                        ? (int) filter_var($v['volume'], FILTER_SANITIZE_NUMBER_INT)
+                        : 50;
+                    if ($volInt <= 0) {
+                        $volInt = 50;
+                    }
+
+                    $variantName = ! empty(trim($v['name'] ?? ''))
+                        ? trim($v['name'])
+                        : ($volInt.'ml Reguler');
+
+                    $variantSlug = Str::slug($variantName) ?: 'v'.($index + 1);
+                    $sku = ! empty($v['sku'])
+                        ? trim($v['sku'])
+                        : 'AP-'.$product->id.'-'.$volInt.'-'.$variantSlug;
+
+                    ProductVariant::create([
+                        'product_id' => $product->id,
+                        'name' => $variantName,
+                        'volume' => $volInt,
+                        'price' => $price,
+                        'original_price' => $originalPrice,
+                        'discount_percent' => $discountPercent,
+                        'sku' => $sku,
+                        'stock' => isset($v['stock']) && $v['stock'] !== '' ? (int) $v['stock'] : 0,
+                    ]);
                 }
-
-                $volInt = (int) filter_var($v['volume'], FILTER_SANITIZE_NUMBER_INT);
-                $variantSlug = Str::slug($v['name']) ?: 'v'.($index + 1);
-                $sku = ! empty($v['sku'])
-                    ? trim($v['sku'])
-                    : 'AP-'.$product->id.'-'.$volInt.'-'.$variantSlug;
-
-                ProductVariant::create([
-                    'product_id' => $product->id,
-                    'name' => $v['name'],
-                    'volume' => $volInt,
-                    'price' => $price,
-                    'original_price' => $originalPrice,
-                    'discount_percent' => $discountPercent,
-                    'sku' => $sku,
-                    'stock' => (int) $v['stock'],
-                ]);
             }
         });
 
@@ -536,7 +593,9 @@ class ProductController extends Controller
      */
     public function update(Request $request, Product $product): RedirectResponse
     {
-        $validated = $request->validate([
+        $isDraft = $request->boolean('is_draft');
+
+        $rules = [
             'name' => ['required', 'string', 'max:255'],
             'slug' => [
                 'nullable',
@@ -558,16 +617,43 @@ class ProductController extends Controller
             'existing_images.*' => ['string'],
             'images' => ['nullable', 'array'],
             'images.*' => ['nullable'],
-            'variants' => ['required', 'array', 'min:1'],
-            'variants.*.id' => ['nullable', 'integer'],
-            'variants.*.name' => ['required', 'string', 'max:255'],
-            'variants.*.volume' => ['required'],
-            'variants.*.price' => ['required', 'integer', 'min:0'],
-            'variants.*.original_price' => ['nullable', 'integer', 'min:0'],
-            'variants.*.discount_percent' => ['nullable', 'integer', 'min:0', 'max:100'],
-            'variants.*.discount_price' => ['nullable', 'integer', 'min:0'],
-            'variants.*.sku' => ['nullable', 'string', 'max:100'],
-            'variants.*.stock' => ['required', 'integer', 'min:0'],
+        ];
+
+        if ($isDraft) {
+            $rules['variants'] = ['nullable', 'array'];
+            $rules['variants.*.id'] = ['nullable', 'integer'];
+            $rules['variants.*.name'] = ['nullable', 'string', 'max:255'];
+            $rules['variants.*.volume'] = ['nullable'];
+            $rules['variants.*.price'] = ['nullable'];
+            $rules['variants.*.original_price'] = ['nullable'];
+            $rules['variants.*.discount_percent'] = ['nullable'];
+            $rules['variants.*.discount_price'] = ['nullable'];
+            $rules['variants.*.sku'] = ['nullable', 'string', 'max:100'];
+            $rules['variants.*.stock'] = ['nullable'];
+        } else {
+            $rules['variants'] = ['required', 'array', 'min:1'];
+            $rules['variants.*.id'] = ['nullable', 'integer'];
+            $rules['variants.*.name'] = ['required', 'string', 'max:255'];
+            $rules['variants.*.volume'] = ['required'];
+            $rules['variants.*.price'] = ['required', 'integer', 'min:0'];
+            $rules['variants.*.original_price'] = ['nullable', 'integer', 'min:0'];
+            $rules['variants.*.discount_percent'] = ['nullable', 'integer', 'min:0', 'max:100'];
+            $rules['variants.*.discount_price'] = ['nullable', 'integer', 'min:0'];
+            $rules['variants.*.sku'] = ['nullable', 'string', 'max:100'];
+            $rules['variants.*.stock'] = ['required', 'integer', 'min:0'];
+        }
+
+        $validated = $request->validate($rules, [
+            'name.required' => 'Nama parfum wajib diisi.',
+            'slug.unique' => 'URL slug ini sudah digunakan oleh produk lain.',
+            'variants.required' => 'Produk wajib memiliki setidaknya 1 varian ukuran.',
+            'variants.min' => 'Produk wajib memiliki setidaknya 1 varian ukuran.',
+            'variants.*.name.required' => 'Label varian wajib diisi (contoh: 50ml Reguler).',
+            'variants.*.volume.required' => 'Volume (ml) varian wajib diisi.',
+            'variants.*.price.required' => 'Harga jual (Rp) varian wajib diisi.',
+            'variants.*.price.min' => 'Harga jual tidak boleh bernilai negatif.',
+            'variants.*.stock.required' => 'Stok unit varian wajib diisi.',
+            'variants.*.stock.min' => 'Stok unit tidak boleh bernilai negatif.',
         ]);
 
         if ($request->has('images')) {
@@ -591,13 +677,21 @@ class ProductController extends Controller
             ]);
         }
 
-        // Validate that variant names within the same request are distinct
-        $variantNames = array_map(fn ($v) => trim(mb_strtolower($v['name'])), $validated['variants']);
-        if (count($variantNames) !== count(array_unique($variantNames))) {
-            return back()->withErrors(['variants' => 'Setiap varian dalam satu produk harus memiliki nama varian yang berbeda (contoh: Varian Oren, Varian Hijau).'])->withInput();
+        // Validate that non-empty variant names within the same request are distinct
+        if (! empty($validated['variants']) && is_array($validated['variants'])) {
+            $variantNames = [];
+            foreach ($validated['variants'] as $v) {
+                $trimmed = trim(mb_strtolower($v['name'] ?? ''));
+                if ($trimmed !== '') {
+                    $variantNames[] = $trimmed;
+                }
+            }
+            if (count($variantNames) !== count(array_unique($variantNames))) {
+                return back()->withErrors(['variants' => 'Setiap varian dalam satu produk harus memiliki nama varian yang berbeda (contoh: Varian Oren, Varian Hijau).'])->withInput();
+            }
         }
 
-        DB::transaction(function () use ($validated, $request, $product) {
+        DB::transaction(function () use ($validated, $request, $product, $isDraft) {
             $slug = ! empty($validated['slug'])
                 ? Str::slug($validated['slug'])
                 : Str::slug($validated['name']);
@@ -658,72 +752,98 @@ class ProductController extends Controller
 
             // Sync variants
             $submittedVariantIds = [];
-            foreach ($validated['variants'] as $index => $v) {
-                $inputPrice = (int) $v['price'];
-                $inputOriginalPrice = ! empty($v['original_price']) ? (int) $v['original_price'] : null;
-                $inputDiscountPrice = ! empty($v['discount_price']) ? (int) $v['discount_price'] : null;
-                $discountPercent = ! empty($v['discount_percent']) ? (int) $v['discount_percent'] : null;
+            if (! empty($validated['variants']) && is_array($validated['variants'])) {
+                foreach ($validated['variants'] as $index => $v) {
+                    $hasData = ! empty(trim($v['name'] ?? ''))
+                        || ! empty($v['volume'])
+                        || (isset($v['price']) && $v['price'] !== '')
+                        || (isset($v['stock']) && $v['stock'] !== '')
+                        || ! empty($v['id']);
 
-                if ($inputDiscountPrice !== null && $inputDiscountPrice > 0 && $inputDiscountPrice < $inputPrice) {
-                    $price = $inputDiscountPrice;
-                    $originalPrice = $inputPrice;
-                    if (! $discountPercent) {
-                        $discountPercent = (int) round((($originalPrice - $price) / $originalPrice) * 100);
-                    }
-                } elseif ($inputOriginalPrice && $inputOriginalPrice > $inputPrice) {
-                    $price = $inputPrice;
-                    $originalPrice = $inputOriginalPrice;
-                    if (! $discountPercent) {
-                        $discountPercent = (int) round((($originalPrice - $price) / $originalPrice) * 100);
-                    }
-                } else {
-                    $price = $inputPrice;
-                    $originalPrice = null;
-                    $discountPercent = null;
-                }
-
-                $volInt = (int) filter_var($v['volume'], FILTER_SANITIZE_NUMBER_INT);
-                $variantSlug = Str::slug($v['name']) ?: 'v'.($index + 1);
-                $sku = ! empty($v['sku'])
-                    ? trim($v['sku'])
-                    : 'AP-'.$product->id.'-'.$volInt.'-'.$variantSlug;
-
-                if (! empty($v['id'])) {
-                    $existingVariant = ProductVariant::where('product_id', $product->id)
-                        ->where('id', $v['id'])
-                        ->first();
-
-                    if ($existingVariant) {
-                        $existingVariant->update([
-                            'name' => $v['name'],
-                            'volume' => $volInt,
-                            'price' => $price,
-                            'original_price' => $originalPrice,
-                            'discount_percent' => $discountPercent,
-                            'sku' => $sku,
-                            'stock' => (int) $v['stock'],
-                        ]);
-                        $submittedVariantIds[] = $existingVariant->id;
-
+                    if (! $hasData && $isDraft) {
                         continue;
                     }
-                }
 
-                $newVariant = ProductVariant::create([
-                    'product_id' => $product->id,
-                    'name' => $v['name'],
-                    'volume' => $volInt,
-                    'price' => $price,
-                    'original_price' => $originalPrice,
-                    'discount_percent' => $discountPercent,
-                    'sku' => $sku,
-                    'stock' => (int) $v['stock'],
-                ]);
-                $submittedVariantIds[] = $newVariant->id;
+                    $inputPrice = isset($v['price']) && $v['price'] !== '' ? (int) $v['price'] : 0;
+                    $inputOriginalPrice = ! empty($v['original_price']) ? (int) $v['original_price'] : null;
+                    $inputDiscountPrice = ! empty($v['discount_price']) ? (int) $v['discount_price'] : null;
+                    $discountPercent = ! empty($v['discount_percent']) ? (int) $v['discount_percent'] : null;
+
+                    if ($inputDiscountPrice !== null && $inputDiscountPrice > 0 && $inputDiscountPrice < $inputPrice) {
+                        $price = $inputDiscountPrice;
+                        $originalPrice = $inputPrice;
+                        if (! $discountPercent) {
+                            $discountPercent = (int) round((($originalPrice - $price) / $originalPrice) * 100);
+                        }
+                    } elseif ($inputOriginalPrice && $inputOriginalPrice > $inputPrice) {
+                        $price = $inputPrice;
+                        $originalPrice = $inputOriginalPrice;
+                        if (! $discountPercent) {
+                            $discountPercent = (int) round((($originalPrice - $price) / $originalPrice) * 100);
+                        }
+                    } else {
+                        $price = $inputPrice;
+                        $originalPrice = null;
+                        $discountPercent = null;
+                    }
+
+                    $volInt = ! empty($v['volume'])
+                        ? (int) filter_var($v['volume'], FILTER_SANITIZE_NUMBER_INT)
+                        : 50;
+                    if ($volInt <= 0) {
+                        $volInt = 50;
+                    }
+
+                    $variantName = ! empty(trim($v['name'] ?? ''))
+                        ? trim($v['name'])
+                        : ($volInt.'ml Reguler');
+
+                    $variantSlug = Str::slug($variantName) ?: 'v'.($index + 1);
+                    $sku = ! empty($v['sku'])
+                        ? trim($v['sku'])
+                        : 'AP-'.$product->id.'-'.$volInt.'-'.$variantSlug;
+
+                    if (! empty($v['id'])) {
+                        $existingVariant = ProductVariant::where('product_id', $product->id)
+                            ->where('id', $v['id'])
+                            ->first();
+
+                        if ($existingVariant) {
+                            $existingVariant->update([
+                                'name' => $variantName,
+                                'volume' => $volInt,
+                                'price' => $price,
+                                'original_price' => $originalPrice,
+                                'discount_percent' => $discountPercent,
+                                'sku' => $sku,
+                                'stock' => isset($v['stock']) && $v['stock'] !== '' ? (int) $v['stock'] : 0,
+                            ]);
+                            $submittedVariantIds[] = $existingVariant->id;
+
+                            continue;
+                        }
+                    }
+
+                    $newVariant = ProductVariant::create([
+                        'product_id' => $product->id,
+                        'name' => $variantName,
+                        'volume' => $volInt,
+                        'price' => $price,
+                        'original_price' => $originalPrice,
+                        'discount_percent' => $discountPercent,
+                        'sku' => $sku,
+                        'stock' => isset($v['stock']) && $v['stock'] !== '' ? (int) $v['stock'] : 0,
+                    ]);
+                    $submittedVariantIds[] = $newVariant->id;
+                }
             }
 
             // Delete removed variants that are no longer present
-            $product->variants()->whereNotIn('id', $submittedVariantIds)->delete();
+            if (! empty($submittedVariantIds)) {
+                $product->variants()->whereNotIn('id', $submittedVariantIds)->delete();
+            } elseif (! $isDraft) {
+                $product->variants()->delete();
+            }
         });
 
         return redirect()->route('admin.products.index')

@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Head, Link, useForm, router } from '@inertiajs/react';
 import AdminLayout from '@/layouts/AdminLayout';
 import { getStorefrontUrl } from '@/lib/route-resolver';
+import { cn } from '@/lib/utils';
 import {
     ArrowLeft,
     Plus,
@@ -16,6 +17,7 @@ import {
     Sparkles,
     Clock,
     FileEdit,
+    AlertCircle,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -92,7 +94,7 @@ export default function AdminProductEdit({
     const [newImagePreviews, setNewImagePreviews] = useState<UploadedPreview[]>([]);
     const [isDragging, setIsDragging] = useState(false);
 
-    const { data, setData, post, processing, errors, transform } = useForm<{
+    const { data, setData, post, processing, errors, setError, clearErrors, transform } = useForm<{
         _method: string;
         name: string;
         slug: string;
@@ -123,17 +125,30 @@ export default function AdminProductEdit({
         is_draft: Boolean(product.is_draft),
         existing_images: product.images || [],
         images: [],
-        variants: product.variants.map((v) => ({
-            id: v.id,
-            name: v.name,
-            volume: v.volume,
-            price: v.price,
-            original_price: v.original_price ?? '',
-            discount_percent: v.discount_percent ?? '',
-            discount_price: (v as any).discount_price ?? '',
-            sku: v.sku ?? '',
-            stock: v.stock,
-        })),
+        variants: product.variants && product.variants.length > 0
+            ? product.variants.map((v) => ({
+                id: v.id,
+                name: v.name,
+                volume: v.volume,
+                price: v.price,
+                original_price: v.original_price ?? '',
+                discount_percent: v.discount_percent ?? '',
+                discount_price: (v as any).discount_price ?? '',
+                sku: v.sku ?? '',
+                stock: v.stock,
+            }))
+            : [
+                {
+                    name: '',
+                    volume: '',
+                    price: '',
+                    original_price: '',
+                    discount_percent: '',
+                    discount_price: '',
+                    sku: '',
+                    stock: '',
+                },
+            ],
     });
 
     const [isDeleting, setIsDeleting] = useState(false);
@@ -224,6 +239,9 @@ export default function AdminProductEdit({
     };
 
     const handleAddVariant = () => {
+        if (errors.variants) {
+            clearErrors('variants' as any);
+        }
         const newVariant: VariantFormItem = {
             name: '',
             volume: '',
@@ -244,11 +262,20 @@ export default function AdminProductEdit({
         setData('variants', newVariants);
     };
 
+    const getNestedError = (key: string): string | undefined => {
+        return (errors as Record<string, string | undefined>)[key];
+    };
+
     const handleVariantChange = (
         index: number,
         field: keyof VariantFormItem,
         value: string | number
     ) => {
+        const errorKey = `variants.${index}.${String(field)}`;
+        if (getNestedError(errorKey)) {
+            clearErrors(errorKey as any);
+        }
+
         const newVariants = [...data.variants];
         const currentVariant = { ...newVariants[index], [field]: value };
 
@@ -339,6 +366,9 @@ export default function AdminProductEdit({
     }, [categories]);
 
     const handleNameChange = (nameValue: string) => {
+        if (errors.name) {
+            clearErrors('name');
+        }
         setData((prev) => ({
             ...prev,
             name: nameValue,
@@ -346,7 +376,136 @@ export default function AdminProductEdit({
         }));
     };
 
+    const scrollToFirstError = (errObj?: Record<string, any>) => {
+        setTimeout(() => {
+            const errorKeys = errObj ? Object.keys(errObj) : Object.keys(errors);
+            for (const key of errorKeys) {
+                let elementId = '';
+                if (key === 'name') {
+                    elementId = 'field-name';
+                } else if (key.startsWith('variants.')) {
+                    const parts = key.split('.');
+                    if (parts.length >= 3) {
+                        elementId = `field-variant-${parts[1]}-${parts[2]}`;
+                    }
+                } else if (key === 'variants') {
+                    elementId = 'card-variants';
+                }
+                if (elementId) {
+                    const el = document.getElementById(elementId);
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        el.focus();
+                        break;
+                    }
+                }
+            }
+        }, 60);
+    };
+
+    const validateForm = (): boolean => {
+        clearErrors();
+        const newErrors: Record<string, string> = {};
+        let firstErrorElementId: string | null = null;
+
+        if (!data.name || data.name.trim() === '') {
+            newErrors['name'] = 'Nama parfum wajib diisi.';
+            firstErrorElementId = 'field-name';
+        }
+
+        if (!data.variants || data.variants.length === 0) {
+            newErrors['variants'] = 'Produk wajib memiliki setidaknya 1 varian ukuran.';
+            if (!firstErrorElementId) {
+                firstErrorElementId = 'card-variants';
+            }
+        } else {
+            const seenNames = new Map<string, number>();
+
+            data.variants.forEach((v, idx) => {
+                const vName = String(v.name || '').trim();
+                const vVolume = String(v.volume ?? '').trim();
+                const vPrice = String(v.price ?? '').trim();
+                const vStock = String(v.stock ?? '').trim();
+
+                if (!vName) {
+                    newErrors[`variants.${idx}.name`] = 'Label varian wajib diisi (contoh: 50ml Reguler).';
+                    if (!firstErrorElementId) firstErrorElementId = `field-variant-${idx}-name`;
+                } else {
+                    const lower = vName.toLowerCase();
+                    if (seenNames.has(lower)) {
+                        newErrors[`variants.${idx}.name`] = 'Label varian tidak boleh sama dengan varian lainnya.';
+                        if (!firstErrorElementId) firstErrorElementId = `field-variant-${idx}-name`;
+                    } else {
+                        seenNames.set(lower, idx);
+                    }
+                }
+
+                if (!vVolume || Number(vVolume) <= 0) {
+                    newErrors[`variants.${idx}.volume`] = 'Volume (ml) varian wajib diisi.';
+                    if (!firstErrorElementId) firstErrorElementId = `field-variant-${idx}-volume`;
+                }
+
+                if (vPrice === '' || Number(vPrice) < 0) {
+                    newErrors[`variants.${idx}.price`] = 'Harga jual (Rp) varian wajib diisi.';
+                    if (!firstErrorElementId) firstErrorElementId = `field-variant-${idx}-price`;
+                }
+
+                if (vStock === '' || Number(vStock) < 0) {
+                    newErrors[`variants.${idx}.stock`] = 'Stok unit varian wajib diisi.';
+                    if (!firstErrorElementId) firstErrorElementId = `field-variant-${idx}-stock`;
+                }
+            });
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+            setError(newErrors as any);
+            window.showAdminToast?.(
+                'Mohon lengkapi kolom wajib (*) yang ditandai merah.',
+                'warning',
+                'Form Belum Lengkap'
+            );
+
+            if (firstErrorElementId) {
+                setTimeout(() => {
+                    const el = document.getElementById(firstErrorElementId!);
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        el.focus();
+                    }
+                }, 60);
+            }
+            return false;
+        }
+
+        return true;
+    };
+
     const handleSave = (asDraft: boolean) => {
+        if (asDraft) {
+            // Khusus draft: tanpa validasi varian. Hanya periksa nama parfum jika belum diisi.
+            if (!data.name || data.name.trim() === '') {
+                clearErrors();
+                setError('name', 'Nama parfum wajib diisi.');
+                const el = document.getElementById('field-name');
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    el.focus();
+                }
+                window.showAdminToast?.(
+                    'Nama parfum wajib diisi untuk menyimpan draft.',
+                    'warning',
+                    'Form Belum Lengkap'
+                );
+                return;
+            }
+            clearErrors();
+        } else {
+            // Untuk publikasi, validasi penuh nama dan seluruh varian wajib
+            if (!validateForm()) {
+                return;
+            }
+        }
+
         setData('is_draft', asDraft);
         transform((prev) => ({
             ...prev,
@@ -354,6 +513,14 @@ export default function AdminProductEdit({
         }));
         post(`/manajemen-produk/${product.id}`, {
             forceFormData: true,
+            onError: (backendErrors) => {
+                window.showAdminToast?.(
+                    'Terdapat data yang belum valid. Silakan periksa kolom yang ditandai merah.',
+                    'error',
+                    'Gagal Menyimpan'
+                );
+                scrollToFirstError(backendErrors);
+            },
         });
     };
 
@@ -450,15 +617,25 @@ export default function AdminProductEdit({
                     <CardContent className="space-y-4 text-xs">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             <div className="space-y-1.5">
-                                <label className="font-medium text-foreground">Nama Parfum *</label>
+                                <label htmlFor="field-name" className="font-medium text-foreground">
+                                    Nama Parfum <span className="text-destructive">*</span>
+                                </label>
                                 <Input
+                                    id="field-name"
                                     type="text"
                                     value={data.name}
                                     onChange={(e) => handleNameChange(e.target.value)}
-                                    className="h-9"
-                                    required
+                                    className={cn(
+                                        "h-9",
+                                        errors.name && "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+                                    )}
                                 />
-                                {errors.name && <p className="text-destructive text-[11px]">{errors.name}</p>}
+                                {errors.name && (
+                                    <p className="text-destructive text-[11px] font-medium flex items-center gap-1 mt-1 animate-in fade-in-50">
+                                        <AlertCircle className="size-3.5 shrink-0" />
+                                        <span>{errors.name}</span>
+                                    </p>
+                                )}
                             </div>
 
                             <div className="space-y-1.5">
@@ -884,7 +1061,7 @@ export default function AdminProductEdit({
                 </Card>
 
                 {/* Card 3: Varian Ukuran & Stok */}
-                <Card>
+                <Card id="card-variants">
                     <CardHeader className="flex flex-row items-center justify-between pb-3">
                         <div>
                             <CardTitle className="text-base font-semibold">3. Varian Ukuran &amp; Stok</CardTitle>
@@ -897,120 +1074,174 @@ export default function AdminProductEdit({
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {errors.variants && (
-                            <p className="text-xs text-destructive font-medium">{errors.variants}</p>
+                            <div className="p-3 rounded-lg border border-destructive/30 bg-destructive/5 text-destructive text-xs font-medium flex items-center gap-2 animate-in fade-in-50">
+                                <AlertCircle className="size-4 shrink-0" />
+                                <span>{errors.variants}</span>
+                            </div>
                         )}
 
                         <div className="space-y-3">
-                            {data.variants.map((variant, idx) => (
-                                <div key={idx} className="rounded-lg border p-3.5 space-y-3 bg-muted/20">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-xs font-semibold">
-                                            Varian #{idx + 1}{variant.name ? ` - ${variant.name}` : ''}{variant.volume ? ` (${variant.volume}ml)` : ''} {variant.id ? `(ID: ${variant.id})` : '(Varian Baru)'}
-                                        </span>
-                                        {data.variants.length > 1 && (
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => handleRemoveVariant(idx)}
-                                                className="h-7 text-xs text-destructive hover:bg-destructive/10"
-                                            >
-                                                <Trash2 className="size-3.5 mr-1" />
-                                                <span>Hapus</span>
-                                            </Button>
-                                        )}
+                            {data.variants.map((variant, idx) => {
+                                const nameErr = getNestedError(`variants.${idx}.name`);
+                                const volumeErr = getNestedError(`variants.${idx}.volume`);
+                                const priceErr = getNestedError(`variants.${idx}.price`);
+                                const stockErr = getNestedError(`variants.${idx}.stock`);
+
+                                return (
+                                    <div key={idx} className="rounded-lg border p-3.5 space-y-3 bg-muted/20">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs font-semibold">
+                                                Varian #{idx + 1}{variant.name ? ` - ${variant.name}` : ''}{variant.volume ? ` (${variant.volume}ml)` : ''} {variant.id ? `(ID: ${variant.id})` : '(Varian Baru)'}
+                                            </span>
+                                            {data.variants.length > 1 && (
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => handleRemoveVariant(idx)}
+                                                    className="h-7 text-xs text-destructive hover:bg-destructive/10"
+                                                >
+                                                    <Trash2 className="size-3.5 mr-1" />
+                                                    <span>Hapus</span>
+                                                </Button>
+                                            )}
+                                        </div>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                                            <div className="space-y-1 lg:col-span-2">
+                                                <label htmlFor={`field-variant-${idx}-name`} className="font-medium text-foreground">
+                                                    Label Varian <span className="text-destructive">*</span>
+                                                </label>
+                                                <Input
+                                                    id={`field-variant-${idx}-name`}
+                                                    type="text"
+                                                    placeholder="cth: Varian Oren, 50ml Reguler, dll"
+                                                    value={variant.name}
+                                                    onChange={(e) => handleVariantChange(idx, 'name', e.target.value)}
+                                                    className={cn(
+                                                        "h-8 text-xs",
+                                                        nameErr && "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+                                                    )}
+                                                />
+                                                {nameErr && (
+                                                    <p className="text-destructive text-[11px] font-medium flex items-center gap-1 mt-1 animate-in fade-in-50">
+                                                        <AlertCircle className="size-3.5 shrink-0" />
+                                                        <span>{nameErr}</span>
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <label htmlFor={`field-variant-${idx}-volume`} className="font-medium text-foreground">
+                                                    Volume (ml) <span className="text-destructive">*</span>
+                                                </label>
+                                                <Input
+                                                    id={`field-variant-${idx}-volume`}
+                                                    type="number"
+                                                    min={1}
+                                                    placeholder="cth: 50, 100"
+                                                    value={variant.volume}
+                                                    onChange={(e) => handleVariantChange(idx, 'volume', e.target.value)}
+                                                    className={cn(
+                                                        "h-8 text-xs font-medium",
+                                                        volumeErr && "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+                                                    )}
+                                                />
+                                                {volumeErr && (
+                                                    <p className="text-destructive text-[11px] font-medium flex items-center gap-1 mt-1 animate-in fade-in-50">
+                                                        <AlertCircle className="size-3.5 shrink-0" />
+                                                        <span>{volumeErr}</span>
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <label className="font-medium text-foreground">SKU</label>
+                                                <Input
+                                                    type="text"
+                                                    placeholder="cth: SKU-001 (opsional)"
+                                                    value={variant.sku}
+                                                    onChange={(e) => handleVariantChange(idx, 'sku', e.target.value)}
+                                                    className="h-8 text-xs font-mono"
+                                                />
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <label htmlFor={`field-variant-${idx}-price`} className="font-medium text-foreground">
+                                                    Harga Jual (Rp) <span className="text-destructive">*</span>
+                                                </label>
+                                                <Input
+                                                    id={`field-variant-${idx}-price`}
+                                                    type="number"
+                                                    min={0}
+                                                    placeholder="cth: 1500000"
+                                                    value={variant.price}
+                                                    onChange={(e) => handleVariantChange(idx, 'price', e.target.value)}
+                                                    className={cn(
+                                                        "h-8 text-xs font-semibold",
+                                                        priceErr && "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+                                                    )}
+                                                />
+                                                {priceErr && (
+                                                    <p className="text-destructive text-[11px] font-medium flex items-center gap-1 mt-1 animate-in fade-in-50">
+                                                        <AlertCircle className="size-3.5 shrink-0" />
+                                                        <span>{priceErr}</span>
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <label className="font-medium text-foreground">Diskon (%)</label>
+                                                <Input
+                                                    type="number"
+                                                    min={0}
+                                                    max={100}
+                                                    placeholder="cth: 15"
+                                                    value={variant.discount_percent}
+                                                    onChange={(e) => handleVariantChange(idx, 'discount_percent', e.target.value)}
+                                                    className="h-8 text-xs"
+                                                />
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <label className="font-medium text-foreground">Harga Diskon (Rp)</label>
+                                                <Input
+                                                    type="number"
+                                                    min={0}
+                                                    placeholder="cth: 1275000 (otomatis)"
+                                                    value={variant.discount_price ?? ''}
+                                                    onChange={(e) => handleVariantChange(idx, 'discount_price', e.target.value)}
+                                                    className="h-8 text-xs font-medium text-emerald-600 dark:text-emerald-400"
+                                                />
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <label htmlFor={`field-variant-${idx}-stock`} className="font-medium text-foreground">
+                                                    Stok Unit <span className="text-destructive">*</span>
+                                                </label>
+                                                <Input
+                                                    id={`field-variant-${idx}-stock`}
+                                                    type="number"
+                                                    min={0}
+                                                    placeholder="cth: 20"
+                                                    value={variant.stock}
+                                                    onChange={(e) => handleVariantChange(idx, 'stock', e.target.value)}
+                                                    className={cn(
+                                                        "h-8 text-xs font-semibold",
+                                                        stockErr && "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+                                                    )}
+                                                />
+                                                {stockErr && (
+                                                    <p className="text-destructive text-[11px] font-medium flex items-center gap-1 mt-1 animate-in fade-in-50">
+                                                        <AlertCircle className="size-3.5 shrink-0" />
+                                                        <span>{stockErr}</span>
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
-
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-                                        <div className="space-y-1 lg:col-span-2">
-                                            <label className="font-medium text-foreground">Label Varian *</label>
-                                            <Input
-                                                type="text"
-                                                placeholder="cth: Varian Oren, 50ml Reguler, dll"
-                                                value={variant.name}
-                                                onChange={(e) => handleVariantChange(idx, 'name', e.target.value)}
-                                                className="h-8 text-xs"
-                                                required
-                                            />
-                                        </div>
-
-                                        <div className="space-y-1">
-                                            <label className="font-medium text-foreground">Volume (ml) *</label>
-                                            <Input
-                                                type="number"
-                                                min={1}
-                                                placeholder="cth: 50, 100"
-                                                value={variant.volume}
-                                                onChange={(e) => handleVariantChange(idx, 'volume', e.target.value)}
-                                                className="h-8 text-xs font-medium"
-                                                required
-                                            />
-                                        </div>
-
-                                        <div className="space-y-1">
-                                            <label className="font-medium text-foreground">SKU</label>
-                                            <Input
-                                                type="text"
-                                                placeholder="cth: SKU-001 (opsional)"
-                                                value={variant.sku}
-                                                onChange={(e) => handleVariantChange(idx, 'sku', e.target.value)}
-                                                className="h-8 text-xs font-mono"
-                                            />
-                                        </div>
-
-                                        <div className="space-y-1">
-                                            <label className="font-medium text-foreground">Harga Jual (Rp) *</label>
-                                            <Input
-                                                type="number"
-                                                min={0}
-                                                placeholder="cth: 1500000"
-                                                value={variant.price}
-                                                onChange={(e) => handleVariantChange(idx, 'price', e.target.value)}
-                                                className="h-8 text-xs font-semibold"
-                                                required
-                                            />
-                                        </div>
-
-                                        <div className="space-y-1">
-                                            <label className="font-medium text-foreground">Diskon (%)</label>
-                                            <Input
-                                                type="number"
-                                                min={0}
-                                                max={100}
-                                                placeholder="cth: 15"
-                                                value={variant.discount_percent}
-                                                onChange={(e) => handleVariantChange(idx, 'discount_percent', e.target.value)}
-                                                className="h-8 text-xs"
-                                            />
-                                        </div>
-
-                                        <div className="space-y-1">
-                                            <label className="font-medium text-foreground">Harga Diskon (Rp)</label>
-                                            <Input
-                                                type="number"
-                                                min={0}
-                                                placeholder="cth: 1275000 (otomatis)"
-                                                value={variant.discount_price ?? ''}
-                                                onChange={(e) => handleVariantChange(idx, 'discount_price', e.target.value)}
-                                                className="h-8 text-xs font-medium text-emerald-600 dark:text-emerald-400"
-                                            />
-                                        </div>
-
-                                        <div className="space-y-1">
-                                            <label className="font-medium text-foreground">Stok Unit *</label>
-                                            <Input
-                                                type="number"
-                                                min={0}
-                                                placeholder="cth: 20"
-                                                value={variant.stock}
-                                                onChange={(e) => handleVariantChange(idx, 'stock', e.target.value)}
-                                                className="h-8 text-xs font-semibold"
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </CardContent>
                 </Card>
