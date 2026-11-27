@@ -33,3 +33,71 @@ export function isGifUrl(url?: string | null): boolean {
     return /\.gif$/i.test(cleanUrl) || cleanUrl.startsWith('data:image/gif');
 }
 
+export function formatProductName(name: string | null | undefined): string {
+    if (!name) return '';
+    const trimmed = String(name).trim();
+    if (!trimmed) return '';
+
+    const alwaysUpper = new Set([
+        'EDP', 'EDT', 'EDC', 'PDB', 'EXT', 'OG',
+        'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X',
+    ]);
+
+    const alwaysLower = new Set([
+        'by', 'de', 'du', 'la', 'le', 'des', 'di', 'del', 'della',
+        'von', 'van', 'and', 'for', 'in', 'of', 'the', 'pour', 'avec', 'et',
+    ]);
+
+    const tokens = trimmed.split(/(\s+)/);
+    let wordIndex = 0;
+
+    return tokens
+        .map((token) => {
+            if (/^\s+$/.test(token)) {
+                return token;
+            }
+
+            const match = token.match(/^([^a-zA-Z0-9]*)(.*?)([^a-zA-Z0-9]*)$/);
+            if (!match) return token;
+
+            const [, prefix, core, suffix] = match;
+            if (!core) return token;
+
+            if (/^\d+\s*ml$/i.test(core)) {
+                wordIndex++;
+                return prefix + core.toLowerCase() + suffix;
+            }
+
+            const cleanAlpha = core.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+
+            if (alwaysUpper.has(cleanAlpha)) {
+                wordIndex++;
+                return prefix + core.toUpperCase() + suffix;
+            }
+
+            const lowerCore = core.toLowerCase();
+            if (wordIndex > 0 && alwaysLower.has(lowerCore)) {
+                wordIndex++;
+                return prefix + lowerCore + suffix;
+            }
+
+            const parts = core.split(/([-–—'’])/);
+            const transformedCore = parts
+                .map((part, pIdx) => {
+                    if (/^[-–—'’]$/.test(part) || !part) return part;
+                    const partUpper = part.toUpperCase();
+                    if (alwaysUpper.has(partUpper)) return partUpper;
+                    const partLower = part.toLowerCase();
+                    if (wordIndex > 0 && pIdx > 0 && alwaysLower.has(partLower)) {
+                        return partLower;
+                    }
+                    return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+                })
+                .join('');
+
+            wordIndex++;
+            return prefix + transformedCore + suffix;
+        })
+        .join('');
+}
+

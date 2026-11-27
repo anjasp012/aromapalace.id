@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Brand;
 use App\Models\Product;
-use App\Models\ProductGallery;
 use App\Models\ProductVariant;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -72,7 +71,7 @@ class ProductImportService
             return [];
         }
 
-        $delimiters = ["\t", ",", ";"];
+        $delimiters = ["\t", ',', ';'];
         $bestDelimiter = "\t";
         $maxCount = 0;
         foreach ($delimiters as $delim) {
@@ -155,7 +154,7 @@ class ProductImportService
         $sheetXml = null;
 
         if (class_exists(\ZipArchive::class)) {
-            $zip = new \ZipArchive();
+            $zip = new \ZipArchive;
             if ($zip->open($filePath) === true) {
                 $sharedStringsXml = $zip->getFromName('xl/sharedStrings.xml') ?: null;
                 $sheetXml = $zip->getFromName('xl/worksheets/sheet1.xml')
@@ -822,7 +821,7 @@ class ProductImportService
                 $intPart = substr($str, 0, $lastDotPos);
                 $decPart = substr($str, $lastDotPos + 1);
                 $cleanInt = preg_replace('/[^\d]/', '', $intPart);
-                $decVal = (float) ('0.' . preg_replace('/[^\d]/', '', $decPart));
+                $decVal = (float) ('0.'.preg_replace('/[^\d]/', '', $decPart));
 
                 return (int) round(((float) $cleanInt) + $decVal);
             } else {
@@ -830,7 +829,7 @@ class ProductImportService
                 $intPart = substr($str, 0, $lastCommaPos);
                 $decPart = substr($str, $lastCommaPos + 1);
                 $cleanInt = preg_replace('/[^\d]/', '', $intPart);
-                $decVal = (float) ('0.' . preg_replace('/[^\d]/', '', $decPart));
+                $decVal = (float) ('0.'.preg_replace('/[^\d]/', '', $decPart));
 
                 return (int) round(((float) $cleanInt) + $decVal);
             }
@@ -854,7 +853,7 @@ class ProductImportService
             // If suffix is NOT 3 digits (e.g. "412500,0" or "412500,00" or "412500,5"), it's a decimal separator
             if ($suffixLen !== 3) {
                 $cleanInt = preg_replace('/[^\d]/', '', $intPart);
-                $decVal = $suffixLen > 0 ? (float) ('0.' . $cleanSuffix) : 0.0;
+                $decVal = $suffixLen > 0 ? (float) ('0.'.$cleanSuffix) : 0.0;
 
                 return (int) round(((float) $cleanInt) + $decVal);
             }
@@ -863,13 +862,13 @@ class ProductImportService
             // If integer part has 4+ digits without separator (e.g. "412500,000"), comma is decimal
             $cleanInt = preg_replace('/[^\d]/', '', $intPart);
             if (strlen($cleanInt) > 3) {
-                $decVal = (float) ('0.' . $cleanSuffix);
+                $decVal = (float) ('0.'.$cleanSuffix);
 
                 return (int) round(((float) $cleanInt) + $decVal);
             }
 
             // Standard thousands separator: "412,500" -> 412500
-            return (int) ($cleanInt . $cleanSuffix);
+            return (int) ($cleanInt.$cleanSuffix);
         }
 
         // Case 3: Only dots present (e.g. "412.500", "4.125.000", "412500.0", "412500.00")
@@ -890,7 +889,7 @@ class ProductImportService
             // If suffix is NOT 3 digits (e.g. "412500.0", "412500.00", "412500.5"), it's a decimal separator
             if ($suffixLen !== 3) {
                 $cleanInt = preg_replace('/[^\d]/', '', $intPart);
-                $decVal = $suffixLen > 0 ? (float) ('0.' . $cleanSuffix) : 0.0;
+                $decVal = $suffixLen > 0 ? (float) ('0.'.$cleanSuffix) : 0.0;
 
                 return (int) round(((float) $cleanInt) + $decVal);
             }
@@ -899,13 +898,13 @@ class ProductImportService
             // If integer part has 4+ digits without separator (e.g. "412500.000"), dot is decimal
             $cleanInt = preg_replace('/[^\d]/', '', $intPart);
             if (strlen($cleanInt) > 3) {
-                $decVal = (float) ('0.' . $cleanSuffix);
+                $decVal = (float) ('0.'.$cleanSuffix);
 
                 return (int) round(((float) $cleanInt) + $decVal);
             }
 
             // Standard thousands separator: "412.500" -> 412500
-            return (int) ($cleanInt . $cleanSuffix);
+            return (int) ($cleanInt.$cleanSuffix);
         }
 
         // Case 4: No commas, no dots (e.g. "412500" or with spaces "412 500")
@@ -987,4 +986,3 @@ class ProductImportService
         return (string) $csv;
     }
 }
-

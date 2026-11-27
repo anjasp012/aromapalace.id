@@ -59,4 +59,3 @@ class Banner extends Model
         ];
     }
 }
-

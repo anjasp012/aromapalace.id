@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { type ProductItem } from '@/components/ProductCard';
 import { useTranslation, formatCategoryName } from '@/lib/i18n';
 import { Check, Loader2 } from 'lucide-react';
-import { cn, formatVolume } from '@/lib/utils';
+import { cn, formatVolume, formatProductName } from '@/lib/utils';
 
 interface ProductQuickViewModalProps {
     product: ProductItem | null;
@@ -193,7 +193,7 @@ export default function ProductQuickViewModal({
                                 )}
                             </div>
                             <DialogTitle className="text-lg sm:text-xl font-bold">
-                                {product.name}
+                                {formatProductName(product.name)}
                             </DialogTitle>
                             <DialogDescription className="text-xs">
                                 {t('catalog.concentration')}: {product.concentration || 'Eau de Parfum'} &bull; {displayVolume}

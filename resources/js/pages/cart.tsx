@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { cn, formatVolume } from '@/lib/utils';
+import { cn, formatVolume, formatProductName } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n';
 import { Loader2, Package, Ticket, Truck } from 'lucide-react';
 import VoucherSelectorModal, { AvailableVoucher } from '@/components/VoucherSelectorModal';
@@ -466,7 +466,7 @@ export default function CartPage({
                                                             href={`/products/${product.slug}`}
                                                             className="block font-semibold text-xs sm:text-sm text-foreground hover:text-[#4A070B] transition-colors line-clamp-1"
                                                         >
-                                                            {product.name}
+                                                            {formatProductName(product.name)}
                                                         </Link>
                                                         {item.is_draft && (
                                                             <Badge variant="destructive" className="text-[10px] bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30 font-medium">

@@ -149,7 +149,7 @@ class CatalogService
 
         return [
             'id' => $p->id,
-            'name' => $p->name,
+            'name' => static::formatProductName($p->name),
             'slug' => $p->slug,
             'category_id' => $categories->first()?->id,
             'category_ids' => $categoryIds,
@@ -217,5 +217,101 @@ class CatalogService
                 'in_stock' => $v->stock > 0,
             ])->values()->all(),
         ];
+    }
+
+    /**
+     * Format a product name to have uniform, elegant Title Case across all storefront views.
+     */
+    public static function formatProductName(?string $name): string
+    {
+        if (empty($name)) {
+            return '';
+        }
+
+        $trimmed = trim($name);
+        if ($trimmed === '') {
+            return '';
+        }
+
+        $alwaysUpper = [
+            'EDP', 'EDT', 'EDC', 'PDB', 'EXT', 'OG',
+            'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X',
+        ];
+
+        $alwaysLower = [
+            'by', 'de', 'du', 'la', 'le', 'des', 'di', 'del', 'della',
+            'von', 'van', 'and', 'for', 'in', 'of', 'the', 'pour', 'avec', 'et',
+        ];
+
+        $tokens = preg_split('/(\s+)/u', $trimmed, -1, PREG_SPLIT_DELIM_CAPTURE);
+        $wordIndex = 0;
+
+        foreach ($tokens as $idx => $token) {
+            if (preg_match('/^\s+$/u', $token)) {
+                continue;
+            }
+
+            if (preg_match('/^([^\p{L}\p{N}]*)(.*?)([^\p{L}\p{N}]*)$/u', $token, $m)) {
+                $prefix = $m[1] ?? '';
+                $core = $m[2] ?? '';
+                $suffix = $m[3] ?? '';
+
+                if ($core === '') {
+                    continue;
+                }
+
+                if (preg_match('/^\d+\s*ml$/iu', $core)) {
+                    $tokens[$idx] = $prefix.strtolower($core).$suffix;
+                    $wordIndex++;
+
+                    continue;
+                }
+
+                $cleanAlpha = strtoupper((string) preg_replace('/[^\p{L}\p{N}]/u', '', $core));
+
+                if (in_array($cleanAlpha, $alwaysUpper, true)) {
+                    $tokens[$idx] = $prefix.strtoupper($core).$suffix;
+                    $wordIndex++;
+
+                    continue;
+                }
+
+                $lowerCore = mb_strtolower($core, 'UTF-8');
+                if ($wordIndex > 0 && in_array($lowerCore, $alwaysLower, true)) {
+                    $tokens[$idx] = $prefix.$lowerCore.$suffix;
+                    $wordIndex++;
+
+                    continue;
+                }
+
+                $parts = preg_split("/([-–—'’])/u", $core, -1, PREG_SPLIT_DELIM_CAPTURE);
+                $transformedParts = [];
+                foreach ($parts as $pIdx => $part) {
+                    if (preg_match("/^[-–—'’]$/u", $part) || $part === '') {
+                        $transformedParts[] = $part;
+
+                        continue;
+                    }
+                    $partUpper = strtoupper($part);
+                    if (in_array($partUpper, $alwaysUpper, true)) {
+                        $transformedParts[] = $partUpper;
+
+                        continue;
+                    }
+                    $partLower = mb_strtolower($part, 'UTF-8');
+                    if ($wordIndex > 0 && $pIdx > 0 && in_array($partLower, $alwaysLower, true)) {
+                        $transformedParts[] = $partLower;
+
+                        continue;
+                    }
+                    $transformedParts[] = mb_convert_case($part, MB_CASE_TITLE, 'UTF-8');
+                }
+
+                $tokens[$idx] = $prefix.implode('', $transformedParts).$suffix;
+                $wordIndex++;
+            }
+        }
+
+        return implode('', $tokens);
     }
 }

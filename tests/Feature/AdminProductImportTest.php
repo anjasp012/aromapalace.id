@@ -4,6 +4,7 @@ use App\Models\Brand;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\User;
+use App\Services\ProductImportService;
 use Illuminate\Http\UploadedFile;
 
 beforeEach(function () {
@@ -209,7 +210,7 @@ test('admin can execute product import with 5 columns saving variant name to var
 });
 
 test('cleanPrice correctly handles various price formats without adding trailing zeros', function () {
-    $service = new \App\Services\ProductImportService();
+    $service = new ProductImportService;
 
     expect($service->cleanPrice('412,500'))->toBe(412500)
         ->and($service->cleanPrice('412.500'))->toBe(412500)
@@ -260,4 +261,3 @@ test('importing multiple variants for the same product attaches variants to sing
     expect($variants)->toHaveCount(2)
         ->and($variants->pluck('volume')->all())->toContain(50, 100);
 });
-

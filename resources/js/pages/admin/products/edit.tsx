@@ -18,7 +18,9 @@ import {
     Clock,
     FileEdit,
     AlertCircle,
+    Crop,
 } from 'lucide-react';
+import ProductImageEditorModal from './ProductImageEditorModal';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -92,6 +94,10 @@ export default function AdminProductEdit({
 }: ProductEditProps) {
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [newImagePreviews, setNewImagePreviews] = useState<UploadedPreview[]>([]);
+    const [editingTarget, setEditingTarget] = useState<{
+        type: 'existing' | 'new';
+        index: number;
+    } | null>(null);
     const [isDragging, setIsDragging] = useState(false);
 
     const { data, setData, post, processing, errors, setError, clearErrors, transform } = useForm<{
@@ -215,6 +221,34 @@ export default function AdminProductEdit({
         const updatedFiles = [...data.images];
         updatedFiles.splice(index, 1);
         setData('images', updatedFiles);
+    };
+
+    const handleSaveEditedImage = (editedFile: File, newPreviewUrl: string) => {
+        if (!editingTarget) return;
+
+        if (editingTarget.type === 'new') {
+            const updatedPreviews = [...newImagePreviews];
+            if (updatedPreviews[editingTarget.index]) {
+                URL.revokeObjectURL(updatedPreviews[editingTarget.index].previewUrl);
+            }
+            updatedPreviews[editingTarget.index] = {
+                file: editedFile,
+                previewUrl: newPreviewUrl,
+            };
+            setNewImagePreviews(updatedPreviews);
+
+            const updatedFiles = [...data.images];
+            updatedFiles[editingTarget.index] = editedFile;
+            setData('images', updatedFiles);
+        } else {
+            // Existing image edited: remove old URL, append as new uploaded file
+            const updatedExisting = data.existing_images.filter((_, i) => i !== editingTarget.index);
+            setData('existing_images', updatedExisting);
+            setNewImagePreviews((prev) => [...prev, { file: editedFile, previewUrl: newPreviewUrl }]);
+            setData('images', [...data.images, editedFile]);
+        }
+
+        setEditingTarget(null);
     };
 
     const handleDragOver = (e: React.DragEvent) => {
@@ -991,16 +1025,28 @@ export default function AdminProductEdit({
                                                 Utama
                                             </Badge>
                                         )}
-                                        <Button
-                                            type="button"
-                                            variant="destructive"
-                                            size="icon"
-                                            onClick={() => handleRemoveExistingImage(idx)}
-                                            className="absolute top-2 right-2 size-7 opacity-90 hover:opacity-100 shadow-sm"
-                                            title="Hapus foto ini"
-                                        >
-                                            <Trash2 className="size-3.5" />
-                                        </Button>
+                                        <div className="absolute top-2 right-2 flex items-center gap-1">
+                                            <Button
+                                                type="button"
+                                                variant="secondary"
+                                                size="icon"
+                                                onClick={() => setEditingTarget({ type: 'existing', index: idx })}
+                                                className="size-7 bg-white/90 dark:bg-zinc-800/90 hover:bg-white text-foreground shadow-sm"
+                                                title="Sesuaikan ukuran & posisi foto (Crop / Grid)"
+                                            >
+                                                <Crop className="size-3.5 text-[#4A070B] dark:text-[#E8D0BA]" />
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="destructive"
+                                                size="icon"
+                                                onClick={() => handleRemoveExistingImage(idx)}
+                                                className="size-7 opacity-90 hover:opacity-100 shadow-sm"
+                                                title="Hapus foto ini"
+                                            >
+                                                <Trash2 className="size-3.5" />
+                                            </Button>
+                                        </div>
                                         <div className="absolute bottom-0 inset-x-0 bg-black/60 text-[10px] text-white px-2 py-1 truncate">
                                             Tersimpan #{idx + 1}
                                         </div>
@@ -1023,16 +1069,28 @@ export default function AdminProductEdit({
                                                 Utama
                                             </Badge>
                                         )}
-                                        <Button
-                                            type="button"
-                                            variant="destructive"
-                                            size="icon"
-                                            onClick={() => handleRemoveNewFile(idx)}
-                                            className="absolute top-2 right-2 size-7 opacity-90 hover:opacity-100 shadow-sm"
-                                            title="Hapus foto baru ini"
-                                        >
-                                            <Trash2 className="size-3.5" />
-                                        </Button>
+                                        <div className="absolute top-2 right-2 flex items-center gap-1">
+                                            <Button
+                                                type="button"
+                                                variant="secondary"
+                                                size="icon"
+                                                onClick={() => setEditingTarget({ type: 'new', index: idx })}
+                                                className="size-7 bg-white/90 dark:bg-zinc-800/90 hover:bg-white text-foreground shadow-sm"
+                                                title="Sesuaikan ukuran & posisi foto (Crop / Grid)"
+                                            >
+                                                <Crop className="size-3.5 text-[#4A070B] dark:text-[#E8D0BA]" />
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="destructive"
+                                                size="icon"
+                                                onClick={() => handleRemoveNewFile(idx)}
+                                                className="size-7 opacity-90 hover:opacity-100 shadow-sm"
+                                                title="Hapus foto baru ini"
+                                            >
+                                                <Trash2 className="size-3.5" />
+                                            </Button>
+                                        </div>
                                         <div className="absolute bottom-0 inset-x-0 bg-primary/80 text-[10px] text-primary-foreground px-2 py-1 truncate">
                                             {img.file.name}
                                         </div>
@@ -1319,6 +1377,24 @@ export default function AdminProductEdit({
                         </div>
                     </Card>
                 </div>
+            )}
+
+            {editingTarget !== null && (
+                <ProductImageEditorModal
+                    open={editingTarget !== null}
+                    imageUrl={
+                        editingTarget.type === 'existing'
+                            ? data.existing_images[editingTarget.index]
+                            : newImagePreviews[editingTarget.index]?.previewUrl
+                    }
+                    imageName={
+                        editingTarget.type === 'existing'
+                            ? `existing-image-${editingTarget.index + 1}.jpg`
+                            : (newImagePreviews[editingTarget.index]?.file.name || 'product-image.jpg')
+                    }
+                    onClose={() => setEditingTarget(null)}
+                    onSave={handleSaveEditedImage}
+                />
             )}
         </AdminLayout>
     );

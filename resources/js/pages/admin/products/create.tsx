@@ -16,7 +16,9 @@ import {
     Clock,
     FileEdit,
     AlertCircle,
+    Crop,
 } from 'lucide-react';
+import ProductImageEditorModal from './ProductImageEditorModal';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -69,6 +71,7 @@ export default function AdminProductCreate({
 }: ProductCreateProps) {
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [imagePreviews, setImagePreviews] = useState<UploadedPreview[]>([]);
+    const [editingImageIndex, setEditingImageIndex] = useState<number | null>(null);
     const [isDragging, setIsDragging] = useState(false);
 
     const { data, setData, post, processing, errors, setError, clearErrors, transform } = useForm<{
@@ -162,6 +165,21 @@ export default function AdminProductCreate({
         }
         setImagePreviews(updated);
         setData('images', updated.map((item) => item.file));
+    };
+
+    const handleSaveEditedImage = (editedFile: File, newPreviewUrl: string) => {
+        if (editingImageIndex === null) return;
+        const updated = [...imagePreviews];
+        if (updated[editingImageIndex]) {
+            URL.revokeObjectURL(updated[editingImageIndex].previewUrl);
+        }
+        updated[editingImageIndex] = {
+            file: editedFile,
+            previewUrl: newPreviewUrl,
+        };
+        setImagePreviews(updated);
+        setData('images', updated.map((item) => item.file));
+        setEditingImageIndex(null);
     };
 
     const handleDragOver = (e: React.DragEvent) => {
@@ -903,16 +921,28 @@ export default function AdminProductCreate({
                                                 Utama
                                             </Badge>
                                         )}
-                                        <Button
-                                            type="button"
-                                            variant="destructive"
-                                            size="icon"
-                                            onClick={() => handleRemoveFile(idx)}
-                                            className="absolute top-2 right-2 size-7 opacity-90 hover:opacity-100 shadow-sm"
-                                            title="Hapus foto ini"
-                                        >
-                                            <Trash2 className="size-3.5" />
-                                        </Button>
+                                        <div className="absolute top-2 right-2 flex items-center gap-1">
+                                            <Button
+                                                type="button"
+                                                variant="secondary"
+                                                size="icon"
+                                                onClick={() => setEditingImageIndex(idx)}
+                                                className="size-7 bg-white/90 dark:bg-zinc-800/90 hover:bg-white text-foreground shadow-sm"
+                                                title="Sesuaikan ukuran & posisi foto (Crop / Grid)"
+                                            >
+                                                <Crop className="size-3.5 text-[#4A070B] dark:text-[#E8D0BA]" />
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="destructive"
+                                                size="icon"
+                                                onClick={() => handleRemoveFile(idx)}
+                                                className="size-7 opacity-90 hover:opacity-100 shadow-sm"
+                                                title="Hapus foto ini"
+                                            >
+                                                <Trash2 className="size-3.5" />
+                                            </Button>
+                                        </div>
                                         <div className="absolute bottom-0 inset-x-0 bg-black/60 text-[10px] text-white px-2 py-1 truncate">
                                             {img.file.name}
                                         </div>
@@ -1152,6 +1182,16 @@ export default function AdminProductCreate({
                     </Button>
                 </div>
             </form>
+
+            {editingImageIndex !== null && imagePreviews[editingImageIndex] && (
+                <ProductImageEditorModal
+                    open={editingImageIndex !== null}
+                    imageUrl={imagePreviews[editingImageIndex].previewUrl}
+                    imageName={imagePreviews[editingImageIndex].file.name}
+                    onClose={() => setEditingImageIndex(null)}
+                    onSave={handleSaveEditedImage}
+                />
+            )}
         </AdminLayout>
     );
 }

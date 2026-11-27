@@ -61,6 +61,7 @@ class SliderPromoController extends Controller
                 UPLOAD_ERR_PARTIAL => 'Berkas hanya terunggah sebagian. Silakan coba unggah kembali.',
                 default => 'Gagal mengunggah berkas media. Silakan coba beberapa saat lagi.',
             };
+
             return back()->withErrors(['thumbnail' => $errorMsg])->withInput();
         }
 
@@ -133,6 +134,7 @@ class SliderPromoController extends Controller
                 UPLOAD_ERR_PARTIAL => 'Berkas hanya terunggah sebagian. Silakan coba unggah kembali.',
                 default => 'Gagal mengunggah berkas media. Silakan coba beberapa saat lagi.',
             };
+
             return back()->withErrors(['thumbnail' => $errorMsg])->withInput();
         }
 

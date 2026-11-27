@@ -227,6 +227,7 @@ class PaymentController extends Controller
                 UPLOAD_ERR_PARTIAL => 'Berkas hanya terunggah sebagian. Silakan coba unggah kembali.',
                 default => 'Gagal mengunggah berkas. Silakan coba beberapa saat lagi.',
             };
+
             return back()->withErrors(['payment_proof' => $errorMsg])->withInput();
         }
 

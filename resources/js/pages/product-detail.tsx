@@ -15,7 +15,7 @@ import {
     DialogTitle,
     DialogDescription,
 } from '@/components/ui/dialog';
-import { cn, formatVolume } from '@/lib/utils';
+import { cn, formatVolume, formatProductName } from '@/lib/utils';
 import { isNativeApp } from '@/lib/native-app';
 import { useTranslation, formatCategoryName } from '@/lib/i18n';
 import { getAdminUrl } from '@/lib/route-resolver';
@@ -150,6 +150,7 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
     const user = props?.auth?.user;
     const isAdmin = Boolean(props?.auth?.is_admin || user?.role === 'admin');
     const { t, pickText, isEn } = useTranslation();
+    const formattedProductName = useMemo(() => formatProductName(product.name), [product.name]);
 
     // Gallery State
     const images = useMemo(() => {
@@ -442,14 +443,14 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
     return (
         <Layout>
             <Head>
-                <title>{`${product.name} • ${isEn ? 'Luxury Fragrance Aroma Palace' : 'Wewangian Mewah Aroma Palace'}`}</title>
+                <title>{`${formattedProductName} • ${isEn ? 'Luxury Fragrance Aroma Palace' : 'Wewangian Mewah Aroma Palace'}`}</title>
                 <meta
                     name="description"
                     content={
                         plainMetaDescription ||
                         (isEn
-                            ? `Order artisanal fragrance ${product.name} with pure concentration ${product.concentration} from Aroma Palace.`
-                            : `Pesan parfum artisanal ${product.name} dengan konsentrasi murni ${product.concentration} dari Aroma Palace.`)
+                            ? `Order artisanal fragrance ${formattedProductName} with pure concentration ${product.concentration} from Aroma Palace.`
+                            : `Pesan parfum artisanal ${formattedProductName} dengan konsentrasi murni ${product.concentration} dari Aroma Palace.`)
                     }
                 />
             </Head>
@@ -477,7 +478,7 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
                         </Link>
                         <span>/</span>
                         <span className="font-semibold text-foreground truncate max-w-[200px] sm:max-w-none">
-                            {product.name}
+                            {formattedProductName}
                         </span>
                     </nav>
                 </div>
@@ -729,7 +730,7 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
 
                             {/* Title */}
                             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-foreground">
-                                {product.name}
+                                {formattedProductName}
                             </h1>
                         </div>
 

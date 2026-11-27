@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
+import { cn, formatProductName } from '@/lib/utils';
 import { useTranslation, formatCategoryName } from '@/lib/i18n';
 
 export interface ProductVariantItem {
@@ -214,7 +214,7 @@ export default function ProductCard({
                         cacheFor="2m"
                         className=""
                     >
-                        {product.name}
+                        {formatProductName(product.name)}
                     </Link>
                 </h3>
 

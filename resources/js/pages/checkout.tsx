@@ -13,7 +13,7 @@ import AddressModal from '@/components/AddressModal';
 import AddressSelectorModal from '@/components/AddressSelectorModal';
 import VoucherSelectorModal, { AvailableVoucher } from '@/components/VoucherSelectorModal';
 import { formatVoucherBadge } from '@/components/VoucherCard';
-import { formatVolume } from '@/lib/utils';
+import { formatVolume, formatProductName } from '@/lib/utils';
 
 interface CheckoutItem {
     id: number;
@@ -1443,7 +1443,7 @@ export default function CheckoutPage({
                                             </div>
                                             <div className="space-y-1.5 min-w-0 flex-1">
                                                 <h3 className="font-semibold text-xs sm:text-sm text-foreground">
-                                                    {item.product?.name}
+                                                    {formatProductName(item.product?.name)}
                                                 </h3>
                                                 <div className="flex items-center gap-1.5 flex-wrap">
                                                     <span className="text-[11px] text-muted-foreground">{isEn ? 'Size:' : 'Ukuran:'}</span>

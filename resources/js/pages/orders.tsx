@@ -5,7 +5,7 @@ import Layout from '@/components/Layout';
 import TrackingModal from '@/components/TrackingModal';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/lib/i18n';
-import { formatVolume } from '@/lib/utils';
+import { formatVolume, formatProductName } from '@/lib/utils';
 import {
     Package,
     Clock,
@@ -467,7 +467,7 @@ export default function OrdersPage({
                 </div>
                 <div className="space-y-1 min-w-0">
                     <h4 className="font-semibold text-xs sm:text-sm text-foreground truncate">
-                        {item.product_name}
+                        {formatProductName(item.product_name)}
                     </h4>
                     <div className="flex items-center gap-2 flex-wrap">
                         <div className="inline-flex items-center gap-1.5">
@@ -1217,7 +1217,7 @@ export default function OrdersPage({
                                                             </div>
                                                             <div className="space-y-0.5 min-w-0">
                                                                 <h4 className="font-semibold text-foreground truncate">
-                                                                    {item.product_name}
+                                                                    {formatProductName(item.product_name)}
                                                                 </h4>
                                                                 <div className="text-[11px] text-muted-foreground">
                                                                     1 produk ({formatVolume(item.volume)}{item.variant_name ? ` • ${item.variant_name}` : ''})
