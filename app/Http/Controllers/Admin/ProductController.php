@@ -281,6 +281,16 @@ class ProductController extends Controller
             ]);
         }
 
+        if ($request->hasFile('replaced_images_files')) {
+            $request->validate([
+                'replaced_images_files.*' => ['file', 'image', 'mimes:jpeg,png,jpg,webp', 'max:10240'],
+            ], [
+                'replaced_images_files.*.image' => 'File foto produk hasil edit harus berupa gambar yang valid (JPG, PNG, WEBP).',
+                'replaced_images_files.*.mimes' => 'Format foto produk hasil edit harus berupa JPG, PNG, atau WEBP.',
+                'replaced_images_files.*.max' => 'Ukuran file foto produk hasil edit maksimal adalah 10MB per foto.',
+            ]);
+        }
+
         // Validate that non-empty variant names within the same request are distinct
         if (! empty($validated['variants']) && is_array($validated['variants'])) {
             $variantNames = [];
@@ -617,6 +627,10 @@ class ProductController extends Controller
             'existing_images.*' => ['string'],
             'images' => ['nullable', 'array'],
             'images.*' => ['nullable'],
+            'replaced_images_urls' => ['nullable', 'array'],
+            'replaced_images_urls.*' => ['string'],
+            'replaced_images_files' => ['nullable', 'array'],
+            'replaced_images_files.*' => ['nullable'],
         ];
 
         if ($isDraft) {
@@ -677,6 +691,16 @@ class ProductController extends Controller
             ]);
         }
 
+        if ($request->hasFile('replaced_images_files')) {
+            $request->validate([
+                'replaced_images_files.*' => ['file', 'image', 'mimes:jpeg,png,jpg,webp', 'max:10240'],
+            ], [
+                'replaced_images_files.*.image' => 'File foto produk hasil edit harus berupa gambar yang valid (JPG, PNG, WEBP).',
+                'replaced_images_files.*.mimes' => 'Format foto produk hasil edit harus berupa JPG, PNG, atau WEBP.',
+                'replaced_images_files.*.max' => 'Ukuran file foto produk hasil edit maksimal adalah 10MB per foto.',
+            ]);
+        }
+
         // Validate that non-empty variant names within the same request are distinct
         if (! empty($validated['variants']) && is_array($validated['variants'])) {
             $variantNames = [];
@@ -724,6 +748,24 @@ class ProductController extends Controller
 
             // Delete gallery rows no longer in existing_images
             $product->galleries()->whereNotIn('image', $existingImages)->delete();
+
+            // Update replaced existing image rows in-place (keeps row id, position, and primary image!)
+            if ($request->hasFile('replaced_images_files')) {
+                $replacedUrls = $request->input('replaced_images_urls', []);
+                $replacedFiles = $request->file('replaced_images_files', []);
+                if (is_array($replacedFiles)) {
+                    foreach ($replacedFiles as $idx => $newFile) {
+                        $oldUrl = $replacedUrls[$idx] ?? null;
+                        if ($oldUrl && $newFile instanceof UploadedFile && $newFile->isValid()) {
+                            $path = $newFile->store('products', 'public');
+                            $newPath = Storage::url($path);
+                            $product->galleries()->where('image', $oldUrl)->update([
+                                'image' => $newPath,
+                            ]);
+                        }
+                    }
+                }
+            }
 
             // 2. Upload new image files
             if ($request->hasFile('images')) {

@@ -23,6 +23,9 @@ interface ProductImageEditorModalProps {
     onSave: (editedFile: File, newPreviewUrl: string) => void;
 }
 
+const GRID_SIZE_STORAGE_KEY = 'aromapalace_editor_grid_size';
+const SHOW_GRID_STORAGE_KEY = 'aromapalace_editor_show_grid';
+
 export default function ProductImageEditorModal({
     open,
     imageUrl,
@@ -38,9 +41,42 @@ export default function ProductImageEditorModal({
     const [zoom, setZoom] = useState<number>(1);
     const [position, setPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
     const [rotation, setRotation] = useState<number>(0); // 0, 90, 180, 270
-    const [showGrid, setShowGrid] = useState<boolean>(true);
-    const [gridSize, setGridSize] = useState<number>(3); // 3 for 3x3, 4 for 4x4, 5 for 5x5, etc.
-    const [customGridInput, setCustomGridInput] = useState<string>('3');
+
+    // Grid states with persistence so the last selected grid is remembered
+    const [showGrid, setShowGrid] = useState<boolean>(() => {
+        if (typeof window === 'undefined') return true;
+        const saved = localStorage.getItem(SHOW_GRID_STORAGE_KEY);
+        return saved !== null ? saved === 'true' : true;
+    });
+    const [gridSize, setGridSize] = useState<number>(() => {
+        if (typeof window === 'undefined') return 3;
+        const saved = localStorage.getItem(GRID_SIZE_STORAGE_KEY);
+        const parsed = saved ? parseInt(saved, 10) : 3;
+        return !isNaN(parsed) && parsed >= 2 && parsed <= 20 ? parsed : 3;
+    });
+    const [customGridInput, setCustomGridInput] = useState<string>(() => {
+        if (typeof window === 'undefined') return '3';
+        const saved = localStorage.getItem(GRID_SIZE_STORAGE_KEY);
+        const parsed = saved ? parseInt(saved, 10) : 3;
+        return !isNaN(parsed) && parsed >= 2 && parsed <= 20 ? String(parsed) : '3';
+    });
+
+    const updateGridSelection = (size: number, visible = true) => {
+        setGridSize(size);
+        setCustomGridInput(String(size));
+        setShowGrid(visible);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem(GRID_SIZE_STORAGE_KEY, String(size));
+            localStorage.setItem(SHOW_GRID_STORAGE_KEY, String(visible));
+        }
+    };
+
+    const toggleGridVisibility = (visible: boolean) => {
+        setShowGrid(visible);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem(SHOW_GRID_STORAGE_KEY, String(visible));
+        }
+    };
 
     // Dragging state
     const [isDragging, setIsDragging] = useState(false);
@@ -444,11 +480,7 @@ export default function ProductImageEditorModal({
                                         <button
                                             key={size}
                                             type="button"
-                                            onClick={() => {
-                                                setGridSize(size);
-                                                setCustomGridInput(String(size));
-                                                setShowGrid(true);
-                                            }}
+                                            onClick={() => updateGridSelection(size, true)}
                                             className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
                                                 showGrid && gridSize === size
                                                     ? 'bg-primary text-primary-foreground shadow-xs'
@@ -461,7 +493,7 @@ export default function ProductImageEditorModal({
                                     ))}
                                     <button
                                         type="button"
-                                        onClick={() => setShowGrid(false)}
+                                        onClick={() => toggleGridVisibility(false)}
                                         className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
                                             !showGrid
                                                 ? 'bg-primary text-primary-foreground shadow-xs'
@@ -488,8 +520,7 @@ export default function ProductImageEditorModal({
                                             setCustomGridInput(val);
                                             const num = parseInt(val, 10);
                                             if (!isNaN(num) && num >= 2 && num <= 20) {
-                                                setGridSize(num);
-                                                setShowGrid(true);
+                                                updateGridSelection(num, true);
                                             }
                                         }}
                                         className="w-10 h-6 text-center text-xs font-semibold border rounded bg-background text-foreground font-mono focus:outline-none focus:ring-1 focus:ring-primary"

@@ -76,9 +76,14 @@ interface ProductDetailProps {
     variants: VariantFormItem[];
 }
 
-interface UploadedPreview {
-    file: File;
+interface GalleryItem {
+    id: string;
+    type: 'existing' | 'new';
     previewUrl: string;
+    originalUrl?: string;
+    file?: File;
+    isEdited?: boolean;
+    name?: string;
 }
 
 interface ProductEditProps {
@@ -93,11 +98,18 @@ export default function AdminProductEdit({
     brands = [],
 }: ProductEditProps) {
     const fileInputRef = useRef<HTMLInputElement | null>(null);
-    const [newImagePreviews, setNewImagePreviews] = useState<UploadedPreview[]>([]);
-    const [editingTarget, setEditingTarget] = useState<{
-        type: 'existing' | 'new';
-        index: number;
-    } | null>(null);
+    const [galleryItems, setGalleryItems] = useState<GalleryItem[]>(() => {
+        const existing = product.images || [];
+        return existing.map((url, idx) => ({
+            id: `existing-${idx}`,
+            type: 'existing' as const,
+            previewUrl: url,
+            originalUrl: url,
+            isEdited: false,
+            name: `Foto tersimpan #${idx + 1}`,
+        }));
+    });
+    const [editingIndex, setEditingIndex] = useState<number | null>(null);
     const [isDragging, setIsDragging] = useState(false);
 
     const { data, setData, post, processing, errors, setError, clearErrors, transform } = useForm<{
@@ -162,8 +174,7 @@ export default function AdminProductEdit({
 
     const handleFilesSelected = (files: FileList | null) => {
         if (!files || files.length === 0) return;
-        const newPreviews: UploadedPreview[] = [];
-        const newFilesList: File[] = [];
+        const newItems: GalleryItem[] = [];
         const maxMB = 10;
         const oversizedFiles: string[] = [];
         const invalidTypeFiles: string[] = [];
@@ -180,11 +191,14 @@ export default function AdminProductEdit({
                 oversizedFiles.push(`"${file.name}" (${sizeMB.toFixed(2)} MB)`);
                 continue;
             }
-            newPreviews.push({
+            newItems.push({
+                id: `new-${Date.now()}-${i}`,
+                type: 'new' as const,
                 file,
                 previewUrl: URL.createObjectURL(file),
+                isEdited: false,
+                name: file.name,
             });
-            newFilesList.push(file);
         }
 
         if (invalidTypeFiles.length > 0) {
@@ -199,56 +213,42 @@ export default function AdminProductEdit({
             fileInputRef.current.value = '';
         }
 
-        if (newPreviews.length > 0) {
-            setNewImagePreviews((prev) => [...prev, ...newPreviews]);
-            setData('images', [...data.images, ...newFilesList]);
+        if (newItems.length > 0) {
+            setGalleryItems((prev) => [...prev, ...newItems]);
         }
     };
 
-    const handleRemoveExistingImage = (index: number) => {
-        const updated = data.existing_images.filter((_, i) => i !== index);
-        setData('existing_images', updated);
-    };
-
-    const handleRemoveNewFile = (index: number) => {
-        const updatedPreviews = [...newImagePreviews];
-        const removed = updatedPreviews.splice(index, 1);
-        if (removed[0]) {
-            URL.revokeObjectURL(removed[0].previewUrl);
-        }
-        setNewImagePreviews(updatedPreviews);
-
-        const updatedFiles = [...data.images];
-        updatedFiles.splice(index, 1);
-        setData('images', updatedFiles);
+    const handleRemoveItem = (index: number) => {
+        setGalleryItems((prev) => {
+            const next = [...prev];
+            const removed = next.splice(index, 1)[0];
+            if (removed && removed.previewUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(removed.previewUrl);
+            }
+            return next;
+        });
     };
 
     const handleSaveEditedImage = (editedFile: File, newPreviewUrl: string) => {
-        if (!editingTarget) return;
-
-        if (editingTarget.type === 'new') {
-            const updatedPreviews = [...newImagePreviews];
-            if (updatedPreviews[editingTarget.index]) {
-                URL.revokeObjectURL(updatedPreviews[editingTarget.index].previewUrl);
+        if (editingIndex === null) return;
+        setGalleryItems((prev) => {
+            const next = [...prev];
+            const current = next[editingIndex];
+            if (current) {
+                if (current.previewUrl.startsWith('blob:')) {
+                    URL.revokeObjectURL(current.previewUrl);
+                }
+                next[editingIndex] = {
+                    ...current,
+                    file: editedFile,
+                    previewUrl: newPreviewUrl,
+                    isEdited: true, // Tag Diedit!
+                    name: editedFile.name || current.name,
+                };
             }
-            updatedPreviews[editingTarget.index] = {
-                file: editedFile,
-                previewUrl: newPreviewUrl,
-            };
-            setNewImagePreviews(updatedPreviews);
-
-            const updatedFiles = [...data.images];
-            updatedFiles[editingTarget.index] = editedFile;
-            setData('images', updatedFiles);
-        } else {
-            // Existing image edited: remove old URL, append as new uploaded file
-            const updatedExisting = data.existing_images.filter((_, i) => i !== editingTarget.index);
-            setData('existing_images', updatedExisting);
-            setNewImagePreviews((prev) => [...prev, { file: editedFile, previewUrl: newPreviewUrl }]);
-            setData('images', [...data.images, editedFile]);
-        }
-
-        setEditingTarget(null);
+            return next;
+        });
+        setEditingIndex(null);
     };
 
     const handleDragOver = (e: React.DragEvent) => {
@@ -540,10 +540,31 @@ export default function AdminProductEdit({
             }
         }
 
+        const existingImagesToKeep: string[] = [];
+        const replacedUrls: string[] = [];
+        const replacedFiles: File[] = [];
+        const newFilesToUpload: File[] = [];
+
+        galleryItems.forEach((item) => {
+            if (item.type === 'existing' && item.originalUrl) {
+                existingImagesToKeep.push(item.originalUrl);
+                if (item.isEdited && item.file) {
+                    replacedUrls.push(item.originalUrl);
+                    replacedFiles.push(item.file);
+                }
+            } else if (item.type === 'new' && item.file) {
+                newFilesToUpload.push(item.file);
+            }
+        });
+
         setData('is_draft', asDraft);
         transform((prev) => ({
             ...prev,
             is_draft: asDraft,
+            existing_images: existingImagesToKeep,
+            images: newFilesToUpload,
+            replaced_images_urls: replacedUrls,
+            replaced_images_files: replacedFiles,
         }));
         post(`/manajemen-produk/${product.id}`, {
             forceFormData: true,
@@ -570,7 +591,7 @@ export default function AdminProductEdit({
         });
     };
 
-    const totalImagesCount = data.existing_images.length + newImagePreviews.length;
+    const totalImagesCount = galleryItems.length;
 
     return (
         <AdminLayout
@@ -1009,28 +1030,45 @@ export default function AdminProductEdit({
                             </div>
                         ) : (
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                                {/* Existing Images */}
-                                {data.existing_images.map((imgUrl, idx) => (
+                                {galleryItems.map((item, idx) => (
                                     <div
-                                        key={`existing-${idx}`}
-                                        className="group relative rounded-lg border bg-muted overflow-hidden aspect-square flex items-center justify-center"
+                                        key={item.id}
+                                        className={cn(
+                                            "group relative rounded-lg border bg-muted overflow-hidden aspect-square flex items-center justify-center transition-all",
+                                            item.isEdited
+                                                ? "border-amber-500/60 ring-1 ring-amber-500/30"
+                                                : item.type === 'new'
+                                                ? "border-primary/40 ring-1 ring-primary/20"
+                                                : "border-border"
+                                        )}
                                     >
                                         <img
-                                            src={imgUrl}
-                                            alt={`Foto tersimpan ${idx + 1}`}
+                                            src={item.previewUrl}
+                                            alt={item.name || `Foto ${idx + 1}`}
                                             className="w-full h-full object-cover"
                                         />
-                                        {idx === 0 && (
-                                            <Badge className="absolute top-2 left-2 text-[10px] bg-primary text-primary-foreground font-semibold shadow-xs">
-                                                Utama
-                                            </Badge>
-                                        )}
-                                        <div className="absolute top-2 right-2 flex items-center gap-1">
+
+                                        {/* Badges Container (Top-Left) */}
+                                        <div className="absolute top-2 left-2 flex flex-col gap-1 items-start pointer-events-none z-10">
+                                            {idx === 0 && (
+                                                <Badge className="text-[10px] bg-primary text-primary-foreground font-semibold shadow-xs">
+                                                    Utama
+                                                </Badge>
+                                            )}
+                                            {item.isEdited && (
+                                                <Badge className="text-[10px] bg-amber-600 hover:bg-amber-600 text-white font-semibold shadow-xs">
+                                                    Diedit
+                                                </Badge>
+                                            )}
+                                        </div>
+
+                                        {/* Action Buttons (Top-Right) */}
+                                        <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
                                             <Button
                                                 type="button"
                                                 variant="secondary"
                                                 size="icon"
-                                                onClick={() => setEditingTarget({ type: 'existing', index: idx })}
+                                                onClick={() => setEditingIndex(idx)}
                                                 className="size-7 bg-white/90 dark:bg-zinc-800/90 hover:bg-white text-foreground shadow-sm"
                                                 title="Sesuaikan ukuran & posisi foto (Crop / Grid)"
                                             >
@@ -1040,59 +1078,17 @@ export default function AdminProductEdit({
                                                 type="button"
                                                 variant="destructive"
                                                 size="icon"
-                                                onClick={() => handleRemoveExistingImage(idx)}
+                                                onClick={() => handleRemoveItem(idx)}
                                                 className="size-7 opacity-90 hover:opacity-100 shadow-sm"
                                                 title="Hapus foto ini"
                                             >
                                                 <Trash2 className="size-3.5" />
                                             </Button>
                                         </div>
-                                        <div className="absolute bottom-0 inset-x-0 bg-black/60 text-[10px] text-white px-2 py-1 truncate">
-                                            Tersimpan #{idx + 1}
-                                        </div>
-                                    </div>
-                                ))}
 
-                                {/* New Uploaded Previews */}
-                                {newImagePreviews.map((img, idx) => (
-                                    <div
-                                        key={`new-${idx}`}
-                                        className="group relative rounded-lg border bg-muted overflow-hidden aspect-square flex items-center justify-center border-primary/40 ring-1 ring-primary/20"
-                                    >
-                                        <img
-                                            src={img.previewUrl}
-                                            alt={`Foto baru ${idx + 1}`}
-                                            className="w-full h-full object-cover"
-                                        />
-                                        {data.existing_images.length === 0 && idx === 0 && (
-                                            <Badge className="absolute top-2 left-2 text-[10px] bg-primary text-primary-foreground font-semibold shadow-xs">
-                                                Utama
-                                            </Badge>
-                                        )}
-                                        <div className="absolute top-2 right-2 flex items-center gap-1">
-                                            <Button
-                                                type="button"
-                                                variant="secondary"
-                                                size="icon"
-                                                onClick={() => setEditingTarget({ type: 'new', index: idx })}
-                                                className="size-7 bg-white/90 dark:bg-zinc-800/90 hover:bg-white text-foreground shadow-sm"
-                                                title="Sesuaikan ukuran & posisi foto (Crop / Grid)"
-                                            >
-                                                <Crop className="size-3.5 text-[#4A070B] dark:text-[#E8D0BA]" />
-                                            </Button>
-                                            <Button
-                                                type="button"
-                                                variant="destructive"
-                                                size="icon"
-                                                onClick={() => handleRemoveNewFile(idx)}
-                                                className="size-7 opacity-90 hover:opacity-100 shadow-sm"
-                                                title="Hapus foto baru ini"
-                                            >
-                                                <Trash2 className="size-3.5" />
-                                            </Button>
-                                        </div>
-                                        <div className="absolute bottom-0 inset-x-0 bg-primary/80 text-[10px] text-primary-foreground px-2 py-1 truncate">
-                                            {img.file.name}
+                                        {/* Bottom Label */}
+                                        <div className="absolute bottom-0 inset-x-0 bg-black/60 text-[10px] text-white px-2 py-1 truncate">
+                                            {item.name || (item.type === 'existing' ? `Tersimpan #${idx + 1}` : 'Foto baru')}
                                         </div>
                                     </div>
                                 ))}
@@ -1379,20 +1375,12 @@ export default function AdminProductEdit({
                 </div>
             )}
 
-            {editingTarget !== null && (
+            {editingIndex !== null && galleryItems[editingIndex] && (
                 <ProductImageEditorModal
-                    open={editingTarget !== null}
-                    imageUrl={
-                        editingTarget.type === 'existing'
-                            ? data.existing_images[editingTarget.index]
-                            : newImagePreviews[editingTarget.index]?.previewUrl
-                    }
-                    imageName={
-                        editingTarget.type === 'existing'
-                            ? `existing-image-${editingTarget.index + 1}.jpg`
-                            : (newImagePreviews[editingTarget.index]?.file.name || 'product-image.jpg')
-                    }
-                    onClose={() => setEditingTarget(null)}
+                    open={editingIndex !== null}
+                    imageUrl={galleryItems[editingIndex].previewUrl}
+                    imageName={galleryItems[editingIndex].name || galleryItems[editingIndex].file?.name || 'product-image.jpg'}
+                    onClose={() => setEditingIndex(null)}
                     onSave={handleSaveEditedImage}
                 />
             )}

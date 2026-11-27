@@ -63,6 +63,7 @@ interface ProductCreateProps {
 interface UploadedPreview {
     file: File;
     previewUrl: string;
+    isEdited?: boolean;
 }
 
 export default function AdminProductCreate({
@@ -176,6 +177,7 @@ export default function AdminProductCreate({
         updated[editingImageIndex] = {
             file: editedFile,
             previewUrl: newPreviewUrl,
+            isEdited: true,
         };
         setImagePreviews(updated);
         setData('images', updated.map((item) => item.file));
@@ -916,11 +918,18 @@ export default function AdminProductCreate({
                                             alt={`Preview ${idx + 1}`}
                                             className="w-full h-full object-cover"
                                         />
-                                        {idx === 0 && (
-                                            <Badge className="absolute top-2 left-2 text-[10px] bg-primary text-primary-foreground font-semibold shadow-xs">
-                                                Utama
-                                            </Badge>
-                                        )}
+                                        <div className="absolute top-2 left-2 flex flex-col gap-1 items-start pointer-events-none z-10">
+                                            {idx === 0 && (
+                                                <Badge className="text-[10px] bg-primary text-primary-foreground font-semibold shadow-xs">
+                                                    Utama
+                                                </Badge>
+                                            )}
+                                            {img.isEdited && (
+                                                <Badge className="text-[10px] bg-amber-600 hover:bg-amber-600 text-white font-semibold shadow-xs">
+                                                    Diedit
+                                                </Badge>
+                                            )}
+                                        </div>
                                         <div className="absolute top-2 right-2 flex items-center gap-1">
                                             <Button
                                                 type="button"
