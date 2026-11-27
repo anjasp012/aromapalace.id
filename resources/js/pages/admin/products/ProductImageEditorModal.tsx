@@ -23,8 +23,6 @@ interface ProductImageEditorModalProps {
     onSave: (editedFile: File, newPreviewUrl: string) => void;
 }
 
-type GridMode = 'thirds' | 'fine' | 'none';
-
 export default function ProductImageEditorModal({
     open,
     imageUrl,
@@ -40,8 +38,9 @@ export default function ProductImageEditorModal({
     const [zoom, setZoom] = useState<number>(1);
     const [position, setPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
     const [rotation, setRotation] = useState<number>(0); // 0, 90, 180, 270
-    const [gridMode, setGridMode] = useState<GridMode>('thirds');
-    const [bgTheme, setBgTheme] = useState<'checker' | 'white' | 'dark'>('checker');
+    const [showGrid, setShowGrid] = useState<boolean>(true);
+    const [gridSize, setGridSize] = useState<number>(3); // 3 for 3x3, 4 for 4x4, 5 for 5x5, etc.
+    const [customGridInput, setCustomGridInput] = useState<string>('3');
 
     // Dragging state
     const [isDragging, setIsDragging] = useState(false);
@@ -201,14 +200,10 @@ export default function ProductImageEditorModal({
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
-        // Optional background fill
-        if (bgTheme === 'white') {
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
-        } else if (bgTheme === 'dark') {
-            ctx.fillStyle = '#18181B';
-            ctx.fillRect(0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
-        }
+        // Background kanvas SELALU otomatis diisi warna putih bersih murni (#FFFFFF)
+        // Menjamin tidak ada warna hitam atau gelap pada format JPEG maupun area tepi transparan
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
 
         const baseScale = getBaseScale();
         const ratio = OUTPUT_SIZE / (viewportSize || 360);
@@ -282,14 +277,8 @@ export default function ProductImageEditorModal({
                         onTouchMove={handleTouchMove}
                         onTouchEnd={handleTouchEnd}
                         onWheel={handleWheel}
-                        className={`relative w-full max-w-[360px] sm:max-w-[400px] aspect-square rounded-xl overflow-hidden select-none border-2 shadow-inner transition-colors ${
+                        className={`relative w-full max-w-[360px] sm:max-w-[400px] aspect-square rounded-xl overflow-hidden select-none border-2 shadow-inner transition-colors bg-white ${
                             isDragging ? 'cursor-grabbing border-primary' : 'cursor-grab border-border/80 hover:border-primary/50'
-                        } ${
-                            bgTheme === 'checker'
-                                ? 'bg-[linear-gradient(45deg,#f0f0f0_25%,transparent_25%),linear-gradient(-45deg,#f0f0f0_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#f0f0f0_75%),linear-gradient(-45deg,transparent_75%,#f0f0f0_75%)] dark:bg-[linear-gradient(45deg,#262626_25%,transparent_25%),linear-gradient(-45deg,#262626_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#262626_75%),linear-gradient(-45deg,transparent_75%,#262626_75%)] bg-[size:16px_16px]'
-                                : bgTheme === 'white'
-                                ? 'bg-white'
-                                : 'bg-zinc-900'
                         }`}
                         title="Geser mouse untuk menggeser posisi, scroll mouse untuk zoom in/out"
                     >
@@ -330,50 +319,32 @@ export default function ProductImageEditorModal({
                         )}
 
                         {/* GRID OVERLAYS */}
-                        {gridMode === 'thirds' && (
+                        {showGrid && gridSize >= 2 && (
                             <div className="absolute inset-0 pointer-events-none">
-                                {/* Rule of Thirds Lines */}
-                                <div className="absolute left-1/3 inset-y-0 w-px bg-white/40 dark:bg-white/30 shadow-[0_0_1px_rgba(0,0,0,0.8)]" />
-                                <div className="absolute left-2/3 inset-y-0 w-px bg-white/40 dark:bg-white/30 shadow-[0_0_1px_rgba(0,0,0,0.8)]" />
-                                <div className="absolute top-1/3 inset-x-0 h-px bg-white/40 dark:bg-white/30 shadow-[0_0_1px_rgba(0,0,0,0.8)]" />
-                                <div className="absolute top-2/3 inset-x-0 h-px bg-white/40 dark:bg-white/30 shadow-[0_0_1px_rgba(0,0,0,0.8)]" />
+                                {/* Dynamic Grid Lines based on gridSize (misal 3x3, 4x4, 5x5, dst) */}
+                                {Array.from({ length: gridSize - 1 }, (_, i) => {
+                                    const pct = ((i + 1) / gridSize) * 100;
+                                    return (
+                                        <React.Fragment key={i}>
+                                            <div
+                                                className="absolute inset-y-0 w-px bg-neutral-600/35 dark:bg-neutral-400/40 shadow-[0_0_1px_rgba(255,255,255,0.9)]"
+                                                style={{ left: `${pct}%` }}
+                                            />
+                                            <div
+                                                className="absolute inset-x-0 h-px bg-neutral-600/35 dark:bg-neutral-400/40 shadow-[0_0_1px_rgba(255,255,255,0.9)]"
+                                                style={{ top: `${pct}%` }}
+                                            />
+                                        </React.Fragment>
+                                    );
+                                })}
 
                                 {/* Center Alignment Crosshair Guide (Amber Accent) */}
-                                <div className="absolute left-1/2 inset-y-0 w-px border-l border-dashed border-amber-400/80 shadow-[0_0_2px_rgba(0,0,0,0.8)]" />
-                                <div className="absolute top-1/2 inset-x-0 h-px border-t border-dashed border-amber-400/80 shadow-[0_0_2px_rgba(0,0,0,0.8)]" />
+                                <div className="absolute left-1/2 inset-y-0 w-px border-l border-dashed border-amber-500/90 shadow-[0_0_2px_rgba(0,0,0,0.5)]" />
+                                <div className="absolute top-1/2 inset-x-0 h-px border-t border-dashed border-amber-500/90 shadow-[0_0_2px_rgba(0,0,0,0.5)]" />
 
                                 {/* Center Target Ring */}
-                                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 size-7 rounded-full border border-amber-400/80 shadow-[0_0_2px_rgba(0,0,0,0.8)] flex items-center justify-center">
-                                    <div className="size-1 rounded-full bg-amber-400" />
-                                </div>
-                            </div>
-                        )}
-
-                        {gridMode === 'fine' && (
-                            <div className="absolute inset-0 pointer-events-none">
-                                {/* 6x6 Fine Alignment Grid */}
-                                {[16.666, 33.333, 50, 66.666, 83.333].map((pct, i) => (
-                                    <React.Fragment key={i}>
-                                        <div
-                                            className={`absolute inset-y-0 w-px ${
-                                                pct === 50
-                                                    ? 'border-l border-dashed border-amber-400/90'
-                                                    : 'bg-white/30 shadow-[0_0_1px_rgba(0,0,0,0.8)]'
-                                            }`}
-                                            style={{ left: `${pct}%` }}
-                                        />
-                                        <div
-                                            className={`absolute inset-x-0 h-px ${
-                                                pct === 50
-                                                    ? 'border-t border-dashed border-amber-400/90'
-                                                    : 'bg-white/30 shadow-[0_0_1px_rgba(0,0,0,0.8)]'
-                                            }`}
-                                            style={{ top: `${pct}%` }}
-                                        />
-                                    </React.Fragment>
-                                ))}
-                                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 size-6 rounded-full border border-amber-400/90 flex items-center justify-center">
-                                    <div className="size-1 rounded-full bg-amber-400" />
+                                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 size-7 rounded-full border border-amber-500/90 shadow-[0_0_2px_rgba(0,0,0,0.5)] flex items-center justify-center">
+                                    <div className="size-1.5 rounded-full bg-amber-500" />
                                 </div>
                             </div>
                         )}
@@ -462,73 +433,81 @@ export default function ProductImageEditorModal({
                                 </Button>
                             </div>
 
-                            {/* Grid Switcher */}
-                            <div className="flex items-center gap-1 bg-background p-0.5 rounded-lg border border-border">
-                                <button
-                                    type="button"
-                                    onClick={() => setGridMode('thirds')}
-                                    className={`px-2 py-1 rounded text-[11px] font-medium transition-colors ${
-                                        gridMode === 'thirds' ? 'bg-primary text-primary-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground'
-                                    }`}
-                                    title="Grid Garis Bantu Tengah & 3x3"
-                                >
-                                    Grid 3x3
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setGridMode('fine')}
-                                    className={`px-2 py-1 rounded text-[11px] font-medium transition-colors ${
-                                        gridMode === 'fine' ? 'bg-primary text-primary-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground'
-                                    }`}
-                                    title="Grid Rapat (Presisi)"
-                                >
-                                    Grid Rapat
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setGridMode('none')}
-                                    className={`px-2 py-1 rounded text-[11px] font-medium transition-colors ${
-                                        gridMode === 'none' ? 'bg-primary text-primary-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground'
-                                    }`}
-                                    title="Tanpa Garis Bantu"
-                                >
-                                    Polos
-                                </button>
+                            {/* Grid Switcher & Custom Grid Input */}
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
+                                    <Grid className="size-3.5" />
+                                    <span>Grid:</span>
+                                </span>
+                                <div className="flex items-center gap-1 bg-background p-0.5 rounded-lg border border-border">
+                                    {[3, 4, 5, 6].map((size) => (
+                                        <button
+                                            key={size}
+                                            type="button"
+                                            onClick={() => {
+                                                setGridSize(size);
+                                                setCustomGridInput(String(size));
+                                                setShowGrid(true);
+                                            }}
+                                            className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
+                                                showGrid && gridSize === size
+                                                    ? 'bg-primary text-primary-foreground shadow-xs'
+                                                    : 'text-muted-foreground hover:text-foreground'
+                                            }`}
+                                            title={`Grid ${size}x${size}`}
+                                        >
+                                            {size}x{size}
+                                        </button>
+                                    ))}
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowGrid(false)}
+                                        className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
+                                            !showGrid
+                                                ? 'bg-primary text-primary-foreground shadow-xs'
+                                                : 'text-muted-foreground hover:text-foreground'
+                                        }`}
+                                        title="Sembunyikan Garis Grid"
+                                    >
+                                        Polos
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Custom Grid Number Input */}
+                            <div className="flex items-center gap-1.5 bg-muted/40 px-2 py-1 rounded-lg border border-border/70">
+                                <span className="text-[11px] text-muted-foreground">Kustom:</span>
+                                <div className="flex items-center gap-1">
+                                    <input
+                                        type="number"
+                                        min={2}
+                                        max={20}
+                                        value={customGridInput}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            setCustomGridInput(val);
+                                            const num = parseInt(val, 10);
+                                            if (!isNaN(num) && num >= 2 && num <= 20) {
+                                                setGridSize(num);
+                                                setShowGrid(true);
+                                            }
+                                        }}
+                                        className="w-10 h-6 text-center text-xs font-semibold border rounded bg-background text-foreground font-mono focus:outline-none focus:ring-1 focus:ring-primary"
+                                        placeholder="3"
+                                        title="Ketik angka ukuran grid (misal: 3, 4, 5, 7, 8)"
+                                    />
+                                    <span className="text-[11px] font-mono text-muted-foreground">x</span>
+                                    <span className="text-[11px] font-mono font-semibold text-foreground">{gridSize}</span>
+                                </div>
                             </div>
                         </div>
 
-                        {/* Background Theme Switcher (for PNG transparency) */}
-                        <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1">
-                            <span>Latar Belakang Pratinjau:</span>
-                            <div className="flex items-center gap-1.5">
-                                <button
-                                    type="button"
-                                    onClick={() => setBgTheme('checker')}
-                                    className={`px-2 py-0.5 rounded border text-[10.5px] ${
-                                        bgTheme === 'checker' ? 'border-primary bg-primary/10 text-primary font-semibold' : 'border-border text-muted-foreground'
-                                    }`}
-                                >
-                                    Transparan
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setBgTheme('white')}
-                                    className={`px-2 py-0.5 rounded border text-[10.5px] ${
-                                        bgTheme === 'white' ? 'border-primary bg-primary/10 text-primary font-semibold' : 'border-border text-muted-foreground'
-                                    }`}
-                                >
-                                    Putih
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setBgTheme('dark')}
-                                    className={`px-2 py-0.5 rounded border text-[10.5px] ${
-                                        bgTheme === 'dark' ? 'border-primary bg-primary/10 text-primary font-semibold' : 'border-border text-muted-foreground'
-                                    }`}
-                                >
-                                    Gelap
-                                </button>
-                            </div>
+                        {/* Background Auto-White Indicator */}
+                        <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-0.5">
+                            <span className="flex items-center gap-1.5">
+                                <span className="size-2 rounded-full bg-emerald-500 inline-block" />
+                                <span>Background: <strong className="text-foreground font-medium">Otomatis Putih Bersih</strong> (Standar Foto E-commerce)</span>
+                            </span>
                         </div>
                     </div>
                 </div>
