@@ -419,9 +419,6 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
         if (!desc) {
             return (
                 <p>
-                    {isEn
-                        ? 'A masterwork fragrance with pure extract concentration and strong character, crafted to leave an unforgettable trail in every room you enter.'
-                        : 'Wewangian mahakarya dengan konsentrasi ekstrak murni berkarakter kuat yang dirancang untuk meninggalkan jejak aroma tak terlupakan di setiap ruangan yang Anda masuki.'}
                 </p>
             );
         }
@@ -759,7 +756,7 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
                         {/* Price Block */}
                         <div className="space-y-1.5 bg-muted/20 p-4 rounded-lg border border-border/80">
                             <div className="text-[11px] uppercase font-bold tracking-wider text-muted-foreground">
-                                {isEn ? 'Fragrance Investment' : 'Harga Investasi Aroma'}
+                                {isEn ? 'Price' : 'Harga'}
                             </div>
                             <div className="flex flex-wrap items-baseline gap-3">
                                 <span className={cn('text-2xl sm:text-3xl font-extrabold', currentPriceInfo.originalPrice ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 px-2 py-0.5 rounded' : 'text-[#4A070B] dark:text-[#E8D0BA]')}>
@@ -773,8 +770,8 @@ function ProductDetailContent({ product, relatedProducts }: ProductDetailPagePro
                             </div>
                             <p className="text-[11px] text-muted-foreground">
                                 {isEn
-                                    ? 'Includes VAT & premium delivery box packaging with velvet-sealed casing.'
-                                    : 'Sudah termasuk pajak PPN & garansi kemasan pengiriman premium dengan kotak segel beludru.'}
+                                    ? 'Includes VAT & Free Delivery Nationwide'
+                                    : 'Termasuk PPN & Pengiriman Gratis ke Seluruh Negeri'}
                             </p>
                         </div>
 
